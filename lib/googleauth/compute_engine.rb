@@ -50,11 +50,21 @@ module Google
         # is available
         def on_gce?(options = {})
           c = options[:connection] || Faraday.default_connection
-          resp = c.get(COMPUTE_CHECK_URI)
+          resp = c.get(COMPUTE_CHECK_URI) do |req|
+            # Comment from: oauth2client/client.py
+            #
+            # Note: the explicit `timeout` below is a workaround. The underlying
+            # issue is that resolving an unknown host on some networks will take
+            # 20-30 seconds; making this timeout short fixes the issue, but
+            # could lead to false negatives in the event that we are on GCE, but
+            # the metadata resolution was particularly slow. The latter case is
+            # "unlikely".
+            req.options.timeout = 0.1
+          end
           return false unless resp.status == 200
           return false unless resp.headers.key?('Metadata-Flavor')
           return resp.headers['Metadata-Flavor'] == 'Google'
-        rescue Faraday::ConnectionFailed
+        rescue [Faraday::TimeoutError, Faraday::ConnectionFailed]
           return false
         end
         memoize :on_gce?
