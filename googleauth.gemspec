@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
   s.version       = GoogleAuth::VERSION
   s.authors       = ['Tim Emiola']
   s.email         = 'temiola@google.com'
-  s.homepage      = 'https://github.com/google/google-auth-ruby-'
+  s.homepage      = 'https://github.com/google/google-auth-library-ruby'
   s.summary       = 'Google Auth Library for Ruby'
   s.description   = <<-eos
    Allows simple authorization for accessing Google APIs.
