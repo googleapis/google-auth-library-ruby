@@ -29,6 +29,7 @@
 
 require 'faraday'
 require 'googleauth/signet'
+require 'memoist'
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
@@ -43,16 +44,20 @@ module Google
                                'instance/service-accounts/default/token'
       COMPUTE_CHECK_URI = 'http://169.254.169.254'
 
-      # Detect if this appear to be a GCE instance, by checking if metadata
-      # is available
-      def self.on_gce?(options = {})
-        c = options[:connection] || Faraday.default_connection
-        resp = c.get(COMPUTE_CHECK_URI)
-        return false unless resp.status == 200
-        return false unless resp.headers.key?('Metadata-Flavor')
-        return resp.headers['Metadata-Flavor'] == 'Google'
-      rescue Faraday::ConnectionFailed
-        return false
+      class << self
+        extend Memoist
+        # Detect if this appear to be a GCE instance, by checking if metadata
+        # is available
+        def on_gce?(options = {})
+          c = options[:connection] || Faraday.default_connection
+          resp = c.get(COMPUTE_CHECK_URI)
+          return false unless resp.status == 200
+          return false unless resp.headers.key?('Metadata-Flavor')
+          return resp.headers['Metadata-Flavor'] == 'Google'
+        rescue Faraday::ConnectionFailed
+          return false
+        end
+        memoize :on_gce?
       end
 
       # Overrides the super class method to change how access tokens are

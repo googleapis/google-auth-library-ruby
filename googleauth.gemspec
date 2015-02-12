@@ -5,7 +5,7 @@ require 'googleauth/version'
 
 Gem::Specification.new do |s|
   s.name          = 'googleauth'
-  s.version       = GoogleAuth::VERSION
+  s.version       = Google::Auth::VERSION
   s.authors       = ['Tim Emiola']
   s.email         = 'temiola@google.com'
   s.homepage      = 'https://github.com/google/google-auth-library-ruby'
@@ -13,7 +13,7 @@ Gem::Specification.new do |s|
   s.description   = <<-eos
    Allows simple authorization for accessing Google APIs.
    Provide support Application Default Credentials, as described at
-   https://developers.google.com/accounts/docs/application-default-credentials
+   https://developers.google.com/accounts/xdocs/application-default-credentials
   eos
 
   s.files         = `git ls-files`.split("\n")
@@ -27,6 +27,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'faraday', '~> 0.9'
   s.add_dependency 'logging', '~> 1.8'
   s.add_dependency 'jwt', '~> 1.2.1'
+  s.add_dependency 'memoist', '~> 0.11.0'
   s.add_dependency 'multi_json', '1.10.1'
   s.add_dependency 'signet', '~> 0.6.0'
 
