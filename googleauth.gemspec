@@ -13,7 +13,7 @@ Gem::Specification.new do |s|
   s.description   = <<-eos
    Allows simple authorization for accessing Google APIs.
    Provide support Application Default Credentials, as described at
-   https://developers.google.com/accounts/xdocs/application-default-credentials
+   https://developers.google.com/accounts/docs/application-default-credentials
   eos
 
   s.files         = `git ls-files`.split("\n")
