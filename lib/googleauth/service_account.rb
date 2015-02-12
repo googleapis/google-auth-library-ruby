@@ -28,8 +28,10 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 require 'googleauth/signet'
+require 'memoist'
 require 'multi_json'
 require 'openssl'
+require 'rbconfig'
 
 # Reads the private key and client email fields from service account JSON key.
 def read_json_key(json_key_io)
@@ -45,14 +47,56 @@ module Google
   module Auth
     # Authenticates requests using Google's Service Account credentials.
     #
-    # This class provides a simpler surface to the behavior in
-    # Signet::OAuth2::Client.  It allows authorizing requests directly using
-    # credentials from a json key file downloaded from the developer console
-    # (via 'Generate new Json Key').
+    # This class allows authorizing requests for service accounts directly
+    # from credentials from a json key file downloaded from the developer
+    # console (via 'Generate new Json Key').
     #
     # cf [Application Default Credentials](http://goo.gl/mkAHpZ)
     class ServiceAccountCredentials < Signet::OAuth2::Client
+      ENV_VAR = 'GOOGLE_APPLICATION_CREDENTIALS'
+      NOT_FOUND_PREFIX =
+        "Unable to read the credential file specified by #{ENV_VAR}"
       TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v3/token'
+      WELL_KNOWN_PATH = 'gcloud/application_default_credentials.json'
+      WELL_KNOWN_PREFIX = 'Unable to read the default credential file'
+
+      class << self
+        extend Memoist
+
+        # determines if the current OS is windows
+        def windows?
+          RbConfig::CONFIG['host_os'] =~ /Windows|mswin/
+        end
+        memoize :windows?
+
+        # Creates an instance from the path specified in an environment
+        # variable.
+        #
+        # @param scope [string|array] the scope(s) to access
+        def from_env(scope)
+          return nil unless ENV.key?(ENV_VAR)
+          path = ENV[ENV_VAR]
+          fail 'file #{path} does not exist' unless File.exist?(path)
+          return new(scope, File.open(path))
+        rescue StandardError => e
+          raise "#{NOT_FOUND_PREFIX}: #{e}"
+        end
+
+        # Creates an instance from a well known path.
+        #
+        # @param scope [string|array] the scope(s) to access
+        def from_well_known_path(scope)
+          home_var = windows? ? 'APPDATA' : 'HOME'
+          root = ENV[home_var].nil? ? '' : ENV[home_var]
+          base = WELL_KNOWN_PATH
+          base = File.join('.config', base) unless windows?
+          path = File.join(root, base)
+          return nil unless File.exist?(path)
+          return new(scope, File.open(path))
+        rescue StandardError => e
+          raise "#{WELL_KNOWN_PREFIX}: #{e}"
+        end
+      end
 
       # Initializes a ServiceAccountCredentials.
       #
