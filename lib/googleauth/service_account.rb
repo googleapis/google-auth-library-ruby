@@ -54,11 +54,11 @@ module Google
     # cf [Application Default Credentials](http://goo.gl/mkAHpZ)
     class ServiceAccountCredentials < Signet::OAuth2::Client
       ENV_VAR = 'GOOGLE_APPLICATION_CREDENTIALS'
-      NOT_FOUND_PREFIX =
+      NOT_FOUND_ERROR =
         "Unable to read the credential file specified by #{ENV_VAR}"
       TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v3/token'
       WELL_KNOWN_PATH = 'gcloud/application_default_credentials.json'
-      WELL_KNOWN_PREFIX = 'Unable to read the default credential file'
+      WELL_KNOWN_ERROR = 'Unable to read the default credential file'
 
       class << self
         extend Memoist
@@ -79,7 +79,7 @@ module Google
           fail 'file #{path} does not exist' unless File.exist?(path)
           return new(scope, File.open(path))
         rescue StandardError => e
-          raise "#{NOT_FOUND_PREFIX}: #{e}"
+          raise "#{NOT_FOUND_ERROR}: #{e}"
         end
 
         # Creates an instance from a well known path.
@@ -94,7 +94,7 @@ module Google
           return nil unless File.exist?(path)
           return new(scope, File.open(path))
         rescue StandardError => e
-          raise "#{WELL_KNOWN_PREFIX}: #{e}"
+          raise "#{WELL_KNOWN_ERROR}: #{e}"
         end
       end
 

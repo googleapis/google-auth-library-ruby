@@ -34,7 +34,7 @@ module Google
   # Module Auth provides classes that provide Google-specific authorization
   # used to access Google APIs.
   module Auth
-    NOT_FOUND = <<END
+    NOT_FOUND_ERROR = <<END
 Could not load the default credentials. Browse to
 https://developers.google.com/accounts/docs/application-default-credentials
 for more information
@@ -53,7 +53,7 @@ END
       return creds unless creds.nil?
       creds = ServiceAccountCredentials.from_well_known_path(scope)
       return creds unless creds.nil?
-      fail NOT_FOUND unless GCECredentials.on_gce?(options)
+      fail NOT_FOUND_ERROR unless GCECredentials.on_gce?(options)
       GCECredentials.new
     end
 
