@@ -43,6 +43,10 @@ END
     # Obtains the default credentials implementation to use in this
     # environment.
     #
+    # Use this to obtain the Application Default Credentials for accessing
+    # Google APIs.  Application Default Credentials are described in detail
+    # at http://goo.gl/IUuyuX.
+    #
     # If supplied, scope is used to create the credentials instance, when it
     # can applied.  E.g, on compute engine, the scope is ignored.
     #
