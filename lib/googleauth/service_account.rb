@@ -77,7 +77,9 @@ module Google
           return nil unless ENV.key?(ENV_VAR)
           path = ENV[ENV_VAR]
           fail 'file #{path} does not exist' unless File.exist?(path)
-          return new(scope, File.open(path))
+          File.open(path) do |f|
+            return new(scope, f)
+          end
         rescue StandardError => e
           raise "#{NOT_FOUND_ERROR}: #{e}"
         end
@@ -86,13 +88,14 @@ module Google
         #
         # @param scope [string|array] the scope(s) to access
         def from_well_known_path(scope)
-          home_var = windows? ? 'APPDATA' : 'HOME'
+          home_var, base = windows? ? 'APPDATA' : 'HOME', WELL_KNOWN_PATH
           root = ENV[home_var].nil? ? '' : ENV[home_var]
-          base = WELL_KNOWN_PATH
           base = File.join('.config', base) unless windows?
           path = File.join(root, base)
           return nil unless File.exist?(path)
-          return new(scope, File.open(path))
+          File.open(path) do |f|
+            return new(scope, f)
+          end
         rescue StandardError => e
           raise "#{WELL_KNOWN_ERROR}: #{e}"
         end
