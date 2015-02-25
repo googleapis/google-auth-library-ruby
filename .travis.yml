@@ -1,0 +1,18 @@
+language: ruby
+rvm:
+  - 2.2
+  - 2.0.0
+  - 2.1
+  - 1.9.3
+  - rbx-2
+  - jruby
+script: "bundle exec rake spec:all"
+before_install:
+ - sudo apt-get update
+ - sudo apt-get install idn
+notifications:
+  email:
+    recipients:
+      - temiola@google.com
+    on_success: change
+    on_failure: change
