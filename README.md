@@ -27,7 +27,7 @@ Be sure `https://rubygems.org/` is in your gem sources.
 For normal client usage, this is sufficient:
 
 ```bash
-$ gem install google-auth-library
+$ gem install googleauth
 ```
 
 ## Example Usage
