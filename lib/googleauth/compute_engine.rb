@@ -46,6 +46,7 @@ module Google
 
       class << self
         extend Memoist
+
         # Detect if this appear to be a GCE instance, by checking if metadata
         # is available
         def on_gce?(options = {})
@@ -64,9 +65,10 @@ module Google
           return false unless resp.status == 200
           return false unless resp.headers.key?('Metadata-Flavor')
           return resp.headers['Metadata-Flavor'] == 'Google'
-        rescue [Faraday::TimeoutError, Faraday::ConnectionFailed]
+        rescue Faraday::TimeoutError, Faraday::ConnectionFailed
           return false
         end
+
         memoize :on_gce?
       end
 
