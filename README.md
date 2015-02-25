@@ -12,7 +12,7 @@
 
 ## Description
 
-This Google's officially supported ruby client library for using OAuth 2.0
+This is Google's officially supported ruby client library for using OAuth 2.0
 authorization and authentication with Google APIs.
 
 ## Alpha
@@ -27,7 +27,7 @@ Be sure `https://rubygems.org/` is in your gem sources.
 For normal client usage, this is sufficient:
 
 ```bash
-$ gem install google-auth-library
+$ gem install googleauth
 ```
 
 ## Example Usage
