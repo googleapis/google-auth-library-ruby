@@ -10,9 +10,10 @@ Gem::Specification.new do |s|
   s.email         = 'temiola@google.com'
   s.homepage      = 'https://github.com/google/google-auth-library-ruby'
   s.summary       = 'Google Auth Library for Ruby'
+  s.license       = "Apache-2.0"
   s.description   = <<-eos
    Allows simple authorization for accessing Google APIs.
-   Provide support Application Default Credentials, as described at
+   Provide support for Application Default Credentials, as described at
    https://developers.google.com/accounts/docs/application-default-credentials
   eos
 
