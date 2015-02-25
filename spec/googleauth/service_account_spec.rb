@@ -50,7 +50,8 @@ describe Google::Auth::ServiceAccountCredentials do
         StringIO.new(cred_json_text))
   end
 
-  def make_auth_stubs(access_token: '')
+  def make_auth_stubs(opts = {})
+    access_token = opts[:access_token] || ''
     Faraday::Adapter::Test::Stubs.new do |stub|
       stub.post('/oauth2/v3/token') do |env|
         params = Addressable::URI.form_unencode(env[:body])
