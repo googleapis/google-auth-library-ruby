@@ -1,6 +1,7 @@
 # -*- ruby -*-
 require 'rspec/core/rake_task'
 require 'rubocop/rake_task'
+require 'bundler/gem_tasks'
 
 desc 'Run Rubocop to check for style violations'
 RuboCop::RakeTask.new
