@@ -49,7 +49,8 @@ describe Signet::OAuth2::Client do
       )
   end
 
-  def make_auth_stubs(access_token: '')
+  def make_auth_stubs(opts)
+    access_token = opts[:access_token] || ''
     Faraday::Adapter::Test::Stubs.new do |stub|
       stub.post('/o/oauth2/token') do |env|
         params = Addressable::URI.form_unencode(env[:body])

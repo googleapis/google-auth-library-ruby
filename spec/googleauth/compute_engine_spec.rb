@@ -44,7 +44,8 @@ describe Google::Auth::GCECredentials do
     @client = GCECredentials.new
   end
 
-  def make_auth_stubs(access_token: '')
+  def make_auth_stubs(opts = {})
+    access_token = opts[:access_token] || ''
     Faraday::Adapter::Test::Stubs.new do |stub|
       stub.get(MD_URI) do |env|
         headers = env[:request_headers]
