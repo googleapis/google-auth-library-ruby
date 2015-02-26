@@ -36,8 +36,8 @@ $ gem install googleauth
 require 'googleauth'
 
 # Get the environment configured authorization
-scope = 'https://www.googleapis.com/auth/userinfo.profile'
-authorization = Google::Auth.get_application_default(scope)
+scopes =  ['https://www.googleapis.com/auth/cloud-platform', 'https://www.googleapis.com/auth/compute']
+authorization = Google::Auth.get_application_default(scopes)
 
 # Add the the access token obtained using the authorization to a hash, e.g
 # headers.
