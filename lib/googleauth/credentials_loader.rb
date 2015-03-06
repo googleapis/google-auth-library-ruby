@@ -27,45 +27,58 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-require 'googleauth/signet'
-require 'googleauth/credentials_loader'
-require 'multi_json'
+require 'memoist'
+require 'rbconfig'
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
   # used to access Google APIs.
   module Auth
-    # Authenticates requests using Google's Service Account credentials.
-    #
-    # This class allows authorizing requests for service accounts directly
-    # from credentials from a json key file downloaded from the developer
-    # console (via 'Generate new Json Key').
-    #
-    # cf [Application Default Credentials](http://goo.gl/mkAHpZ)
-    class ServiceAccountCredentials < Signet::OAuth2::Client
-      TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v3/token'
-      extend CredentialsLoader
+    # CredentialsLoader contains the behaviour used to locate and find default
+    # credentials files on the file system.
+    module CredentialsLoader
+      extend Memoist
+      ENV_VAR = 'GOOGLE_APPLICATION_CREDENTIALS'
+      NOT_FOUND_ERROR =
+        "Unable to read the credential file specified by #{ENV_VAR}"
+      WELL_KNOWN_PATH = 'gcloud/application_default_credentials.json'
+      WELL_KNOWN_ERROR = 'Unable to read the default credential file'
 
-      # Reads the private key and client email fields from the service account
-      # JSON key.
-      def self.read_json_key(json_key_io)
-        json_key = MultiJson.load(json_key_io.read)
-        fail 'missing client_email' unless json_key.key?('client_email')
-        fail 'missing private_key' unless json_key.key?('private_key')
-        [json_key['private_key'], json_key['client_email']]
+      # determines if the current OS is windows
+      def windows?
+        RbConfig::CONFIG['host_os'] =~ /Windows|mswin/
       end
+      memoize :windows?
 
-      # Initializes a ServiceAccountCredentials.
+      # Creates an instance from the path specified in an environment
+      # variable.
       #
       # @param scope [string|array] the scope(s) to access
-      # @param json_key_io [IO] an IO from which the JSON key can be read
-      def initialize(scope, json_key_io)
-        private_key, client_email = self.class.read_json_key(json_key_io)
-        super(token_credential_uri: TOKEN_CRED_URI,
-              audience: TOKEN_CRED_URI,
-              scope: scope,
-              issuer: client_email,
-              signing_key: OpenSSL::PKey::RSA.new(private_key))
+      def from_env(scope)
+        return nil unless ENV.key?(ENV_VAR)
+        path = ENV[ENV_VAR]
+        fail 'file #{path} does not exist' unless File.exist?(path)
+        File.open(path) do |f|
+          return new(scope, f)
+        end
+      rescue StandardError => e
+        raise "#{NOT_FOUND_ERROR}: #{e}"
+      end
+
+      # Creates an instance from a well known path.
+      #
+      # @param scope [string|array] the scope(s) to access
+      def from_well_known_path(scope)
+        home_var, base = windows? ? 'APPDATA' : 'HOME', WELL_KNOWN_PATH
+        root = ENV[home_var].nil? ? '' : ENV[home_var]
+        base = File.join('.config', base) unless windows?
+        path = File.join(root, base)
+        return nil unless File.exist?(path)
+        File.open(path) do |f|
+          return new(scope, f)
+        end
+      rescue StandardError => e
+        raise "#{WELL_KNOWN_ERROR}: #{e}"
       end
     end
   end

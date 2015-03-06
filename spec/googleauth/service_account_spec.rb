@@ -42,6 +42,7 @@ require 'tmpdir'
 
 describe Google::Auth::ServiceAccountCredentials do
   ServiceAccountCredentials = Google::Auth::ServiceAccountCredentials
+  CredentialsLoader = Google::Auth::CredentialsLoader
 
   before(:example) do
     @key = OpenSSL::PKey::RSA.new(2048)
@@ -79,9 +80,10 @@ describe Google::Auth::ServiceAccountCredentials do
 
   describe '#from_env' do
     before(:example) do
-      @var_name = ServiceAccountCredentials::ENV_VAR
+      @var_name = CredentialsLoader::ENV_VAR
       @orig = ENV[@var_name]
       @scope = 'https://www.googleapis.com/auth/userinfo.profile'
+      @clz = ServiceAccountCredentials
     end
 
     after(:example) do
@@ -99,18 +101,17 @@ describe Google::Auth::ServiceAccountCredentials do
       Dir.mktmpdir do |dir|
         key_path = File.join(dir, 'does-not-exist')
         ENV[@var_name] = key_path
-        expect { sac.from_env(@scope) }.to raise_error
+        expect { @clz.from_env(@scope) }.to raise_error
       end
     end
 
     it 'succeeds when the GOOGLE_APPLICATION_CREDENTIALS file is valid' do
-      sac = ServiceAccountCredentials  # shortens name
       Dir.mktmpdir do |dir|
         key_path = File.join(dir, 'my_cert_file')
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV[@var_name] = key_path
-        expect(sac.from_env(@scope)).to_not be_nil
+        expect(@clz.from_env(@scope)).to_not be_nil
       end
     end
   end
@@ -119,6 +120,8 @@ describe Google::Auth::ServiceAccountCredentials do
     before(:example) do
       @home = ENV['HOME']
       @scope = 'https://www.googleapis.com/auth/userinfo.profile'
+      @known_path = CredentialsLoader::WELL_KNOWN_PATH
+      @clz = ServiceAccountCredentials
     end
 
     after(:example) do
@@ -131,13 +134,12 @@ describe Google::Auth::ServiceAccountCredentials do
     end
 
     it 'successfully loads the file when it is present' do
-      sac = ServiceAccountCredentials  # shortens name
       Dir.mktmpdir do |dir|
-        key_path = File.join(dir, '.config', sac::WELL_KNOWN_PATH)
+        key_path = File.join(dir, '.config', @known_path)
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV['HOME'] = dir
-        expect(sac.from_well_known_path(@scope)).to_not be_nil
+        expect(@clz.from_well_known_path(@scope)).to_not be_nil
       end
     end
   end

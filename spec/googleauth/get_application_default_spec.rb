@@ -38,7 +38,7 @@ require 'spec_helper'
 describe '#get_application_default' do
   before(:example) do
     @key = OpenSSL::PKey::RSA.new(2048)
-    @var_name = ServiceAccountCredentials::ENV_VAR
+    @var_name = CredentialsLoader::ENV_VAR
     @orig = ENV[@var_name]
     @home = ENV['HOME']
     @scope = 'https://www.googleapis.com/auth/userinfo.profile'
@@ -82,7 +82,7 @@ describe '#get_application_default' do
     ENV.delete(@var_name) unless ENV[@var_name].nil?
     Dir.mktmpdir do |dir|
       key_path = File.join(dir, '.config',
-                           ServiceAccountCredentials::WELL_KNOWN_PATH)
+                           CredentialsLoader::WELL_KNOWN_PATH)
       FileUtils.mkdir_p(File.dirname(key_path))
       File.write(key_path, cred_json_text)
       ENV['HOME'] = dir
