@@ -27,8 +27,13 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-require 'googleauth/service_account'
+require 'multi_json'
+require 'stringio'
+
+require 'googleauth/credentials_loader'
 require 'googleauth/compute_engine'
+require 'googleauth/service_account'
+require 'googleauth/user_refresh'
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
@@ -39,6 +44,28 @@ Could not load the default credentials. Browse to
 https://developers.google.com/accounts/docs/application-default-credentials
 for more information
 END
+
+    # DefaultCredentials is used to preload the credentials file, to determine
+    # which type of credentials should be loaded.
+    class DefaultCredentials
+      extend CredentialsLoader
+
+      # override CredentialsLoader#make_creds to use the class determined by
+      # loading the json.
+      def self.make_creds(scope, json_key_io)
+        json_key, clz = determine_creds_class(json_key_io)
+        clz.new(scope, StringIO.new(MultiJson.dump(json_key)))
+      end
+
+      # Reads the input json and determines which creds class to use.
+      def self.determine_creds_class(json_key_io)
+        json_key = MultiJson.load(json_key_io.read)
+        fail "the json is missing the #{key} field" unless json_key.key?('type')
+        svc_account = json_key['type'] == 'service_account'
+        return json_key, ServiceAccountCredentials if svc_account
+        [json_key, UserRefreshCredentials]
+      end
+    end
 
     # Obtains the default credentials implementation to use in this
     # environment.
@@ -53,9 +80,9 @@ END
     # @param scope [string|array] the scope(s) to access
     # @param options [hash] allows override of the connection being used
     def get_application_default(scope, options = {})
-      creds = ServiceAccountCredentials.from_env(scope)
+      creds = DefaultCredentials.from_env(scope)
       return creds unless creds.nil?
-      creds = ServiceAccountCredentials.from_well_known_path(scope)
+      creds = DefaultCredentials.from_well_known_path(scope)
       return creds unless creds.nil?
       fail NOT_FOUND_ERROR unless GCECredentials.on_gce?(options)
       GCECredentials.new

@@ -50,6 +50,14 @@ module Google
       end
       memoize :windows?
 
+      # make_creds proxies the construction of a credentials instance
+      #
+      # By default, it calls #new on the current class, but this behaviour can
+      # be modified, allowing different instances to be created.
+      def make_creds(*args)
+        new(*args)
+      end
+
       # Creates an instance from the path specified in an environment
       # variable.
       #
@@ -59,7 +67,7 @@ module Google
         path = ENV[ENV_VAR]
         fail 'file #{path} does not exist' unless File.exist?(path)
         File.open(path) do |f|
-          return new(scope, f)
+          return make_creds(scope, f)
         end
       rescue StandardError => e
         raise "#{NOT_FOUND_ERROR}: #{e}"
@@ -75,7 +83,7 @@ module Google
         path = File.join(root, base)
         return nil unless File.exist?(path)
         File.open(path) do |f|
-          return new(scope, f)
+          return make_creds(scope, f)
         end
       rescue StandardError => e
         raise "#{WELL_KNOWN_ERROR}: #{e}"
