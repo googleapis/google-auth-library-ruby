@@ -29,6 +29,7 @@
 
 require 'googleauth/signet'
 require 'googleauth/credentials_loader'
+require 'jwt'
 require 'multi_json'
 
 module Google
@@ -43,6 +44,8 @@ module Google
     #
     # cf [Application Default Credentials](http://goo.gl/mkAHpZ)
     class ServiceAccountCredentials < Signet::OAuth2::Client
+      JWT_AUD_URI_KEY = :jwt_aud_uri
+      AUTH_METADATA_KEY = Signet::OAuth2::AUTH_METADATA_KEY
       TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v3/token'
       extend CredentialsLoader
 
@@ -66,6 +69,34 @@ module Google
               scope: scope,
               issuer: client_email,
               signing_key: OpenSSL::PKey::RSA.new(private_key))
+      end
+
+      # Extends the superclass behaviour to construct a jwt token if the
+      # google jwt uri key is present in the input hash.
+      #
+      # The jwt is used as the authentication token.
+      def apply!(a_hash, opts = {})
+        jwt_aud_uri = a_hash.delete(JWT_AUD_URI_KEY)
+        unless jwt_aud_uri.nil?
+          jwt_token = new_jwt_token(jwt_aud_uri, opts)
+          a_hash[AUTH_METADATA_KEY] = "Bearer #{jwt_token}"
+          return a_hash
+        end
+        super
+      end
+
+      # Creates a jwt uri token.
+      def new_jwt_token(jwt_aud_uri, options = {})
+        now = Time.new
+        skew = options[:skew] || 60
+        assertion = {
+          'iss' => issuer,
+          'sub' => issuer,
+          'aud' => jwt_aud_uri,
+          'exp' => (now + expiry).to_i,
+          'iat' => (now - skew).to_i
+        }
+        JWT.encode(assertion, signing_key, signing_algorithm)
       end
     end
   end

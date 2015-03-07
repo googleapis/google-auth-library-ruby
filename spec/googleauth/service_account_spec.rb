@@ -44,6 +44,8 @@ describe Google::Auth::ServiceAccountCredentials do
   ServiceAccountCredentials = Google::Auth::ServiceAccountCredentials
   CredentialsLoader = Google::Auth::CredentialsLoader
 
+  let(:client_email) { 'app@developer.gserviceaccount.com' }
+
   before(:example) do
     @key = OpenSSL::PKey::RSA.new(2048)
     @client = ServiceAccountCredentials.new(
@@ -69,7 +71,7 @@ describe Google::Auth::ServiceAccountCredentials do
     cred_json = {
       private_key_id: 'a_private_key_id',
       private_key: @key.to_pem,
-      client_email: 'app@developer.gserviceaccount.com',
+      client_email: client_email,
       client_id: 'app.apps.googleusercontent.com',
       type: 'service_account'
     }
@@ -77,6 +79,67 @@ describe Google::Auth::ServiceAccountCredentials do
   end
 
   it_behaves_like 'apply/apply! are OK'
+
+  context 'when jwt_aud_uri is present' do
+    WANTED_AUTH_KEY = ServiceAccountCredentials::AUTH_METADATA_KEY
+    JWT_AUD_URI_KEY = ServiceAccountCredentials::JWT_AUD_URI_KEY
+    let(:test_uri) { 'https://www.googleapis.com/myservice' }
+    let(:auth_prefix) { 'Bearer ' }
+
+    def expect_is_encoded_jwt(hdr)
+      expect(hdr).to_not be_nil
+      expect(hdr.start_with?(auth_prefix)).to be true
+      authorization = hdr[auth_prefix.length..-1]
+      payload, _ = JWT.decode(authorization, @key.public_key)
+      expect(payload['aud']).to eq(test_uri)
+      expect(payload['iss']).to eq(client_email)
+    end
+
+    describe '#apply!' do
+      it 'should update the target hash with a jwt token' do
+        md = { foo: 'bar' }
+        md[JWT_AUD_URI_KEY] = test_uri
+        @client.apply!(md)
+        auth_header = md[WANTED_AUTH_KEY]
+        expect_is_encoded_jwt(auth_header)
+        expect(md[JWT_AUD_URI_KEY]).to be_nil
+      end
+    end
+
+    describe 'updater_proc' do
+      it 'should provide a proc that updates a hash with a jwt token' do
+        md = { foo: 'bar' }
+        md[JWT_AUD_URI_KEY] = test_uri
+        the_proc = @client.updater_proc
+        got = the_proc.call(md)
+        auth_header = got[WANTED_AUTH_KEY]
+        expect_is_encoded_jwt(auth_header)
+        expect(got[JWT_AUD_URI_KEY]).to be_nil
+        expect(md[JWT_AUD_URI_KEY]).to_not be_nil
+      end
+    end
+
+    describe '#apply' do
+      it 'should not update the original hash with a jwt token' do
+        md = { foo: 'bar' }
+        md[JWT_AUD_URI_KEY] = test_uri
+        the_proc = @client.updater_proc
+        got = the_proc.call(md)
+        auth_header = md[WANTED_AUTH_KEY]
+        expect(auth_header).to be_nil
+        expect(got[JWT_AUD_URI_KEY]).to be_nil
+        expect(md[JWT_AUD_URI_KEY]).to_not be_nil
+      end
+
+      it 'should add a jwt token to the returned hash' do
+        md = { foo: 'bar' }
+        md[JWT_AUD_URI_KEY] = test_uri
+        got = @client.apply(md)
+        auth_header = got[WANTED_AUTH_KEY]
+        expect_is_encoded_jwt(auth_header)
+      end
+    end
+  end
 
   describe '#from_env' do
     before(:example) do

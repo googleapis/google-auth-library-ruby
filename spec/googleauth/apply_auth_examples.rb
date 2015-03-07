@@ -46,9 +46,9 @@ def build_access_token_json(token)
                       'expires_in' => 3600)
 end
 
-WANTED_AUTH_KEY = :Authorization
-
 shared_examples 'apply/apply! are OK' do
+  WANTED_AUTH_KEY = :Authorization
+
   # tests that use these examples need to define
   #
   # @client which should be an auth client
