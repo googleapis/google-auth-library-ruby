@@ -61,9 +61,10 @@ END
       def self.determine_creds_class(json_key_io)
         json_key = MultiJson.load(json_key_io.read)
         fail "the json is missing the #{key} field" unless json_key.key?('type')
-        svc_account = json_key['type'] == 'service_account'
-        return json_key, ServiceAccountCredentials if svc_account
-        [json_key, UserRefreshCredentials]
+        type = json_key['type']
+        return json_key, ServiceAccountCredentials if type == 'service_account'
+        return [json_key, UserRefreshCredentials] if type == 'authorized_user'
+        fail "credentials type '#{type}' is not supported"
       end
     end
 

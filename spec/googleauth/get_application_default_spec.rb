@@ -49,34 +49,12 @@ describe '#get_application_default' do
     ENV['HOME'] = @home unless @home == ENV['HOME']
   end
 
-  shared_examples 'it loads them correctly' do
+  shared_examples 'it cannot load misconfigured credentials' do
     it 'fails if the GOOGLE_APPLICATION_CREDENTIALS path does not exist' do
       Dir.mktmpdir do |dir|
         key_path = File.join(dir, 'does-not-exist')
         ENV[@var_name] = key_path
         expect { Google::Auth.get_application_default(@scope) }.to raise_error
-      end
-    end
-
-    it 'succeeds if the GOOGLE_APPLICATION_CREDENTIALS file is valid' do
-      Dir.mktmpdir do |dir|
-        key_path = File.join(dir, 'my_cert_file')
-        FileUtils.mkdir_p(File.dirname(key_path))
-        File.write(key_path, cred_json_text)
-        ENV[@var_name] = key_path
-        expect(Google::Auth.get_application_default(@scope)).to_not be_nil
-      end
-    end
-
-    it 'succeeds with default file without GOOGLE_APPLICATION_CREDENTIALS' do
-      ENV.delete(@var_name) unless ENV[@var_name].nil?
-      Dir.mktmpdir do |dir|
-        key_path = File.join(dir, '.config',
-                             CredentialsLoader::WELL_KNOWN_PATH)
-        FileUtils.mkdir_p(File.dirname(key_path))
-        File.write(key_path, cred_json_text)
-        ENV['HOME'] = dir
-        expect(Google::Auth.get_application_default(@scope)).to_not be_nil
       end
     end
 
@@ -100,6 +78,30 @@ describe '#get_application_default' do
         expect(&blk).to raise_error
       end
       stubs.verify_stubbed_calls
+    end
+  end
+
+  shared_examples 'it can successfully load credentials' do
+    it 'succeeds if the GOOGLE_APPLICATION_CREDENTIALS file is valid' do
+      Dir.mktmpdir do |dir|
+        key_path = File.join(dir, 'my_cert_file')
+        FileUtils.mkdir_p(File.dirname(key_path))
+        File.write(key_path, cred_json_text)
+        ENV[@var_name] = key_path
+        expect(Google::Auth.get_application_default(@scope)).to_not be_nil
+      end
+    end
+
+    it 'succeeds with default file without GOOGLE_APPLICATION_CREDENTIALS' do
+      ENV.delete(@var_name) unless ENV[@var_name].nil?
+      Dir.mktmpdir do |dir|
+        key_path = File.join(dir, '.config',
+                             CredentialsLoader::WELL_KNOWN_PATH)
+        FileUtils.mkdir_p(File.dirname(key_path))
+        File.write(key_path, cred_json_text)
+        ENV['HOME'] = dir
+        expect(Google::Auth.get_application_default(@scope)).to_not be_nil
+      end
     end
 
     it 'succeeds without default file or env if on compute engine' do
@@ -137,7 +139,8 @@ describe '#get_application_default' do
       MultiJson.dump(cred_json)
     end
 
-    it_behaves_like 'it loads them correctly'
+    it_behaves_like 'it can successfully load credentials'
+    it_behaves_like 'it cannot load misconfigured credentials'
   end
 
   describe 'when credential type is authorized_user' do
@@ -151,6 +154,47 @@ describe '#get_application_default' do
       MultiJson.dump(cred_json)
     end
 
-    it_behaves_like 'it loads them correctly'
+    it_behaves_like 'it can successfully load credentials'
+    it_behaves_like 'it cannot load misconfigured credentials'
+  end
+
+  describe 'when credential type is unknown' do
+    def cred_json_text
+      cred_json = {
+        client_secret: 'privatekey',
+        refresh_token: 'refreshtoken',
+        client_id: 'app.apps.googleusercontent.com',
+        type: 'not_known_type'
+      }
+      MultiJson.dump(cred_json)
+    end
+
+    it 'fails if the GOOGLE_APPLICATION_CREDENTIALS file contains the creds' do
+      Dir.mktmpdir do |dir|
+        key_path = File.join(dir, 'my_cert_file')
+        FileUtils.mkdir_p(File.dirname(key_path))
+        File.write(key_path, cred_json_text)
+        ENV[@var_name] = key_path
+        blk = proc do
+          Google::Auth.get_application_default(@scope)
+        end
+        expect(&blk).to raise_error RuntimeError
+      end
+    end
+
+    it 'fails if the well known file contains the creds' do
+      ENV.delete(@var_name) unless ENV[@var_name].nil?
+      Dir.mktmpdir do |dir|
+        key_path = File.join(dir, '.config',
+                             CredentialsLoader::WELL_KNOWN_PATH)
+        FileUtils.mkdir_p(File.dirname(key_path))
+        File.write(key_path, cred_json_text)
+        ENV['HOME'] = dir
+        blk = proc do
+          Google::Auth.get_application_default(@scope)
+        end
+        expect(&blk).to raise_error RuntimeError
+      end
+    end
   end
 end
