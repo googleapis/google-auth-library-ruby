@@ -27,9 +27,9 @@ Gem::Specification.new do |s|
 
   s.add_dependency 'faraday', '~> 0.9'
   s.add_dependency 'logging', '~> 1.8'
-  s.add_dependency 'jwt', '~> 1.2.1'
+  s.add_dependency 'jwt', '~> 1.3.0'
   s.add_dependency 'memoist', '~> 0.11.0'
-  s.add_dependency 'multi_json', '1.10.1'
+  s.add_dependency 'multi_json', '1.11.0'
   s.add_dependency 'signet', '~> 0.6.0'
 
   s.add_development_dependency 'bundler', '~> 1.7'
