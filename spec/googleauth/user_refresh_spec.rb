@@ -33,20 +33,20 @@ $LOAD_PATH.uniq!
 
 require 'apply_auth_examples'
 require 'fileutils'
-require 'googleauth/service_account'
+require 'googleauth/user_refresh'
 require 'jwt'
 require 'multi_json'
 require 'openssl'
 require 'spec_helper'
 require 'tmpdir'
 
-describe Google::Auth::ServiceAccountCredentials do
-  ServiceAccountCredentials = Google::Auth::ServiceAccountCredentials
+describe Google::Auth::UserRefreshCredentials do
+  UserRefreshCredentials = Google::Auth::UserRefreshCredentials
   CredentialsLoader = Google::Auth::CredentialsLoader
 
   before(:example) do
     @key = OpenSSL::PKey::RSA.new(2048)
-    @client = ServiceAccountCredentials.new(
+    @client = UserRefreshCredentials.new(
         'https://www.googleapis.com/auth/userinfo.profile',
         StringIO.new(cred_json_text))
   end
@@ -56,23 +56,21 @@ describe Google::Auth::ServiceAccountCredentials do
     Faraday::Adapter::Test::Stubs.new do |stub|
       stub.post('/oauth2/v3/token') do |env|
         params = Addressable::URI.form_unencode(env[:body])
-        _claim, _header = JWT.decode(params.assoc('assertion').last,
-                                     @key.public_key)
-        want = ['grant_type', 'urn:ietf:params:oauth:grant-type:jwt-bearer']
+        want = %w(grant_type refresh_token)
         expect(params.assoc('grant_type')).to eq(want)
         build_access_token_json(access_token)
       end
     end
   end
 
-  def cred_json_text
+  def cred_json_text(missing = nil)
     cred_json = {
-      private_key_id: 'a_private_key_id',
-      private_key: @key.to_pem,
-      client_email: 'app@developer.gserviceaccount.com',
-      client_id: 'app.apps.googleusercontent.com',
-      type: 'service_account'
+      client_secret: 'privatekey',
+      client_id: 'client123',
+      refresh_token: 'refreshtoken',
+      type: 'authorized_user'
     }
+    cred_json.delete(missing.to_sym) unless missing.nil?
     MultiJson.dump(cred_json)
   end
 
@@ -83,7 +81,7 @@ describe Google::Auth::ServiceAccountCredentials do
       @var_name = CredentialsLoader::ENV_VAR
       @orig = ENV[@var_name]
       @scope = 'https://www.googleapis.com/auth/userinfo.profile'
-      @clz = ServiceAccountCredentials
+      @clz = UserRefreshCredentials
     end
 
     after(:example) do
@@ -92,16 +90,29 @@ describe Google::Auth::ServiceAccountCredentials do
 
     it 'returns nil if the GOOGLE_APPLICATION_CREDENTIALS is unset' do
       ENV.delete(@var_name) unless ENV[@var_name].nil?
-      expect(ServiceAccountCredentials.from_env(@scope)).to be_nil
+      expect(UserRefreshCredentials.from_env(@scope)).to be_nil
     end
 
     it 'fails if the GOOGLE_APPLICATION_CREDENTIALS path does not exist' do
       ENV.delete(@var_name) unless ENV[@var_name].nil?
-      expect(ServiceAccountCredentials.from_env(@scope)).to be_nil
+      expect(UserRefreshCredentials.from_env(@scope)).to be_nil
       Dir.mktmpdir do |dir|
         key_path = File.join(dir, 'does-not-exist')
         ENV[@var_name] = key_path
         expect { @clz.from_env(@scope) }.to raise_error
+      end
+    end
+
+    it 'fails if the GOOGLE_APPLICATION_CREDENTIALS path file is invalid' do
+      needed = %w(client_id client_secret refresh_token)
+      needed.each do |missing|
+        Dir.mktmpdir do |dir|
+          key_path = File.join(dir, 'my_cert_file')
+          FileUtils.mkdir_p(File.dirname(key_path))
+          File.write(key_path, cred_json_text(missing))
+          ENV[@var_name] = key_path
+          expect { @clz.from_env(@scope) }.to raise_error
+        end
       end
     end
 
@@ -121,7 +132,7 @@ describe Google::Auth::ServiceAccountCredentials do
       @home = ENV['HOME']
       @scope = 'https://www.googleapis.com/auth/userinfo.profile'
       @known_path = CredentialsLoader::WELL_KNOWN_PATH
-      @clz = ServiceAccountCredentials
+      @clz = UserRefreshCredentials
     end
 
     after(:example) do
@@ -130,7 +141,20 @@ describe Google::Auth::ServiceAccountCredentials do
 
     it 'is nil if no file exists' do
       ENV['HOME'] = File.dirname(__FILE__)
-      expect(ServiceAccountCredentials.from_well_known_path(@scope)).to be_nil
+      expect(UserRefreshCredentials.from_well_known_path(@scope)).to be_nil
+    end
+
+    it 'fails if the file is invalid' do
+      needed = %w(client_id client_secret refresh_token)
+      needed.each do |missing|
+        Dir.mktmpdir do |dir|
+          key_path = File.join(dir, '.config', @known_path)
+          FileUtils.mkdir_p(File.dirname(key_path))
+          File.write(key_path, cred_json_text(missing))
+          ENV['HOME'] = dir
+          expect { @clz.from_env(@scope) }.to raise_error
+        end
+      end
     end
 
     it 'successfully loads the file when it is present' do

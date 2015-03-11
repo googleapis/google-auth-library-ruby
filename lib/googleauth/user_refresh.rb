@@ -35,37 +35,41 @@ module Google
   # Module Auth provides classes that provide Google-specific authorization
   # used to access Google APIs.
   module Auth
-    # Authenticates requests using Google's Service Account credentials.
+    # Authenticates requests using User Refresh credentials.
     #
-    # This class allows authorizing requests for service accounts directly
-    # from credentials from a json key file downloaded from the developer
-    # console (via 'Generate new Json Key').
+    # This class allows authorizing requests from user refresh tokens.
+    #
+    # This the end of the result of a 3LO flow.  E.g, the end result of
+    # 'gcloud auth login' saves a file with these contents in well known
+    # location
     #
     # cf [Application Default Credentials](http://goo.gl/mkAHpZ)
-    class ServiceAccountCredentials < Signet::OAuth2::Client
+    class UserRefreshCredentials < Signet::OAuth2::Client
       TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v3/token'
       extend CredentialsLoader
 
-      # Reads the private key and client email fields from the service account
+      # Reads the client_id, client_secret and refresh_token fields from the
       # JSON key.
       def self.read_json_key(json_key_io)
         json_key = MultiJson.load(json_key_io.read)
-        fail 'missing client_email' unless json_key.key?('client_email')
-        fail 'missing private_key' unless json_key.key?('private_key')
-        [json_key['private_key'], json_key['client_email']]
+        wanted = %w(client_id client_secret refresh_token)
+        wanted.each do |key|
+          fail "the json is missing the #{key} field" unless json_key.key?(key)
+        end
+        json_key
       end
 
-      # Initializes a ServiceAccountCredentials.
+      # Initializes a UserRefreshCredentials.
       #
       # @param scope [string|array] the scope(s) to access
       # @param json_key_io [IO] an IO from which the JSON key can be read
       def initialize(scope, json_key_io)
-        private_key, client_email = self.class.read_json_key(json_key_io)
+        user_creds = self.class.read_json_key(json_key_io)
         super(token_credential_uri: TOKEN_CRED_URI,
-              audience: TOKEN_CRED_URI,
-              scope: scope,
-              issuer: client_email,
-              signing_key: OpenSSL::PKey::RSA.new(private_key))
+              client_id: user_creds['client_id'],
+              client_secret: user_creds['client_secret'],
+              refresh_token: user_creds['refresh_token'],
+              scope: scope)
       end
     end
   end
