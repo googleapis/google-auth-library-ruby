@@ -31,6 +31,6 @@ module Google
   # Module Auth provides classes that provide Google-specific authorization
   # used to access Google APIs.
   module Auth
-    VERSION = '0.2.0'
+    VERSION = '0.3.0'
   end
 end
