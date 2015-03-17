@@ -61,13 +61,13 @@ module Google
       # Creates an instance from the path specified in an environment
       # variable.
       #
-      # @param scope [string|array] the scope(s) to access
-      def from_env(scope)
+      # @param scope [string|array|nil] the scope(s) to access
+      def from_env(scope = nil)
         return nil unless ENV.key?(ENV_VAR)
         path = ENV[ENV_VAR]
         fail 'file #{path} does not exist' unless File.exist?(path)
         File.open(path) do |f|
-          return make_creds(scope, f)
+          return make_creds(f, scope)
         end
       rescue StandardError => e
         raise "#{NOT_FOUND_ERROR}: #{e}"
@@ -75,15 +75,15 @@ module Google
 
       # Creates an instance from a well known path.
       #
-      # @param scope [string|array] the scope(s) to access
-      def from_well_known_path(scope)
+      # @param scope [string|array|nil] the scope(s) to access
+      def from_well_known_path(scope = nil)
         home_var, base = windows? ? 'APPDATA' : 'HOME', WELL_KNOWN_PATH
         root = ENV[home_var].nil? ? '' : ENV[home_var]
         base = File.join('.config', base) unless windows?
         path = File.join(root, base)
         return nil unless File.exist?(path)
         File.open(path) do |f|
-          return make_creds(scope, f)
+          return make_creds(f, scope)
         end
       rescue StandardError => e
         raise "#{WELL_KNOWN_ERROR}: #{e}"

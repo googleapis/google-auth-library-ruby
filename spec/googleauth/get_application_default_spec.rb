@@ -104,6 +104,18 @@ describe '#get_application_default' do
       end
     end
 
+    it 'succeeds with default file without a scope' do
+      ENV.delete(@var_name) unless ENV[@var_name].nil?
+      Dir.mktmpdir do |dir|
+        key_path = File.join(dir, '.config',
+                             CredentialsLoader::WELL_KNOWN_PATH)
+        FileUtils.mkdir_p(File.dirname(key_path))
+        File.write(key_path, cred_json_text)
+        ENV['HOME'] = dir
+        expect(Google::Auth.get_application_default).to_not be_nil
+      end
+    end
+
     it 'succeeds without default file or env if on compute engine' do
       stubs = Faraday::Adapter::Test::Stubs.new do |stub|
         stub.get('/') do |_env|

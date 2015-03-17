@@ -47,8 +47,8 @@ describe Google::Auth::UserRefreshCredentials do
   before(:example) do
     @key = OpenSSL::PKey::RSA.new(2048)
     @client = UserRefreshCredentials.new(
-        'https://www.googleapis.com/auth/userinfo.profile',
-        StringIO.new(cred_json_text))
+        StringIO.new(cred_json_text),
+        'https://www.googleapis.com/auth/userinfo.profile')
   end
 
   def make_auth_stubs(opts = {})

@@ -52,9 +52,9 @@ END
 
       # override CredentialsLoader#make_creds to use the class determined by
       # loading the json.
-      def self.make_creds(scope, json_key_io)
+      def self.make_creds(json_key_io, scope = nil)
         json_key, clz = determine_creds_class(json_key_io)
-        clz.new(scope, StringIO.new(MultiJson.dump(json_key)))
+        clz.new(StringIO.new(MultiJson.dump(json_key)), scope)
       end
 
       # Reads the input json and determines which creds class to use.
@@ -76,11 +76,11 @@ END
     # at http://goo.gl/IUuyuX.
     #
     # If supplied, scope is used to create the credentials instance, when it
-    # can applied.  E.g, on compute engine, the scope is ignored.
+    # can applied.  E.g, on google compute engine, the scope is ignored.
     #
-    # @param scope [string|array] the scope(s) to access
+    # @param scope [string|array|nil] the scope(s) to access
     # @param options [hash] allows override of the connection being used
-    def get_application_default(scope, options = {})
+    def get_application_default(scope = nil, options = {})
       creds = DefaultCredentials.from_env(scope)
       return creds unless creds.nil?
       creds = DefaultCredentials.from_well_known_path(scope)
