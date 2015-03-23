@@ -41,11 +41,11 @@ describe Signet::OAuth2::Client do
   before(:example) do
     @key = OpenSSL::PKey::RSA.new(2048)
     @client = Signet::OAuth2::Client.new(
-        token_credential_uri: 'https://accounts.google.com/o/oauth2/token',
-        scope: 'https://www.googleapis.com/auth/userinfo.profile',
-        issuer: 'app@example.com',
-        audience: 'https://accounts.google.com/o/oauth2/token',
-        signing_key: @key
+      token_credential_uri: 'https://accounts.google.com/o/oauth2/token',
+      scope: 'https://www.googleapis.com/auth/userinfo.profile',
+      issuer: 'app@example.com',
+      audience: 'https://accounts.google.com/o/oauth2/token',
+      signing_key: @key
       )
   end
 

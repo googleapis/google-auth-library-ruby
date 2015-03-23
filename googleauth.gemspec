@@ -27,7 +27,7 @@ Gem::Specification.new do |s|
 
   s.add_dependency 'faraday', '~> 0.9'
   s.add_dependency 'logging', '~> 1.8'
-  s.add_dependency 'jwt', '~> 1.3.0'
+  s.add_dependency 'jwt', '~> 1.4.1'
   s.add_dependency 'memoist', '~> 0.11.0'
   s.add_dependency 'multi_json', '1.11.0'
   s.add_dependency 'signet', '~> 0.6.0'
@@ -36,6 +36,6 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'simplecov', '~> 0.9.2'
   s.add_development_dependency 'coveralls', '~> 0.7.11'
   s.add_development_dependency 'rake', '~> 10.0'
-  s.add_development_dependency 'rubocop', '~> 0.28.0'
+  s.add_development_dependency 'rubocop', '~> 0.29.1'
   s.add_development_dependency 'rspec', '~> 3.0'
 end
