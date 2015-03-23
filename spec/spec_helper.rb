@@ -39,6 +39,8 @@ require 'faraday'
 require 'rspec'
 require 'logging'
 require 'rspec/logging_helper'
+require 'simplecov'
+SimpleCov.start
 
 # Allow Faraday to support test stubs
 Faraday::Adapter.load_middleware(:test)

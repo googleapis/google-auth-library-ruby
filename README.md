@@ -8,6 +8,7 @@
 </dl>
 
 [![Build Status](https://secure.travis-ci.org/google/google-auth-library-ruby.png)](http://travis-ci.org/google/google-auth-library-ruby)
+[![Coverage Status](https://coveralls.io/repos/google/google-auth-library-ruby/badge.png)](https://coveralls.io/r/google/google-auth-library-ruby)
 [![Dependency Status](https://gemnasium.com/google/google-auth-library-ruby.png)](https://gemnasium.com/google/google-auth-library-ruby)
 
 ## Description
