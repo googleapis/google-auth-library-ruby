@@ -57,9 +57,9 @@ module Google
 
       # Initializes a ServiceAccountCredentials.
       #
-      # @param scope [string|array] the scope(s) to access
       # @param json_key_io [IO] an IO from which the JSON key can be read
-      def initialize(scope, json_key_io)
+      # @param scope [string|array|nil] the scope(s) to access
+      def initialize(json_key_io, scope = nil)
         private_key, client_email = self.class.read_json_key(json_key_io)
         super(token_credential_uri: TOKEN_CRED_URI,
               audience: TOKEN_CRED_URI,

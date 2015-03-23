@@ -61,9 +61,9 @@ module Google
 
       # Initializes a UserRefreshCredentials.
       #
-      # @param scope [string|array] the scope(s) to access
       # @param json_key_io [IO] an IO from which the JSON key can be read
-      def initialize(scope, json_key_io)
+      # @param scope [string|array|nil] the scope(s) to access
+      def initialize(json_key_io, scope = nil)
         user_creds = self.class.read_json_key(json_key_io)
         super(token_credential_uri: TOKEN_CRED_URI,
               client_id: user_creds['client_id'],
