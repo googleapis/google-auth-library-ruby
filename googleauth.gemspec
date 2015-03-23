@@ -34,6 +34,7 @@ Gem::Specification.new do |s|
 
   s.add_development_dependency 'bundler', '~> 1.7'
   s.add_development_dependency 'simplecov', '~> 0.9.2'
+  s.add_development_dependency 'coveralls', '~> 0.7.11'
   s.add_development_dependency 'rake', '~> 10.0'
   s.add_development_dependency 'rubocop', '~> 0.28.0'
   s.add_development_dependency 'rspec', '~> 3.0'

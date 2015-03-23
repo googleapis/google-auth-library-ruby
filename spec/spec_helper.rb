@@ -35,12 +35,17 @@ $LOAD_PATH.unshift(spec_dir)
 $LOAD_PATH.unshift(lib_dir)
 $LOAD_PATH.uniq!
 
+# set up coverage
+require 'simplecov'
+require 'coveralls'
+
+SimpleCov.formatter = Coveralls::SimpleCov::Formatter
+SimpleCov.start
+
 require 'faraday'
 require 'rspec'
 require 'logging'
 require 'rspec/logging_helper'
-require 'simplecov'
-SimpleCov.start
 
 # Allow Faraday to support test stubs
 Faraday::Adapter.load_middleware(:test)
