@@ -75,8 +75,9 @@ END
     # Google APIs.  Application Default Credentials are described in detail
     # at http://goo.gl/IUuyuX.
     #
-    # If supplied, scope is used to create the credentials instance, when it
-    # can applied.  E.g, on google compute engine, the scope is ignored.
+    # If supplied, scope is used to create the credentials instance, when it can
+    # be applied.  E.g, on google compute engine and for user credentials the
+    # scope is ignored.
     #
     # @param scope [string|array|nil] the scope(s) to access
     # @param options [hash] allows override of the connection being used
