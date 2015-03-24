@@ -51,9 +51,9 @@ describe Google::Auth::GCECredentials do
         headers = env[:request_headers]
         expect(headers['Metadata-Flavor']).to eq('Google')
         build_json_response(
-            'access_token' => access_token,
-            'token_type' => 'Bearer',
-            'expires_in' => 3600)
+          'access_token' => access_token,
+          'token_type' => 'Bearer',
+          'expires_in' => 3600)
       end
     end
   end

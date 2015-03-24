@@ -1,4 +1,4 @@
-# Google Auth Library for Ruby 
+# Google Auth Library for Ruby
 
 <dl>
   <dt>Homepage</dt><dd><a href="http://www.github.com/google/google-auth-library-ruby">http://www.github.com/google/google-auth-library-ruby</a></dd>
@@ -7,6 +7,7 @@
   <dt>License</dt><dd>Apache 2.0</dd>
 </dl>
 
+[![Gem Version](https://badge.fury.io/rb/googleauth.svg)](http://badge.fury.io/rb/googleauth)
 [![Build Status](https://secure.travis-ci.org/google/google-auth-library-ruby.png)](http://travis-ci.org/google/google-auth-library-ruby)
 [![Coverage Status](https://coveralls.io/repos/google/google-auth-library-ruby/badge.png)](https://coveralls.io/r/google/google-auth-library-ruby)
 [![Dependency Status](https://gemnasium.com/google/google-auth-library-ruby.png)](https://gemnasium.com/google/google-auth-library-ruby)
