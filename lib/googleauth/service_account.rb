@@ -31,6 +31,7 @@ require 'googleauth/signet'
 require 'googleauth/credentials_loader'
 require 'jwt'
 require 'multi_json'
+require 'stringio'
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
@@ -68,6 +69,29 @@ module Google
               scope: scope,
               issuer: client_email,
               signing_key: OpenSSL::PKey::RSA.new(private_key))
+      end
+
+      # Extends the base class.
+      #
+      # If scope(s) is not set, it creates a transient
+      # ServiceAccountJwtHeaderCredentials instance and uses that to
+      # authenticate instead.
+      def apply!(a_hash, opts = {})
+        # Use the base implementation if scopes are set
+        unless scope.nil?
+          super
+          return
+        end
+
+        # Use the ServiceAccountJwtHeaderCredentials using the same cred values
+        # if no scopes are set.
+        cred_json = {
+          private_key: @signing_key.to_s,
+          client_email: @issuer
+        }
+        alt_clz = ServiceAccountJwtHeaderCredentials
+        alt = alt_clz.new(StringIO.new(MultiJson.dump(cred_json)))
+        alt.apply!(a_hash)
       end
     end
 
@@ -118,7 +142,7 @@ module Google
         @signing_key = OpenSSL::PKey::RSA.new(private_key)
       end
 
-      # Construct a jwt token if the WT_AUD_URI key is present in the input
+      # Construct a jwt token if the JWT_AUD_URI key is present in the input
       # hash.
       #
       # The jwt token is used as the value of a 'Bearer '.

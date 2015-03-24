@@ -40,10 +40,73 @@ require 'openssl'
 require 'spec_helper'
 require 'tmpdir'
 
+include Google::Auth::CredentialsLoader
+
+shared_examples 'jwt header auth' do
+  context 'when jwt_aud_uri is present' do
+    let(:test_uri) { 'https://www.googleapis.com/myservice' }
+    let(:auth_prefix) { 'Bearer ' }
+    let(:auth_key) { ServiceAccountJwtHeaderCredentials::AUTH_METADATA_KEY }
+    let(:jwt_uri_key) { ServiceAccountJwtHeaderCredentials::JWT_AUD_URI_KEY }
+
+    def expect_is_encoded_jwt(hdr)
+      expect(hdr).to_not be_nil
+      expect(hdr.start_with?(auth_prefix)).to be true
+      authorization = hdr[auth_prefix.length..-1]
+      payload, _ = JWT.decode(authorization, @key.public_key)
+      expect(payload['aud']).to eq(test_uri)
+      expect(payload['iss']).to eq(client_email)
+    end
+
+    describe '#apply!' do
+      it 'should update the target hash with a jwt token' do
+        md = { foo: 'bar' }
+        md[jwt_uri_key] = test_uri
+        @client.apply!(md)
+        auth_header = md[auth_key]
+        expect_is_encoded_jwt(auth_header)
+        expect(md[jwt_uri_key]).to be_nil
+      end
+    end
+
+    describe 'updater_proc' do
+      it 'should provide a proc that updates a hash with a jwt token' do
+        md = { foo: 'bar' }
+        md[jwt_uri_key] = test_uri
+        the_proc = @client.updater_proc
+        got = the_proc.call(md)
+        auth_header = got[auth_key]
+        expect_is_encoded_jwt(auth_header)
+        expect(got[jwt_uri_key]).to be_nil
+        expect(md[jwt_uri_key]).to_not be_nil
+      end
+    end
+
+    describe '#apply' do
+      it 'should not update the original hash with a jwt token' do
+        md = { foo: 'bar' }
+        md[jwt_uri_key] = test_uri
+        the_proc = @client.updater_proc
+        got = the_proc.call(md)
+        auth_header = md[auth_key]
+        expect(auth_header).to be_nil
+        expect(got[jwt_uri_key]).to be_nil
+        expect(md[jwt_uri_key]).to_not be_nil
+      end
+
+      it 'should add a jwt token to the returned hash' do
+        md = { foo: 'bar' }
+        md[jwt_uri_key] = test_uri
+        got = @client.apply(md)
+        auth_header = got[auth_key]
+        expect_is_encoded_jwt(auth_header)
+      end
+    end
+  end
+end
+
 describe Google::Auth::ServiceAccountCredentials do
   ServiceAccountCredentials = Google::Auth::ServiceAccountCredentials
-  CredentialsLoader = Google::Auth::CredentialsLoader
-
   let(:client_email) { 'app@developer.gserviceaccount.com' }
 
   before(:example) do
@@ -80,9 +143,17 @@ describe Google::Auth::ServiceAccountCredentials do
 
   it_behaves_like 'apply/apply! are OK'
 
+  context 'when scope is nil' do
+    before(:example) do
+      @client.scope = nil
+    end
+
+    it_behaves_like 'jwt header auth'
+  end
+
   describe '#from_env' do
     before(:example) do
-      @var_name = CredentialsLoader::ENV_VAR
+      @var_name = ENV_VAR
       @orig = ENV[@var_name]
       @scope = 'https://www.googleapis.com/auth/userinfo.profile'
       @clz = ServiceAccountCredentials
@@ -122,7 +193,7 @@ describe Google::Auth::ServiceAccountCredentials do
     before(:example) do
       @home = ENV['HOME']
       @scope = 'https://www.googleapis.com/auth/userinfo.profile'
-      @known_path = CredentialsLoader::WELL_KNOWN_PATH
+      @known_path = WELL_KNOWN_PATH
       @clz = ServiceAccountCredentials
     end
 
@@ -148,7 +219,6 @@ describe Google::Auth::ServiceAccountCredentials do
 end
 
 describe Google::Auth::ServiceAccountJwtHeaderCredentials do
-  CredentialsLoader = Google::Auth::CredentialsLoader
   ServiceAccountJwtHeaderCredentials =
     Google::Auth::ServiceAccountJwtHeaderCredentials
 
@@ -171,70 +241,11 @@ describe Google::Auth::ServiceAccountJwtHeaderCredentials do
     MultiJson.dump(cred_json)
   end
 
-  context 'when jwt_aud_uri is present' do
-    WANTED_AUTH_KEY = ServiceAccountJwtHeaderCredentials::AUTH_METADATA_KEY
-    JWT_AUD_URI_KEY = ServiceAccountJwtHeaderCredentials::JWT_AUD_URI_KEY
-    let(:test_uri) { 'https://www.googleapis.com/myservice' }
-    let(:auth_prefix) { 'Bearer ' }
-
-    def expect_is_encoded_jwt(hdr)
-      expect(hdr).to_not be_nil
-      expect(hdr.start_with?(auth_prefix)).to be true
-      authorization = hdr[auth_prefix.length..-1]
-      payload, _ = JWT.decode(authorization, @key.public_key)
-      expect(payload['aud']).to eq(test_uri)
-      expect(payload['iss']).to eq(client_email)
-    end
-
-    describe '#apply!' do
-      it 'should update the target hash with a jwt token' do
-        md = { foo: 'bar' }
-        md[JWT_AUD_URI_KEY] = test_uri
-        @client.apply!(md)
-        auth_header = md[WANTED_AUTH_KEY]
-        expect_is_encoded_jwt(auth_header)
-        expect(md[JWT_AUD_URI_KEY]).to be_nil
-      end
-    end
-
-    describe 'updater_proc' do
-      it 'should provide a proc that updates a hash with a jwt token' do
-        md = { foo: 'bar' }
-        md[JWT_AUD_URI_KEY] = test_uri
-        the_proc = @client.updater_proc
-        got = the_proc.call(md)
-        auth_header = got[WANTED_AUTH_KEY]
-        expect_is_encoded_jwt(auth_header)
-        expect(got[JWT_AUD_URI_KEY]).to be_nil
-        expect(md[JWT_AUD_URI_KEY]).to_not be_nil
-      end
-    end
-
-    describe '#apply' do
-      it 'should not update the original hash with a jwt token' do
-        md = { foo: 'bar' }
-        md[JWT_AUD_URI_KEY] = test_uri
-        the_proc = @client.updater_proc
-        got = the_proc.call(md)
-        auth_header = md[WANTED_AUTH_KEY]
-        expect(auth_header).to be_nil
-        expect(got[JWT_AUD_URI_KEY]).to be_nil
-        expect(md[JWT_AUD_URI_KEY]).to_not be_nil
-      end
-
-      it 'should add a jwt token to the returned hash' do
-        md = { foo: 'bar' }
-        md[JWT_AUD_URI_KEY] = test_uri
-        got = @client.apply(md)
-        auth_header = got[WANTED_AUTH_KEY]
-        expect_is_encoded_jwt(auth_header)
-      end
-    end
-  end
+  it_behaves_like 'jwt header auth'
 
   describe '#from_env' do
     before(:example) do
-      @var_name = CredentialsLoader::ENV_VAR
+      @var_name = ENV_VAR
       @orig = ENV[@var_name]
     end
 
@@ -271,7 +282,6 @@ describe Google::Auth::ServiceAccountJwtHeaderCredentials do
   describe '#from_well_known_path' do
     before(:example) do
       @home = ENV['HOME']
-      @known_path = CredentialsLoader::WELL_KNOWN_PATH
     end
 
     after(:example) do
@@ -285,7 +295,7 @@ describe Google::Auth::ServiceAccountJwtHeaderCredentials do
 
     it 'successfully loads the file when it is present' do
       Dir.mktmpdir do |dir|
-        key_path = File.join(dir, '.config', @known_path)
+        key_path = File.join(dir, '.config', WELL_KNOWN_PATH)
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV['HOME'] = dir
