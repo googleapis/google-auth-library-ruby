@@ -29,13 +29,16 @@
 
 require 'googleauth/signet'
 require 'googleauth/credentials_loader'
+require 'jwt'
 require 'multi_json'
+require 'stringio'
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
   # used to access Google APIs.
   module Auth
-    # Authenticates requests using Google's Service Account credentials.
+    # Authenticates requests using Google's Service Account credentials via an
+    # OAuth access token.
     #
     # This class allows authorizing requests for service accounts directly
     # from credentials from a json key file downloaded from the developer
@@ -66,6 +69,118 @@ module Google
               scope: scope,
               issuer: client_email,
               signing_key: OpenSSL::PKey::RSA.new(private_key))
+      end
+
+      # Extends the base class.
+      #
+      # If scope(s) is not set, it creates a transient
+      # ServiceAccountJwtHeaderCredentials instance and uses that to
+      # authenticate instead.
+      def apply!(a_hash, opts = {})
+        # Use the base implementation if scopes are set
+        unless scope.nil?
+          super
+          return
+        end
+
+        # Use the ServiceAccountJwtHeaderCredentials using the same cred values
+        # if no scopes are set.
+        cred_json = {
+          private_key: @signing_key.to_s,
+          client_email: @issuer
+        }
+        alt_clz = ServiceAccountJwtHeaderCredentials
+        alt = alt_clz.new(StringIO.new(MultiJson.dump(cred_json)))
+        alt.apply!(a_hash)
+      end
+    end
+
+    # Authenticates requests using Google's Service Account credentials via
+    # JWT Header.
+    #
+    # This class allows authorizing requests for service accounts directly
+    # from credentials from a json key file downloaded from the developer
+    # console (via 'Generate new Json Key').  It is not part of any OAuth2
+    # flow, rather it creates a JWT and sends that as a credential.
+    #
+    # cf [Application Default Credentials](http://goo.gl/mkAHpZ)
+    class ServiceAccountJwtHeaderCredentials
+      JWT_AUD_URI_KEY = :jwt_aud_uri
+      AUTH_METADATA_KEY = Signet::OAuth2::AUTH_METADATA_KEY
+      TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v3/token'
+      SIGNING_ALGORITHM = 'RS256'
+      EXPIRY = 60
+      extend CredentialsLoader
+
+      # make_creds proxies the construction of a credentials instance
+      #
+      # make_creds is used by the methods in CredentialsLoader.
+      #
+      # By default, it calls #new with 2 args, the second one being an
+      # optional scope. Here's the constructor only has one param, so
+      # we modify make_creds to reflect this.
+      def self.make_creds(*args)
+        new(args[0])
+      end
+
+      # Reads the private key and client email fields from the service account
+      # JSON key.
+      def self.read_json_key(json_key_io)
+        json_key = MultiJson.load(json_key_io.read)
+        fail 'missing client_email' unless json_key.key?('client_email')
+        fail 'missing private_key' unless json_key.key?('private_key')
+        [json_key['private_key'], json_key['client_email']]
+      end
+
+      # Initializes a ServiceAccountJwtHeaderCredentials.
+      #
+      # @param json_key_io [IO] an IO from which the JSON key can be read
+      def initialize(json_key_io)
+        private_key, client_email = self.class.read_json_key(json_key_io)
+        @private_key = private_key
+        @issuer = client_email
+        @signing_key = OpenSSL::PKey::RSA.new(private_key)
+      end
+
+      # Construct a jwt token if the JWT_AUD_URI key is present in the input
+      # hash.
+      #
+      # The jwt token is used as the value of a 'Bearer '.
+      def apply!(a_hash, opts = {})
+        jwt_aud_uri = a_hash.delete(JWT_AUD_URI_KEY)
+        return a_hash if jwt_aud_uri.nil?
+        jwt_token = new_jwt_token(jwt_aud_uri, opts)
+        a_hash[AUTH_METADATA_KEY] = "Bearer #{jwt_token}"
+        a_hash
+      end
+
+      # Returns a clone of a_hash updated with the authoriation header
+      def apply(a_hash, opts = {})
+        a_copy = a_hash.clone
+        apply!(a_copy, opts)
+        a_copy
+      end
+
+      # Returns a reference to the #apply method, suitable for passing as
+      # a closure
+      def updater_proc
+        lambda(&method(:apply))
+      end
+
+      protected
+
+      # Creates a jwt uri token.
+      def new_jwt_token(jwt_aud_uri, options = {})
+        now = Time.new
+        skew = options[:skew] || 60
+        assertion = {
+          'iss' => @issuer,
+          'sub' => @issuer,
+          'aud' => jwt_aud_uri,
+          'exp' => (now + EXPIRY).to_i,
+          'iat' => (now - skew).to_i
+        }
+        JWT.encode(assertion, @signing_key, SIGNING_ALGORITHM)
       end
     end
   end

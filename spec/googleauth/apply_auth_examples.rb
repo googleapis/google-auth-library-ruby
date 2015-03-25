@@ -46,9 +46,9 @@ def build_access_token_json(token)
                       'expires_in' => 3600)
 end
 
-WANTED_AUTH_KEY = :Authorization
-
 shared_examples 'apply/apply! are OK' do
+  let(:auth_key) { :Authorization }
+
   # tests that use these examples need to define
   #
   # @client which should be an auth client
@@ -79,7 +79,7 @@ shared_examples 'apply/apply! are OK' do
 
       md = { foo: 'bar' }
       @client.apply!(md, connection: c)
-      want = { :foo => 'bar', WANTED_AUTH_KEY => "Bearer #{token}" }
+      want = { :foo => 'bar', auth_key => "Bearer #{token}" }
       expect(md).to eq(want)
       stubs.verify_stubbed_calls
     end
@@ -96,7 +96,7 @@ shared_examples 'apply/apply! are OK' do
       md = { foo: 'bar' }
       the_proc = @client.updater_proc
       got = the_proc.call(md, connection: c)
-      want = { :foo => 'bar', WANTED_AUTH_KEY => "Bearer #{token}" }
+      want = { :foo => 'bar', auth_key => "Bearer #{token}" }
       expect(got).to eq(want)
       stubs.verify_stubbed_calls
     end
@@ -126,7 +126,7 @@ shared_examples 'apply/apply! are OK' do
 
       md = { foo: 'bar' }
       got = @client.apply(md, connection: c)
-      want = { :foo => 'bar', WANTED_AUTH_KEY => "Bearer #{token}" }
+      want = { :foo => 'bar', auth_key => "Bearer #{token}" }
       expect(got).to eq(want)
       stubs.verify_stubbed_calls
     end
@@ -142,7 +142,7 @@ shared_examples 'apply/apply! are OK' do
       n.times do |_t|
         md = { foo: 'bar' }
         got = @client.apply(md, connection: c)
-        want = { :foo => 'bar', WANTED_AUTH_KEY => "Bearer #{token}" }
+        want = { :foo => 'bar', auth_key => "Bearer #{token}" }
         expect(got).to eq(want)
       end
       stubs.verify_stubbed_calls
@@ -159,7 +159,7 @@ shared_examples 'apply/apply! are OK' do
         end
         md = { foo: 'bar' }
         got = @client.apply(md, connection: c)
-        want = { :foo => 'bar', WANTED_AUTH_KEY => "Bearer #{t}" }
+        want = { :foo => 'bar', auth_key => "Bearer #{t}" }
         expect(got).to eq(want)
         stubs.verify_stubbed_calls
         @client.expires_at -= 3601 # default is to expire in 1hr
