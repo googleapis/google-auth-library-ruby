@@ -45,8 +45,7 @@ describe Signet::OAuth2::Client do
       scope: 'https://www.googleapis.com/auth/userinfo.profile',
       issuer: 'app@example.com',
       audience: 'https://accounts.google.com/o/oauth2/token',
-      signing_key: @key
-      )
+      signing_key: @key)
   end
 
   def make_auth_stubs(opts)
