@@ -62,9 +62,14 @@ END
         json_key = MultiJson.load(json_key_io.read)
         fail "the json is missing the #{key} field" unless json_key.key?('type')
         type = json_key['type']
-        return json_key, ServiceAccountCredentials if type == 'service_account'
-        return [json_key, UserRefreshCredentials] if type == 'authorized_user'
-        fail "credentials type '#{type}' is not supported"
+        case type
+        when 'service_account'
+          [json_key, ServiceAccountCredentials]
+        when 'authorized_user'
+          [json_key, UserRefreshCredentials]
+        else
+          fail "credentials type '#{type}' is not supported"
+        end
       end
     end
 
