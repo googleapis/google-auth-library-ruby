@@ -62,9 +62,14 @@ END
         json_key = MultiJson.load(json_key_io.read)
         fail "the json is missing the #{key} field" unless json_key.key?('type')
         type = json_key['type']
-        return json_key, ServiceAccountCredentials if type == 'service_account'
-        return [json_key, UserRefreshCredentials] if type == 'authorized_user'
-        fail "credentials type '#{type}' is not supported"
+        case type
+        when 'service_account'
+          [json_key, ServiceAccountCredentials]
+        when 'authorized_user'
+          [json_key, UserRefreshCredentials]
+        else
+          fail "credentials type '#{type}' is not supported"
+        end
       end
     end
 
@@ -82,9 +87,8 @@ END
     # @param scope [string|array|nil] the scope(s) to access
     # @param options [hash] allows override of the connection being used
     def get_application_default(scope = nil, options = {})
-      creds = DefaultCredentials.from_env(scope)
-      return creds unless creds.nil?
-      creds = DefaultCredentials.from_well_known_path(scope)
+      creds = DefaultCredentials.from_env(scope) ||
+              DefaultCredentials.from_well_known_path(scope)
       return creds unless creds.nil?
       fail NOT_FOUND_ERROR unless GCECredentials.on_gce?(options)
       GCECredentials.new
