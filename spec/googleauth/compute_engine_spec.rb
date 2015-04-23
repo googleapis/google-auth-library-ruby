@@ -78,7 +78,7 @@ describe Google::Auth::GCECredentials do
         stubs.verify_stubbed_calls
       end
 
-      it 'should fail if metadata the request returns an unexpected codes' do
+      it 'should fail if the metadata request returns an unexpected code' do
         stubs = Faraday::Adapter::Test::Stubs.new do |stub|
           stub.get(MD_URI) do |_env|
             [503,
