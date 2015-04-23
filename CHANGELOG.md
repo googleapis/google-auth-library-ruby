@@ -1,3 +1,10 @@
+## 0.4.1 (25/04/2015)
+
+### Changes
+
+* Improves handling of --no-scopes GCE authorization ([@tbetbetbe][])
+* Refactoring and cleanup ([@joneslee85][])
+
 ## 0.4.0 (25/03/2015)
 
 ### Changes
@@ -12,3 +19,4 @@
 * changes the scope parameter's position in various constructors. ([@tbetbetbe][])
 
 [@tbetbetbe]: https://github.com/tbetbetbe
+[@joneslee85]: https://github.com/joneslee85
