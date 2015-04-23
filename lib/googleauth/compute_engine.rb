@@ -35,13 +35,24 @@ module Google
   # Module Auth provides classes that provide Google-specific authorization
   # used to access Google APIs.
   module Auth
+    NO_METADATA_SERVER_ERROR = <<END
+Error code 404 trying to get security access token
+from Compute Engine metadata for the default service account. This
+may be because the virtual machine instance does not have permission
+scopes specified.
+END
+    UNEXPECTED_ERROR_SUFFIX = <<END
+trying to get security access token from Compute Engine metadata for
+the default service account
+END
+
     # Extends Signet::OAuth2::Client so that the auth token is obtained from
     # the GCE metadata server.
     class GCECredentials < Signet::OAuth2::Client
       # The IP Address is used in the URIs to speed up failures on non-GCE
       # systems.
       COMPUTE_AUTH_TOKEN_URI = 'http://169.254.169.254/computeMetadata/v1/'\
-                               'instance/service-accounts/default/token'
+      'instance/service-accounts/default/token'
       COMPUTE_CHECK_URI = 'http://169.254.169.254'
 
       class << self
@@ -78,6 +89,13 @@ module Google
         c = options[:connection] || Faraday.default_connection
         c.headers = { 'Metadata-Flavor' => 'Google' }
         resp = c.get(COMPUTE_AUTH_TOKEN_URI)
+        if resp.status == 404
+          fail(Signet::AuthorizationError, NO_METADATA_SERVER_ERROR)
+        end
+        if resp.status != 200
+          msg = "Unexpected error code #{resp.status}" + UNEXPECTED_ERROR_SUFFIX
+          fail(Signet::AuthorizationError, msg)
+        end
         Signet::OAuth2.parse_credentials(resp.body,
                                          resp.headers['content-type'])
       end

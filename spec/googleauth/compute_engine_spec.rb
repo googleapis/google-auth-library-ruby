@@ -60,6 +60,42 @@ describe Google::Auth::GCECredentials do
 
   it_behaves_like 'apply/apply! are OK'
 
+  context 'metadata is unavailable' do
+    describe '#fetch_access_token' do
+      it 'should fail if the metadata request returns a 404' do
+        stubs = Faraday::Adapter::Test::Stubs.new do |stub|
+          stub.get(MD_URI) do |_env|
+            [404,
+             { 'Metadata-Flavor' => 'Google' },
+             '']
+          end
+        end
+        c = Faraday.new do |b|
+          b.adapter(:test, stubs)
+        end
+        blk = proc { @client.fetch_access_token!(connection: c) }
+        expect(&blk).to raise_error Signet::AuthorizationError
+        stubs.verify_stubbed_calls
+      end
+
+      it 'should fail if metadata the request returns an unexpected codes' do
+        stubs = Faraday::Adapter::Test::Stubs.new do |stub|
+          stub.get(MD_URI) do |_env|
+            [503,
+             { 'Metadata-Flavor' => 'Google' },
+             '']
+          end
+        end
+        c = Faraday.new do |b|
+          b.adapter(:test, stubs)
+        end
+        blk = proc { @client.fetch_access_token!(connection: c) }
+        expect(&blk).to raise_error Signet::AuthorizationError
+        stubs.verify_stubbed_calls
+      end
+    end
+  end
+
   describe '#on_gce?' do
     it 'should be true when Metadata-Flavor is Google' do
       stubs = Faraday::Adapter::Test::Stubs.new do |stub|
