@@ -89,15 +89,16 @@ END
         c = options[:connection] || Faraday.default_connection
         c.headers = { 'Metadata-Flavor' => 'Google' }
         resp = c.get(COMPUTE_AUTH_TOKEN_URI)
-        if resp.status == 404
+        case resp.status
+        when 200
+          Signet::OAuth2.parse_credentials(resp.body,
+                                           resp.headers['content-type'])
+        when 404
           fail(Signet::AuthorizationError, NO_METADATA_SERVER_ERROR)
-        end
-        if resp.status != 200
+        else
           msg = "Unexpected error code #{resp.status}" + UNEXPECTED_ERROR_SUFFIX
           fail(Signet::AuthorizationError, msg)
         end
-        Signet::OAuth2.parse_credentials(resp.body,
-                                         resp.headers['content-type'])
       end
     end
   end
