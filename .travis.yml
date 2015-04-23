@@ -8,6 +8,7 @@ rvm:
   - jruby
 script: "bundle exec rake"
 before_install:
+ - gem update bundler
  - sudo apt-get update
  - sudo apt-get install idn
 notifications:
