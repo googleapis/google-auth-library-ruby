@@ -63,8 +63,15 @@ module Google
       #
       # @param json_key_io [IO] an IO from which the JSON key can be read
       # @param scope [string|array|nil] the scope(s) to access
-      def initialize(json_key_io, scope = nil)
-        user_creds = self.class.read_json_key(json_key_io)
+      def initialize(options = {})
+        json_key_io, scope = options.values_at(:json_key_io, :scope)
+        user_creds = self.class.read_json_key(json_key_io) if json_key_io
+        user_creds ||= {
+          client_id: ENV[CredentialsLoader::CLIENT_ID_VAR],
+          client_secret: ENV[CredentialsLoader::CLIENT_SECRET_VAR],
+          refresh_token: ENV[CredentialsLoader::REFRESH_TOKEN_VAR]
+        }
+
         super(token_credential_uri: TOKEN_CRED_URI,
               client_id: user_creds['client_id'],
               client_secret: user_creds['client_secret'],

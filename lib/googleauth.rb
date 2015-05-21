@@ -52,16 +52,38 @@ END
 
       # override CredentialsLoader#make_creds to use the class determined by
       # loading the json.
-      def self.make_creds(json_key_io, scope = nil)
-        json_key, clz = determine_creds_class(json_key_io)
-        clz.new(StringIO.new(MultiJson.dump(json_key)), scope)
+      def self.make_creds(options = {})
+        json_key_io, scope = options.values_at(:json_key_io, :scope)
+        if json_key_io
+          json_key, clz = determine_creds_class(json_key_io)
+          clz.new(json_key_io: StringIO.new(MultiJson.dump(json_key)),
+                  scope: scope)
+        else
+          clz = read_creds
+          clz.new(scope: scope)
+        end
+      end
+
+      def self.read_creds
+        env_var = CredentialsLoader::ACCOUNT_TYPE_VAR
+        type = ENV[env_var]
+        fail "#{ACCOUNT_TYPE_VAR} is undefined in env" unless type
+        case type
+        when 'service_account'
+          ServiceAccountCredentials
+        when 'authorized_user'
+          UserRefreshCredentials
+        else
+          fail "credentials type '#{type}' is not supported"
+        end
       end
 
       # Reads the input json and determines which creds class to use.
       def self.determine_creds_class(json_key_io)
         json_key = MultiJson.load(json_key_io.read)
-        fail "the json is missing the #{key} field" unless json_key.key?('type')
-        type = json_key['type']
+        key = 'type'
+        fail "the json is missing the '#{key}' field" unless json_key.key?(key)
+        type = json_key[key]
         case type
         when 'service_account'
           [json_key, ServiceAccountCredentials]

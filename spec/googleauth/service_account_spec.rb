@@ -108,12 +108,22 @@ end
 describe Google::Auth::ServiceAccountCredentials do
   ServiceAccountCredentials = Google::Auth::ServiceAccountCredentials
   let(:client_email) { 'app@developer.gserviceaccount.com' }
+  let(:cred_json) do
+    {
+      private_key_id: 'a_private_key_id',
+      private_key: @key.to_pem,
+      client_email: client_email,
+      client_id: 'app.apps.googleusercontent.com',
+      type: 'service_account'
+    }
+  end
 
   before(:example) do
     @key = OpenSSL::PKey::RSA.new(2048)
     @client = ServiceAccountCredentials.new(
-      StringIO.new(cred_json_text),
-      'https://www.googleapis.com/auth/userinfo.profile')
+      json_key_io: StringIO.new(cred_json_text),
+      scope: 'https://www.googleapis.com/auth/userinfo.profile'
+    )
   end
 
   def make_auth_stubs(opts = {})
@@ -131,13 +141,6 @@ describe Google::Auth::ServiceAccountCredentials do
   end
 
   def cred_json_text
-    cred_json = {
-      private_key_id: 'a_private_key_id',
-      private_key: @key.to_pem,
-      client_email: client_email,
-      client_id: 'app.apps.googleusercontent.com',
-      type: 'service_account'
-    }
     MultiJson.dump(cred_json)
   end
 
@@ -154,13 +157,18 @@ describe Google::Auth::ServiceAccountCredentials do
   describe '#from_env' do
     before(:example) do
       @var_name = ENV_VAR
-      @orig = ENV[@var_name]
+      @credential_vars = [
+        ENV_VAR, PRIVATE_KEY_VAR, CLIENT_EMAIL_VAR, ACCOUNT_TYPE_VAR]
+      @original_env_vals = {}
+      @credential_vars.each { |var| @original_env_vals[var] = ENV[var] }
+      ENV[ACCOUNT_TYPE_VAR] = cred_json[:type]
+
       @scope = 'https://www.googleapis.com/auth/userinfo.profile'
       @clz = ServiceAccountCredentials
     end
 
     after(:example) do
-      ENV[@var_name] = @orig unless @orig.nil?
+      @credential_vars.each { |var| ENV[var] = @original_env_vals[var] }
     end
 
     it 'returns nil if the GOOGLE_APPLICATION_CREDENTIALS is unset' do
@@ -186,6 +194,13 @@ describe Google::Auth::ServiceAccountCredentials do
         ENV[@var_name] = key_path
         expect(@clz.from_env(@scope)).to_not be_nil
       end
+    end
+
+    it 'succeeds when GOOGLE_PRIVATE_KEY and GOOGLE_CLIENT_EMAIL env vars are'\
+      ' valid' do
+      ENV[PRIVATE_KEY_VAR] = cred_json[:private_key]
+      ENV[CLIENT_EMAIL_VAR] = cred_json[:client_email]
+      expect(@clz.from_env(@scope)).to_not be_nil
     end
   end
 
@@ -224,20 +239,22 @@ describe Google::Auth::ServiceAccountJwtHeaderCredentials do
 
   let(:client_email) { 'app@developer.gserviceaccount.com' }
   let(:clz) { Google::Auth::ServiceAccountJwtHeaderCredentials }
-
-  before(:example) do
-    @key = OpenSSL::PKey::RSA.new(2048)
-    @client = clz.new(StringIO.new(cred_json_text))
-  end
-
-  def cred_json_text
-    cred_json = {
+  let(:cred_json) do
+    {
       private_key_id: 'a_private_key_id',
       private_key: @key.to_pem,
       client_email: client_email,
       client_id: 'app.apps.googleusercontent.com',
       type: 'service_account'
     }
+  end
+
+  before(:example) do
+    @key = OpenSSL::PKey::RSA.new(2048)
+    @client = clz.new(json_key_io: StringIO.new(cred_json_text))
+  end
+
+  def cred_json_text
     MultiJson.dump(cred_json)
   end
 
@@ -246,11 +263,15 @@ describe Google::Auth::ServiceAccountJwtHeaderCredentials do
   describe '#from_env' do
     before(:example) do
       @var_name = ENV_VAR
-      @orig = ENV[@var_name]
+      @credential_vars = [
+        ENV_VAR, PRIVATE_KEY_VAR, CLIENT_EMAIL_VAR, ACCOUNT_TYPE_VAR]
+      @original_env_vals = {}
+      @credential_vars.each { |var| @original_env_vals[var] = ENV[var] }
+      ENV[ACCOUNT_TYPE_VAR] = cred_json[:type]
     end
 
     after(:example) do
-      ENV[@var_name] = @orig unless @orig.nil?
+      @credential_vars.each { |var| ENV[var] = @original_env_vals[var] }
     end
 
     it 'returns nil if the GOOGLE_APPLICATION_CREDENTIALS is unset' do
@@ -276,6 +297,13 @@ describe Google::Auth::ServiceAccountJwtHeaderCredentials do
         ENV[@var_name] = key_path
         expect(clz.from_env).to_not be_nil
       end
+    end
+
+    it 'succeeds when GOOGLE_PRIVATE_KEY and GOOGLE_CLIENT_EMAIL env vars are'\
+      ' valid' do
+      ENV[PRIVATE_KEY_VAR] = cred_json[:private_key]
+      ENV[CLIENT_EMAIL_VAR] = cred_json[:client_email]
+      expect(clz.from_env(@scope)).to_not be_nil
     end
   end
 

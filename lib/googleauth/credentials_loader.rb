@@ -39,6 +39,14 @@ module Google
     module CredentialsLoader
       extend Memoist
       ENV_VAR = 'GOOGLE_APPLICATION_CREDENTIALS'
+
+      PRIVATE_KEY_VAR = 'GOOGLE_PRIVATE_KEY'
+      CLIENT_EMAIL_VAR = 'GOOGLE_CLIENT_EMAIL'
+      CLIENT_ID_VAR = 'GOOGLE_CLIENT_ID'
+      CLIENT_SECRET_VAR = 'GOOGLE_CLIENT_SECRET'
+      REFRESH_TOKEN_VAR = 'GOOGLE_REFRESH_TOKEN'
+      ACCOUNT_TYPE_VAR = 'GOOGLE_ACCOUNT_TYPE'
+
       NOT_FOUND_ERROR =
         "Unable to read the credential file specified by #{ENV_VAR}"
       WELL_KNOWN_PATH = 'gcloud/application_default_credentials.json'
@@ -63,11 +71,14 @@ module Google
       #
       # @param scope [string|array|nil] the scope(s) to access
       def from_env(scope = nil)
-        return nil unless ENV.key?(ENV_VAR)
-        path = ENV[ENV_VAR]
-        fail 'file #{path} does not exist' unless File.exist?(path)
-        File.open(path) do |f|
-          return make_creds(f, scope)
+        if ENV.key?(ENV_VAR)
+          path = ENV[ENV_VAR]
+          fail "file #{path} does not exist" unless File.exist?(path)
+          File.open(path) do |f|
+            return make_creds(json_key_io: f, scope: scope)
+          end
+        elsif service_account_env_vars? || authorized_user_env_vars?
+          return make_creds(scope: scope)
         end
       rescue StandardError => e
         raise "#{NOT_FOUND_ERROR}: #{e}"
@@ -83,10 +94,21 @@ module Google
         path = File.join(root, base)
         return nil unless File.exist?(path)
         File.open(path) do |f|
-          return make_creds(f, scope)
+          return make_creds(json_key_io: f, scope: scope)
         end
       rescue StandardError => e
         raise "#{WELL_KNOWN_ERROR}: #{e}"
+      end
+
+      private
+
+      def service_account_env_vars?
+        ([PRIVATE_KEY_VAR, CLIENT_EMAIL_VAR] - ENV.keys).empty?
+      end
+
+      def authorized_user_env_vars?
+        ([CLIENT_ID_VAR, CLIENT_SECRET_VAR, REFRESH_TOKEN_VAR] -
+          ENV.keys).empty?
       end
     end
   end

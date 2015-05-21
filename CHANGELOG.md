@@ -1,3 +1,8 @@
+### Changes
+
+* Enables passing credentials via environment variables. ([@haabaato][])
+[#27](https://github.com/google/google-auth-library-ruby/issues/27)
+
 ## 0.4.1 (25/04/2015)
 
 ### Changes
@@ -20,3 +25,4 @@
 
 [@tbetbetbe]: https://github.com/tbetbetbe
 [@joneslee85]: https://github.com/joneslee85
+[@haabaato]: https://github.com/haabaato
