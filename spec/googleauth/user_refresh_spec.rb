@@ -40,15 +40,26 @@ require 'openssl'
 require 'spec_helper'
 require 'tmpdir'
 
+include Google::Auth::CredentialsLoader
+
 describe Google::Auth::UserRefreshCredentials do
   UserRefreshCredentials = Google::Auth::UserRefreshCredentials
-  CredentialsLoader = Google::Auth::CredentialsLoader
+
+  let(:cred_json) do
+    {
+      client_secret: 'privatekey',
+      client_id: 'client123',
+      refresh_token: 'refreshtoken',
+      type: 'authorized_user'
+    }
+  end
 
   before(:example) do
     @key = OpenSSL::PKey::RSA.new(2048)
     @client = UserRefreshCredentials.new(
-      StringIO.new(cred_json_text),
-      'https://www.googleapis.com/auth/userinfo.profile')
+      json_key_io: StringIO.new(cred_json_text),
+      scope: 'https://www.googleapis.com/auth/userinfo.profile'
+    )
   end
 
   def make_auth_stubs(opts = {})
@@ -64,12 +75,6 @@ describe Google::Auth::UserRefreshCredentials do
   end
 
   def cred_json_text(missing = nil)
-    cred_json = {
-      client_secret: 'privatekey',
-      client_id: 'client123',
-      refresh_token: 'refreshtoken',
-      type: 'authorized_user'
-    }
     cred_json.delete(missing.to_sym) unless missing.nil?
     MultiJson.dump(cred_json)
   end
@@ -78,14 +83,18 @@ describe Google::Auth::UserRefreshCredentials do
 
   describe '#from_env' do
     before(:example) do
-      @var_name = CredentialsLoader::ENV_VAR
-      @orig = ENV[@var_name]
+      @var_name = ENV_VAR
+      @credential_vars = [
+        ENV_VAR, CLIENT_ID_VAR, CLIENT_SECRET_VAR, REFRESH_TOKEN_VAR,
+        ACCOUNT_TYPE_VAR]
+      @original_env_vals = {}
+      @credential_vars.each { |var| @original_env_vals[var] = ENV[var] }
       @scope = 'https://www.googleapis.com/auth/userinfo.profile'
       @clz = UserRefreshCredentials
     end
 
     after(:example) do
-      ENV[@var_name] = @orig unless @orig.nil?
+      @credential_vars.each { |var| ENV[var] = @original_env_vals[var] }
     end
 
     it 'returns nil if the GOOGLE_APPLICATION_CREDENTIALS is unset' do
@@ -125,13 +134,22 @@ describe Google::Auth::UserRefreshCredentials do
         expect(@clz.from_env(@scope)).to_not be_nil
       end
     end
+
+    it 'succeeds when GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and '\
+      'GOOGLE_REFRESH_TOKEN env vars are valid' do
+      ENV[CLIENT_ID_VAR] = cred_json[:client_id]
+      ENV[CLIENT_SECRET_VAR] = cred_json[:client_secret]
+      ENV[REFRESH_TOKEN_VAR] = cred_json[:refresh_token]
+      ENV[ACCOUNT_TYPE_VAR] = cred_json[:type]
+      expect(@clz.from_env(@scope)).to_not be_nil
+    end
   end
 
   describe '#from_well_known_path' do
     before(:example) do
       @home = ENV['HOME']
       @scope = 'https://www.googleapis.com/auth/userinfo.profile'
-      @known_path = CredentialsLoader::WELL_KNOWN_PATH
+      @known_path = WELL_KNOWN_PATH
       @clz = UserRefreshCredentials
     end
 
@@ -152,7 +170,7 @@ describe Google::Auth::UserRefreshCredentials do
           FileUtils.mkdir_p(File.dirname(key_path))
           File.write(key_path, cred_json_text(missing))
           ENV['HOME'] = dir
-          expect { @clz.from_env(@scope) }.to raise_error
+          expect { @clz.from_well_known_path(@scope) }.to raise_error
         end
       end
     end

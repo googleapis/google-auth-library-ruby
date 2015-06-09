@@ -38,14 +38,18 @@ require 'spec_helper'
 describe '#get_application_default' do
   before(:example) do
     @key = OpenSSL::PKey::RSA.new(2048)
-    @var_name = CredentialsLoader::ENV_VAR
-    @orig = ENV[@var_name]
+    @var_name = ENV_VAR
+    @credential_vars = [
+      ENV_VAR, PRIVATE_KEY_VAR, CLIENT_EMAIL_VAR, CLIENT_ID_VAR,
+      CLIENT_SECRET_VAR, REFRESH_TOKEN_VAR, ACCOUNT_TYPE_VAR]
+    @original_env_vals = {}
+    @credential_vars.each { |var| @original_env_vals[var] = ENV[var] }
     @home = ENV['HOME']
     @scope = 'https://www.googleapis.com/auth/userinfo.profile'
   end
 
   after(:example) do
-    ENV[@var_name] = @orig unless @orig.nil?
+    @credential_vars.each { |var| ENV[var] = @original_env_vals[var] }
     ENV['HOME'] = @home unless @home == ENV['HOME']
   end
 
@@ -95,8 +99,7 @@ describe '#get_application_default' do
     it 'succeeds with default file without GOOGLE_APPLICATION_CREDENTIALS' do
       ENV.delete(@var_name) unless ENV[@var_name].nil?
       Dir.mktmpdir do |dir|
-        key_path = File.join(dir, '.config',
-                             CredentialsLoader::WELL_KNOWN_PATH)
+        key_path = File.join(dir, '.config', WELL_KNOWN_PATH)
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV['HOME'] = dir
@@ -107,8 +110,7 @@ describe '#get_application_default' do
     it 'succeeds with default file without a scope' do
       ENV.delete(@var_name) unless ENV[@var_name].nil?
       Dir.mktmpdir do |dir|
-        key_path = File.join(dir, '.config',
-                             CredentialsLoader::WELL_KNOWN_PATH)
+        key_path = File.join(dir, '.config', WELL_KNOWN_PATH)
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV['HOME'] = dir
@@ -137,17 +139,31 @@ describe '#get_application_default' do
       end
       stubs.verify_stubbed_calls
     end
+
+    it 'succeeds if environment vars are valid' do
+      ENV.delete(@var_name) unless ENV[@var_name].nil? # no env var
+      ENV[PRIVATE_KEY_VAR] = cred_json[:private_key]
+      ENV[CLIENT_EMAIL_VAR] = cred_json[:client_email]
+      ENV[CLIENT_ID_VAR] = cred_json[:client_id]
+      ENV[CLIENT_SECRET_VAR] = cred_json[:client_secret]
+      ENV[REFRESH_TOKEN_VAR] = cred_json[:refresh_token]
+      ENV[ACCOUNT_TYPE_VAR] = cred_json[:type]
+      expect(Google::Auth.get_application_default(@scope)).to_not be_nil
+    end
   end
 
   describe 'when credential type is service account' do
-    def cred_json_text
-      cred_json = {
+    let(:cred_json) do
+      {
         private_key_id: 'a_private_key_id',
         private_key: @key.to_pem,
         client_email: 'app@developer.gserviceaccount.com',
         client_id: 'app.apps.googleusercontent.com',
         type: 'service_account'
       }
+    end
+
+    def cred_json_text
       MultiJson.dump(cred_json)
     end
 
@@ -156,13 +172,16 @@ describe '#get_application_default' do
   end
 
   describe 'when credential type is authorized_user' do
-    def cred_json_text
-      cred_json = {
+    let(:cred_json) do
+      {
         client_secret: 'privatekey',
         refresh_token: 'refreshtoken',
         client_id: 'app.apps.googleusercontent.com',
         type: 'authorized_user'
       }
+    end
+
+    def cred_json_text
       MultiJson.dump(cred_json)
     end
 
@@ -171,13 +190,16 @@ describe '#get_application_default' do
   end
 
   describe 'when credential type is unknown' do
-    def cred_json_text
-      cred_json = {
+    let(:cred_json) do
+      {
         client_secret: 'privatekey',
         refresh_token: 'refreshtoken',
         client_id: 'app.apps.googleusercontent.com',
         type: 'not_known_type'
       }
+    end
+
+    def cred_json_text
       MultiJson.dump(cred_json)
     end
 
@@ -197,8 +219,7 @@ describe '#get_application_default' do
     it 'fails if the well known file contains the creds' do
       ENV.delete(@var_name) unless ENV[@var_name].nil?
       Dir.mktmpdir do |dir|
-        key_path = File.join(dir, '.config',
-                             CredentialsLoader::WELL_KNOWN_PATH)
+        key_path = File.join(dir, '.config', WELL_KNOWN_PATH)
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV['HOME'] = dir
@@ -207,6 +228,15 @@ describe '#get_application_default' do
         end
         expect(&blk).to raise_error RuntimeError
       end
+    end
+
+    it 'fails if env vars are set' do
+      ENV[PRIVATE_KEY_VAR] = cred_json[:private_key]
+      ENV[CLIENT_EMAIL_VAR] = cred_json[:client_email]
+      blk = proc do
+        Google::Auth.get_application_default(@scope)
+      end
+      expect(&blk).to raise_error RuntimeError
     end
   end
 end
