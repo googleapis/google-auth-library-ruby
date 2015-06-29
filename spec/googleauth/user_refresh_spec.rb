@@ -108,7 +108,7 @@ describe Google::Auth::UserRefreshCredentials do
       Dir.mktmpdir do |dir|
         key_path = File.join(dir, 'does-not-exist')
         ENV[@var_name] = key_path
-        expect { @clz.from_env(@scope) }.to raise_error
+        expect { @clz.from_env(@scope) }.to raise_error RuntimeError
       end
     end
 
@@ -120,7 +120,7 @@ describe Google::Auth::UserRefreshCredentials do
           FileUtils.mkdir_p(File.dirname(key_path))
           File.write(key_path, cred_json_text(missing))
           ENV[@var_name] = key_path
-          expect { @clz.from_env(@scope) }.to raise_error
+          expect { @clz.from_env(@scope) }.to raise_error RuntimeError
         end
       end
     end
@@ -170,7 +170,8 @@ describe Google::Auth::UserRefreshCredentials do
           FileUtils.mkdir_p(File.dirname(key_path))
           File.write(key_path, cred_json_text(missing))
           ENV['HOME'] = dir
-          expect { @clz.from_well_known_path(@scope) }.to raise_error
+          expect { @clz.from_well_known_path(@scope) }.
+            to raise_error RuntimeError
         end
       end
     end
