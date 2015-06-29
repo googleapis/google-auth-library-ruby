@@ -208,7 +208,8 @@ describe Google::Auth::UserRefreshCredentials do
           Dir.mktmpdir do |dir|
             FileUtils.mkdir_p(File.dirname(@path))
             File.write(@path, cred_json_text(missing))
-            expect { @clz.from_system_default_path(@scope) }.to raise_error
+            expect { @clz.from_system_default_path(@scope) }.
+              to raise_error RuntimeError
             File.delete(@path)
           end
         end
