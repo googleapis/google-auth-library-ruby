@@ -195,6 +195,8 @@ describe '#get_application_default' do
         client_secret: 'privatekey',
         refresh_token: 'refreshtoken',
         client_id: 'app.apps.googleusercontent.com',
+        private_key: @key.to_pem,
+        client_email: 'app@developer.gserviceaccount.com',
         type: 'not_known_type'
       }
     end
