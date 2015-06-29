@@ -47,10 +47,13 @@ module Google
       REFRESH_TOKEN_VAR = 'GOOGLE_REFRESH_TOKEN'
       ACCOUNT_TYPE_VAR = 'GOOGLE_ACCOUNT_TYPE'
 
+      CREDENTIALS_FILE_NAME = 'application_default_credentials.json'
       NOT_FOUND_ERROR =
         "Unable to read the credential file specified by #{ENV_VAR}"
-      WELL_KNOWN_PATH = 'gcloud/application_default_credentials.json'
+      WELL_KNOWN_PATH = "gcloud/#{CREDENTIALS_FILE_NAME}"
       WELL_KNOWN_ERROR = 'Unable to read the default credential file'
+
+      SYSTEM_DEFAULT_ERROR = 'Unable to read the system default credential file'
 
       # determines if the current OS is windows
       def windows?
@@ -98,6 +101,25 @@ module Google
         end
       rescue StandardError => e
         raise "#{WELL_KNOWN_ERROR}: #{e}"
+      end
+
+      # Creates an instance from the system default path
+      #
+      # @param scope [string|array|nil] the scope(s) to access
+      def from_system_default_path(scope = nil)
+        if windows?
+          return nil unless ENV['ProgramData']
+          prefix = File.join(ENV['ProgramData'], 'Google/Auth')
+        else
+          prefix = '/etc/google/auth/'
+        end
+        path = File.join(prefix, CREDENTIALS_FILE_NAME)
+        return nil unless File.exist?(path)
+        File.open(path) do |f|
+          return make_creds(json_key_io: f, scope: scope)
+        end
+      rescue StandardError => e
+        raise "#{SYSTEM_DEFAULT_ERROR}: #{e}"
       end
 
       private

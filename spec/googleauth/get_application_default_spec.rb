@@ -32,6 +32,7 @@ $LOAD_PATH.unshift(spec_dir)
 $LOAD_PATH.uniq!
 
 require 'faraday'
+require 'fakefs/safe'
 require 'googleauth'
 require 'spec_helper'
 
@@ -138,6 +139,19 @@ describe '#get_application_default' do
         expect(creds).to_not be_nil
       end
       stubs.verify_stubbed_calls
+    end
+
+    it 'succeeds with system default file' do
+      ENV.delete(@var_name) unless ENV[@var_name].nil?
+      FakeFS do
+        Dir.mktmpdir do |dir|
+          key_path = File.join('/etc/google/auth/', CREDENTIALS_FILE_NAME)
+          FileUtils.mkdir_p(File.dirname(key_path))
+          File.write(key_path, cred_json_text)
+          expect(Google::Auth.get_application_default(@scope)).to_not be_nil
+          File.delete(key_path)
+        end
+      end
     end
 
     it 'succeeds if environment vars are valid' do

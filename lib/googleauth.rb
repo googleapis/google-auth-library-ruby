@@ -110,7 +110,8 @@ END
     # @param options [hash] allows override of the connection being used
     def get_application_default(scope = nil, options = {})
       creds = DefaultCredentials.from_env(scope) ||
-              DefaultCredentials.from_well_known_path(scope)
+              DefaultCredentials.from_well_known_path(scope) ||
+              DefaultCredentials.from_system_default_path(scope)
       return creds unless creds.nil?
       fail NOT_FOUND_ERROR unless GCECredentials.on_gce?(options)
       GCECredentials.new
