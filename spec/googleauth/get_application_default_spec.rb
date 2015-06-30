@@ -144,13 +144,11 @@ describe '#get_application_default' do
     it 'succeeds with system default file' do
       ENV.delete(@var_name) unless ENV[@var_name].nil?
       FakeFS do
-        Dir.mktmpdir do |dir|
-          key_path = File.join('/etc/google/auth/', CREDENTIALS_FILE_NAME)
-          FileUtils.mkdir_p(File.dirname(key_path))
-          File.write(key_path, cred_json_text)
-          expect(Google::Auth.get_application_default(@scope)).to_not be_nil
-          File.delete(key_path)
-        end
+        key_path = File.join('/etc/google/auth/', CREDENTIALS_FILE_NAME)
+        FileUtils.mkdir_p(File.dirname(key_path))
+        File.write(key_path, cred_json_text)
+        expect(Google::Auth.get_application_default(@scope)).to_not be_nil
+        File.delete(key_path)
       end
     end
 

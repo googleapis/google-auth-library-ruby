@@ -242,19 +242,17 @@ describe Google::Auth::ServiceAccountCredentials do
 
     it 'is nil if no file exists' do
       FakeFS do
-        expect(ServiceAccountCredentials.from_system_default_path(@scope)).
-          to be_nil
+        expect(ServiceAccountCredentials.from_system_default_path(@scope))
+          .to be_nil
       end
     end
 
     it 'successfully loads the file when it is present' do
       FakeFS do
-        Dir.mktmpdir do |dir|
-          FileUtils.mkdir_p(File.dirname(@path))
-          File.write(@path, cred_json_text)
-          expect(@clz.from_system_default_path(@scope)).to_not be_nil
-          File.delete(@path)
-        end
+        FileUtils.mkdir_p(File.dirname(@path))
+        File.write(@path, cred_json_text)
+        expect(@clz.from_system_default_path(@scope)).to_not be_nil
+        File.delete(@path)
       end
     end
   end

@@ -196,8 +196,8 @@ describe Google::Auth::UserRefreshCredentials do
 
     it 'is nil if no file exists' do
       FakeFS do
-        expect(UserRefreshCredentials.from_system_default_path(@scope)).
-          to be_nil
+        expect(UserRefreshCredentials.from_system_default_path(@scope))
+          .to be_nil
       end
     end
 
@@ -205,25 +205,21 @@ describe Google::Auth::UserRefreshCredentials do
       needed = %w(client_id client_secret refresh_token)
       needed.each do |missing|
         FakeFS do
-          Dir.mktmpdir do |dir|
-            FileUtils.mkdir_p(File.dirname(@path))
-            File.write(@path, cred_json_text(missing))
-            expect { @clz.from_system_default_path(@scope) }.
-              to raise_error RuntimeError
-            File.delete(@path)
-          end
+          FileUtils.mkdir_p(File.dirname(@path))
+          File.write(@path, cred_json_text(missing))
+          expect { @clz.from_system_default_path(@scope) }
+            .to raise_error RuntimeError
+          File.delete(@path)
         end
       end
     end
 
     it 'successfully loads the file when it is present' do
       FakeFS do
-        Dir.mktmpdir do |dir|
-          FileUtils.mkdir_p(File.dirname(@path))
-          File.write(@path, cred_json_text)
-          expect(@clz.from_system_default_path(@scope)).to_not be_nil
-          File.delete(@path)
-        end
+        FileUtils.mkdir_p(File.dirname(@path))
+        File.write(@path, cred_json_text)
+        expect(@clz.from_system_default_path(@scope)).to_not be_nil
+        File.delete(@path)
       end
     end
   end
