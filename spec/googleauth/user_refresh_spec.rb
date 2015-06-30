@@ -170,8 +170,8 @@ describe Google::Auth::UserRefreshCredentials do
           FileUtils.mkdir_p(File.dirname(key_path))
           File.write(key_path, cred_json_text(missing))
           ENV['HOME'] = dir
-          expect { @clz.from_well_known_path(@scope) }.
-            to raise_error RuntimeError
+          expect { @clz.from_well_known_path(@scope) }
+            .to raise_error RuntimeError
         end
       end
     end

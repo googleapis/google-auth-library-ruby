@@ -58,8 +58,8 @@ describe '#get_application_default' do
       Dir.mktmpdir do |dir|
         key_path = File.join(dir, 'does-not-exist')
         ENV[@var_name] = key_path
-        expect { Google::Auth.get_application_default(@scope) }.
-          to raise_error RuntimeError
+        expect { Google::Auth.get_application_default(@scope) }
+          .to raise_error RuntimeError
       end
     end
 
