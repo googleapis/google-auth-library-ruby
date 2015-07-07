@@ -142,6 +142,9 @@ describe Google::Auth::UserRefreshCredentials do
       ENV[REFRESH_TOKEN_VAR] = cred_json[:refresh_token]
       ENV[ACCOUNT_TYPE_VAR] = cred_json[:type]
       expect(@clz.from_env(@scope)).to_not be_nil
+      expect(subject.client_id).to eq(cred_json[:client_id])
+      expect(subject.client_secret).to eq(cred_json[:client_secret])
+      expect(subject.refresh_token).to eq(cred_json[:refresh_token])
     end
   end
 
