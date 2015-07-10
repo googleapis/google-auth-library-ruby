@@ -32,6 +32,7 @@ $LOAD_PATH.unshift(spec_dir)
 $LOAD_PATH.uniq!
 
 require 'apply_auth_examples'
+require 'fakefs/safe'
 require 'fileutils'
 require 'googleauth/user_refresh'
 require 'jwt'
@@ -186,6 +187,43 @@ describe Google::Auth::UserRefreshCredentials do
         File.write(key_path, cred_json_text)
         ENV['HOME'] = dir
         expect(@clz.from_well_known_path(@scope)).to_not be_nil
+      end
+    end
+  end
+
+  describe '#from_system_default_path' do
+    before(:example) do
+      @scope = 'https://www.googleapis.com/auth/userinfo.profile'
+      @path = File.join('/etc/google/auth/', CREDENTIALS_FILE_NAME)
+      @clz = UserRefreshCredentials
+    end
+
+    it 'is nil if no file exists' do
+      FakeFS do
+        expect(UserRefreshCredentials.from_system_default_path(@scope))
+          .to be_nil
+      end
+    end
+
+    it 'fails if the file is invalid' do
+      needed = %w(client_id client_secret refresh_token)
+      needed.each do |missing|
+        FakeFS do
+          FileUtils.mkdir_p(File.dirname(@path))
+          File.write(@path, cred_json_text(missing))
+          expect { @clz.from_system_default_path(@scope) }
+            .to raise_error RuntimeError
+          File.delete(@path)
+        end
+      end
+    end
+
+    it 'successfully loads the file when it is present' do
+      FakeFS do
+        FileUtils.mkdir_p(File.dirname(@path))
+        File.write(@path, cred_json_text)
+        expect(@clz.from_system_default_path(@scope)).to_not be_nil
+        File.delete(@path)
       end
     end
   end
