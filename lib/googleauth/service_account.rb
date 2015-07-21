@@ -32,6 +32,7 @@ require 'googleauth/credentials_loader'
 require 'jwt'
 require 'multi_json'
 require 'stringio'
+require 'yaml'
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
@@ -147,7 +148,7 @@ module Google
         if json_key_io
           private_key, client_email = self.class.read_json_key(json_key_io)
         else
-          private_key = ENV[CredentialsLoader::PRIVATE_KEY_VAR]
+          private_key = YAML.load(%Q(---\n"#{ENV[CredentialsLoader::PRIVATE_KEY_VAR]}"\n))
           client_email = ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
         end
         @private_key = private_key
