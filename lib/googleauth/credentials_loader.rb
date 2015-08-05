@@ -91,7 +91,8 @@ module Google
       #
       # @param scope [string|array|nil] the scope(s) to access
       def from_well_known_path(scope = nil)
-        home_var, base = windows? ? 'APPDATA' : 'HOME', WELL_KNOWN_PATH
+        home_var = windows? ? 'APPDATA' : 'HOME'
+        base = WELL_KNOWN_PATH
         root = ENV[home_var].nil? ? '' : ENV[home_var]
         base = File.join('.config', base) unless windows?
         path = File.join(root, base)
