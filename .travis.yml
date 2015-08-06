@@ -1,3 +1,4 @@
+sudo: false
 language: ruby
 rvm:
   - 2.2
@@ -7,10 +8,24 @@ rvm:
   - rbx-2
   - jruby
 script: "bundle exec rake"
+addons:
+  apt:
+    packages:
+    - idn
+    - build-essential  # this and below attempt allow rubinius to be setup ok
+    - bison
+    - ruby-dev
+    - rake zlib1g-dev
+    - libyaml-dev
+    - libssl-dev
+    - libreadline-dev
+    - libncurses5-dev
+    - llvm
+    - llvm-dev
+    - libeditline-dev
+    - libedit-dev
 before_install:
  - gem update bundler
- - sudo apt-get update
- - sudo apt-get install idn
 notifications:
   email:
     recipients:
