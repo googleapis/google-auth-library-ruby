@@ -13,13 +13,3 @@ Metrics/AbcSize:
 # Configuration parameters: CountComments.
 Metrics/MethodLength:
   Max: 13
-
-# Offense count: 1
-# Cop supports --auto-correct.
-Performance/ParallelAssignment:
-  Enabled: false
-
-# Offense count: 1
-# Cop supports --auto-correct.
-Style/TrailingUnderscoreVariable:
-  Enabled: false

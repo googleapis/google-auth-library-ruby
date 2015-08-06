@@ -54,7 +54,7 @@ shared_examples 'jwt header auth' do
       expect(hdr).to_not be_nil
       expect(hdr.start_with?(auth_prefix)).to be true
       authorization = hdr[auth_prefix.length..-1]
-      payload, _ = JWT.decode(authorization, @key.public_key)
+      payload, = JWT.decode(authorization, @key.public_key)
       expect(payload['aud']).to eq(test_uri)
       expect(payload['iss']).to eq(client_email)
     end

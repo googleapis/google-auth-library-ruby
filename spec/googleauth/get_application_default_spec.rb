@@ -71,10 +71,10 @@ describe '#get_application_default' do
            { 'Metadata-Flavor' => 'Google' },
            '']
         end
-      end  # GCE not detected
+      end # GCE not detected
       Dir.mktmpdir do |dir|
         ENV.delete(@var_name) unless ENV[@var_name].nil? # no env var
-        ENV['HOME'] = dir  # no config present in this tmp dir
+        ENV['HOME'] = dir # no config present in this tmp dir
         c = Faraday.new do |b|
           b.adapter(:test, stubs)
         end
@@ -127,10 +127,10 @@ describe '#get_application_default' do
            { 'Metadata-Flavor' => 'Google' },
            '']
         end
-      end  # GCE detected
+      end # GCE detected
       Dir.mktmpdir do |dir|
         ENV.delete(@var_name) unless ENV[@var_name].nil? # no env var
-        ENV['HOME'] = dir  # no config present in this tmp dir
+        ENV['HOME'] = dir # no config present in this tmp dir
         c = Faraday.new do |b|
           b.adapter(:test, stubs)
         end
