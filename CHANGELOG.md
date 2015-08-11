@@ -2,7 +2,7 @@
 
 ### Changes
 
-* Updated UserRefreshCredentials hash to use string keys ([@haabator][])
+* Updated UserRefreshCredentials hash to use string keys ([@haabaato][])
 [#36](https://github.com/google/google-auth-library-ruby/issues/36)
 
 * Add support for a system default credentials file. ([@mr-salty][])
