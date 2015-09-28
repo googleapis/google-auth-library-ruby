@@ -27,59 +27,35 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-spec_dir = File.expand_path(File.dirname(__FILE__))
-root_dir = File.expand_path(File.join(spec_dir, '..'))
-lib_dir = File.expand_path(File.join(root_dir, 'lib'))
+require 'googleauth/signet'
+require 'googleauth/credentials_loader'
+require 'multi_json'
 
-$LOAD_PATH.unshift(spec_dir)
-$LOAD_PATH.unshift(lib_dir)
-$LOAD_PATH.uniq!
+module Google
+  module Auth
+    module ScopeUtil
+      
+      ALIASES = {
+        'email' => 'https://www.googleapis.com/auth/userinfo.email',
+        'profile' => 'https://www.googleapis.com/auth/userinfo.profile',
+        'openid' => 'https://www.googleapis.com/auth/plus.me'
+      }     
+       
+      def self.normalize(scope)
+        list = self.as_array(scope)
+        list.map {|item| ALIASES[item] || item }        
+      end
 
-# set up coverage
-require 'simplecov'
-require 'coveralls'
-
-SimpleCov.formatter = Coveralls::SimpleCov::Formatter
-SimpleCov.start
-
-require 'faraday'
-require 'rspec'
-require 'logging'
-require 'rspec/logging_helper'
-require 'webmock/rspec'
-
-
-# Allow Faraday to support test stubs
-Faraday::Adapter.load_middleware(:test)
-
-# Configure RSpec to capture log messages for each test. The output from the
-# logs will be stored in the @log_output variable. It is a StringIO instance.
-RSpec.configure do |config|
-  include RSpec::LoggingHelper
-  config.capture_log_messages
-  config.include WebMock::API
-end
-
-
-module TestHelpers
-  include WebMock::API
-  include WebMock::Matchers
-end
-
-class DummyTokenStore
-  def initialize
-    @tokens = Hash.new
-  end
-
-  def load(id)
-    @tokens[id]
-  end
-
-  def store(id, token)
-    @tokens[id] = token
-  end
-
-  def delete(id)
-    @tokens.delete(id)
+      def self.as_array(scope)
+        case scope
+        when Array
+          scope
+        when String
+          scope.split(' ')
+        else
+          fail "Invalid scope value. Must be string or array"
+        end
+      end
+    end
   end
 end

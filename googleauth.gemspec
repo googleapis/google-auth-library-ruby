@@ -31,6 +31,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'memoist', '~> 0.12'
   s.add_dependency 'multi_json', '~> 1.11'
   s.add_dependency 'signet', '~> 0.6'
+  s.add_dependency 'launchy', '~> 2.4'
 
   s.add_development_dependency 'bundler', '~> 1.9'
   s.add_development_dependency 'simplecov', '~> 0.9'
@@ -39,4 +40,11 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'rake', '~> 10.0'
   s.add_development_dependency 'rubocop', '~> 0.30'
   s.add_development_dependency 'rspec', '~> 3.0'
+  s.add_development_dependency 'redis', '~> 3.2'
+  s.add_development_dependency 'fakeredis', '~> 0.5'
+  s.add_development_dependency 'webmock', '~> 1.21'
+  s.add_development_dependency 'sinatra', '~> 1.4'
+  s.add_development_dependency 'activerecord', '~> 4.2'
+  s.add_development_dependency 'sqlite3', '~> 1.3'
+  s.add_development_dependency 'rack-test', '~> 0.6'
 end

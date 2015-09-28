@@ -56,17 +56,29 @@ shared_examples 'apply/apply! are OK' do
   # @make_auth_stubs, which should stub out the expected http behaviour of the
   # auth client
   describe '#fetch_access_token' do
-    it 'should set access_token to the fetched value' do
-      token = '1/abcdef1234567890'
+    let(:token) { '1/abcdef1234567890' }
+    let(:stubs) do
       stubs = make_auth_stubs access_token: token
-      c = Faraday.new do |b|
+    end
+    let(:connection) do
+      Faraday.new do |b|
         b.adapter(:test, stubs)
       end
-
-      @client.fetch_access_token!(connection: c)
+    end
+    
+    it 'should set access_token to the fetched value' do
+      @client.fetch_access_token!(connection: connection)
       expect(@client.access_token).to eq(token)
       stubs.verify_stubbed_calls
     end
+    
+    it 'should notify refresh listeners after updating' do
+      expect do |b| 
+        @client.on_refresh(&b)
+        @client.fetch_access_token!(connection: connection)
+      end.to yield_with_args(have_attributes(access_token: '1/abcdef1234567890'))
+      stubs.verify_stubbed_calls
+    end      
   end
 
   describe '#apply!' do

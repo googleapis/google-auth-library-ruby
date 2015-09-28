@@ -29,6 +29,7 @@
 
 require 'googleauth/signet'
 require 'googleauth/credentials_loader'
+require 'googleauth/scope_util'
 require 'multi_json'
 
 module Google
@@ -46,7 +47,31 @@ module Google
     # cf [Application Default Credentials](http://goo.gl/mkAHpZ)
     class UserRefreshCredentials < Signet::OAuth2::Client
       TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v3/token'
+      AUTHORIZATION_URI = 'https://accounts.google.com/o/oauth2/auth'
+      REVOKE_TOKEN_URI = 'https://accounts.google.com/o/oauth2/revoke'
       extend CredentialsLoader
+
+
+      # Create a UserRefreshCredentials.
+      #
+      # @param json_key_io [IO] an IO from which the JSON key can be read
+      # @param scope [string|array|nil] the scope(s) to access
+      def self.make_creds(options = {})
+        json_key_io, scope = options.values_at(:json_key_io, :scope)
+        user_creds = self.read_json_key(json_key_io) if json_key_io
+        user_creds ||= {
+          'client_id'     => ENV[CredentialsLoader::CLIENT_ID_VAR],
+          'client_secret' => ENV[CredentialsLoader::CLIENT_SECRET_VAR],
+          'refresh_token' => ENV[CredentialsLoader::REFRESH_TOKEN_VAR]
+        }
+
+        new(token_credential_uri: TOKEN_CRED_URI,
+            client_id: user_creds['client_id'],
+            client_secret: user_creds['client_secret'],
+            refresh_token: user_creds['refresh_token'],
+            scope: scope)
+      end
+
 
       # Reads the client_id, client_secret and refresh_token fields from the
       # JSON key.
@@ -59,24 +84,36 @@ module Google
         json_key
       end
 
-      # Initializes a UserRefreshCredentials.
-      #
-      # @param json_key_io [IO] an IO from which the JSON key can be read
-      # @param scope [string|array|nil] the scope(s) to access
       def initialize(options = {})
-        json_key_io, scope = options.values_at(:json_key_io, :scope)
-        user_creds = self.class.read_json_key(json_key_io) if json_key_io
-        user_creds ||= {
-          'client_id'     => ENV[CredentialsLoader::CLIENT_ID_VAR],
-          'client_secret' => ENV[CredentialsLoader::CLIENT_SECRET_VAR],
-          'refresh_token' => ENV[CredentialsLoader::REFRESH_TOKEN_VAR]
-        }
+        options ||= {}
+        options[:token_credential_uri] ||= TOKEN_CRED_URI
+        options[:authorization_uri] ||= AUTHORIZATION_URI
+        super(options)
+      end
 
-        super(token_credential_uri: TOKEN_CRED_URI,
-              client_id: user_creds['client_id'],
-              client_secret: user_creds['client_secret'],
-              refresh_token: user_creds['refresh_token'],
-              scope: scope)
+      # Revokes the credential
+      def revoke!(options = {})
+        c = options[:connection] || Faraday.default_connection
+        resp = c.get(REVOKE_TOKEN_URI, { token: refresh_token || access_token })
+        case resp.status
+        when 200
+          self.access_token = nil
+          self.refresh_token = nil
+          self.expires_at = 0
+        else
+          fail(Signet::AuthorizationError, "Unexpected error code #{resp.status}")
+        end
+      end
+
+      # Verifies that a credential grants the requested scope
+      #
+      # @param [Array<String>, String] required_scope
+      #  Scope to verify
+      # @return [Boolean]
+      #  True if scope is granted
+      def includes_scope?(required_scope)
+        missing_scope = Google::Auth::ScopeUtil.normalize(required_scope) - Google::Auth::ScopeUtil.normalize(scope)
+        return missing_scope.empty?
       end
     end
   end
