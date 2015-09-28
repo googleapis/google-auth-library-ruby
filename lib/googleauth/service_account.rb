@@ -49,6 +49,26 @@ module Google
       TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v3/token'
       extend CredentialsLoader
 
+      # Creates a ServiceAccountCredentials.
+      #
+      # @param json_key_io [IO] an IO from which the JSON key can be read
+      # @param scope [string|array|nil] the scope(s) to access
+      def self.make_creds(options = {})
+        json_key_io, scope = options.values_at(:json_key_io, :scope)
+        if json_key_io
+          private_key, client_email = self.read_json_key(json_key_io)
+        else
+          private_key = ENV[CredentialsLoader::PRIVATE_KEY_VAR]
+          client_email = ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
+        end
+
+        new(token_credential_uri: TOKEN_CRED_URI,
+            audience: TOKEN_CRED_URI,
+            scope: scope,
+            issuer: client_email,
+            signing_key: OpenSSL::PKey::RSA.new(private_key))
+      end
+
       # Reads the private key and client email fields from the service account
       # JSON key.
       def self.read_json_key(json_key_io)
@@ -58,24 +78,8 @@ module Google
         [json_key['private_key'], json_key['client_email']]
       end
 
-      # Initializes a ServiceAccountCredentials.
-      #
-      # @param json_key_io [IO] an IO from which the JSON key can be read
-      # @param scope [string|array|nil] the scope(s) to access
-      def initialize(options = {})
-        json_key_io, scope = options.values_at(:json_key_io, :scope)
-        if json_key_io
-          private_key, client_email = self.class.read_json_key(json_key_io)
-        else
-          private_key = ENV[CredentialsLoader::PRIVATE_KEY_VAR]
-          client_email = ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
-        end
-
-        super(token_credential_uri: TOKEN_CRED_URI,
-              audience: TOKEN_CRED_URI,
-              scope: scope,
-              issuer: client_email,
-              signing_key: OpenSSL::PKey::RSA.new(private_key))
+      def initialize(options={})
+        super(options)
       end
 
       # Extends the base class.
@@ -97,7 +101,7 @@ module Google
           client_email: @issuer
         }
         alt_clz = ServiceAccountJwtHeaderCredentials
-        alt = alt_clz.new(json_key_io: StringIO.new(MultiJson.dump(cred_json)))
+        alt = alt_clz.make_creds(json_key_io: StringIO.new(MultiJson.dump(cred_json)))
         alt.apply!(a_hash)
       end
     end

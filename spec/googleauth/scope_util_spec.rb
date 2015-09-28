@@ -27,59 +27,45 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-spec_dir = File.expand_path(File.dirname(__FILE__))
-root_dir = File.expand_path(File.join(spec_dir, '..'))
-lib_dir = File.expand_path(File.join(root_dir, 'lib'))
-
+spec_dir = File.expand_path(File.join(File.dirname(__FILE__)))
 $LOAD_PATH.unshift(spec_dir)
-$LOAD_PATH.unshift(lib_dir)
 $LOAD_PATH.uniq!
 
-# set up coverage
-require 'simplecov'
-require 'coveralls'
+require 'googleauth/scope_util'
 
-SimpleCov.formatter = Coveralls::SimpleCov::Formatter
-SimpleCov.start
+describe Google::Auth::ScopeUtil do
 
-require 'faraday'
-require 'rspec'
-require 'logging'
-require 'rspec/logging_helper'
-require 'webmock/rspec'
+  shared_examples 'normalizes scopes' do
+    let(:normalized) { Google::Auth::ScopeUtil.normalize(source) }
 
+    it 'normalizes the email scope' do
+      expect(normalized).to include 'https://www.googleapis.com/auth/userinfo.email'
+      expect(normalized).to_not include 'email'
+    end
 
-# Allow Faraday to support test stubs
-Faraday::Adapter.load_middleware(:test)
+    it 'normalizes the profile scope' do
+      expect(normalized).to include 'https://www.googleapis.com/auth/userinfo.profile'
+      expect(normalized).to_not include 'profile'
+    end
 
-# Configure RSpec to capture log messages for each test. The output from the
-# logs will be stored in the @log_output variable. It is a StringIO instance.
-RSpec.configure do |config|
-  include RSpec::LoggingHelper
-  config.capture_log_messages
-  config.include WebMock::API
-end
+    it 'normalizes the openid scope' do
+      expect(normalized).to include 'https://www.googleapis.com/auth/plus.me'
+      expect(normalized).to_not include 'openid'
+    end
 
-
-module TestHelpers
-  include WebMock::API
-  include WebMock::Matchers
-end
-
-class DummyTokenStore
-  def initialize
-    @tokens = Hash.new
+    it 'leaves other other scopes as-is' do
+      expect(normalized).to include 'https://www.googleapis.com/auth/drive'
+    end
   end
 
-  def load(id)
-    @tokens[id]
+  context 'with scope as string' do
+    let(:source) { 'email profile openid https://www.googleapis.com/auth/drive' }
+    it_behaves_like 'normalizes scopes'
   end
 
-  def store(id, token)
-    @tokens[id] = token
+  context 'with scope as Array' do
+    let(:source) { %w(email profile openid https://www.googleapis.com/auth/drive) }
+    it_behaves_like 'normalizes scopes'
   end
 
-  def delete(id)
-    @tokens.delete(id)
-  end
 end

@@ -1,4 +1,4 @@
-# Copyright 2015, Google Inc.
+# Copyright 2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,59 +27,44 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-spec_dir = File.expand_path(File.dirname(__FILE__))
-root_dir = File.expand_path(File.join(spec_dir, '..'))
-lib_dir = File.expand_path(File.join(root_dir, 'lib'))
+require 'active_record'
+require 'googleauth/token_store'
 
-$LOAD_PATH.unshift(spec_dir)
-$LOAD_PATH.unshift(lib_dir)
-$LOAD_PATH.uniq!
-
-# set up coverage
-require 'simplecov'
-require 'coveralls'
-
-SimpleCov.formatter = Coveralls::SimpleCov::Formatter
-SimpleCov.start
-
-require 'faraday'
-require 'rspec'
-require 'logging'
-require 'rspec/logging_helper'
-require 'webmock/rspec'
-
-
-# Allow Faraday to support test stubs
-Faraday::Adapter.load_middleware(:test)
-
-# Configure RSpec to capture log messages for each test. The output from the
-# logs will be stored in the @log_output variable. It is a StringIO instance.
-RSpec.configure do |config|
-  include RSpec::LoggingHelper
-  config.capture_log_messages
-  config.include WebMock::API
-end
-
-
-module TestHelpers
-  include WebMock::API
-  include WebMock::Matchers
-end
-
-class DummyTokenStore
-  def initialize
-    @tokens = Hash.new
-  end
-
-  def load(id)
-    @tokens[id]
-  end
-
-  def store(id, token)
-    @tokens[id] = token
-  end
-
-  def delete(id)
-    @tokens.delete(id)
+module Google
+  module Auth
+    module Stores
+      
+      # Simple model for storing tokens
+      class GoogleAuthToken < ActiveRecord::Base
+        validates :user_id, presence: true
+        validates :token, presence: true
+      end
+      
+      # Implementation of user token storage using ActiveRecord.
+      class ActiveRecordTokenStore < Google::Auth::TokenStore
+        
+        def initialize(*)
+        end
+        
+        # (see Google::Auth::Stores::TokenStore#load)
+        def load(id)
+          entry = GoogleAuthToken.find_by(user_id: id)
+          return nil if entry.nil?
+          return entry.token
+        end
+        
+        # (see Google::Auth::Stores::TokenStore#store)
+        def store(id, token)
+          entry = GoogleAuthToken.find_or_initialize_by(user_id: id)
+          entry.update(:token => token)
+        end
+        
+        # (see Google::Auth::Stores::TokenStore#delete)
+        def delete(id)
+          entry = GoogleAuthToken.find_by(user_id: id)
+          entry.destroy unless entry.nil?
+        end
+      end
+    end
   end
 end

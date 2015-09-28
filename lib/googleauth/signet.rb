@@ -58,6 +58,25 @@ module Signet
       def updater_proc
         lambda(&method(:apply))
       end
+      
+      def on_refresh(&block)
+        @refresh_listeners ||= []
+        @refresh_listeners << block
+      end
+      
+      alias_method :orig_fetch_access_token!, :fetch_access_token!
+      def fetch_access_token!(options)
+        info = orig_fetch_access_token!(options)
+        notify_refresh_listeners
+        info
+      end
+      
+      def notify_refresh_listeners
+        listeners = @refresh_listeners || []
+        listeners.each do |block|
+          block.call(self)
+        end
+      end          
     end
   end
 end

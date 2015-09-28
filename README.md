@@ -32,7 +32,20 @@ For normal client usage, this is sufficient:
 $ gem install googleauth
 ```
 
-## Example Usage
+## Application Default Credentials
+
+This library provides an implementation of
+[application default credentials][application default credentials] for Ruby.
+
+The Application Default Credentials provide a simple way to get authorization
+credentials for use in calling Google APIs.
+
+They are best suited for cases when the call needs to have the same identity
+and authorization level for the application independent of the user. This is
+the recommended approach to authorize calls to Cloud APIs, particularly when
+you're building an application that uses Google Compute Engine.
+
+### Example Usage
 
 ```ruby
 require 'googleauth'
@@ -48,26 +61,69 @@ authorization.apply(some_headers)
 
 ```
 
-## Application Default Credentials
+## User Authorization
 
-This library provides an implementation of
-[application default credentials][application default credentials] for Ruby.
+Applications that need to act on behalf of users can obtain credentials
+using `Google::Auth::UserAuthorizer`, `Google::Auth::WebUserAuthorizer`,
+or `Google::Auth::InstalledAppUserAuthorizer` depending on the use case.
+While `UserAuthorizer` can be used in all contexts, both `WebUserAuthorizer`
+and `InstalledAppUserAuthorizer` present simpler interfaces for web and
+command line applications, respectively.
 
-The Application Default Credentials provide a simple way to get authorization
-credentials for use in calling Google APIs.
+### Example usage (command line)
 
-They are best suited for cases when the call needs to have the same identity
-and authorization level for the application independent of the user. This is
-the recommended approach to authorize calls to Cloud APIs, particularly when
-you're building an application that uses Google Compute Engine.
+```ruby
+require 'googleauth'
 
-## What about auth in google-apis-ruby-client?
+# Load the client ID and secrets along with stored credentials
+client_id = Google::Auth::ClientId.from_file('client_secret.json')
+storage = Google::Auth::Stores::FileTokenStore.new(:file => 'user_credentials.yaml')
+scope = 'https://www.googleapis.com/auth/drive'
+authorizer = Google::Auth::InstalledAppUserAuthorizer.new(client_id, scope, storage)
 
-The goal is for all auth done by
-[google-apis-ruby-client][google-apis-ruby-client] to be performed by this
-library. I.e, eventually google-apis-ruby-client will just take a dependency
-on this library.  This update is a work in progress, but should be completed
-by Q2 2015.
+# Retrieve credentials for an account. Launches a browser to authorize if needed.
+credentials = authorizer.get_credentials('user@example.com')
+```
+
+### Example usage (Rails)
+
+Add to Gemfile:
+
+    gem 'googleauth', :require => 'googleauth'
+
+Then run the following commands:
+
+```bash
+$ bundle install
+$ rails g googleauth
+$ bin/rake db:migrate
+```
+
+This will configure your Rails app to store user credentials in your database
+as well as sets up a route for the callback at `/oauth2callback`. It also
+creates an initializer at `config/intializers/googleauth.rb` which can
+customized if needed.
+
+You'll also need to configure and download your application client ID
+and secret from the [Google Developers Console](https://console.developers.google.com)
+and save it to `config/client_secret.json`
+
+To require user authorization for a controller, call `require_google_credentials`.
+For simple cases where the user is already authenticated and the user ID
+is available in `session[:user_id]`, this can be called as a filter:
+
+```ruby
+class GreetingController < ApplicationController
+  # ensure @google_user_credentials exists in any actions
+  before_action :require_google_credentials
+
+  ...
+end
+```
+
+See [ControllerHelpers](/lib/googleauth/rails/controller_helpers.rb) and
+[WebUserAuthorizer](/lib/googleauth/web_user_authorizer.rb) for additional
+usage information.
 
 ## License
 

@@ -27,59 +27,42 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-spec_dir = File.expand_path(File.dirname(__FILE__))
-root_dir = File.expand_path(File.join(spec_dir, '..'))
-lib_dir = File.expand_path(File.join(root_dir, 'lib'))
-
+spec_dir = File.expand_path(File.join(File.dirname(__FILE__)))
 $LOAD_PATH.unshift(spec_dir)
-$LOAD_PATH.unshift(lib_dir)
 $LOAD_PATH.uniq!
 
-# set up coverage
-require 'simplecov'
-require 'coveralls'
+require 'googleauth'
+require 'googleauth/stores/active_record_token_store'
+require 'spec_helper'
+require 'googleauth/stores/store_examples'
+require 'active_record'
 
-SimpleCov.formatter = Coveralls::SimpleCov::Formatter
-SimpleCov.start
-
-require 'faraday'
-require 'rspec'
-require 'logging'
-require 'rspec/logging_helper'
-require 'webmock/rspec'
-
-
-# Allow Faraday to support test stubs
-Faraday::Adapter.load_middleware(:test)
-
-# Configure RSpec to capture log messages for each test. The output from the
-# logs will be stored in the @log_output variable. It is a StringIO instance.
-RSpec.configure do |config|
-  include RSpec::LoggingHelper
-  config.capture_log_messages
-  config.include WebMock::API
-end
-
-
-module TestHelpers
-  include WebMock::API
-  include WebMock::Matchers
-end
-
-class DummyTokenStore
-  def initialize
-    @tokens = Hash.new
-  end
-
-  def load(id)
-    @tokens[id]
-  end
-
-  def store(id, token)
-    @tokens[id] = token
-  end
-
-  def delete(id)
-    @tokens.delete(id)
+module FakeFS
+  class File
+    # FakeFS doesn't implement. And since we don't need to actually lock, just stub out...
+    def flock(*)
+    end
   end
 end
+
+describe Google::Auth::Stores::ActiveRecordTokenStore do
+  # Set up an in-memory DB for testing
+  before(:context) do
+    ActiveRecord::Base.establish_connection adapter: "sqlite3", database: ":memory:"
+    ActiveRecord::Schema.define do
+      self.verbose = false
+      create_table :google_auth_tokens do |t|
+        t.string :user_id
+        t.string :token
+      end
+      add_index :google_auth_tokens, :user_id
+    end
+  end
+  
+  let(:store) do
+    Google::Auth::Stores::ActiveRecordTokenStore.new
+  end
+    
+  it_behaves_like 'token store' 
+end
+
