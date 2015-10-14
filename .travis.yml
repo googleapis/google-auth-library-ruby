@@ -7,6 +7,9 @@ rvm:
   - 1.9.3
   - rbx-2
   - jruby
+matrix:
+  allow_failures:
+    - rbx-2 # See rubinius/rubinius#3485 - rubocop segfaults
 script: "bundle exec rake"
 addons:
   apt:
