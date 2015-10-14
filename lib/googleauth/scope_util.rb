@@ -27,54 +27,33 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-require 'signet/oauth_2/client'
+require 'googleauth/signet'
+require 'googleauth/credentials_loader'
+require 'multi_json'
 
-module Signet
-  # OAuth2 supports OAuth2 authentication.
-  module OAuth2
-    AUTH_METADATA_KEY = :Authorization
-    # Signet::OAuth2::Client creates an OAuth2 client
-    #
-    # This reopens Client to add #apply and #apply! methods which update a
-    # hash with the fetched authentication token.
-    class Client
-      # Updates a_hash updated with the authentication token
-      def apply!(a_hash, opts = {})
-        # fetch the access token there is currently not one, or if the client
-        # has expired
-        fetch_access_token!(opts) if access_token.nil? || expired?
-        a_hash[AUTH_METADATA_KEY] = "Bearer #{access_token}"
+module Google
+  module Auth
+    # Small utility for normalizing scopes into canonical form
+    module ScopeUtil
+      ALIASES = {
+        'email' => 'https://www.googleapis.com/auth/userinfo.email',
+        'profile' => 'https://www.googleapis.com/auth/userinfo.profile',
+        'openid' => 'https://www.googleapis.com/auth/plus.me'
+      }
+
+      def self.normalize(scope)
+        list = as_array(scope)
+        list.map { |item| ALIASES[item] || item }
       end
 
-      # Returns a clone of a_hash updated with the authentication token
-      def apply(a_hash, opts = {})
-        a_copy = a_hash.clone
-        apply!(a_copy, opts)
-        a_copy
-      end
-
-      # Returns a reference to the #apply method, suitable for passing as
-      # a closure
-      def updater_proc
-        lambda(&method(:apply))
-      end
-
-      def on_refresh(&block)
-        @refresh_listeners ||= []
-        @refresh_listeners << block
-      end
-
-      alias_method :orig_fetch_access_token!, :fetch_access_token!
-      def fetch_access_token!(options)
-        info = orig_fetch_access_token!(options)
-        notify_refresh_listeners
-        info
-      end
-
-      def notify_refresh_listeners
-        listeners = @refresh_listeners || []
-        listeners.each do |block|
-          block.call(self)
+      def self.as_array(scope)
+        case scope
+        when Array
+          scope
+        when String
+          scope.split(' ')
+        else
+          fail 'Invalid scope value. Must be string or array'
         end
       end
     end

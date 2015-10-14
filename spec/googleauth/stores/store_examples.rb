@@ -27,56 +27,32 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-require 'signet/oauth_2/client'
+spec_dir = File.expand_path(File.join(File.dirname(__FILE__)))
+$LOAD_PATH.unshift(spec_dir)
+$LOAD_PATH.uniq!
 
-module Signet
-  # OAuth2 supports OAuth2 authentication.
-  module OAuth2
-    AUTH_METADATA_KEY = :Authorization
-    # Signet::OAuth2::Client creates an OAuth2 client
-    #
-    # This reopens Client to add #apply and #apply! methods which update a
-    # hash with the fetched authentication token.
-    class Client
-      # Updates a_hash updated with the authentication token
-      def apply!(a_hash, opts = {})
-        # fetch the access token there is currently not one, or if the client
-        # has expired
-        fetch_access_token!(opts) if access_token.nil? || expired?
-        a_hash[AUTH_METADATA_KEY] = "Bearer #{access_token}"
-      end
+require 'spec_helper'
 
-      # Returns a clone of a_hash updated with the authentication token
-      def apply(a_hash, opts = {})
-        a_copy = a_hash.clone
-        apply!(a_copy, opts)
-        a_copy
-      end
+shared_examples 'token store' do
+  before(:each) do
+    store.store('default', 'test')
+  end
 
-      # Returns a reference to the #apply method, suitable for passing as
-      # a closure
-      def updater_proc
-        lambda(&method(:apply))
-      end
+  it 'should return a stored value' do
+    expect(store.load('default')).to eq 'test'
+  end
 
-      def on_refresh(&block)
-        @refresh_listeners ||= []
-        @refresh_listeners << block
-      end
+  it 'should return nil for missing tokens' do
+    expect(store.load('notavalidkey')).to be_nil
+  end
 
-      alias_method :orig_fetch_access_token!, :fetch_access_token!
-      def fetch_access_token!(options)
-        info = orig_fetch_access_token!(options)
-        notify_refresh_listeners
-        info
-      end
+  it 'should return nil for deleted tokens' do
+    store.delete('default')
+    expect(store.load('default')).to be_nil
+  end
 
-      def notify_refresh_listeners
-        listeners = @refresh_listeners || []
-        listeners.each do |block|
-          block.call(self)
-        end
-      end
-    end
+  it 'should save overwrite values on store' do
+    store.store('default', 'test2')
+    expect(store.load('default')).to eq 'test2'
   end
 end

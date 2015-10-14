@@ -57,7 +57,7 @@ describe Google::Auth::UserRefreshCredentials do
 
   before(:example) do
     @key = OpenSSL::PKey::RSA.new(2048)
-    @client = UserRefreshCredentials.new(
+    @client = UserRefreshCredentials.make_creds(
       json_key_io: StringIO.new(cred_json_text),
       scope: 'https://www.googleapis.com/auth/userinfo.profile'
     )
@@ -142,10 +142,11 @@ describe Google::Auth::UserRefreshCredentials do
       ENV[CLIENT_SECRET_VAR] = cred_json[:client_secret]
       ENV[REFRESH_TOKEN_VAR] = cred_json[:refresh_token]
       ENV[ACCOUNT_TYPE_VAR] = cred_json[:type]
-      expect(@clz.from_env(@scope)).to_not be_nil
-      expect(subject.client_id).to eq(cred_json[:client_id])
-      expect(subject.client_secret).to eq(cred_json[:client_secret])
-      expect(subject.refresh_token).to eq(cred_json[:refresh_token])
+      creds = @clz.from_env(@scope)
+      expect(creds).to_not be_nil
+      expect(creds.client_id).to eq(cred_json[:client_id])
+      expect(creds.client_secret).to eq(cred_json[:client_secret])
+      expect(creds.refresh_token).to eq(cred_json[:refresh_token])
     end
   end
 
@@ -225,6 +226,89 @@ describe Google::Auth::UserRefreshCredentials do
         expect(@clz.from_system_default_path(@scope)).to_not be_nil
         File.delete(@path)
       end
+    end
+  end
+
+  shared_examples 'revoked token' do
+    it 'should nil the refresh token' do
+      expect(@client.refresh_token).to be_nil
+    end
+
+    it 'should nil the access token' do
+      expect(@client.access_token).to be_nil
+    end
+
+    it 'should mark the token as expired' do
+      expect(@client.expired?).to be_truthy
+    end
+  end
+
+  describe 'when revoking a refresh token' do
+    let(:stubs) do
+      Faraday::Adapter::Test::Stubs.new do |stub|
+        stub.get('/o/oauth2/revoke') do |env|
+          expect(env.params['token']).to eql 'refreshtoken'
+          [200]
+        end
+      end
+    end
+
+    let(:connection) do
+      Faraday.new do |c|
+        c.adapter(:test, stubs)
+      end
+    end
+
+    before(:example) do
+      @client.revoke!(connection: connection)
+    end
+
+    it_behaves_like 'revoked token'
+  end
+
+  describe 'when revoking an access token' do
+    let(:stubs) do
+      Faraday::Adapter::Test::Stubs.new do |stub|
+        stub.get('/o/oauth2/revoke') do |env|
+          expect(env.params['token']).to eql 'accesstoken'
+          [200]
+        end
+      end
+    end
+
+    let(:connection) do
+      Faraday.new do |c|
+        c.adapter(:test, stubs)
+      end
+    end
+
+    before(:example) do
+      @client.refresh_token = nil
+      @client.access_token = 'accesstoken'
+      @client.revoke!(connection: connection)
+    end
+
+    it_behaves_like 'revoked token'
+  end
+
+  describe 'when revoking an invalid token' do
+    let(:stubs) do
+      Faraday::Adapter::Test::Stubs.new do |stub|
+        stub.get('/o/oauth2/revoke') do |_env|
+          [400]
+        end
+      end
+    end
+
+    let(:connection) do
+      Faraday.new do |c|
+        c.adapter(:test, stubs)
+      end
+    end
+
+    it 'raises an authorization error' do
+      expect { @client.revoke!(connection: connection) }.to raise_error(
+        Signet::AuthorizationError)
     end
   end
 end
