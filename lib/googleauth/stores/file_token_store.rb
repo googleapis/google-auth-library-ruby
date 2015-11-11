@@ -1,4 +1,4 @@
-# Copyright 2015, Google Inc.
+# Copyright 2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,54 +27,36 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-require 'signet/oauth_2/client'
+require 'yaml/store'
+require 'googleauth/token_store'
 
-module Signet
-  # OAuth2 supports OAuth2 authentication.
-  module OAuth2
-    AUTH_METADATA_KEY = :Authorization
-    # Signet::OAuth2::Client creates an OAuth2 client
-    #
-    # This reopens Client to add #apply and #apply! methods which update a
-    # hash with the fetched authentication token.
-    class Client
-      # Updates a_hash updated with the authentication token
-      def apply!(a_hash, opts = {})
-        # fetch the access token there is currently not one, or if the client
-        # has expired
-        fetch_access_token!(opts) if access_token.nil? || expired?
-        a_hash[AUTH_METADATA_KEY] = "Bearer #{access_token}"
-      end
+module Google
+  module Auth
+    module Stores
+      # Implementation of user token storage backed by a local YAML file
+      class FileTokenStore < Google::Auth::TokenStore
+        # Create a new store with the supplied file.
+        #
+        # @param [String, File] file
+        #  Path to storage file
+        def initialize(options = {})
+          path = options[:file]
+          @store = YAML::Store.new(path)
+        end
 
-      # Returns a clone of a_hash updated with the authentication token
-      def apply(a_hash, opts = {})
-        a_copy = a_hash.clone
-        apply!(a_copy, opts)
-        a_copy
-      end
+        # (see Google::Auth::Stores::TokenStore#load)
+        def load(id)
+          @store.transaction { @store[id] }
+        end
 
-      # Returns a reference to the #apply method, suitable for passing as
-      # a closure
-      def updater_proc
-        lambda(&method(:apply))
-      end
+        # (see Google::Auth::Stores::TokenStore#store)
+        def store(id, token)
+          @store.transaction { @store[id] = token }
+        end
 
-      def on_refresh(&block)
-        @refresh_listeners ||= []
-        @refresh_listeners << block
-      end
-
-      alias_method :orig_fetch_access_token!, :fetch_access_token!
-      def fetch_access_token!(options)
-        info = orig_fetch_access_token!(options)
-        notify_refresh_listeners
-        info
-      end
-
-      def notify_refresh_listeners
-        listeners = @refresh_listeners || []
-        listeners.each do |block|
-          block.call(self)
+        # (see Google::Auth::Stores::TokenStore#delete)
+        def delete(id)
+          @store.transaction { @store.delete(id) }
         end
       end
     end

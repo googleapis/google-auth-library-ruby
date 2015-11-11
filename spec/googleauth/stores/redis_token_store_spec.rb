@@ -27,56 +27,24 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-require 'signet/oauth_2/client'
+spec_dir = File.expand_path(File.join(File.dirname(__FILE__)))
+$LOAD_PATH.unshift(spec_dir)
+$LOAD_PATH.uniq!
 
-module Signet
-  # OAuth2 supports OAuth2 authentication.
-  module OAuth2
-    AUTH_METADATA_KEY = :Authorization
-    # Signet::OAuth2::Client creates an OAuth2 client
-    #
-    # This reopens Client to add #apply and #apply! methods which update a
-    # hash with the fetched authentication token.
-    class Client
-      # Updates a_hash updated with the authentication token
-      def apply!(a_hash, opts = {})
-        # fetch the access token there is currently not one, or if the client
-        # has expired
-        fetch_access_token!(opts) if access_token.nil? || expired?
-        a_hash[AUTH_METADATA_KEY] = "Bearer #{access_token}"
-      end
+require 'googleauth'
+require 'googleauth/stores/redis_token_store'
+require 'spec_helper'
+require 'fakeredis/rspec'
+require 'googleauth/stores/store_examples'
 
-      # Returns a clone of a_hash updated with the authentication token
-      def apply(a_hash, opts = {})
-        a_copy = a_hash.clone
-        apply!(a_copy, opts)
-        a_copy
-      end
-
-      # Returns a reference to the #apply method, suitable for passing as
-      # a closure
-      def updater_proc
-        lambda(&method(:apply))
-      end
-
-      def on_refresh(&block)
-        @refresh_listeners ||= []
-        @refresh_listeners << block
-      end
-
-      alias_method :orig_fetch_access_token!, :fetch_access_token!
-      def fetch_access_token!(options)
-        info = orig_fetch_access_token!(options)
-        notify_refresh_listeners
-        info
-      end
-
-      def notify_refresh_listeners
-        listeners = @refresh_listeners || []
-        listeners.each do |block|
-          block.call(self)
-        end
-      end
-    end
+describe Google::Auth::Stores::RedisTokenStore do
+  let(:redis) do
+    Redis.new
   end
+
+  let(:store) do
+    Google::Auth::Stores::RedisTokenStore.new(redis: redis)
+  end
+
+  it_behaves_like 'token store'
 end

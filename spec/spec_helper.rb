@@ -46,6 +46,7 @@ require 'faraday'
 require 'rspec'
 require 'logging'
 require 'rspec/logging_helper'
+require 'webmock/rspec'
 
 # Allow Faraday to support test stubs
 Faraday::Adapter.load_middleware(:test)
@@ -55,4 +56,28 @@ Faraday::Adapter.load_middleware(:test)
 RSpec.configure do |config|
   include RSpec::LoggingHelper
   config.capture_log_messages
+  config.include WebMock::API
+end
+
+module TestHelpers
+  include WebMock::API
+  include WebMock::Matchers
+end
+
+class DummyTokenStore
+  def initialize
+    @tokens = {}
+  end
+
+  def load(id)
+    @tokens[id]
+  end
+
+  def store(id, token)
+    @tokens[id] = token
+  end
+
+  def delete(id)
+    @tokens.delete(id)
+  end
 end

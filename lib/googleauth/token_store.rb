@@ -1,4 +1,4 @@
-# Copyright 2015, Google Inc.
+# Copyright 2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,55 +27,42 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-require 'signet/oauth_2/client'
-
-module Signet
-  # OAuth2 supports OAuth2 authentication.
-  module OAuth2
-    AUTH_METADATA_KEY = :Authorization
-    # Signet::OAuth2::Client creates an OAuth2 client
-    #
-    # This reopens Client to add #apply and #apply! methods which update a
-    # hash with the fetched authentication token.
-    class Client
-      # Updates a_hash updated with the authentication token
-      def apply!(a_hash, opts = {})
-        # fetch the access token there is currently not one, or if the client
-        # has expired
-        fetch_access_token!(opts) if access_token.nil? || expired?
-        a_hash[AUTH_METADATA_KEY] = "Bearer #{access_token}"
+module Google
+  module Auth
+    # Interface definition for token stores. It is not required that
+    # implementations inherit from this class. It is provided for documentation
+    # purposes to illustrate the API contract.
+    class TokenStore
+      class << self
+        attr_accessor :default
       end
 
-      # Returns a clone of a_hash updated with the authentication token
-      def apply(a_hash, opts = {})
-        a_copy = a_hash.clone
-        apply!(a_copy, opts)
-        a_copy
+      # Load the token data from storage for the given ID.
+      #
+      # @param [String] id
+      #  ID of token data to load.
+      # @return [String]
+      #  The loaded token data.
+      def load(_id)
+        fail 'Not implemented'
       end
 
-      # Returns a reference to the #apply method, suitable for passing as
-      # a closure
-      def updater_proc
-        lambda(&method(:apply))
+      # Put the token data into storage for the given ID.
+      #
+      # @param [String] id
+      #  ID of token data to store.
+      # @param [String] token
+      #  The token data to store.
+      def store(_id, _token)
+        fail 'Not implemented'
       end
 
-      def on_refresh(&block)
-        @refresh_listeners ||= []
-        @refresh_listeners << block
-      end
-
-      alias_method :orig_fetch_access_token!, :fetch_access_token!
-      def fetch_access_token!(options)
-        info = orig_fetch_access_token!(options)
-        notify_refresh_listeners
-        info
-      end
-
-      def notify_refresh_listeners
-        listeners = @refresh_listeners || []
-        listeners.each do |block|
-          block.call(self)
-        end
+      # Remove the token data from storage for the given ID.
+      #
+      # @param [String] id
+      #  ID of the token data to delete
+      def delete(_id)
+        fail 'Not implemented'
       end
     end
   end

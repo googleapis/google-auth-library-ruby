@@ -34,6 +34,8 @@ require 'googleauth/credentials_loader'
 require 'googleauth/compute_engine'
 require 'googleauth/service_account'
 require 'googleauth/user_refresh'
+require 'googleauth/client_id'
+require 'googleauth/user_authorizer'
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
@@ -56,11 +58,11 @@ END
         json_key_io, scope = options.values_at(:json_key_io, :scope)
         if json_key_io
           json_key, clz = determine_creds_class(json_key_io)
-          clz.new(json_key_io: StringIO.new(MultiJson.dump(json_key)),
-                  scope: scope)
+          clz.make_creds(json_key_io: StringIO.new(MultiJson.dump(json_key)),
+                         scope: scope)
         else
           clz = read_creds
-          clz.new(scope: scope)
+          clz.make_creds(scope: scope)
         end
       end
 
