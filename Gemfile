@@ -14,6 +14,7 @@ group :development do
   gem 'redis', '~> 3.2'
   gem 'fakeredis', '~> 0.5'
   gem 'webmock', '~> 1.21'
+  gem 'rack-test', '~> 0.6'
 end
 
 platforms :jruby do
