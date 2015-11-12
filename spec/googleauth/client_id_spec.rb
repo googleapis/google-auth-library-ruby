@@ -31,6 +31,7 @@ spec_dir = File.expand_path(File.join(File.dirname(__FILE__)))
 $LOAD_PATH.unshift(spec_dir)
 $LOAD_PATH.uniq!
 
+require 'spec_helper'
 require 'fakefs/safe'
 require 'googleauth'
 

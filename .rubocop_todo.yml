@@ -29,3 +29,4 @@ Metrics/MethodLength:
 Style/FormatString:
   Exclude:
     - 'lib/googleauth/user_authorizer.rb'
+    - 'lib/googleauth/web_user_authorizer.rb'
