@@ -37,6 +37,7 @@ require 'googleauth/user_refresh'
 require 'googleauth/client_id'
 require 'googleauth/user_authorizer'
 require 'googleauth/web_user_authorizer'
+require 'googleauth/installed_app_user_authorizer'
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization

@@ -31,4 +31,5 @@ Gem::Specification.new do |s|
   s.add_dependency 'memoist', '~> 0.12'
   s.add_dependency 'multi_json', '~> 1.11'
   s.add_dependency 'signet', '~> 0.6'
+  s.add_dependency 'launchy', '~> 2.4'
 end
