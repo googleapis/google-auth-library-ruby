@@ -42,7 +42,7 @@ module Signet
       def apply!(a_hash, opts = {})
         # fetch the access token there is currently not one, or if the client
         # has expired
-        fetch_access_token!(opts) if access_token.nil? || expired?
+        fetch_access_token!(opts) if access_token.nil? || expires_within?(60)
         a_hash[AUTH_METADATA_KEY] = "Bearer #{access_token}"
       end
 
@@ -65,7 +65,7 @@ module Signet
       end
 
       alias_method :orig_fetch_access_token!, :fetch_access_token!
-      def fetch_access_token!(options)
+      def fetch_access_token!(options = {})
         info = orig_fetch_access_token!(options)
         notify_refresh_listeners
         info

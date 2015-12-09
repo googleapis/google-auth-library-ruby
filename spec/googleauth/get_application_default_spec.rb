@@ -37,6 +37,9 @@ require 'googleauth'
 require 'spec_helper'
 
 describe '#get_application_default' do
+  # Pass unique options each time to bypass memoization
+  let(:options) { |example| { dememoize: example } }
+
   before(:example) do
     @key = OpenSSL::PKey::RSA.new(2048)
     @var_name = ENV_VAR
@@ -59,31 +62,24 @@ describe '#get_application_default' do
       Dir.mktmpdir do |dir|
         key_path = File.join(dir, 'does-not-exist')
         ENV[@var_name] = key_path
-        expect { Google::Auth.get_application_default(@scope) }
+        expect { Google::Auth.get_application_default(@scope, options) }
           .to raise_error RuntimeError
       end
     end
 
     it 'fails without default file or env if not on compute engine' do
-      stubs = Faraday::Adapter::Test::Stubs.new do |stub|
-        stub.get('/') do |_env|
-          [404,
-           { 'Metadata-Flavor' => 'Google' },
-           '']
-        end
-      end # GCE not detected
+      stub = stub_request(:get, 'http://169.254.169.254')
+             .to_return(status: 404,
+                        headers: { 'Metadata-Flavor' => 'NotGoogle' })
       Dir.mktmpdir do |dir|
         ENV.delete(@var_name) unless ENV[@var_name].nil? # no env var
         ENV['HOME'] = dir # no config present in this tmp dir
-        c = Faraday.new do |b|
-          b.adapter(:test, stubs)
-        end
         blk = proc do
-          Google::Auth.get_application_default(@scope, connection: c)
+          Google::Auth.get_application_default(@scope, options)
         end
         expect(&blk).to raise_error RuntimeError
       end
-      stubs.verify_stubbed_calls
+      expect(stub).to have_been_requested
     end
   end
 
@@ -94,7 +90,8 @@ describe '#get_application_default' do
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV[@var_name] = key_path
-        expect(Google::Auth.get_application_default(@scope)).to_not be_nil
+        expect(Google::Auth.get_application_default(@scope, options))
+          .to_not be_nil
       end
     end
 
@@ -105,7 +102,8 @@ describe '#get_application_default' do
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV['HOME'] = dir
-        expect(Google::Auth.get_application_default(@scope)).to_not be_nil
+        expect(Google::Auth.get_application_default(@scope, options))
+          .to_not be_nil
       end
     end
 
@@ -116,30 +114,21 @@ describe '#get_application_default' do
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV['HOME'] = dir
-        expect(Google::Auth.get_application_default).to_not be_nil
+        expect(Google::Auth.get_application_default(nil, options)).to_not be_nil
       end
     end
 
     it 'succeeds without default file or env if on compute engine' do
-      stubs = Faraday::Adapter::Test::Stubs.new do |stub|
-        stub.get('/') do |_env|
-          [200,
-           { 'Metadata-Flavor' => 'Google' },
-           '']
-        end
-      end # GCE detected
+      stub = stub_request(:get, 'http://169.254.169.254')
+             .to_return(status: 200,
+                        headers: { 'Metadata-Flavor' => 'Google' })
       Dir.mktmpdir do |dir|
         ENV.delete(@var_name) unless ENV[@var_name].nil? # no env var
         ENV['HOME'] = dir # no config present in this tmp dir
-        c = Faraday.new do |b|
-          b.adapter(:test, stubs)
-        end
-        creds = Google::Auth.get_application_default(
-          @scope,
-          connection: c)
+        creds = Google::Auth.get_application_default(@scope, options)
         expect(creds).to_not be_nil
       end
-      stubs.verify_stubbed_calls
+      expect(stub).to have_been_requested
     end
 
     it 'succeeds with system default file' do
@@ -148,7 +137,8 @@ describe '#get_application_default' do
         key_path = File.join('/etc/google/auth/', CREDENTIALS_FILE_NAME)
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
-        expect(Google::Auth.get_application_default(@scope)).to_not be_nil
+        expect(Google::Auth.get_application_default(@scope, options))
+          .to_not be_nil
         File.delete(key_path)
       end
     end
@@ -161,7 +151,8 @@ describe '#get_application_default' do
       ENV[CLIENT_SECRET_VAR] = cred_json[:client_secret]
       ENV[REFRESH_TOKEN_VAR] = cred_json[:refresh_token]
       ENV[ACCOUNT_TYPE_VAR] = cred_json[:type]
-      expect(Google::Auth.get_application_default(@scope)).to_not be_nil
+      expect(Google::Auth.get_application_default(@scope, options))
+        .to_not be_nil
     end
   end
 
@@ -225,7 +216,7 @@ describe '#get_application_default' do
         File.write(key_path, cred_json_text)
         ENV[@var_name] = key_path
         blk = proc do
-          Google::Auth.get_application_default(@scope)
+          Google::Auth.get_application_default(@scope, options)
         end
         expect(&blk).to raise_error RuntimeError
       end
@@ -239,7 +230,7 @@ describe '#get_application_default' do
         File.write(key_path, cred_json_text)
         ENV['HOME'] = dir
         blk = proc do
-          Google::Auth.get_application_default(@scope)
+          Google::Auth.get_application_default(@scope, options)
         end
         expect(&blk).to raise_error RuntimeError
       end
@@ -249,7 +240,7 @@ describe '#get_application_default' do
       ENV[PRIVATE_KEY_VAR] = cred_json[:private_key]
       ENV[CLIENT_EMAIL_VAR] = cred_json[:client_email]
       blk = proc do
-        Google::Auth.get_application_default(@scope)
+        Google::Auth.get_application_default(@scope, options)
       end
       expect(&blk).to raise_error RuntimeError
     end

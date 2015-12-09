@@ -37,7 +37,7 @@ require 'googleauth/compute_engine'
 require 'spec_helper'
 
 describe Google::Auth::GCECredentials do
-  MD_URI = '/computeMetadata/v1/instance/service-accounts/default/token'
+  MD_URI = 'http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token'
   GCECredentials = Google::Auth::GCECredentials
 
   before(:example) do
@@ -46,16 +46,14 @@ describe Google::Auth::GCECredentials do
 
   def make_auth_stubs(opts = {})
     access_token = opts[:access_token] || ''
-    Faraday::Adapter::Test::Stubs.new do |stub|
-      stub.get(MD_URI) do |env|
-        headers = env[:request_headers]
-        expect(headers['Metadata-Flavor']).to eq('Google')
-        build_json_response(
-          'access_token' => access_token,
-          'token_type' => 'Bearer',
-          'expires_in' => 3600)
-      end
-    end
+    body = MultiJson.dump('access_token' => access_token,
+                          'token_type' => 'Bearer',
+                          'expires_in' => 3600)
+    stub_request(:get, MD_URI)
+      .with(headers: { 'Metadata-Flavor' => 'Google' })
+      .to_return(body: body,
+                 status: 200,
+                 headers: { 'Content-Type' => 'application/json' })
   end
 
   it_behaves_like 'apply/apply! are OK'
@@ -63,83 +61,48 @@ describe Google::Auth::GCECredentials do
   context 'metadata is unavailable' do
     describe '#fetch_access_token' do
       it 'should fail if the metadata request returns a 404' do
-        stubs = Faraday::Adapter::Test::Stubs.new do |stub|
-          stub.get(MD_URI) do |_env|
-            [404,
-             { 'Metadata-Flavor' => 'Google' },
-             '']
-          end
-        end
-        c = Faraday.new do |b|
-          b.adapter(:test, stubs)
-        end
-        blk = proc { @client.fetch_access_token!(connection: c) }
+        stub = stub_request(:get, MD_URI)
+               .to_return(status: 404,
+                          headers: { 'Metadata-Flavor' => 'Google' })
+        blk = proc { @client.fetch_access_token! }
         expect(&blk).to raise_error Signet::AuthorizationError
-        stubs.verify_stubbed_calls
+        expect(stub).to have_been_requested
       end
 
       it 'should fail if the metadata request returns an unexpected code' do
-        stubs = Faraday::Adapter::Test::Stubs.new do |stub|
-          stub.get(MD_URI) do |_env|
-            [503,
-             { 'Metadata-Flavor' => 'Google' },
-             '']
-          end
-        end
-        c = Faraday.new do |b|
-          b.adapter(:test, stubs)
-        end
-        blk = proc { @client.fetch_access_token!(connection: c) }
+        stub = stub_request(:get, MD_URI)
+               .to_return(status: 503,
+                          headers: { 'Metadata-Flavor' => 'Google' })
+        blk = proc { @client.fetch_access_token! }
         expect(&blk).to raise_error Signet::AuthorizationError
-        stubs.verify_stubbed_calls
+        expect(stub).to have_been_requested
       end
     end
   end
 
   describe '#on_gce?' do
     it 'should be true when Metadata-Flavor is Google' do
-      stubs = Faraday::Adapter::Test::Stubs.new do |stub|
-        stub.get('/') do |_env|
-          [200,
-           { 'Metadata-Flavor' => 'Google' },
-           '']
-        end
-      end
-      c = Faraday.new do |b|
-        b.adapter(:test, stubs)
-      end
-      expect(GCECredentials.on_gce?(connection: c)).to eq(true)
-      stubs.verify_stubbed_calls
+      stub = stub_request(:get, 'http://169.254.169.254')
+             .to_return(status: 200,
+                        headers: { 'Metadata-Flavor' => 'Google' })
+      expect(GCECredentials.on_gce?({}, true)).to eq(true)
+      expect(stub).to have_been_requested
     end
 
     it 'should be false when Metadata-Flavor is not Google' do
-      stubs = Faraday::Adapter::Test::Stubs.new do |stub|
-        stub.get('/') do |_env|
-          [200,
-           { 'Metadata-Flavor' => 'NotGoogle' },
-           '']
-        end
-      end
-      c = Faraday.new do |b|
-        b.adapter(:test, stubs)
-      end
-      expect(GCECredentials.on_gce?(connection: c)).to eq(false)
-      stubs.verify_stubbed_calls
+      stub = stub_request(:get, 'http://169.254.169.254')
+             .to_return(status: 200,
+                        headers: { 'Metadata-Flavor' => 'NotGoogle' })
+      expect(GCECredentials.on_gce?({}, true)).to eq(false)
+      expect(stub).to have_been_requested
     end
 
     it 'should be false if the response is not 200' do
-      stubs = Faraday::Adapter::Test::Stubs.new do |stub|
-        stub.get('/') do |_env|
-          [404,
-           { 'Metadata-Flavor' => 'Google' },
-           '']
-        end
-      end
-      c = Faraday.new do |b|
-        b.adapter(:test, stubs)
-      end
-      expect(GCECredentials.on_gce?(connection: c)).to eq(false)
-      stubs.verify_stubbed_calls
+      stub = stub_request(:get, 'http://169.254.169.254')
+             .to_return(status: 404,
+                        headers: { 'Metadata-Flavor' => 'NotGoogle' })
+      expect(GCECredentials.on_gce?({}, true)).to eq(false)
+      expect(stub).to have_been_requested
     end
   end
 end

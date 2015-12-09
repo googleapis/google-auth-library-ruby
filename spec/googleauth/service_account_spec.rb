@@ -129,16 +129,21 @@ describe Google::Auth::ServiceAccountCredentials do
 
   def make_auth_stubs(opts = {})
     access_token = opts[:access_token] || ''
-    Faraday::Adapter::Test::Stubs.new do |stub|
-      stub.post('/oauth2/v3/token') do |env|
-        params = Addressable::URI.form_unencode(env[:body])
-        _claim, _header = JWT.decode(params.assoc('assertion').last,
-                                     @key.public_key)
-        want = ['grant_type', 'urn:ietf:params:oauth:grant-type:jwt-bearer']
-        expect(params.assoc('grant_type')).to eq(want)
-        build_access_token_json(access_token)
-      end
+    body = MultiJson.dump('access_token' => access_token,
+                          'token_type' => 'Bearer',
+                          'expires_in' => 3600)
+    blk = proc do |request|
+      params = Addressable::URI.form_unencode(request.body)
+      _claim, _header = JWT.decode(params.assoc('assertion').last,
+                                   @key.public_key)
     end
+    stub_request(:post, 'https://www.googleapis.com/oauth2/v3/token')
+      .with(body: hash_including(
+        'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer'),
+            &blk)
+      .to_return(body: body,
+                 status: 200,
+                 headers: { 'Content-Type' => 'application/json' })
   end
 
   def cred_json_text

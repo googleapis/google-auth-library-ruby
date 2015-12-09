@@ -38,7 +38,8 @@ $ gem install googleauth
 require 'googleauth'
 
 # Get the environment configured authorization
-scopes =  ['https://www.googleapis.com/auth/cloud-platform', 'https://www.googleapis.com/auth/compute']
+scopes =  ['https://www.googleapis.com/auth/cloud-platform',
+           'https://www.googleapis.com/auth/compute']
 authorization = Google::Auth.get_application_default(scopes)
 
 # Add the the access token obtained using the authorization to a hash, e.g
@@ -60,6 +61,84 @@ They are best suited for cases when the call needs to have the same identity
 and authorization level for the application independent of the user. This is
 the recommended approach to authorize calls to Cloud APIs, particularly when
 you're building an application that uses Google Compute Engine.
+
+## User Credentials
+
+The library also provides support for requesting and storing user
+credentials (3-Legged OAuth2.) Two implementations are currently available,
+a generic authorizer useful for command line apps or custom integrations as
+well as a web variant tailored toward Rack-based applications.
+
+The authorizers are intended for authorization use cases. For sign-on,
+see [Google Idenity Platform](https://developers.google.com/identity/)
+
+### Example (Web)
+
+```ruby
+require 'googleauth'
+require 'googleauth/web_user_authorizer'
+require 'googleauth/stores/redis_token_store'
+require 'redis'
+
+client_id = Google::Auth::ClientId.from_file('/path/to/client_secrets.json')
+scope = ['https://www.googleapis.com/auth/drive']
+token_store = Google::Auth::Stores::RedisTokenStore.new(redis: Redis.new)
+authorizer = Google::Auth::WebUserAuthorizer.new(
+  client_id, scope, token_store, '/oauth2callback')
+
+
+get('/authorize') do
+  # NOTE: Assumes the user is already authenticated to the app
+  user_id = request.session['user_id']
+  credentials = authorizer.get_credentials(user_id, request)
+  if credentials.nil?
+    redirect authorizer.get_authorization_url(user_id: user_id, request: request)
+  end
+  # Credentials are valid, can call APIs
+  # ...
+end
+
+get('/oauth2callback') do
+  target_url = Google::Auth::WebUserAuthorizer.handle_auth_callback_deferred(
+    request)
+  redirect target_url
+end
+```
+
+### Example (Command Line)
+
+```ruby
+require 'googleauth'
+require 'googleauth/stores/file_token_store'
+
+scope = 'https://www.googleapis.com/auth/drive'
+client_id = Google::Auth::ClientId.from_file('/path/to/client_secrets.json')
+token_store = Google::Auth::Stores::FileTokenStore.new(
+  :file => '/path/to/tokens.yaml')
+authorizer = Google::Auth::UserAuthorizer.new(client_id, scope, token_store)
+
+credentials = authorizer.get_credentials(user_id)
+if credentials.nil?
+  url = authorizer.get_authorization_url(base_url: 'urn:ietf:wg:oauth:2.0:oob')
+  puts "Open #{url} in your browser and enter the resulting code:"
+  code = gets
+  credentials = authorizer.get_and_store_credentials_from_code(
+    user_id: user_id, code: code, base_url: OOB_URI)
+end
+
+# OK to use credentials
+```
+
+### Storage
+
+Authorizers require a storage instance to manage long term persistence of
+access and refresh tokens. Two storage implementations are included:
+
+*   Google::Auth::Stores::FileTokenStore
+*   Google::Auth::Stores::RedisTokenStore
+
+Custom storage implementations can also be used. See
+[token_store.rb](lib/googleauth/token_store.rb) for additional details.
 
 ## What about auth in google-apis-ruby-client?
 

@@ -65,14 +65,14 @@ describe Google::Auth::UserRefreshCredentials do
 
   def make_auth_stubs(opts = {})
     access_token = opts[:access_token] || ''
-    Faraday::Adapter::Test::Stubs.new do |stub|
-      stub.post('/oauth2/v3/token') do |env|
-        params = Addressable::URI.form_unencode(env[:body])
-        want = %w(grant_type refresh_token)
-        expect(params.assoc('grant_type')).to eq(want)
-        build_access_token_json(access_token)
-      end
-    end
+    body = MultiJson.dump('access_token' => access_token,
+                          'token_type' => 'Bearer',
+                          'expires_in' => 3600)
+    stub_request(:post, 'https://www.googleapis.com/oauth2/v3/token')
+      .with(body: hash_including('grant_type' => 'refresh_token'))
+      .to_return(body: body,
+                 status: 200,
+                 headers: { 'Content-Type' => 'application/json' })
   end
 
   def cred_json_text(missing = nil)
@@ -244,70 +244,50 @@ describe Google::Auth::UserRefreshCredentials do
   end
 
   describe 'when revoking a refresh token' do
-    let(:stubs) do
-      Faraday::Adapter::Test::Stubs.new do |stub|
-        stub.get('/o/oauth2/revoke') do |env|
-          expect(env.params['token']).to eql 'refreshtoken'
-          [200]
-        end
-      end
-    end
-
-    let(:connection) do
-      Faraday.new do |c|
-        c.adapter(:test, stubs)
-      end
+    let(:stub) do
+      stub_request(:get, 'https://accounts.google.com/o/oauth2/revoke' \
+                         '?token=refreshtoken')
+        .to_return(status: 200,
+                   headers: { 'Content-Type' => 'application/json' })
     end
 
     before(:example) do
-      @client.revoke!(connection: connection)
+      stub
+      @client.revoke!
     end
 
     it_behaves_like 'revoked token'
   end
 
   describe 'when revoking an access token' do
-    let(:stubs) do
-      Faraday::Adapter::Test::Stubs.new do |stub|
-        stub.get('/o/oauth2/revoke') do |env|
-          expect(env.params['token']).to eql 'accesstoken'
-          [200]
-        end
-      end
-    end
-
-    let(:connection) do
-      Faraday.new do |c|
-        c.adapter(:test, stubs)
-      end
+    let(:stub) do
+      stub_request(:get, 'https://accounts.google.com/o/oauth2/revoke' \
+                         '?token=accesstoken')
+        .to_return(status: 200,
+                   headers: { 'Content-Type' => 'application/json' })
     end
 
     before(:example) do
+      stub
       @client.refresh_token = nil
       @client.access_token = 'accesstoken'
-      @client.revoke!(connection: connection)
+      @client.revoke!
     end
 
     it_behaves_like 'revoked token'
   end
 
   describe 'when revoking an invalid token' do
-    let(:stubs) do
-      Faraday::Adapter::Test::Stubs.new do |stub|
-        stub.get('/o/oauth2/revoke') do |_env|
-          [400]
-        end
-      end
-    end
-
-    let(:connection) do
-      Faraday.new do |c|
-        c.adapter(:test, stubs)
-      end
+    let(:stub) do
+      stub_request(:get, 'https://accounts.google.com/o/oauth2/revoke' \
+                         '?token=refreshtoken')
+        .to_return(status: 400,
+                   headers: { 'Content-Type' => 'application/json' })
     end
 
     it 'raises an authorization error' do
-      expect { @client.revoke!(connection: connection) }.to raise_error(
+      stub
+      expect { @client.revoke! }.to raise_error(
         Signet::AuthorizationError)
     end
   end
