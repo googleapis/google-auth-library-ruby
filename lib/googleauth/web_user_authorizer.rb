@@ -44,16 +44,17 @@ module Google
     #       user_id = request.session['user_email']
     #       credentials = authorizer.get_credentials(user_id, request)
     #       if credentials.nil?
-    #         redirect authorizer.get_authorization_url(user_id: user_id, request: request)
+    #         redirect authorizer.get_authorization_url(user_id: user_id,
+    #                                                   request: request)
     #       end
     #       # Credentials are valid, can call APIs
     #       ...
     #    end
     #
     #    get('/oauth2callback') do
-    #       target_url = Google::Auth::WebUserAuthorizer.handle_auth_callback_deferred(
-    #         request)
-    #      redirect target_url
+    #      url = Google::Auth::WebUserAuthorizer.handle_auth_callback_deferred(
+    #        request)
+    #      redirect url
     #    end
     #
     # Instead of implementing the callback directly, applications are
