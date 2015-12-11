@@ -35,7 +35,6 @@ $LOAD_PATH.unshift(spec_dir)
 $LOAD_PATH.unshift(lib_dir)
 $LOAD_PATH.uniq!
 
-
 # set up coverage
 require 'simplecov'
 require 'coveralls'
