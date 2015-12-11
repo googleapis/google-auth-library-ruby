@@ -34,18 +34,6 @@ $LOAD_PATH.uniq!
 require 'faraday'
 require 'spec_helper'
 
-def build_json_response(payload)
-  [200,
-   { 'Content-Type' => 'application/json; charset=utf-8' },
-   MultiJson.dump(payload)]
-end
-
-def build_access_token_json(token)
-  build_json_response('access_token' => token,
-                      'token_type' => 'Bearer',
-                      'expires_in' => 3600)
-end
-
 shared_examples 'apply/apply! are OK' do
   let(:auth_key) { :Authorization }
 

@@ -35,11 +35,15 @@ $LOAD_PATH.unshift(spec_dir)
 $LOAD_PATH.unshift(lib_dir)
 $LOAD_PATH.uniq!
 
+
 # set up coverage
 require 'simplecov'
 require 'coveralls'
 
-SimpleCov.formatter = Coveralls::SimpleCov::Formatter
+SimpleCov.formatters = [
+  Coveralls::SimpleCov::Formatter,
+  SimpleCov::Formatter::HTMLFormatter
+]
 SimpleCov.start
 
 require 'faraday'
