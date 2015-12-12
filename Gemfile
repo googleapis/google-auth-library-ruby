@@ -15,6 +15,7 @@ group :development do
   gem 'fakeredis', '~> 0.5'
   gem 'webmock', '~> 1.21'
   gem 'rack-test', '~> 0.6'
+  gem 'sinatra'
 end
 
 platforms :jruby do

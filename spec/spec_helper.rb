@@ -39,7 +39,10 @@ $LOAD_PATH.uniq!
 require 'simplecov'
 require 'coveralls'
 
-SimpleCov.formatter = Coveralls::SimpleCov::Formatter
+SimpleCov.formatters = [
+  Coveralls::SimpleCov::Formatter,
+  SimpleCov::Formatter::HTMLFormatter
+]
 SimpleCov.start
 
 require 'faraday'

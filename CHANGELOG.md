@@ -1,3 +1,10 @@
+## 0.5.0 (12/10/2015)
+
+### Changes
+
+* Initial support for user credentials ([@sqrrrl][])
+* Update Signet to 0.7
+
 ## 0.4.2 (05/08/2015)
 
 ### Changes
