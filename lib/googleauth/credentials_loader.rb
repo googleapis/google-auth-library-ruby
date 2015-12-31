@@ -28,6 +28,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 require 'memoist'
+require 'os'
 require 'rbconfig'
 
 module Google
@@ -54,12 +55,6 @@ module Google
       WELL_KNOWN_ERROR = 'Unable to read the default credential file'
 
       SYSTEM_DEFAULT_ERROR = 'Unable to read the system default credential file'
-
-      # determines if the current OS is windows
-      def windows?
-        RbConfig::CONFIG['host_os'] =~ /Windows|mswin/
-      end
-      memoize :windows?
 
       # make_creds proxies the construction of a credentials instance
       #
@@ -91,10 +86,10 @@ module Google
       #
       # @param scope [string|array|nil] the scope(s) to access
       def from_well_known_path(scope = nil)
-        home_var = windows? ? 'APPDATA' : 'HOME'
+        home_var = OS.windows? ? 'APPDATA' : 'HOME'
         base = WELL_KNOWN_PATH
         root = ENV[home_var].nil? ? '' : ENV[home_var]
-        base = File.join('.config', base) unless windows?
+        base = File.join('.config', base) unless OS.windows?
         path = File.join(root, base)
         return nil unless File.exist?(path)
         File.open(path) do |f|
@@ -108,7 +103,7 @@ module Google
       #
       # @param scope [string|array|nil] the scope(s) to access
       def from_system_default_path(scope = nil)
-        if windows?
+        if OS.windows?
           return nil unless ENV['ProgramData']
           prefix = File.join(ENV['ProgramData'], 'Google/Auth')
         else
