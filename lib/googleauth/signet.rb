@@ -32,7 +32,7 @@ require 'signet/oauth_2/client'
 module Signet
   # OAuth2 supports OAuth2 authentication.
   module OAuth2
-    AUTH_METADATA_KEY = :Authorization
+    AUTH_METADATA_KEY = :authorization
     # Signet::OAuth2::Client creates an OAuth2 client
     #
     # This reopens Client to add #apply and #apply! methods which update a
