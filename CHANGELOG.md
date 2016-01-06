@@ -4,7 +4,7 @@
 
 * Change header name emitted by `Client#apply` from "Authorization" to "authorization" ([@murgatroid99][])
 * Fix ADC not working on some windows machines ([@vsubramani][])
-[#55][https://github.com/google/google-auth-library-ruby/issues/55]
+[#55](https://github.com/google/google-auth-library-ruby/issues/55)
 
 ## 0.5.0 (12/10/2015)
 
