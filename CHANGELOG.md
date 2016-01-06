@@ -1,3 +1,9 @@
+## 0.5.1 (06/01/2016)
+
+### Changes
+
+* Change header name emitted by `Client#apply` from "Authorization" to "authorization" ([@murgatroid99][])
+
 ## 0.5.0 (12/10/2015)
 
 ### Changes
@@ -52,3 +58,4 @@
 [@joneslee85]: https://github.com/joneslee85
 [@mr-salty]: https://github.com/mr-salty
 [@tbetbetbe]: https://github.com/tbetbetbe
+[@murgatroid99]: https://github.com/murgatroid99
