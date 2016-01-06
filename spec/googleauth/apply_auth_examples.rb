@@ -35,7 +35,7 @@ require 'faraday'
 require 'spec_helper'
 
 shared_examples 'apply/apply! are OK' do
-  let(:auth_key) { :Authorization }
+  let(:auth_key) { :authorization }
 
   # tests that use these examples need to define
   #
