@@ -70,7 +70,7 @@ a generic authorizer useful for command line apps or custom integrations as
 well as a web variant tailored toward Rack-based applications.
 
 The authorizers are intended for authorization use cases. For sign-on,
-see [Google Idenity Platform](https://developers.google.com/identity/)
+see [Google Identity Platform](https://developers.google.com/identity/)
 
 ### Example (Web)
 
@@ -111,6 +111,8 @@ end
 require 'googleauth'
 require 'googleauth/stores/file_token_store'
 
+OOB_URI = 'urn:ietf:wg:oauth:2.0:oob'
+
 scope = 'https://www.googleapis.com/auth/drive'
 client_id = Google::Auth::ClientId.from_file('/path/to/client_secrets.json')
 token_store = Google::Auth::Stores::FileTokenStore.new(
@@ -119,7 +121,7 @@ authorizer = Google::Auth::UserAuthorizer.new(client_id, scope, token_store)
 
 credentials = authorizer.get_credentials(user_id)
 if credentials.nil?
-  url = authorizer.get_authorization_url(base_url: 'urn:ietf:wg:oauth:2.0:oob')
+  url = authorizer.get_authorization_url(base_url: OOB_URI )
   puts "Open #{url} in your browser and enter the resulting code:"
   code = gets
   credentials = authorizer.get_and_store_credentials_from_code(
