@@ -70,7 +70,7 @@ END
       def self.read_creds
         env_var = CredentialsLoader::ACCOUNT_TYPE_VAR
         type = ENV[env_var]
-        fail "#{ACCOUNT_TYPE_VAR} is undefined in env" unless type
+        fail "#{env_var} is undefined in env" unless type
         case type
         when 'service_account'
           ServiceAccountCredentials
