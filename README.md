@@ -92,7 +92,7 @@ get('/authorize') do
   user_id = request.session['user_id']
   credentials = authorizer.get_credentials(user_id, request)
   if credentials.nil?
-    redirect authorizer.get_authorization_url(user_id: user_id, request: request)
+    redirect authorizer.get_authorization_url(login_hint: user_id, request: request)
   end
   # Credentials are valid, can call APIs
   # ...
