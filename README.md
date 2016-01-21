@@ -142,6 +142,29 @@ access and refresh tokens. Two storage implementations are included:
 Custom storage implementations can also be used. See
 [token_store.rb](lib/googleauth/token_store.rb) for additional details.
 
+## Service Accounts
+
+This library provides an implementation of service accounts for Ruby.
+
+### Example
+
+```
+require "googleauth"
+
+# Get the environment configured authorization
+scopes = ['https://www.googleapis.com/auth/cloud-platform',
+          'https://www.googleapis.com/auth/compute']
+authorization = Google::Auth::ServiceAccountCredentials.make_creds(
+  json_key_io: File.open("/path/to/client_secrets.json"), scope: scopes)
+
+# Add the the access token obtained using the authorization to a hash, e.g
+# headers.
+some_headers = {}
+authorization.apply(some_headers)
+
+# OK to use authorization
+```
+
 ## What about auth in google-apis-ruby-client?
 
 The goal is for all auth done by
