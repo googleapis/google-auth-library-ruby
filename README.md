@@ -148,7 +148,7 @@ This library provides an implementation of service accounts for Ruby.
 
 ### Example
 
-```
+```ruby
 require "googleauth"
 
 # Get the environment configured authorization
