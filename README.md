@@ -149,7 +149,7 @@ This library provides an implementation of service accounts for Ruby.
 ### Example
 
 ```ruby
-require "googleauth"
+require 'googleauth'
 
 # Get the environment configured authorization
 scopes = ['https://www.googleapis.com/auth/cloud-platform',
