@@ -62,6 +62,20 @@ and authorization level for the application independent of the user. This is
 the recommended approach to authorize calls to Cloud APIs, particularly when
 you're building an application that uses Google Compute Engine.
 
+### Example (Service Action)
+
+```ruby
+require 'googleauth/credentials_loader'
+
+scope = 'https://www.googleapis.com/auth/androidpublisher'
+
+authorizer = Google::Auth::ServiceAccountCredentials.make_creds(
+  json_key_io: StringIO.new(File.read('/path/to/service_account_json_key.json')),
+  scope: scope)
+
+authorizer.fetch_access_token!
+```
+
 ## User Credentials
 
 The library also provides support for requesting and storing user
