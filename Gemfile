@@ -16,6 +16,7 @@ group :development do
   gem 'webmock', '~> 1.21'
   gem 'rack-test', '~> 0.6'
   gem 'sinatra'
+  gem 'mongo', '~> 2.2'
 end
 
 platforms :jruby do
