@@ -17,25 +17,25 @@ module Google
         # @param [String] collection
         #  Collection name for mongo. Defaults to 'TokenStore'
         def initialize(options = {})
-					collection = options.delete(:collection)
+          collection = options.delete(:collection)
           @mongo = options.delete(:mongo)
           @collection = collection || DEFAULT_COLLECTION
         end
 
         # (see Google::Auth::Stores::TokenStore#load)
         def load(id)
-          ans = @mongo[@collection].find({_id: id}, {limit: 1, projection: {_id: 0, token: 1}}).to_a
+          ans = @mongo[@collection].find({ _id: id }, { limit: 1, projection: { _id: 0, token: 1 } }).to_a
           ans.any? ? ans[0][:token] : nil
         end
 
         # (see Google::Auth::Stores::TokenStore#store)
         def store(id, token)
-          @mongo[@collection].update_one({_id: id}, {_id: id, token: token}, {upsert: true})
+          @mongo[@collection].update_one({ _id: id }, { _id: id, token: token }, { upsert: true })
         end
 
         # (see Google::Auth::Stores::TokenStore#delete)
         def delete(id)
-          @mongo[@collection].delete_one({_id: id})
+          @mongo[@collection].delete_one({ _id: id })
         end
       end
     end
