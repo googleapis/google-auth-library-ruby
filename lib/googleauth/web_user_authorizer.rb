@@ -66,20 +66,21 @@ module Google
     # @see {Google::Auth::ControllerHelpers}
     # @note Requires sessions are enabled
     class WebUserAuthorizer < Google::Auth::UserAuthorizer
-      STATE_PARAM = 'state'
-      AUTH_CODE_KEY = 'code'
-      ERROR_CODE_KEY = 'error'
-      SESSION_ID_KEY = 'session_id'
-      CALLBACK_STATE_KEY = 'g-auth-callback'
-      CURRENT_URI_KEY = 'current_uri'
-      XSRF_KEY = 'g-xsrf-token'
-      SCOPE_KEY = 'scope'
+      STATE_PARAM = 'state'.freeze
+      AUTH_CODE_KEY = 'code'.freeze
+      ERROR_CODE_KEY = 'error'.freeze
+      SESSION_ID_KEY = 'session_id'.freeze
+      CALLBACK_STATE_KEY = 'g-auth-callback'.freeze
+      CURRENT_URI_KEY = 'current_uri'.freeze
+      XSRF_KEY = 'g-xsrf-token'.freeze
+      SCOPE_KEY = 'scope'.freeze
 
-      NIL_REQUEST_ERROR = 'Request is required.'
-      NIL_SESSION_ERROR = 'Sessions must be enabled'
-      MISSING_AUTH_CODE_ERROR = 'Missing authorization code in request'
-      AUTHORIZATION_ERROR = 'Authorization error: %s'
-      INVALID_STATE_TOKEN_ERROR = 'State token does not match expected value'
+      NIL_REQUEST_ERROR = 'Request is required.'.freeze
+      NIL_SESSION_ERROR = 'Sessions must be enabled'.freeze
+      MISSING_AUTH_CODE_ERROR = 'Missing authorization code in request'.freeze
+      AUTHORIZATION_ERROR = 'Authorization error: %s'.freeze
+      INVALID_STATE_TOKEN_ERROR =
+        'State token does not match expected value'.freeze
 
       class << self
         attr_accessor :default
@@ -128,13 +129,15 @@ module Google
       #  credentials & next URL to redirect to
       def handle_auth_callback(user_id, request)
         callback_state, redirect_uri = WebUserAuthorizer.extract_callback_state(
-          request)
+          request
+        )
         WebUserAuthorizer.validate_callback_state(callback_state, request)
         credentials = get_and_store_credentials_from_code(
           user_id: user_id,
           code: callback_state[AUTH_CODE_KEY],
           scope: callback_state[SCOPE_KEY],
-          base_url: request.url)
+          base_url: request.url
+        )
         [credentials, redirect_uri]
       end
 
@@ -156,14 +159,15 @@ module Google
       def get_authorization_url(options = {})
         options = options.dup
         request = options[:request]
-        fail NIL_REQUEST_ERROR if request.nil?
-        fail NIL_SESSION_ERROR if request.session.nil?
+        raise NIL_REQUEST_ERROR if request.nil?
+        raise NIL_SESSION_ERROR if request.session.nil?
 
         redirect_to = options[:redirect_to] || request.url
         request.session[XSRF_KEY] = SecureRandom.base64
         options[:state] = MultiJson.dump(
           SESSION_ID_KEY => request.session[XSRF_KEY],
-          CURRENT_URI_KEY => redirect_to)
+          CURRENT_URI_KEY => redirect_to
+        )
         options[:base_url] = request.url
         super(options)
       end
@@ -193,7 +197,8 @@ module Google
             user_id: user_id,
             code: callback_state[AUTH_CODE_KEY],
             scope: callback_state[SCOPE_KEY],
-            base_url: request.url)
+            base_url: request.url
+          )
         else
           super(user_id, scope)
         end
@@ -204,7 +209,7 @@ module Google
         redirect_uri = state[CURRENT_URI_KEY]
         callback_state = {
           AUTH_CODE_KEY => request[AUTH_CODE_KEY],
-          ERROR_CODE_KEY =>  request[ERROR_CODE_KEY],
+          ERROR_CODE_KEY => request[ERROR_CODE_KEY],
           SESSION_ID_KEY => state[SESSION_ID_KEY],
           SCOPE_KEY => request[SCOPE_KEY]
         }
@@ -223,12 +228,12 @@ module Google
       #  Current request
       def self.validate_callback_state(state, request)
         if state[AUTH_CODE_KEY].nil?
-          fail Signet::AuthorizationError, MISSING_AUTH_CODE_ERROR
+          raise Signet::AuthorizationError, MISSING_AUTH_CODE_ERROR
         elsif state[ERROR_CODE_KEY]
-          fail Signet::AuthorizationError,
-               sprintf(AUTHORIZATION_ERROR, state[ERROR_CODE_KEY])
+          raise Signet::AuthorizationError,
+                sprintf(AUTHORIZATION_ERROR, state[ERROR_CODE_KEY])
         elsif request.session[XSRF_KEY] != state[SESSION_ID_KEY]
-          fail Signet::AuthorizationError, INVALID_STATE_TOKEN_ERROR
+          raise Signet::AuthorizationError, INVALID_STATE_TOKEN_ERROR
         end
       end
 
@@ -254,7 +259,7 @@ module Google
       #
       # @see {Google::Auth::WebUserAuthorizer}
       class CallbackApp
-        LOCATION_HEADER = 'Location'
+        LOCATION_HEADER = 'Location'.freeze
         REDIR_STATUS = 302
         ERROR_STATUS = 500
 

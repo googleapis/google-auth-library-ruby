@@ -52,13 +52,15 @@ describe Google::Auth::WebUserAuthorizer do
     let(:env) do
       Rack::MockRequest.env_for(
         'http://example.com:8080/test',
-        'REMOTE_ADDR' => '10.10.10.10')
+        'REMOTE_ADDR' => '10.10.10.10'
+      )
     end
     let(:request) { Rack::Request.new(env) }
     it 'should include current url in state' do
       url = authorizer.get_authorization_url(request: request)
       expect(url).to match(
-        %r{%22current_uri%22:%22http://example.com:8080/test%22})
+        %r{%22current_uri%22:%22http://example.com:8080/test%22}
+      )
     end
 
     it 'should include request forgery token in state' do
@@ -76,20 +78,23 @@ describe Google::Auth::WebUserAuthorizer do
     it 'should resolve callback against base URL' do
       url = authorizer.get_authorization_url(request: request)
       expect(url).to match(
-        %r{redirect_uri=http://example.com:8080/oauth2callback})
+        %r{redirect_uri=http://example.com:8080/oauth2callback}
+      )
     end
 
     it 'should allow overriding the current URL' do
       url = authorizer.get_authorization_url(
         request: request,
-        redirect_to: '/foo')
+        redirect_to: '/foo'
+      )
       expect(url).to match %r{%22current_uri%22:%22/foo%22}
     end
 
     it 'should pass through login hint' do
       url = authorizer.get_authorization_url(
         request: request,
-        login_hint: 'user@example.com')
+        login_hint: 'user@example.com'
+      )
       expect(url).to match(/login_hint=user@example.com/)
     end
   end
@@ -113,7 +118,8 @@ describe Google::Auth::WebUserAuthorizer do
         'http://example.com:8080/oauth2callback?code=authcode&'\
         'state=%7B%22current_uri%22%3A%22%2Ffoo%22%2C%22'\
         'session_id%22%3A%22abc%22%7D',
-        'REMOTE_ADDR' => '10.10.10.10')
+        'REMOTE_ADDR' => '10.10.10.10'
+      )
     end
     let(:request) { Rack::Request.new(env) }
 
@@ -123,7 +129,8 @@ describe Google::Auth::WebUserAuthorizer do
 
     it 'should return credentials when valid code present' do
       expect(credentials).to be_instance_of(
-        Google::Auth::UserRefreshCredentials)
+        Google::Auth::UserRefreshCredentials
+      )
     end
 
     it 'should return next URL to redirect to' do

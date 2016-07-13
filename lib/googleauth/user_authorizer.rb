@@ -32,6 +32,7 @@ require 'multi_json'
 require 'googleauth/signet'
 require 'googleauth/user_refresh'
 
+# rubocop:disable ClassLength
 module Google
   module Auth
     # Handles an interactive 3-Legged-OAuth2 (3LO) user consent authorization.
@@ -53,13 +54,13 @@ module Google
     #     ...
     class UserAuthorizer
       MISMATCHED_CLIENT_ID_ERROR =
-        'Token client ID of %s does not match configured client id %s'
-      NIL_CLIENT_ID_ERROR = 'Client id can not be nil.'
-      NIL_SCOPE_ERROR = 'Scope can not be nil.'
-      NIL_USER_ID_ERROR = 'User ID can not be nil.'
-      NIL_TOKEN_STORE_ERROR = 'Can not call method if token store is nil'
+        'Token client ID of %s does not match configured client id %s'.freeze
+      NIL_CLIENT_ID_ERROR = 'Client id can not be nil.'.freeze
+      NIL_SCOPE_ERROR = 'Scope can not be nil.'.freeze
+      NIL_USER_ID_ERROR = 'User ID can not be nil.'.freeze
+      NIL_TOKEN_STORE_ERROR = 'Can not call method if token store is nil'.freeze
       MISSING_ABSOLUTE_URL_ERROR =
-        'Absolute base url required for relative callback url "%s"'
+        'Absolute base url required for relative callback url "%s"'.freeze
 
       # Initialize the authorizer
       #
@@ -73,8 +74,8 @@ module Google
       #  URL (either absolute or relative) of the auth callback.
       #  Defaults to '/oauth2callback'
       def initialize(client_id, scope, token_store, callback_uri = nil)
-        fail NIL_CLIENT_ID_ERROR if client_id.nil?
-        fail NIL_SCOPE_ERROR if scope.nil?
+        raise NIL_CLIENT_ID_ERROR if client_id.nil?
+        raise NIL_SCOPE_ERROR if scope.nil?
 
         @client_id = client_id
         @scope = Array(scope)
@@ -102,7 +103,8 @@ module Google
         credentials = UserRefreshCredentials.new(
           client_id: @client_id.id,
           client_secret: @client_id.secret,
-          scope: scope)
+          scope: scope
+        )
         redirect_uri = redirect_uri_for(options[:base_url])
         url = credentials.authorization_uri(access_type: 'offline',
                                             redirect_uri: redirect_uri,
@@ -123,8 +125,8 @@ module Google
       # @return [Google::Auth::UserRefreshCredentials]
       #  Stored credentials, nil if none present
       def get_credentials(user_id, scope = nil)
-        fail NIL_USER_ID_ERROR if user_id.nil?
-        fail NIL_TOKEN_STORE_ERROR if @token_store.nil?
+        raise NIL_USER_ID_ERROR if user_id.nil?
+        raise NIL_TOKEN_STORE_ERROR if @token_store.nil?
 
         scope ||= @scope
         saved_token = @token_store.load(user_id)
@@ -132,8 +134,8 @@ module Google
         data = MultiJson.load(saved_token)
 
         if data.fetch('client_id', @client_id.id) != @client_id.id
-          fail sprintf(MISMATCHED_CLIENT_ID_ERROR,
-                       data['client_id'], @client_id.id)
+          raise sprintf(MISMATCHED_CLIENT_ID_ERROR,
+                        data['client_id'], @client_id.id)
         end
 
         credentials = UserRefreshCredentials.new(
@@ -142,10 +144,10 @@ module Google
           scope: data['scope'] || @scope,
           access_token: data['access_token'],
           refresh_token: data['refresh_token'],
-          expires_at: data.fetch('expiration_time_millis', 0) / 1000)
+          expires_at: data.fetch('expiration_time_millis', 0) / 1000
+        )
         if credentials.includes_scope?(scope)
-          monitor_credentials(user_id, credentials)
-          return credentials
+          return monitor_credentials(user_id, credentials)
         end
         nil
       end
@@ -174,7 +176,8 @@ module Google
           client_id: @client_id.id,
           client_secret: @client_id.secret,
           redirect_uri: redirect_uri_for(base_url),
-          scope: scope)
+          scope: scope
+        )
         credentials.code = code
         credentials.fetch_access_token!({})
         monitor_credentials(user_id, credentials)
@@ -234,7 +237,8 @@ module Google
           access_token: credentials.access_token,
           refresh_token: credentials.refresh_token,
           scope: credentials.scope,
-          expiration_time_millis: (credentials.expires_at.to_i) * 1000)
+          expiration_time_millis: credentials.expires_at.to_i * 1000
+        )
         @token_store.store(user_id, json)
         credentials
       end
@@ -263,11 +267,13 @@ module Google
       #  Redirect URI
       def redirect_uri_for(base_url)
         return @callback_uri unless URI(@callback_uri).scheme.nil?
-        fail sprintf(
+        raise sprintf(
           MISSING_ABSOLUTE_URL_ERROR,
-          @callback_uri) if base_url.nil? || URI(base_url).scheme.nil?
+          @callback_uri
+        ) if base_url.nil? || URI(base_url).scheme.nil?
         URI.join(base_url, @callback_uri).to_s
       end
     end
   end
 end
+# rubocop:enable ClassLength

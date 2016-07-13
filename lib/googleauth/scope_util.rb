@@ -39,7 +39,7 @@ module Google
         'email' => 'https://www.googleapis.com/auth/userinfo.email',
         'profile' => 'https://www.googleapis.com/auth/userinfo.profile',
         'openid' => 'https://www.googleapis.com/auth/plus.me'
-      }
+      }.freeze
 
       def self.normalize(scope)
         list = as_array(scope)
@@ -53,7 +53,7 @@ module Google
         when String
           scope.split(' ')
         else
-          fail 'Invalid scope value. Must be string or array'
+          raise 'Invalid scope value. Must be string or array'
         end
       end
     end

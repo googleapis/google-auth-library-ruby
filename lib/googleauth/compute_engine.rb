@@ -35,13 +35,13 @@ module Google
   # Module Auth provides classes that provide Google-specific authorization
   # used to access Google APIs.
   module Auth
-    NO_METADATA_SERVER_ERROR = <<END
+    NO_METADATA_SERVER_ERROR = <<END.freeze
 Error code 404 trying to get security access token
 from Compute Engine metadata for the default service account. This
 may be because the virtual machine instance does not have permission
 scopes specified.
 END
-    UNEXPECTED_ERROR_SUFFIX = <<END
+    UNEXPECTED_ERROR_SUFFIX = <<END.freeze
 trying to get security access token from Compute Engine metadata for
 the default service account
 END
@@ -52,8 +52,8 @@ END
       # The IP Address is used in the URIs to speed up failures on non-GCE
       # systems.
       COMPUTE_AUTH_TOKEN_URI = 'http://169.254.169.254/computeMetadata/v1/'\
-      'instance/service-accounts/default/token'
-      COMPUTE_CHECK_URI = 'http://169.254.169.254'
+      'instance/service-accounts/default/token'.freeze
+      COMPUTE_CHECK_URI = 'http://169.254.169.254'.freeze
 
       class << self
         extend Memoist
@@ -94,10 +94,10 @@ END
           Signet::OAuth2.parse_credentials(resp.body,
                                            resp.headers['content-type'])
         when 404
-          fail(Signet::AuthorizationError, NO_METADATA_SERVER_ERROR)
+          raise(Signet::AuthorizationError, NO_METADATA_SERVER_ERROR)
         else
           msg = "Unexpected error code #{resp.status}" + UNEXPECTED_ERROR_SUFFIX
-          fail(Signet::AuthorizationError, msg)
+          raise(Signet::AuthorizationError, msg)
         end
       end
     end

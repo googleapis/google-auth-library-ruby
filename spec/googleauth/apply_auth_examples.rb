@@ -62,7 +62,8 @@ shared_examples 'apply/apply! are OK' do
         @client.on_refresh(&b)
         @client.fetch_access_token!
       end.to yield_with_args(have_attributes(
-                               access_token: '1/abcdef1234567890'))
+                               access_token: '1/abcdef1234567890'
+      ))
       expect(stub).to have_been_requested
     end
   end

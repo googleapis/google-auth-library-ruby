@@ -82,7 +82,8 @@ describe Google::Auth::UserAuthorizer do
 
     it 'should include the callback uri' do
       expect(URI(uri).query).to match(
-        %r{redirect_uri=https://www.example.com/oauth/callback})
+        %r{redirect_uri=https://www.example.com/oauth/callback}
+      )
     end
 
     it 'should include the scope' do
@@ -139,7 +140,8 @@ describe Google::Auth::UserAuthorizer do
       MultiJson.dump(
         access_token: 'accesstoken',
         refresh_token: 'refreshtoken',
-        expiration_time_millis: 1_441_234_742_000)
+        expiration_time_millis: 1_441_234_742_000
+      )
     end
 
     context 'with a valid user id' do
@@ -150,7 +152,8 @@ describe Google::Auth::UserAuthorizer do
 
       it 'should return an instance of UserRefreshCredentials' do
         expect(credentials).to be_instance_of(
-          Google::Auth::UserRefreshCredentials)
+          Google::Auth::UserRefreshCredentials
+        )
       end
 
       it 'should return credentials with a valid refresh token' do
@@ -226,7 +229,8 @@ describe Google::Auth::UserAuthorizer do
     it 'should persist the expiry as milliseconds' do
       expected_expiry = expiry * 1000
       expect(MultiJson.load(token_json)['expiration_time_millis']).to eql(
-        expected_expiry)
+        expected_expiry
+      )
     end
   end
 
@@ -240,12 +244,14 @@ describe Google::Auth::UserAuthorizer do
     before(:example) do
       stub_request(:post, 'https://www.googleapis.com/oauth2/v3/token')
         .to_return(body: token_json, status: 200, headers: {
-                     'Content-Type' => 'application/json' })
+                     'Content-Type' => 'application/json'
+                   })
     end
 
     it 'should exchange a code for credentials' do
       credentials = authorizer.get_credentials_from_code(
-        user_id: 'user1', code: 'code')
+        user_id: 'user1', code: 'code'
+      )
       expect(credentials.access_token).to eq '1/abc123'
     end
 
@@ -256,7 +262,8 @@ describe Google::Auth::UserAuthorizer do
 
     it 'should store credentials when requested' do
       authorizer.get_and_store_credentials_from_code(
-        user_id: 'user1', code: 'code')
+        user_id: 'user1', code: 'code'
+      )
       expect(token_store.load('user1')).to_not be_nil
     end
   end
@@ -286,20 +293,23 @@ describe Google::Auth::UserAuthorizer do
       MultiJson.dump(
         access_token: 'accesstoken',
         refresh_token: 'refreshtoken',
-        expiration_time_millis: 1_441_234_742_000)
+        expiration_time_millis: 1_441_234_742_000
+      )
     end
 
     before(:example) do
       token_store.store('user1', token_json)
       stub_request(
-        :get, 'https://accounts.google.com/o/oauth2/revoke?token=refreshtoken')
+        :get, 'https://accounts.google.com/o/oauth2/revoke?token=refreshtoken'
+      )
         .to_return(status: 200)
     end
 
     it 'should revoke the grant' do
       authorizer.revoke_authorization('user1')
       expect(a_request(
-               :get, 'https://accounts.google.com/o/oauth2/revoke?token=refreshtoken'))
+               :get, 'https://accounts.google.com/o/oauth2/revoke?token=refreshtoken'
+      ))
         .to have_been_made
     end
 

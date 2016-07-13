@@ -42,7 +42,7 @@ module Google
   # Module Auth provides classes that provide Google-specific authorization
   # used to access Google APIs.
   module Auth
-    NOT_FOUND_ERROR = <<END
+    NOT_FOUND_ERROR = <<END.freeze
 Could not load the default credentials. Browse to
 https://developers.google.com/accounts/docs/application-default-credentials
 for more information
@@ -70,14 +70,14 @@ END
       def self.read_creds
         env_var = CredentialsLoader::ACCOUNT_TYPE_VAR
         type = ENV[env_var]
-        fail "#{env_var} is undefined in env" unless type
+        raise "#{env_var} is undefined in env" unless type
         case type
         when 'service_account'
           ServiceAccountCredentials
         when 'authorized_user'
           UserRefreshCredentials
         else
-          fail "credentials type '#{type}' is not supported"
+          raise "credentials type '#{type}' is not supported"
         end
       end
 
@@ -85,7 +85,7 @@ END
       def self.determine_creds_class(json_key_io)
         json_key = MultiJson.load(json_key_io.read)
         key = 'type'
-        fail "the json is missing the '#{key}' field" unless json_key.key?(key)
+        raise "the json is missing the '#{key}' field" unless json_key.key?(key)
         type = json_key[key]
         case type
         when 'service_account'
@@ -93,7 +93,7 @@ END
         when 'authorized_user'
           [json_key, UserRefreshCredentials]
         else
-          fail "credentials type '#{type}' is not supported"
+          raise "credentials type '#{type}' is not supported"
         end
       end
     end
@@ -116,7 +116,7 @@ END
               DefaultCredentials.from_well_known_path(scope) ||
               DefaultCredentials.from_system_default_path(scope)
       return creds unless creds.nil?
-      fail NOT_FOUND_ERROR unless GCECredentials.on_gce?(options)
+      raise NOT_FOUND_ERROR unless GCECredentials.on_gce?(options)
       GCECredentials.new
     end
 

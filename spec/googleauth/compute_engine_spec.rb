@@ -37,7 +37,7 @@ require 'googleauth/compute_engine'
 require 'spec_helper'
 
 describe Google::Auth::GCECredentials do
-  MD_URI = 'http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token'
+  MD_URI = 'http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token'.freeze
   GCECredentials = Google::Auth::GCECredentials
 
   before(:example) do
@@ -64,8 +64,8 @@ describe Google::Auth::GCECredentials do
         stub = stub_request(:get, MD_URI)
                .to_return(status: 404,
                           headers: { 'Metadata-Flavor' => 'Google' })
-        blk = proc { @client.fetch_access_token! }
-        expect(&blk).to raise_error Signet::AuthorizationError
+        expect { @client.fetch_access_token! }
+          .to raise_error Signet::AuthorizationError
         expect(stub).to have_been_requested
       end
 
@@ -73,8 +73,8 @@ describe Google::Auth::GCECredentials do
         stub = stub_request(:get, MD_URI)
                .to_return(status: 503,
                           headers: { 'Metadata-Flavor' => 'Google' })
-        blk = proc { @client.fetch_access_token! }
-        expect(&blk).to raise_error Signet::AuthorizationError
+        expect { @client.fetch_access_token! }
+          .to raise_error Signet::AuthorizationError
         expect(stub).to have_been_requested
       end
     end

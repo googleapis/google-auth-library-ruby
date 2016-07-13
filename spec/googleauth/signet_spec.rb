@@ -45,7 +45,8 @@ describe Signet::OAuth2::Client do
       scope: 'https://www.googleapis.com/auth/userinfo.profile',
       issuer: 'app@example.com',
       audience: 'https://accounts.google.com/o/oauth2/token',
-      signing_key: @key)
+      signing_key: @key
+    )
   end
 
   def make_auth_stubs(opts)
@@ -60,8 +61,8 @@ describe Signet::OAuth2::Client do
     end
     stub_request(:post, 'https://accounts.google.com/o/oauth2/token')
       .with(body: hash_including(
-        'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer'),
-            &blk)
+        'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer'
+      ), &blk)
       .to_return(body: body,
                  status: 200,
                  headers: { 'Content-Type' => 'application/json' })

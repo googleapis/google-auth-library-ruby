@@ -64,7 +64,7 @@ module Signet
         @refresh_listeners << block
       end
 
-      alias_method :orig_fetch_access_token!, :fetch_access_token!
+      alias orig_fetch_access_token! fetch_access_token!
       def fetch_access_token!(options = {})
         info = orig_fetch_access_token!(options)
         notify_refresh_listeners
