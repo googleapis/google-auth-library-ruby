@@ -37,7 +37,7 @@ module Google
       # are stored as JSON using the supplied key, prefixed with
       # `g-user-token:`
       class RedisTokenStore < Google::Auth::TokenStore
-        DEFAULT_KEY_PREFIX = 'g-user-token:'
+        DEFAULT_KEY_PREFIX = 'g-user-token:'.freeze
 
         # Create a new store with the supplied redis client.
         #
@@ -51,12 +51,12 @@ module Google
         def initialize(options = {})
           redis = options.delete(:redis)
           prefix = options.delete(:prefix)
-          case redis
-          when Redis
-            @redis = redis
-          else
-            @redis = Redis.new(options)
-          end
+          @redis = case redis
+                   when Redis
+                     redis
+                   else
+                     Redis.new(options)
+                   end
           @prefix = prefix || DEFAULT_KEY_PREFIX
         end
 

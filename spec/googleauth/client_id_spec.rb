@@ -104,7 +104,8 @@ describe Google::Auth::ClientId do
 
     it 'should raise error' do
       expect { Google::Auth::ClientId.from_hash(config) }.to raise_error(
-        /Expected top level property/)
+        /Expected top level property/
+      )
     end
   end
 
@@ -119,7 +120,8 @@ describe Google::Auth::ClientId do
 
     it 'should raise error' do
       expect { Google::Auth::ClientId.from_hash(config) }.to raise_error(
-        /Client id can not be nil/)
+        /Client id can not be nil/
+      )
     end
   end
 
@@ -134,7 +136,8 @@ describe Google::Auth::ClientId do
 
     it 'should raise error' do
       expect { Google::Auth::ClientId.from_hash(config) }.to raise_error(
-        /Client secret can not be nil/)
+        /Client secret can not be nil/
+      )
     end
   end
 end

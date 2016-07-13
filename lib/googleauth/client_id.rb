@@ -34,12 +34,12 @@ module Google
     # Representation of an application's identity for user authorization
     # flows.
     class ClientId
-      INSTALLED_APP = 'installed'
-      WEB_APP = 'web'
-      CLIENT_ID = 'client_id'
-      CLIENT_SECRET = 'client_secret'
+      INSTALLED_APP = 'installed'.freeze
+      WEB_APP = 'web'.freeze
+      CLIENT_ID = 'client_id'.freeze
+      CLIENT_SECRET = 'client_secret'.freeze
       MISSING_TOP_LEVEL_ELEMENT_ERROR =
-        "Expected top level property 'installed' or 'web' to be present."
+        "Expected top level property 'installed' or 'web' to be present.".freeze
 
       # Text identifier of the client ID
       # @return [String]
@@ -63,8 +63,8 @@ module Google
       #       & secrets in source. See {#from_file} to load from
       #       `client_secrets.json` files.
       def initialize(id, secret)
-        fail 'Client id can not be nil' if id.nil?
-        fail 'Client secret can not be nil' if secret.nil?
+        raise 'Client id can not be nil' if id.nil?
+        raise 'Client secret can not be nil' if secret.nil?
         @id = id
         @secret = secret
       end
@@ -76,7 +76,7 @@ module Google
       #  Path of file to read from
       # @return [Google::Auth::ClientID]
       def self.from_file(file)
-        fail 'File can not be nil.' if file.nil?
+        raise 'File can not be nil.' if file.nil?
         File.open(file.to_s) do |f|
           json = f.read
           config = MultiJson.load(json)
@@ -92,9 +92,9 @@ module Google
       #  Parsed contents of the JSON file
       # @return [Google::Auth::ClientID]
       def self.from_hash(config)
-        fail 'Hash can not be nil.' if config.nil?
+        raise 'Hash can not be nil.' if config.nil?
         raw_detail = config[INSTALLED_APP] || config[WEB_APP]
-        fail MISSING_TOP_LEVEL_ELEMENT_ERROR if raw_detail.nil?
+        raise MISSING_TOP_LEVEL_ELEMENT_ERROR if raw_detail.nil?
         ClientId.new(raw_detail[CLIENT_ID], raw_detail[CLIENT_SECRET])
       end
     end

@@ -46,7 +46,7 @@ module Google
     #
     # cf [Application Default Credentials](http://goo.gl/mkAHpZ)
     class ServiceAccountCredentials < Signet::OAuth2::Client
-      TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v3/token'
+      TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v3/token'.freeze
       extend CredentialsLoader
 
       # Creates a ServiceAccountCredentials.
@@ -73,8 +73,8 @@ module Google
       # JSON key.
       def self.read_json_key(json_key_io)
         json_key = MultiJson.load(json_key_io.read)
-        fail 'missing client_email' unless json_key.key?('client_email')
-        fail 'missing private_key' unless json_key.key?('private_key')
+        raise 'missing client_email' unless json_key.key?('client_email')
+        raise 'missing private_key' unless json_key.key?('private_key')
         [json_key['private_key'], json_key['client_email']]
       end
 
@@ -119,8 +119,8 @@ module Google
     class ServiceAccountJwtHeaderCredentials
       JWT_AUD_URI_KEY = :jwt_aud_uri
       AUTH_METADATA_KEY = Signet::OAuth2::AUTH_METADATA_KEY
-      TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v3/token'
-      SIGNING_ALGORITHM = 'RS256'
+      TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v3/token'.freeze
+      SIGNING_ALGORITHM = 'RS256'.freeze
       EXPIRY = 60
       extend CredentialsLoader
 
@@ -139,8 +139,8 @@ module Google
       # JSON key.
       def self.read_json_key(json_key_io)
         json_key = MultiJson.load(json_key_io.read)
-        fail 'missing client_email' unless json_key.key?('client_email')
-        fail 'missing private_key' unless json_key.key?('private_key')
+        raise 'missing client_email' unless json_key.key?('client_email')
+        raise 'missing private_key' unless json_key.key?('private_key')
         [json_key['private_key'], json_key['client_email']]
       end
 

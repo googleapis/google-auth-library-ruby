@@ -46,9 +46,9 @@ module Google
     #
     # cf [Application Default Credentials](http://goo.gl/mkAHpZ)
     class UserRefreshCredentials < Signet::OAuth2::Client
-      TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v3/token'
-      AUTHORIZATION_URI = 'https://accounts.google.com/o/oauth2/auth'
-      REVOKE_TOKEN_URI = 'https://accounts.google.com/o/oauth2/revoke'
+      TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v3/token'.freeze
+      AUTHORIZATION_URI = 'https://accounts.google.com/o/oauth2/auth'.freeze
+      REVOKE_TOKEN_URI = 'https://accounts.google.com/o/oauth2/revoke'.freeze
       extend CredentialsLoader
 
       # Create a UserRefreshCredentials.
@@ -77,7 +77,7 @@ module Google
         json_key = MultiJson.load(json_key_io.read)
         wanted = %w(client_id client_secret refresh_token)
         wanted.each do |key|
-          fail "the json is missing the #{key} field" unless json_key.key?(key)
+          raise "the json is missing the #{key} field" unless json_key.key?(key)
         end
         json_key
       end
@@ -99,8 +99,8 @@ module Google
           self.refresh_token = nil
           self.expires_at = 0
         else
-          fail(Signet::AuthorizationError,
-               "Unexpected error code #{resp.status}")
+          raise(Signet::AuthorizationError,
+                "Unexpected error code #{resp.status}")
         end
       end
 

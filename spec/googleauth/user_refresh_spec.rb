@@ -87,7 +87,8 @@ describe Google::Auth::UserRefreshCredentials do
       @var_name = ENV_VAR
       @credential_vars = [
         ENV_VAR, CLIENT_ID_VAR, CLIENT_SECRET_VAR, REFRESH_TOKEN_VAR,
-        ACCOUNT_TYPE_VAR]
+        ACCOUNT_TYPE_VAR
+      ]
       @original_env_vals = {}
       @credential_vars.each { |var| @original_env_vals[var] = ENV[var] }
       @scope = 'https://www.googleapis.com/auth/userinfo.profile'
@@ -288,7 +289,8 @@ describe Google::Auth::UserRefreshCredentials do
     it 'raises an authorization error' do
       stub
       expect { @client.revoke! }.to raise_error(
-        Signet::AuthorizationError)
+        Signet::AuthorizationError
+      )
     end
   end
 end

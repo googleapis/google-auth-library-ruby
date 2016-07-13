@@ -37,16 +37,16 @@ module Google
   module Auth
     # Authenticates requests using IAM credentials.
     class IAMCredentials
-      SELECTOR_KEY = 'x-goog-iam-authority-selector'
-      TOKEN_KEY = 'x-goog-iam-authorization-token'
+      SELECTOR_KEY = 'x-goog-iam-authority-selector'.freeze
+      TOKEN_KEY = 'x-goog-iam-authorization-token'.freeze
 
       # Initializes an IAMCredentials.
       #
       # @param selector the IAM selector.
       # @param token the IAM token.
       def initialize(selector, token)
-        fail TypeError unless selector.is_a? String
-        fail TypeError unless token.is_a? String
+        raise TypeError unless selector.is_a? String
+        raise TypeError unless token.is_a? String
         @selector = selector
         @token = token
       end

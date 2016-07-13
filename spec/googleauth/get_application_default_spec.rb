@@ -45,7 +45,8 @@ describe '#get_application_default' do
     @var_name = ENV_VAR
     @credential_vars = [
       ENV_VAR, PRIVATE_KEY_VAR, CLIENT_EMAIL_VAR, CLIENT_ID_VAR,
-      CLIENT_SECRET_VAR, REFRESH_TOKEN_VAR, ACCOUNT_TYPE_VAR]
+      CLIENT_SECRET_VAR, REFRESH_TOKEN_VAR, ACCOUNT_TYPE_VAR
+    ]
     @original_env_vals = {}
     @credential_vars.each { |var| @original_env_vals[var] = ENV[var] }
     @home = ENV['HOME']
@@ -74,10 +75,9 @@ describe '#get_application_default' do
       Dir.mktmpdir do |dir|
         ENV.delete(@var_name) unless ENV[@var_name].nil? # no env var
         ENV['HOME'] = dir # no config present in this tmp dir
-        blk = proc do
+        expect do
           Google::Auth.get_application_default(@scope, options)
-        end
-        expect(&blk).to raise_error RuntimeError
+        end.to raise_error RuntimeError
       end
       expect(stub).to have_been_requested
     end
@@ -215,10 +215,9 @@ describe '#get_application_default' do
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV[@var_name] = key_path
-        blk = proc do
+        expect do
           Google::Auth.get_application_default(@scope, options)
-        end
-        expect(&blk).to raise_error RuntimeError
+        end.to raise_error RuntimeError
       end
     end
 
@@ -229,20 +228,18 @@ describe '#get_application_default' do
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV['HOME'] = dir
-        blk = proc do
+        expect do
           Google::Auth.get_application_default(@scope, options)
-        end
-        expect(&blk).to raise_error RuntimeError
+        end.to raise_error RuntimeError
       end
     end
 
     it 'fails if env vars are set' do
       ENV[PRIVATE_KEY_VAR] = cred_json[:private_key]
       ENV[CLIENT_EMAIL_VAR] = cred_json[:client_email]
-      blk = proc do
+      expect do
         Google::Auth.get_application_default(@scope, options)
-      end
-      expect(&blk).to raise_error RuntimeError
+      end.to raise_error RuntimeError
     end
   end
 end

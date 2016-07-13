@@ -39,22 +39,23 @@ module Google
     # credentials files on the file system.
     module CredentialsLoader
       extend Memoist
-      ENV_VAR = 'GOOGLE_APPLICATION_CREDENTIALS'
+      ENV_VAR = 'GOOGLE_APPLICATION_CREDENTIALS'.freeze
 
-      PRIVATE_KEY_VAR = 'GOOGLE_PRIVATE_KEY'
-      CLIENT_EMAIL_VAR = 'GOOGLE_CLIENT_EMAIL'
-      CLIENT_ID_VAR = 'GOOGLE_CLIENT_ID'
-      CLIENT_SECRET_VAR = 'GOOGLE_CLIENT_SECRET'
-      REFRESH_TOKEN_VAR = 'GOOGLE_REFRESH_TOKEN'
-      ACCOUNT_TYPE_VAR = 'GOOGLE_ACCOUNT_TYPE'
+      PRIVATE_KEY_VAR = 'GOOGLE_PRIVATE_KEY'.freeze
+      CLIENT_EMAIL_VAR = 'GOOGLE_CLIENT_EMAIL'.freeze
+      CLIENT_ID_VAR = 'GOOGLE_CLIENT_ID'.freeze
+      CLIENT_SECRET_VAR = 'GOOGLE_CLIENT_SECRET'.freeze
+      REFRESH_TOKEN_VAR = 'GOOGLE_REFRESH_TOKEN'.freeze
+      ACCOUNT_TYPE_VAR = 'GOOGLE_ACCOUNT_TYPE'.freeze
 
-      CREDENTIALS_FILE_NAME = 'application_default_credentials.json'
+      CREDENTIALS_FILE_NAME = 'application_default_credentials.json'.freeze
       NOT_FOUND_ERROR =
-        "Unable to read the credential file specified by #{ENV_VAR}"
-      WELL_KNOWN_PATH = "gcloud/#{CREDENTIALS_FILE_NAME}"
-      WELL_KNOWN_ERROR = 'Unable to read the default credential file'
+        "Unable to read the credential file specified by #{ENV_VAR}".freeze
+      WELL_KNOWN_PATH = "gcloud/#{CREDENTIALS_FILE_NAME}".freeze
+      WELL_KNOWN_ERROR = 'Unable to read the default credential file'.freeze
 
-      SYSTEM_DEFAULT_ERROR = 'Unable to read the system default credential file'
+      SYSTEM_DEFAULT_ERROR =
+        'Unable to read the system default credential file'.freeze
 
       # make_creds proxies the construction of a credentials instance
       #
@@ -71,7 +72,7 @@ module Google
       def from_env(scope = nil)
         if ENV.key?(ENV_VAR)
           path = ENV[ENV_VAR]
-          fail "file #{path} does not exist" unless File.exist?(path)
+          raise "file #{path} does not exist" unless File.exist?(path)
           File.open(path) do |f|
             return make_creds(json_key_io: f, scope: scope)
           end

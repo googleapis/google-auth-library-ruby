@@ -39,13 +39,15 @@ describe Google::Auth::ScopeUtil do
 
     it 'normalizes the email scope' do
       expect(normalized).to include(
-        'https://www.googleapis.com/auth/userinfo.email')
+        'https://www.googleapis.com/auth/userinfo.email'
+      )
       expect(normalized).to_not include 'email'
     end
 
     it 'normalizes the profile scope' do
       expect(normalized).to include(
-        'https://www.googleapis.com/auth/userinfo.profile')
+        'https://www.googleapis.com/auth/userinfo.profile'
+      )
       expect(normalized).to_not include 'profile'
     end
 

@@ -139,7 +139,8 @@ describe Google::Auth::ServiceAccountCredentials do
     end
     stub_request(:post, 'https://www.googleapis.com/oauth2/v3/token')
       .with(body: hash_including(
-        'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer'),
+        'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer'
+      ),
             &blk)
       .to_return(body: body,
                  status: 200,
@@ -164,7 +165,8 @@ describe Google::Auth::ServiceAccountCredentials do
     before(:example) do
       @var_name = ENV_VAR
       @credential_vars = [
-        ENV_VAR, PRIVATE_KEY_VAR, CLIENT_EMAIL_VAR, ACCOUNT_TYPE_VAR]
+        ENV_VAR, PRIVATE_KEY_VAR, CLIENT_EMAIL_VAR, ACCOUNT_TYPE_VAR
+      ]
       @original_env_vals = {}
       @credential_vars.each { |var| @original_env_vals[var] = ENV[var] }
       ENV[ACCOUNT_TYPE_VAR] = cred_json[:type]
@@ -294,7 +296,8 @@ describe Google::Auth::ServiceAccountJwtHeaderCredentials do
     before(:example) do
       @var_name = ENV_VAR
       @credential_vars = [
-        ENV_VAR, PRIVATE_KEY_VAR, CLIENT_EMAIL_VAR, ACCOUNT_TYPE_VAR]
+        ENV_VAR, PRIVATE_KEY_VAR, CLIENT_EMAIL_VAR, ACCOUNT_TYPE_VAR
+      ]
       @original_env_vals = {}
       @credential_vars.each { |var| @original_env_vals[var] = ENV[var] }
       ENV[ACCOUNT_TYPE_VAR] = cred_json[:type]
