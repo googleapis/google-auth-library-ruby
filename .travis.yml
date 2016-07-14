@@ -1,35 +1,15 @@
-sudo: false
 language: ruby
 rvm:
-  - 2.3
+  - 2.3.0
   - 2.2
   - 2.0.0
   - 2.1
-  - 1.9.3
-  - rbx-2
-  - jruby
-matrix:
-  allow_failures:
-    - rvm: rbx-2 # See rubinius/rubinius#3485 - rubocop segfaults
-script: "bundle exec rake"
-addons:
-  apt:
-    packages:
-    - idn
-    - build-essential  # this and below attempt allow rubinius to be setup ok
-    - bison
-    - ruby-dev
-    - rake zlib1g-dev
-    - libyaml-dev
-    - libssl-dev
-    - libreadline-dev
-    - libncurses5-dev
-    - llvm
-    - llvm-dev
-    - libeditline-dev
-    - libedit-dev
+  - jruby-9000
+script: "bundle exec rake spec:all"
 before_install:
- - gem update bundler
+  - sudo apt-get update
+  - sudo apt-get install idn build-essential bison ruby-dev rake zlib1g-dev libyaml-dev libssl-dev libreadline-dev libncurses5-dev llvm llvm-dev libeditline-dev libedit-dev
+  - gem update bundler
 notifications:
   email:
     recipients:
