@@ -77,6 +77,25 @@ module Signet
           block.call(self)
         end
       end
+
+      def retry_with_error(max_retry_count = 5)
+        retry_count = 0
+
+        begin
+          yield
+        rescue => e
+          raise e if e.is_a?(Signet::AuthorizationError) || e.is_a?(Signet::ParseError)
+
+          if retry_count < max_retry_count
+            retry_count += 1
+            sleep retry_count * 0.3
+            retry
+          else
+            msg = "Unexpected error: #{e.inspect}"
+            raise(Signet::AuthorizationError, msg)
+          end
+        end
+      end
     end
   end
 end
