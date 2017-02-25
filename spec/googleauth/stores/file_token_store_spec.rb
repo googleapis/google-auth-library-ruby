@@ -42,8 +42,7 @@ module FakeFS
   class File
     # FakeFS doesn't implement. And since we don't need to actually lock,
     # just stub out...
-    def flock(*)
-    end
+    def flock(*); end
   end
 end
 
