@@ -267,10 +267,12 @@ module Google
       #  Redirect URI
       def redirect_uri_for(base_url)
         return @callback_uri unless URI(@callback_uri).scheme.nil?
-        raise sprintf(
-          MISSING_ABSOLUTE_URL_ERROR,
-          @callback_uri
-        ) if base_url.nil? || URI(base_url).scheme.nil?
+        if base_url.nil? || URI(base_url).scheme.nil?
+          raise sprintf(
+            MISSING_ABSOLUTE_URL_ERROR,
+            @callback_uri
+          )
+        end
         URI.join(base_url, @callback_uri).to_s
       end
     end
