@@ -132,10 +132,10 @@ shared_examples 'apply/apply! are OK' do
     end
 
     it 'should fetch a new token if the current one is expired' do
-      token_1 = '1/abcdef1234567890'
-      token_2 = '2/abcdef1234567891'
+      token1 = '1/abcdef1234567890'
+      token2 = '2/abcdef1234567891'
 
-      [token_1, token_2].each do |t|
+      [token1, token2].each do |t|
         make_auth_stubs access_token: t
         md = { foo: 'bar' }
         got = @client.apply(md)
