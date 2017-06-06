@@ -142,14 +142,6 @@ access and refresh tokens. Two storage implementations are included:
 Custom storage implementations can also be used. See
 [token_store.rb](lib/googleauth/token_store.rb) for additional details.
 
-## What about auth in google-apis-ruby-client?
-
-The goal is for all auth done by
-[google-apis-ruby-client][google-apis-ruby-client] to be performed by this
-library. I.e, eventually google-apis-ruby-client will just take a dependency
-on this library.  This update is a work in progress, but should be completed
-by Q2 2015.
-
 ## License
 
 This library is licensed under Apache 2.0. Full license text is
