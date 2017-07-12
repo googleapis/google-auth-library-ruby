@@ -115,7 +115,7 @@ describe Google::Auth::UserRefreshCredentials do
     end
 
     it 'fails if the GOOGLE_APPLICATION_CREDENTIALS path file is invalid' do
-      needed = %w(client_id client_secret refresh_token)
+      needed = %w[client_id client_secret refresh_token]
       needed.each do |missing|
         Dir.mktmpdir do |dir|
           key_path = File.join(dir, 'my_cert_file')
@@ -169,7 +169,7 @@ describe Google::Auth::UserRefreshCredentials do
     end
 
     it 'fails if the file is invalid' do
-      needed = %w(client_id client_secret refresh_token)
+      needed = %w[client_id client_secret refresh_token]
       needed.each do |missing|
         Dir.mktmpdir do |dir|
           key_path = File.join(dir, '.config', @known_path)
@@ -208,7 +208,7 @@ describe Google::Auth::UserRefreshCredentials do
     end
 
     it 'fails if the file is invalid' do
-      needed = %w(client_id client_secret refresh_token)
+      needed = %w[client_id client_secret refresh_token]
       needed.each do |missing|
         FakeFS do
           FileUtils.mkdir_p(File.dirname(@path))
