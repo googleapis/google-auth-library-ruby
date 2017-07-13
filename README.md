@@ -131,6 +131,18 @@ end
 # OK to use credentials
 ```
 
+### Example (Service Account)
+
+```ruby
+scope = 'https://www.googleapis.com/auth/androidpublisher'
+
+authorizer = Google::Auth::ServiceAccountCredentials.make_creds(
+  json_key_io: File.open('/path/to/service_account_json_key.json'),
+  scope: scope)
+  
+authorizer.fetch_access_token!
+```
+
 ### Storage
 
 Authorizers require a storage instance to manage long term persistence of
