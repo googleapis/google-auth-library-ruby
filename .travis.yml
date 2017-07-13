@@ -1,7 +1,8 @@
 sudo: false
 language: ruby
 rvm:
-  - 2.3.3
+  - 2.4
+  - 2.3
   - 2.2
   - 2.0.0
   - 2.1
@@ -33,6 +34,6 @@ before_install:
 notifications:
   email:
     recipients:
-      - temiola@google.com
+      - ruby-cloud-eng@google.com
     on_success: change
     on_failure: change
