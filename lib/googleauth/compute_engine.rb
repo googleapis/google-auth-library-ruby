@@ -98,7 +98,8 @@ END
           when 404
             raise(Signet::AuthorizationError, NO_METADATA_SERVER_ERROR)
           else
-            msg = "Unexpected error code #{resp.status}" + UNEXPECTED_ERROR_SUFFIX
+            msg = "Unexpected error code #{resp.status}" \
+              "#{UNEXPECTED_ERROR_SUFFIX}"
             raise(Signet::AuthorizationError, msg)
           end
         end
