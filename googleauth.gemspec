@@ -26,7 +26,7 @@ Gem::Specification.new do |s|
   s.require_paths = ['lib']
   s.platform      = Gem::Platform::RUBY
 
-  s.add_dependency 'faraday', '~> 0.9'
+  s.add_dependency 'faraday', '~> 0.12'
   s.add_dependency 'logging', '~> 2.0'
   s.add_dependency 'jwt', '~> 1.4'
   s.add_dependency 'memoist', '~> 0.12'
