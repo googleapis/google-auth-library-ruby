@@ -41,7 +41,7 @@ describe Google::Auth::UserAuthorizer do
   include TestHelpers
 
   let(:client_id) { Google::Auth::ClientId.new('testclient', 'notasecret') }
-  let(:scope) { %w[email profile] }
+  let(:scope) { %w(email profile) }
   let(:token_store) { DummyTokenStore.new }
   let(:callback_uri) { 'https://www.example.com/oauth/callback' }
   let(:authorizer) do
@@ -173,7 +173,7 @@ describe Google::Auth::UserAuthorizer do
       end
 
       it 'should return credentials with a valid scope' do
-        expect(credentials.scope).to eq %w[email profile]
+        expect(credentials.scope).to eq %w(email profile)
       end
 
       it 'should return credentials with a valid expiration time' do

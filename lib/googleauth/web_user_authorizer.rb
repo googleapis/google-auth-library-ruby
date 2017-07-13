@@ -227,7 +227,7 @@ module Google
       # @param [Rack::Request] request
       #  Current request
       def self.validate_callback_state(state, request)
-        if state[AUTH_CODE_KEY].nil? # rubocop:disable Style/GuardClause
+        if state[AUTH_CODE_KEY].nil?
           raise Signet::AuthorizationError, MISSING_AUTH_CODE_ERROR
         elsif state[ERROR_CODE_KEY]
           raise Signet::AuthorizationError,

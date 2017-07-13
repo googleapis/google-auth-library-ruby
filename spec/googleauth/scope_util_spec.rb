@@ -70,7 +70,7 @@ describe Google::Auth::ScopeUtil do
 
   context 'with scope as Array' do
     let(:source) do
-      %w[email profile openid https://www.googleapis.com/auth/drive]
+      %w(email profile openid https://www.googleapis.com/auth/drive)
     end
     it_behaves_like 'normalizes scopes'
   end

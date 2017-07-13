@@ -17,3 +17,10 @@ Style/IndentHeredoc:
   Enabled: false
 Style/FormatString:
   Enabled: false
+Style/GuardClause:
+  Enabled: false
+Style/PercentLiteralDelimiters: # Contradicting rule
+  Enabled: false
+Style/SymbolArray: # Undefined syntax in Ruby 1.9.3
+  Enabled: false
+

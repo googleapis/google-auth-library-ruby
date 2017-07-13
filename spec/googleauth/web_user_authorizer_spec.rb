@@ -42,7 +42,7 @@ describe Google::Auth::WebUserAuthorizer do
   include TestHelpers
 
   let(:client_id) { Google::Auth::ClientId.new('testclient', 'notasecret') }
-  let(:scope) { %w[email profile] }
+  let(:scope) { %w(email profile) }
   let(:token_store) { DummyTokenStore.new }
   let(:authorizer) do
     Google::Auth::WebUserAuthorizer.new(client_id, scope, token_store)

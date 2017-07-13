@@ -10,6 +10,6 @@ desc 'Run rake task'
 RSpec::Core::RakeTask.new(:spec)
 
 desc 'Does rubocop lint and runs the specs'
-task all: %i[rubocop spec]
+task all: [:rubocop, :spec]
 
 task default: :all
