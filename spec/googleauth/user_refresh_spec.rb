@@ -293,4 +293,20 @@ describe Google::Auth::UserRefreshCredentials do
       )
     end
   end
+
+  describe 'when erros occured with request' do
+    it 'should fail with Signet::AuthorizationError if request times out' do
+      allow_any_instance_of(Faraday::Connection).to receive(:get)
+        .and_raise(Faraday::TimeoutError)
+      expect { @client.revoke! }
+        .to raise_error Signet::AuthorizationError
+    end
+
+    it 'should fail with Signet::AuthorizationError if request fails' do
+      allow_any_instance_of(Faraday::Connection).to receive(:get)
+        .and_raise(Faraday::ConnectionFailed, nil)
+      expect { @client.revoke! }
+        .to raise_error Signet::AuthorizationError
+    end
+  end
 end

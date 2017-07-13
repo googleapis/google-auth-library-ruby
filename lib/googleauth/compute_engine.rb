@@ -88,16 +88,20 @@ END
       def fetch_access_token(options = {})
         c = options[:connection] || Faraday.default_connection
         c.headers = { 'Metadata-Flavor' => 'Google' }
-        resp = c.get(COMPUTE_AUTH_TOKEN_URI)
-        case resp.status
-        when 200
-          Signet::OAuth2.parse_credentials(resp.body,
-                                           resp.headers['content-type'])
-        when 404
-          raise(Signet::AuthorizationError, NO_METADATA_SERVER_ERROR)
-        else
-          msg = "Unexpected error code #{resp.status}" + UNEXPECTED_ERROR_SUFFIX
-          raise(Signet::AuthorizationError, msg)
+
+        retry_with_error do
+          resp = c.get(COMPUTE_AUTH_TOKEN_URI)
+          case resp.status
+          when 200
+            Signet::OAuth2.parse_credentials(resp.body,
+                                             resp.headers['content-type'])
+          when 404
+            raise(Signet::AuthorizationError, NO_METADATA_SERVER_ERROR)
+          else
+            msg = "Unexpected error code #{resp.status}" \
+              "#{UNEXPECTED_ERROR_SUFFIX}"
+            raise(Signet::AuthorizationError, msg)
+          end
         end
       end
     end
