@@ -107,7 +107,7 @@ describe Google::Auth::WebUserAuthorizer do
     end
 
     before(:example) do
-      stub_request(:post, 'https://www.googleapis.com/oauth2/v3/token')
+      stub_request(:post, 'https://www.googleapis.com/oauth2/v4/token')
         .to_return(body: token_json,
                    status: 200,
                    headers: { 'Content-Type' => 'application/json' })

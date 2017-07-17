@@ -46,7 +46,7 @@ module Google
     #
     # cf [Application Default Credentials](http://goo.gl/mkAHpZ)
     class ServiceAccountCredentials < Signet::OAuth2::Client
-      TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v3/token'.freeze
+      TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v4/token'.freeze
       extend CredentialsLoader
 
       # Creates a ServiceAccountCredentials.
@@ -119,7 +119,7 @@ module Google
     class ServiceAccountJwtHeaderCredentials
       JWT_AUD_URI_KEY = :jwt_aud_uri
       AUTH_METADATA_KEY = Signet::OAuth2::AUTH_METADATA_KEY
-      TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v3/token'.freeze
+      TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v4/token'.freeze
       SIGNING_ALGORITHM = 'RS256'.freeze
       EXPIRY = 60
       extend CredentialsLoader

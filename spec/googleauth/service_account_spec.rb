@@ -137,7 +137,7 @@ describe Google::Auth::ServiceAccountCredentials do
       _claim, _header = JWT.decode(params.assoc('assertion').last,
                                    @key.public_key)
     end
-    stub_request(:post, 'https://www.googleapis.com/oauth2/v3/token')
+    stub_request(:post, 'https://www.googleapis.com/oauth2/v4/token')
       .with(body: hash_including(
         'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer'
       ),
