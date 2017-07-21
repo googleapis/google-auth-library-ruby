@@ -1,3 +1,7 @@
+## 0.5.3 (2017/07/21)
+
+* Fix file permissions on the gem's `.rb` files.
+
 ## 0.5.2 (2017/07/19)
 
 ### Changes
