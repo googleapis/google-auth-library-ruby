@@ -8,9 +8,9 @@
 </dl>
 
 [![Gem Version](https://badge.fury.io/rb/googleauth.svg)](http://badge.fury.io/rb/googleauth)
-[![Build Status](https://secure.travis-ci.org/google/google-auth-library-ruby.png)](http://travis-ci.org/google/google-auth-library-ruby)
-[![Coverage Status](https://coveralls.io/repos/google/google-auth-library-ruby/badge.png)](https://coveralls.io/r/google/google-auth-library-ruby)
-[![Dependency Status](https://gemnasium.com/google/google-auth-library-ruby.png)](https://gemnasium.com/google/google-auth-library-ruby)
+[![Build Status](https://secure.travis-ci.org/google/google-auth-library-ruby.svg)](http://travis-ci.org/google/google-auth-library-ruby)
+[![Coverage Status](https://coveralls.io/repos/google/google-auth-library-ruby/badge.svg)](https://coveralls.io/r/google/google-auth-library-ruby)
+[![Dependency Status](https://gemnasium.com/google/google-auth-library-ruby.svg)](https://gemnasium.com/google/google-auth-library-ruby)
 
 ## Description
 
