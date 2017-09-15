@@ -57,7 +57,8 @@ describe Signet::OAuth2::Client do
     blk = proc do |request|
       params = Addressable::URI.form_unencode(request.body)
       _claim, _header = JWT.decode(params.assoc('assertion').last,
-                                   @key.public_key)
+                                   @key.public_key, true,
+                                   algorithm: 'RS256')
     end
     stub_request(:post, 'https://accounts.google.com/o/oauth2/token')
       .with(body: hash_including(
