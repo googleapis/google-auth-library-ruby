@@ -53,7 +53,8 @@ module Google
                      :token_credential_uri, :audience,
                      :scope, :issuer, :signing_key, :updater_proc
 
-      def initialize(keyfile, scope: nil)
+      def initialize(keyfile, options = {})
+        scope = options[:scope]
         verify_keyfile_provided! keyfile
         if keyfile.is_a? Signet::OAuth2::Client
           @client = keyfile
@@ -71,7 +72,8 @@ module Google
       end
 
       # Returns the default credentials.
-      def self.default(scope: nil)
+      def self.default(options = {})
+        scope = options[:scope]
         # First try to find keyfile file from environment variables.
         self::PATH_ENV_VARS.map(&method(:env))
                            .compact
