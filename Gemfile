@@ -12,7 +12,7 @@ group :development do
   gem 'rake', '~> 10.0'
   gem 'redis', '~> 3.2'
   gem 'rspec', '~> 3.0'
-  gem 'rubocop', '>= 0.41', '< 0.50'
+  gem 'rubocop', '~> 0.50'
   gem 'simplecov', '~> 0.9'
   gem 'sinatra'
   gem 'webmock', '~> 1.21'

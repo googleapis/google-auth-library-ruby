@@ -83,11 +83,9 @@ module Signet
 
         begin
           yield
-        rescue => e
-          if e.is_a?(Signet::AuthorizationError) || e.is_a?(Signet::ParseError)
-            raise e
-          end
-
+        rescue Signet::AuthorizationError, Signet::ParseError
+          raise
+        rescue StandardError => e
           if retry_count < max_retry_count
             retry_count += 1
             sleep retry_count * 0.3
