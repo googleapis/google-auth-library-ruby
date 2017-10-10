@@ -42,11 +42,11 @@ module Google
   # Module Auth provides classes that provide Google-specific authorization
   # used to access Google APIs.
   module Auth
-    NOT_FOUND_ERROR = <<END.freeze
+    NOT_FOUND_ERROR = <<ERROR_MESSAGE.freeze
 Could not load the default credentials. Browse to
 https://developers.google.com/accounts/docs/application-default-credentials
 for more information
-END
+ERROR_MESSAGE
 
     # DefaultCredentials is used to preload the credentials file, to determine
     # which type of credentials should be loaded.

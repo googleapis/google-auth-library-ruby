@@ -71,47 +71,68 @@ module Google
         @client.fetch_access_token!
       end
 
-      # Returns the default credentials.
+      # Returns the default credentials checking, in this order, the path env
+      # evironment variables, json environment variables, default paths. If the
+      # previously stated locations do not contain keyfile information,
+      # this method defaults to use the application default.
       def self.default(options = {})
         scope = options[:scope]
         # First try to find keyfile file from environment variables.
-        self::PATH_ENV_VARS.map(&method(:env))
-                           .compact
-                           .select(&method(:path))
-                           .each do |file|
-          return new file, scope: scope
-        end
+        client = from_path_vars(scope)
+
         # Second try to find keyfile json from environment variables.
-        self::JSON_ENV_VARS.map(&method(:json)).compact.each do |hash|
+        client ||= from_json_vars(scope)
+
+        # Third try to find keyfile file from known file paths.
+        client ||= from_default_vars(scope)
+
+        # Finally get instantiated client from Google::Auth
+        client ||= from_application_default(scope)
+        client
+      end
+
+      def self.from_path_vars(scope)
+        self::PATH_ENV_VARS
+          .map { |v| ENV[v] }
+          .compact
+          .select { |p| ::File.file? p }
+          .each do |file|
+            return new file, scope: scope
+          end
+      end
+
+      def self.from_json_vars(scope)
+        json = lambda do |v|
+          unless ENV[v].nil?
+            begin
+              JSON.parse ENV[v]
+            rescue
+              nil
+            end
+          end
+        end
+        self::JSON_ENV_VARS.map(&json).compact.each do |hash|
           return new hash, scope: scope
         end
-        # Third try to find keyfile file from known file paths.
-        self::DEFAULT_PATHS.select(&method(:path)).each do |file|
-          return new file, scope: scope
-        end
-        # Finally get instantiated client from Google::Auth.
+      end
+
+      def self.from_default_paths(scope)
+        self::DEFAULT_PATHS
+          .select { |p| ::File.file? p }
+          .each do |file|
+            return new file, scope: scope
+          end
+      end
+
+      def self.from_application_default(scope)
         scope ||= self::SCOPE
         client = Google::Auth.get_application_default scope
         new client
       end
-
-      def self.env(v)
-        ENV[v]
-      end
-
-      def self.json(v)
-        unless ENV[v].nil?
-          begin
-            JSON.parse ENV[v]
-          rescue
-            nil
-          end
-        end
-      end
-
-      def self.path(p)
-        ::File.file? p
-      end
+      private_class_method :from_path_vars,
+                           :from_json_vars,
+                           :from_default_paths,
+                           :from_application_default
 
       protected
 
