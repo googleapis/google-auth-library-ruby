@@ -31,23 +31,13 @@ require 'multi_json'
 require 'stringio'
 
 require 'googleauth/credentials_loader'
-require 'googleauth/client_id'
-require 'googleauth/compute_engine'
 require 'googleauth/service_account'
-require 'googleauth/user_authorizer'
 require 'googleauth/user_refresh'
-require 'googleauth/web_user_authorizer'
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
   # used to access Google APIs.
   module Auth
-    NOT_FOUND_ERROR = <<ERROR_MESSAGE.freeze
-Could not load the default credentials. Browse to
-https://developers.google.com/accounts/docs/application-default-credentials
-for more information
-ERROR_MESSAGE
-
     # DefaultCredentials is used to preload the credentials file, to determine
     # which type of credentials should be loaded.
     class DefaultCredentials
@@ -97,29 +87,5 @@ ERROR_MESSAGE
         end
       end
     end
-
-    # Obtains the default credentials implementation to use in this
-    # environment.
-    #
-    # Use this to obtain the Application Default Credentials for accessing
-    # Google APIs.  Application Default Credentials are described in detail
-    # at http://goo.gl/IUuyuX.
-    #
-    # If supplied, scope is used to create the credentials instance, when it can
-    # be applied.  E.g, on google compute engine and for user credentials the
-    # scope is ignored.
-    #
-    # @param scope [string|array|nil] the scope(s) to access
-    # @param options [hash] allows override of the connection being used
-    def get_application_default(scope = nil, options = {})
-      creds = DefaultCredentials.from_env(scope) ||
-              DefaultCredentials.from_well_known_path(scope) ||
-              DefaultCredentials.from_system_default_path(scope)
-      return creds unless creds.nil?
-      raise NOT_FOUND_ERROR unless GCECredentials.on_gce?(options)
-      GCECredentials.new
-    end
-
-    module_function :get_application_default
   end
 end
