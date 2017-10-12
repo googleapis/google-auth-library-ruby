@@ -32,5 +32,5 @@ Gem::Specification.new do |s|
   s.add_dependency 'memoist', '~> 0.12'
   s.add_dependency 'multi_json', '~> 1.11'
   s.add_dependency 'os', '~> 0.9'
-  s.add_dependency 'signet', '~> 0.7'
+  s.add_dependency 'signet', '~> 0.8'
 end
