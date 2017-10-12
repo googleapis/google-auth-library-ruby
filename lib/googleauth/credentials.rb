@@ -106,7 +106,7 @@ module Google
           unless ENV[v].nil?
             begin
               JSON.parse ENV[v]
-            rescue
+            rescue StandardError
               nil
             end
           end
