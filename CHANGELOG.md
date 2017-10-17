@@ -1,4 +1,13 @@
+## 0.6.0 (2017/10/17)
+
+### Changes
+
+* Support ruby-jwt 2.0
+* Add simple credentials class
+
 ## 0.5.3 (2017/07/21)
+
+### Changes
 
 * Fix file permissions on the gem's `.rb` files.
 
