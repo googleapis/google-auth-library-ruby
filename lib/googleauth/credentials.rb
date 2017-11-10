@@ -84,7 +84,7 @@ module Google
         client ||= from_json_vars(scope)
 
         # Third try to find keyfile file from known file paths.
-        client ||= from_default_vars(scope)
+        client ||= from_default_paths(scope)
 
         # Finally get instantiated client from Google::Auth
         client ||= from_application_default(scope)
@@ -99,6 +99,7 @@ module Google
           .each do |file|
             return new file, scope: scope
           end
+        nil
       end
 
       def self.from_json_vars(scope)
@@ -114,6 +115,7 @@ module Google
         self::JSON_ENV_VARS.map(&json).compact.each do |hash|
           return new hash, scope: scope
         end
+        nil
       end
 
       def self.from_default_paths(scope)
@@ -122,6 +124,7 @@ module Google
           .each do |file|
             return new file, scope: scope
           end
+        nil
       end
 
       def self.from_application_default(scope)
