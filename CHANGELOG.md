@@ -1,4 +1,28 @@
-## 0.5.1 (06/01/2016)
+## 0.6.1 (2017/10/18)
+
+* Fix file permissions
+
+## 0.6.0 (2017/10/17)
+
+### Changes
+
+* Support ruby-jwt 2.0
+* Add simple credentials class
+
+## 0.5.3 (2017/07/21)
+
+### Changes
+
+* Fix file permissions on the gem's `.rb` files.
+
+## 0.5.2 (2017/07/19)
+
+### Changes
+
+* Add retry mechanism when fetching access tokens in `GCECredentials` and `UserRefreshCredentials` classes.
+* Update Google API OAuth2 token credential URI to v4.
+
+## 0.5.1 (2016/01/06)
 
 ### Changes
 
@@ -6,14 +30,14 @@
 * Fix ADC not working on some windows machines ([@vsubramani][])
 [#55](https://github.com/google/google-auth-library-ruby/issues/55)
 
-## 0.5.0 (12/10/2015)
+## 0.5.0 (2015/10/12)
 
 ### Changes
 
 * Initial support for user credentials ([@sqrrrl][])
 * Update Signet to 0.7
 
-## 0.4.2 (05/08/2015)
+## 0.4.2 (2015/08/05)
 
 ### Changes
 
@@ -34,20 +58,20 @@
 * Enables passing credentials via environment variables. ([@haabaato][])
 [#27](https://github.com/google/google-auth-library-ruby/issues/27)
 
-## 0.4.1 (25/04/2015)
+## 0.4.1 (2015/04/25)
 
 ### Changes
 
 * Improves handling of --no-scopes GCE authorization ([@tbetbetbe][])
 * Refactoring and cleanup ([@joneslee85][])
 
-## 0.4.0 (25/03/2015)
+## 0.4.0 (2015/03/25)
 
 ### Changes
 
 * Adds an implementation of JWT header auth ([@tbetbetbe][])
 
-## 0.3.0 (23/03/2015)
+## 0.3.0 (2015/03/23)
 
 ### Changes
 

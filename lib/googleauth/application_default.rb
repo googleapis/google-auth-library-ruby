@@ -27,31 +27,41 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-spec_dir = File.expand_path(File.join(File.dirname(__FILE__)))
-$LOAD_PATH.unshift(spec_dir)
-$LOAD_PATH.uniq!
+require 'googleauth/compute_engine'
+require 'googleauth/default_credentials'
 
-require 'googleauth'
-require 'googleauth/stores/file_token_store'
-require 'spec_helper'
-require 'fakefs/safe'
-require 'fakefs/spec_helpers'
-require 'googleauth/stores/store_examples'
+module Google
+  # Module Auth provides classes that provide Google-specific authorization
+  # used to access Google APIs.
+  module Auth
+    NOT_FOUND_ERROR = <<ERROR_MESSAGE.freeze
+Could not load the default credentials. Browse to
+https://developers.google.com/accounts/docs/application-default-credentials
+for more information
+ERROR_MESSAGE
 
-module FakeFS
-  class File
-    # FakeFS doesn't implement. And since we don't need to actually lock,
-    # just stub out...
-    def flock(*); end
+    # Obtains the default credentials implementation to use in this
+    # environment.
+    #
+    # Use this to obtain the Application Default Credentials for accessing
+    # Google APIs.  Application Default Credentials are described in detail
+    # at http://goo.gl/IUuyuX.
+    #
+    # If supplied, scope is used to create the credentials instance, when it can
+    # be applied.  E.g, on google compute engine and for user credentials the
+    # scope is ignored.
+    #
+    # @param scope [string|array|nil] the scope(s) to access
+    # @param options [hash] allows override of the connection being used
+    def get_application_default(scope = nil, options = {})
+      creds = DefaultCredentials.from_env(scope) ||
+              DefaultCredentials.from_well_known_path(scope) ||
+              DefaultCredentials.from_system_default_path(scope)
+      return creds unless creds.nil?
+      raise NOT_FOUND_ERROR unless GCECredentials.on_gce?(options)
+      GCECredentials.new
+    end
+
+    module_function :get_application_default
   end
-end
-
-describe Google::Auth::Stores::FileTokenStore do
-  include FakeFS::SpecHelpers
-
-  let(:store) do
-    Google::Auth::Stores::FileTokenStore.new(file: '/tokens.yaml')
-  end
-
-  it_behaves_like 'token store'
 end

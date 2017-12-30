@@ -8,9 +8,9 @@
 </dl>
 
 [![Gem Version](https://badge.fury.io/rb/googleauth.svg)](http://badge.fury.io/rb/googleauth)
-[![Build Status](https://secure.travis-ci.org/google/google-auth-library-ruby.png)](http://travis-ci.org/google/google-auth-library-ruby)
-[![Coverage Status](https://coveralls.io/repos/google/google-auth-library-ruby/badge.png)](https://coveralls.io/r/google/google-auth-library-ruby)
-[![Dependency Status](https://gemnasium.com/google/google-auth-library-ruby.png)](https://gemnasium.com/google/google-auth-library-ruby)
+[![Build Status](https://secure.travis-ci.org/google/google-auth-library-ruby.svg)](http://travis-ci.org/google/google-auth-library-ruby)
+[![Coverage Status](https://coveralls.io/repos/google/google-auth-library-ruby/badge.svg)](https://coveralls.io/r/google/google-auth-library-ruby)
+[![Dependency Status](https://gemnasium.com/google/google-auth-library-ruby.svg)](https://gemnasium.com/google/google-auth-library-ruby)
 
 ## Description
 
@@ -131,6 +131,18 @@ end
 # OK to use credentials
 ```
 
+### Example (Service Account)
+
+```ruby
+scope = 'https://www.googleapis.com/auth/androidpublisher'
+
+authorizer = Google::Auth::ServiceAccountCredentials.make_creds(
+  json_key_io: File.open('/path/to/service_account_json_key.json'),
+  scope: scope)
+  
+authorizer.fetch_access_token!
+```
+
 ### Storage
 
 Authorizers require a storage instance to manage long term persistence of
@@ -141,14 +153,6 @@ access and refresh tokens. Two storage implementations are included:
 
 Custom storage implementations can also be used. See
 [token_store.rb](lib/googleauth/token_store.rb) for additional details.
-
-## What about auth in google-apis-ruby-client?
-
-The goal is for all auth done by
-[google-apis-ruby-client][google-apis-ruby-client] to be performed by this
-library. I.e, eventually google-apis-ruby-client will just take a dependency
-on this library.  This update is a work in progress, but should be completed
-by Q2 2015.
 
 ## License
 

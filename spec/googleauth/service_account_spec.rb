@@ -54,7 +54,7 @@ shared_examples 'jwt header auth' do
       expect(hdr).to_not be_nil
       expect(hdr.start_with?(auth_prefix)).to be true
       authorization = hdr[auth_prefix.length..-1]
-      payload, = JWT.decode(authorization, @key.public_key)
+      payload, = JWT.decode(authorization, @key.public_key, true, algorithm: 'RS256')
       expect(payload['aud']).to eq(test_uri)
       expect(payload['iss']).to eq(client_email)
     end
@@ -135,9 +135,10 @@ describe Google::Auth::ServiceAccountCredentials do
     blk = proc do |request|
       params = Addressable::URI.form_unencode(request.body)
       _claim, _header = JWT.decode(params.assoc('assertion').last,
-                                   @key.public_key)
+                                   @key.public_key, true,
+                                   algorithm: 'RS256')
     end
-    stub_request(:post, 'https://www.googleapis.com/oauth2/v3/token')
+    stub_request(:post, 'https://www.googleapis.com/oauth2/v4/token')
       .with(body: hash_including(
         'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer'
       ),

@@ -64,6 +64,8 @@ RSpec.configure do |config|
   include RSpec::LoggingHelper
   config.capture_log_messages
   config.include WebMock::API
+  config.filter_run focus: true
+  config.run_all_when_everything_filtered = true
 end
 
 module TestHelpers

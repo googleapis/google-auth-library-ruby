@@ -46,7 +46,7 @@ module Google
     #
     # cf [Application Default Credentials](http://goo.gl/mkAHpZ)
     class UserRefreshCredentials < Signet::OAuth2::Client
-      TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v3/token'.freeze
+      TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v4/token'.freeze
       AUTHORIZATION_URI = 'https://accounts.google.com/o/oauth2/auth'.freeze
       REVOKE_TOKEN_URI = 'https://accounts.google.com/o/oauth2/revoke'.freeze
       extend CredentialsLoader
@@ -92,15 +92,18 @@ module Google
       # Revokes the credential
       def revoke!(options = {})
         c = options[:connection] || Faraday.default_connection
-        resp = c.get(REVOKE_TOKEN_URI, token: refresh_token || access_token)
-        case resp.status
-        when 200
-          self.access_token = nil
-          self.refresh_token = nil
-          self.expires_at = 0
-        else
-          raise(Signet::AuthorizationError,
-                "Unexpected error code #{resp.status}")
+
+        retry_with_error do
+          resp = c.get(REVOKE_TOKEN_URI, token: refresh_token || access_token)
+          case resp.status
+          when 200
+            self.access_token = nil
+            self.refresh_token = nil
+            self.expires_at = 0
+          else
+            raise(Signet::AuthorizationError,
+                  "Unexpected error code #{resp.status}")
+          end
         end
       end
 

@@ -68,7 +68,7 @@ describe Google::Auth::UserRefreshCredentials do
     body = MultiJson.dump('access_token' => access_token,
                           'token_type' => 'Bearer',
                           'expires_in' => 3600)
-    stub_request(:post, 'https://www.googleapis.com/oauth2/v3/token')
+    stub_request(:post, 'https://www.googleapis.com/oauth2/v4/token')
       .with(body: hash_including('grant_type' => 'refresh_token'))
       .to_return(body: body,
                  status: 200,
@@ -291,6 +291,22 @@ describe Google::Auth::UserRefreshCredentials do
       expect { @client.revoke! }.to raise_error(
         Signet::AuthorizationError
       )
+    end
+  end
+
+  describe 'when erros occurred with request' do
+    it 'should fail with Signet::AuthorizationError if request times out' do
+      allow_any_instance_of(Faraday::Connection).to receive(:get)
+        .and_raise(Faraday::TimeoutError)
+      expect { @client.revoke! }
+        .to raise_error Signet::AuthorizationError
+    end
+
+    it 'should fail with Signet::AuthorizationError if request fails' do
+      allow_any_instance_of(Faraday::Connection).to receive(:get)
+        .and_raise(Faraday::ConnectionFailed, nil)
+      expect { @client.revoke! }
+        .to raise_error Signet::AuthorizationError
     end
   end
 end

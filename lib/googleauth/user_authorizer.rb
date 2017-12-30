@@ -32,7 +32,6 @@ require 'multi_json'
 require 'googleauth/signet'
 require 'googleauth/user_refresh'
 
-# rubocop:disable ClassLength
 module Google
   module Auth
     # Handles an interactive 3-Legged-OAuth2 (3LO) user consent authorization.
@@ -125,11 +124,7 @@ module Google
       # @return [Google::Auth::UserRefreshCredentials]
       #  Stored credentials, nil if none present
       def get_credentials(user_id, scope = nil)
-        raise NIL_USER_ID_ERROR if user_id.nil?
-        raise NIL_TOKEN_STORE_ERROR if @token_store.nil?
-
-        scope ||= @scope
-        saved_token = @token_store.load(user_id)
+        saved_token = stored_token(user_id)
         return nil if saved_token.nil?
         data = MultiJson.load(saved_token)
 
@@ -146,6 +141,7 @@ module Google
           refresh_token: data['refresh_token'],
           expires_at: data.fetch('expiration_time_millis', 0) / 1000
         )
+        scope ||= @scope
         if credentials.includes_scope?(scope)
           return monitor_credentials(user_id, credentials)
         end
@@ -245,6 +241,18 @@ module Google
 
       private
 
+      # @private Fetch stored token with given user_id
+      #
+      # @param [String] user_id
+      #  Unique ID of the user for loading/storing credentials.
+      # @return [String] The saved token from @token_store
+      def stored_token(user_id)
+        raise NIL_USER_ID_ERROR if user_id.nil?
+        raise NIL_TOKEN_STORE_ERROR if @token_store.nil?
+
+        @token_store.load(user_id)
+      end
+
       # Begin watching a credential for refreshes so the access token can be
       # saved.
       #
@@ -267,13 +275,11 @@ module Google
       #  Redirect URI
       def redirect_uri_for(base_url)
         return @callback_uri unless URI(@callback_uri).scheme.nil?
-        raise sprintf(
-          MISSING_ABSOLUTE_URL_ERROR,
-          @callback_uri
-        ) if base_url.nil? || URI(base_url).scheme.nil?
+        if base_url.nil? || URI(base_url).scheme.nil?
+          raise sprintf(MISSING_ABSOLUTE_URL_ERROR, @callback_uri)
+        end
         URI.join(base_url, @callback_uri).to_s
       end
     end
   end
 end
-# rubocop:enable ClassLength
