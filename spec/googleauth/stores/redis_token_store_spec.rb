@@ -36,6 +36,7 @@ require 'googleauth/stores/redis_token_store'
 require 'spec_helper'
 require 'fakeredis/rspec'
 require 'googleauth/stores/store_examples'
+require 'redis-namespace'
 
 describe Google::Auth::Stores::RedisTokenStore do
   let(:redis) do
@@ -44,6 +45,21 @@ describe Google::Auth::Stores::RedisTokenStore do
 
   let(:store) do
     Google::Auth::Stores::RedisTokenStore.new(redis: redis)
+  end
+
+  context 'use redis-namespace' do
+    let(:named_redis) do
+      Redis::Namespace.new(redis: Redis.new)
+    end
+    let(:redis) do
+       named_redis
+    end
+
+    it_behaves_like 'token store'
+
+    it 'should use redis-namespace' do
+      expect(store.instance_variable_get(:@redis)).to be == named_redis
+    end
   end
 
   it_behaves_like 'token store'

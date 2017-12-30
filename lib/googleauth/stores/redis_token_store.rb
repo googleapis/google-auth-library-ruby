@@ -28,6 +28,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 require 'redis'
+require 'redis-namespace'
 require 'googleauth/token_store'
 
 module Google
@@ -52,7 +53,7 @@ module Google
           redis = options.delete(:redis)
           prefix = options.delete(:prefix)
           @redis = case redis
-                   when Redis
+                   when Redis, Redis::Namespace
                      redis
                    else
                      Redis.new(options)

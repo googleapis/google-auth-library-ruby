@@ -11,6 +11,7 @@ group :development do
   gem 'rack-test', '~> 0.6'
   gem 'rake', '~> 10.0'
   gem 'redis', '~> 3.2'
+  gem 'redis-namespace', '~> 1.5'
   gem 'rspec', '~> 3.0'
   gem 'rubocop', '>= 0.41', '< 0.50'
   gem 'simplecov', '~> 0.9'
