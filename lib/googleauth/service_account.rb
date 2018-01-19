@@ -58,7 +58,7 @@ module Google
         if json_key_io
           private_key, client_email = read_json_key(json_key_io)
         else
-          private_key = ENV[CredentialsLoader::PRIVATE_KEY_VAR]
+          private_key = unescape ENV[CredentialsLoader::PRIVATE_KEY_VAR]
           client_email = ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
         end
 
@@ -76,6 +76,15 @@ module Google
         raise 'missing client_email' unless json_key.key?('client_email')
         raise 'missing private_key' unless json_key.key?('private_key')
         [json_key['private_key'], json_key['client_email']]
+      end
+
+      # Handles certain escape sequences that sometimes appear in input.
+      # Specifically, interprets the "\n" sequence for newline, and removes
+      # enclosing quotes.
+      def self.unescape(str)
+        str = str.gsub '\n', "\n"
+        str = str[1..-2] if str.start_with?('"') && str.end_with?('"')
+        str
       end
 
       def initialize(options = {})

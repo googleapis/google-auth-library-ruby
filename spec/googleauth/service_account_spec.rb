@@ -211,6 +211,13 @@ describe Google::Auth::ServiceAccountCredentials do
       ENV[CLIENT_EMAIL_VAR] = cred_json[:client_email]
       expect(@clz.from_env(@scope)).to_not be_nil
     end
+
+    it 'succeeds when GOOGLE_PRIVATE_KEY is escaped' do
+      escaped_key = cred_json[:private_key].gsub "\n", '\n'
+      ENV[PRIVATE_KEY_VAR] = "\"#{escaped_key}\""
+      ENV[CLIENT_EMAIL_VAR] = cred_json[:client_email]
+      expect(@clz.from_env(@scope)).to_not be_nil
+    end
   end
 
   describe '#from_well_known_path' do
