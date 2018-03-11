@@ -58,7 +58,11 @@ ERROR_MESSAGE
               DefaultCredentials.from_well_known_path(scope) ||
               DefaultCredentials.from_system_default_path(scope)
       return creds unless creds.nil?
-      raise NOT_FOUND_ERROR unless GCECredentials.on_gce?(options)
+      unless GCECredentials.on_gce?(options)
+        # Clear cache of the result of GCECredentials.on_gce?
+        GCECredentials.unmemoize_all
+        raise NOT_FOUND_ERROR
+      end
       GCECredentials.new
     end
 
