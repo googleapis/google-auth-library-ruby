@@ -29,6 +29,7 @@
 
 require 'googleauth/signet'
 require 'googleauth/credentials_loader'
+require 'googleauth/json_key_reader'
 require 'jwt'
 require 'multi_json'
 require 'stringio'
@@ -48,6 +49,7 @@ module Google
     class ServiceAccountCredentials < Signet::OAuth2::Client
       TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v4/token'.freeze
       extend CredentialsLoader
+      extend JsonKeyReader
 
       # Creates a ServiceAccountCredentials.
       #
@@ -67,15 +69,6 @@ module Google
             scope: scope,
             issuer: client_email,
             signing_key: OpenSSL::PKey::RSA.new(private_key))
-      end
-
-      # Reads the private key and client email fields from the service account
-      # JSON key.
-      def self.read_json_key(json_key_io)
-        json_key = MultiJson.load(json_key_io.read)
-        raise 'missing client_email' unless json_key.key?('client_email')
-        raise 'missing private_key' unless json_key.key?('private_key')
-        [json_key['private_key'], json_key['client_email']]
       end
 
       # Handles certain escape sequences that sometimes appear in input.
@@ -132,6 +125,7 @@ module Google
       SIGNING_ALGORITHM = 'RS256'.freeze
       EXPIRY = 60
       extend CredentialsLoader
+      extend JsonKeyReader
 
       # make_creds proxies the construction of a credentials instance
       #
@@ -142,15 +136,6 @@ module Google
       # we modify make_creds to reflect this.
       def self.make_creds(*args)
         new(json_key_io: args[0][:json_key_io])
-      end
-
-      # Reads the private key and client email fields from the service account
-      # JSON key.
-      def self.read_json_key(json_key_io)
-        json_key = MultiJson.load(json_key_io.read)
-        raise 'missing client_email' unless json_key.key?('client_email')
-        raise 'missing private_key' unless json_key.key?('private_key')
-        [json_key['private_key'], json_key['client_email']]
       end
 
       # Initializes a ServiceAccountJwtHeaderCredentials.
