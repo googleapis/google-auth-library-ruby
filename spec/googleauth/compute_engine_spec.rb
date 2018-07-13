@@ -77,6 +77,20 @@ describe Google::Auth::GCECredentials do
           .to raise_error Signet::AuthorizationError
         expect(stub).to have_been_requested
       end
+
+      it 'should fail with Signet::AuthorizationError if request times out' do
+        allow_any_instance_of(Faraday::Connection).to receive(:get)
+          .and_raise(Faraday::TimeoutError)
+        expect { @client.fetch_access_token! }
+          .to raise_error Signet::AuthorizationError
+      end
+
+      it 'should fail with Signet::AuthorizationError if request fails' do
+        allow_any_instance_of(Faraday::Connection).to receive(:get)
+          .and_raise(Faraday::ConnectionFailed, nil)
+        expect { @client.fetch_access_token! }
+          .to raise_error Signet::AuthorizationError
+      end
     end
   end
 

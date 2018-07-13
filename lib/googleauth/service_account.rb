@@ -47,7 +47,7 @@ module Google
     #
     # cf [Application Default Credentials](http://goo.gl/mkAHpZ)
     class ServiceAccountCredentials < Signet::OAuth2::Client
-      TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v3/token'.freeze
+      TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v4/token'.freeze
       extend CredentialsLoader
       extend JsonKeyReader
 
@@ -60,7 +60,7 @@ module Google
         if json_key_io
           private_key, client_email = read_json_key(json_key_io)
         else
-          private_key = ENV[CredentialsLoader::PRIVATE_KEY_VAR]
+          private_key = unescape ENV[CredentialsLoader::PRIVATE_KEY_VAR]
           client_email = ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
         end
 
@@ -69,6 +69,15 @@ module Google
             scope: scope,
             issuer: client_email,
             signing_key: OpenSSL::PKey::RSA.new(private_key))
+      end
+
+      # Handles certain escape sequences that sometimes appear in input.
+      # Specifically, interprets the "\n" sequence for newline, and removes
+      # enclosing quotes.
+      def self.unescape(str)
+        str = str.gsub '\n', "\n"
+        str = str[1..-2] if str.start_with?('"') && str.end_with?('"')
+        str
       end
 
       def initialize(options = {})
@@ -112,7 +121,7 @@ module Google
     class ServiceAccountJwtHeaderCredentials
       JWT_AUD_URI_KEY = :jwt_aud_uri
       AUTH_METADATA_KEY = Signet::OAuth2::AUTH_METADATA_KEY
-      TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v3/token'.freeze
+      TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v4/token'.freeze
       SIGNING_ALGORITHM = 'RS256'.freeze
       EXPIRY = 60
       extend CredentialsLoader

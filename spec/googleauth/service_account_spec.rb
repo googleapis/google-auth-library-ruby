@@ -54,7 +54,7 @@ shared_examples 'jwt header auth' do
       expect(hdr).to_not be_nil
       expect(hdr.start_with?(auth_prefix)).to be true
       authorization = hdr[auth_prefix.length..-1]
-      payload, = JWT.decode(authorization, @key.public_key)
+      payload, = JWT.decode(authorization, @key.public_key, true, algorithm: 'RS256')
       expect(payload['aud']).to eq(test_uri)
       expect(payload['iss']).to eq(client_email)
     end
@@ -135,9 +135,10 @@ describe Google::Auth::ServiceAccountCredentials do
     blk = proc do |request|
       params = Addressable::URI.form_unencode(request.body)
       _claim, _header = JWT.decode(params.assoc('assertion').last,
-                                   @key.public_key)
+                                   @key.public_key, true,
+                                   algorithm: 'RS256')
     end
-    stub_request(:post, 'https://www.googleapis.com/oauth2/v3/token')
+    stub_request(:post, 'https://www.googleapis.com/oauth2/v4/token')
       .with(body: hash_including(
         'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer'
       ),
@@ -207,6 +208,13 @@ describe Google::Auth::ServiceAccountCredentials do
     it 'succeeds when GOOGLE_PRIVATE_KEY and GOOGLE_CLIENT_EMAIL env vars are'\
       ' valid' do
       ENV[PRIVATE_KEY_VAR] = cred_json[:private_key]
+      ENV[CLIENT_EMAIL_VAR] = cred_json[:client_email]
+      expect(@clz.from_env(@scope)).to_not be_nil
+    end
+
+    it 'succeeds when GOOGLE_PRIVATE_KEY is escaped' do
+      escaped_key = cred_json[:private_key].gsub "\n", '\n'
+      ENV[PRIVATE_KEY_VAR] = "\"#{escaped_key}\""
       ENV[CLIENT_EMAIL_VAR] = cred_json[:client_email]
       expect(@clz.from_env(@scope)).to_not be_nil
     end

@@ -1,13 +1,14 @@
 sudo: false
 language: ruby
 rvm:
+  - 2.4
   - 2.3
   - 2.2
   - 2.0.0
   - 2.1
   - 1.9.3
   - rbx-2
-  - jruby
+  - jruby-9.1.9.0
 matrix:
   allow_failures:
     - rvm: rbx-2 # See rubinius/rubinius#3485 - rubocop segfaults
@@ -33,6 +34,6 @@ before_install:
 notifications:
   email:
     recipients:
-      - temiola@google.com
+      - ruby-cloud-eng@google.com
     on_success: change
     on_failure: change
