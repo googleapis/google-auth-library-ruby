@@ -178,7 +178,7 @@ Please
 [report bugs at the project on Github](https://github.com/google/google-auth-library-ruby/issues). Don't
 hesitate to
 [ask questions](http://stackoverflow.com/questions/tagged/google-auth-library-ruby)
-about the client or APIs on [StackOverflow](http://stackoverflow.com).
+about the client or APIs on [StackOverflow](https://stackoverflow.com/questions/tagged/google-auth-library-ruby).
 
 [google-apis-ruby-client]: (https://github.com/google/google-api-ruby-client)
 [application default credentials]: (https://developers.google.com/accounts/docs/application-default-credentials)
