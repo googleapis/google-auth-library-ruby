@@ -43,12 +43,26 @@ module Google
     class DefaultCredentials
       extend CredentialsLoader
 
+      CLOUD_SDK_CLIENT_ID = '764086051850-6qr4p6gpi6hn506pt8ejuq83di341hur.app'\
+        's.googleusercontent.com'.freeze
+
+      CLOUD_SDK_CREDENTIALS_WARNING = 'Your application has authenticated '\
+        'using end user credentials from Google Cloud SDK. We recommend that '\
+        'most server applications use service accounts instead. If your '\
+        'application continues to use end user credentials from Cloud SDK, '\
+        'you might receive a "quota exceeded" or "API not enabled" error. For'\
+        ' more information about service accounts, see '\
+        'https://cloud.google.com/docs/authentication/.'.freeze
+
       # override CredentialsLoader#make_creds to use the class determined by
       # loading the json.
       def self.make_creds(options = {})
         json_key_io, scope = options.values_at(:json_key_io, :scope)
         if json_key_io
           json_key, clz = determine_creds_class(json_key_io)
+          if json_key['client_id'] == CLOUD_SDK_CLIENT_ID
+            Warning.warn(CLOUD_SDK_CREDENTIALS_WARNING)
+          end
           clz.make_creds(json_key_io: StringIO.new(MultiJson.dump(json_key)),
                          scope: scope)
         else
