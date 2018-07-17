@@ -242,4 +242,23 @@ describe '#get_application_default' do
       end.to raise_error RuntimeError
     end
   end
+
+  describe 'when using cloud sdk credentials' do
+    let(:cred_json) do
+      {
+        private_key_id: 'a_private_key_id',
+        private_key: @key.to_pem,
+        client_email: 'app@developer.gserviceaccount.com',
+        client_id: Google::Auth::CredentialsLoader::CLOUD_SDK_CLIENT_ID,
+        type: 'service_account'
+      }
+    end
+
+    def cred_json_text
+      MultiJson.dump(cred_json)
+    end
+
+    it_behaves_like 'it can successfully load credentials'
+    it_behaves_like 'it cannot load misconfigured credentials'
+  end
 end

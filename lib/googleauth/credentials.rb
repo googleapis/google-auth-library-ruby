@@ -32,6 +32,7 @@ require 'json'
 require 'signet/oauth_2/client'
 
 require 'googleauth/default_credentials'
+require 'googleauth/credentials_loader'
 
 module Google
   module Auth
@@ -68,6 +69,7 @@ module Google
           json['scope'] ||= scope
           @client = init_client json
         end
+        CredentialsLoader.warn_if_cloud_sdk_credentials(@client.client_id)
         @client.fetch_access_token!
       end
 

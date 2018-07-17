@@ -57,6 +57,17 @@ module Google
       SYSTEM_DEFAULT_ERROR =
         'Unable to read the system default credential file'.freeze
 
+      CLOUD_SDK_CLIENT_ID = '764086051850-6qr4p6gpi6hn506pt8ejuq83di341hur.app'\
+        's.googleusercontent.com'.freeze
+
+      CLOUD_SDK_CREDENTIALS_WARNING = 'Your application has authenticated '\
+        'using end user credentials from Google Cloud SDK. We recommend that '\
+        'most server applications use service accounts instead. If your '\
+        'application continues to use end user credentials from Cloud SDK, '\
+        'you might receive a "quota exceeded" or "API not enabled" error. For'\
+        ' more information about service accounts, see '\
+        'https://cloud.google.com/docs/authentication/.'.freeze
+
       # make_creds proxies the construction of a credentials instance
       #
       # By default, it calls #new on the current class, but this behaviour can
@@ -117,6 +128,13 @@ module Google
         end
       rescue StandardError => e
         raise "#{SYSTEM_DEFAULT_ERROR}: #{e}"
+      end
+
+      # Issues warning if cloud sdk client id is used
+      def warn_if_cloud_sdk_credentials(client_id)
+        if client_id == CLOUD_SDK_CLIENT_ID
+          Warning.warn(CLOUD_SDK_CREDENTIALS_WARNING)
+        end
       end
 
       private

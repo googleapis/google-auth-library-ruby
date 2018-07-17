@@ -140,4 +140,21 @@ describe Google::Auth::ClientId do
       )
     end
   end
+
+  context 'with cloud sdk credentials' do
+    let(:config) do
+      {
+        'web' => {
+          'client_id' => Google::Auth::CredentialsLoader::CLOUD_SDK_CLIENT_ID,
+          'client_secret' => 'notasecret'
+        }
+      }
+    end
+
+    it 'should raise warning' do
+      expect { Google::Auth::ClientId.from_hash(config) }.to output(
+        Google::Auth::CredentialsLoader::CLOUD_SDK_CREDENTIALS_WARNING
+      ).to_stderr
+    end
+  end
 end

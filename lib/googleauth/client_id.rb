@@ -28,6 +28,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 require 'multi_json'
+require 'googleauth/credentials_loader'
 
 module Google
   module Auth
@@ -63,13 +64,14 @@ module Google
       #       & secrets in source. See {#from_file} to load from
       #       `client_secrets.json` files.
       def initialize(id, secret)
+        CredentialsLoader.warn_if_cloud_sdk_credentials(id)
         raise 'Client id can not be nil' if id.nil?
         raise 'Client secret can not be nil' if secret.nil?
         @id = id
         @secret = secret
       end
 
-      # Constructs a Client ID from a JSON file downloaed from the
+      # Constructs a Client ID from a JSON file downloaded from the
       # Google Developers Console.
       #
       # @param [String, File] file

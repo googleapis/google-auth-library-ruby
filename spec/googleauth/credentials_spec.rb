@@ -29,6 +29,7 @@
 
 require 'googleauth'
 
+
 # This test is testing the private class Google::Auth::Credentials. We want to
 # make sure that the passed in scope propogates to the Signet object. This means
 # testing the private API, which is generally frowned on.
@@ -46,6 +47,7 @@ describe Google::Auth::Credentials, :private do
   it 'uses a default scope' do
     mocked_signet = double('Signet::OAuth2::Client')
     allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
+    allow(mocked_signet).to receive(:client_id)
     allow(Signet::OAuth2::Client).to receive(:new) do |options|
       expect(options[:token_credential_uri]).to eq('https://accounts.google.com/o/oauth2/token')
       expect(options[:audience]).to eq('https://accounts.google.com/o/oauth2/token')
@@ -62,6 +64,7 @@ describe Google::Auth::Credentials, :private do
   it 'uses a custom scope' do
     mocked_signet = double('Signet::OAuth2::Client')
     allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
+    allow(mocked_signet).to receive(:client_id)
     allow(Signet::OAuth2::Client).to receive(:new) do |options|
       expect(options[:token_credential_uri]).to eq('https://accounts.google.com/o/oauth2/token')
       expect(options[:audience]).to eq('https://accounts.google.com/o/oauth2/token')
@@ -93,6 +96,7 @@ describe Google::Auth::Credentials, :private do
 
     mocked_signet = double('Signet::OAuth2::Client')
     allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
+    allow(mocked_signet).to receive(:client_id)
     allow(Signet::OAuth2::Client).to receive(:new) do |options|
       expect(options[:token_credential_uri]).to eq('https://accounts.google.com/o/oauth2/token')
       expect(options[:audience]).to eq('https://accounts.google.com/o/oauth2/token')
@@ -124,6 +128,7 @@ describe Google::Auth::Credentials, :private do
 
     mocked_signet = double('Signet::OAuth2::Client')
     allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
+    allow(mocked_signet).to receive(:client_id)
     allow(Signet::OAuth2::Client).to receive(:new) do |options|
       expect(options[:token_credential_uri]).to eq('https://accounts.google.com/o/oauth2/token')
       expect(options[:audience]).to eq('https://accounts.google.com/o/oauth2/token')
@@ -154,6 +159,7 @@ describe Google::Auth::Credentials, :private do
 
     mocked_signet = double('Signet::OAuth2::Client')
     allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
+    allow(mocked_signet).to receive(:client_id)
     allow(Signet::OAuth2::Client).to receive(:new) do |options|
       expect(options[:token_credential_uri]).to eq('https://accounts.google.com/o/oauth2/token')
       expect(options[:audience]).to eq('https://accounts.google.com/o/oauth2/token')
@@ -185,6 +191,7 @@ describe Google::Auth::Credentials, :private do
 
     mocked_signet = double('Signet::OAuth2::Client')
     allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
+    allow(mocked_signet).to receive(:client_id)
     allow(Signet::OAuth2::Client).to receive(:new) do |options|
       expect(options[:token_credential_uri]).to eq('https://accounts.google.com/o/oauth2/token')
       expect(options[:audience]).to eq('https://accounts.google.com/o/oauth2/token')
@@ -215,6 +222,7 @@ describe Google::Auth::Credentials, :private do
 
     mocked_signet = double('Signet::OAuth2::Client')
     allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
+    allow(mocked_signet).to receive(:client_id)
     allow(Google::Auth).to receive(:get_application_default) do |scope|
       expect(scope).to eq(TestCredentials::SCOPE)
 
@@ -235,5 +243,17 @@ describe Google::Auth::Credentials, :private do
     creds = TestCredentials.default
     expect(creds).to be_a_kind_of(TestCredentials)
     expect(creds.client).to eq(mocked_signet)
+  end
+
+  it 'warns when cloud sdk credentials are used' do
+    mocked_signet = double('Signet::OAuth2::Client')
+    allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
+    allow(Signet::OAuth2::Client).to receive(:new) do |options|
+      mocked_signet
+    end
+    allow(mocked_signet).to receive(:client_id).and_return(Google::Auth::CredentialsLoader::CLOUD_SDK_CLIENT_ID)
+    expect { Google::Auth::Credentials.new default_keyfile_hash }.to output(
+      Google::Auth::CredentialsLoader::CLOUD_SDK_CREDENTIALS_WARNING
+    ).to_stderr
   end
 end
