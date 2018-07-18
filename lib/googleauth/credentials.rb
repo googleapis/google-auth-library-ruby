@@ -31,7 +31,6 @@ require 'forwardable'
 require 'json'
 require 'signet/oauth_2/client'
 
-require 'googleauth/default_credentials'
 require 'googleauth/credentials_loader'
 
 module Google

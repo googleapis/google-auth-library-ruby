@@ -154,6 +154,19 @@ describe '#get_application_default' do
       expect(Google::Auth.get_application_default(@scope, options))
         .to_not be_nil
     end
+
+    it 'warns when using cloud sdk credentials' do
+      ENV.delete(@var_name) unless ENV[@var_name].nil? # no env var
+      ENV[PRIVATE_KEY_VAR] = cred_json[:private_key]
+      ENV[CLIENT_EMAIL_VAR] = cred_json[:client_email]
+      ENV[CLIENT_ID_VAR] = Google::Auth::CredentialsLoader::CLOUD_SDK_CLIENT_ID
+      ENV[CLIENT_SECRET_VAR] = cred_json[:client_secret]
+      ENV[REFRESH_TOKEN_VAR] = cred_json[:refresh_token]
+      ENV[ACCOUNT_TYPE_VAR] = cred_json[:type]
+      expect { Google::Auth.get_application_default(@scope, options) }.to output(
+          Google::Auth::CredentialsLoader::CLOUD_SDK_CREDENTIALS_WARNING
+      ).to_stderr
+    end
   end
 
   describe 'when credential type is service account' do
@@ -241,24 +254,5 @@ describe '#get_application_default' do
         Google::Auth.get_application_default(@scope, options)
       end.to raise_error RuntimeError
     end
-  end
-
-  describe 'when using cloud sdk credentials' do
-    let(:cred_json) do
-      {
-        private_key_id: 'a_private_key_id',
-        private_key: @key.to_pem,
-        client_email: 'app@developer.gserviceaccount.com',
-        client_id: Google::Auth::CredentialsLoader::CLOUD_SDK_CLIENT_ID,
-        type: 'service_account'
-      }
-    end
-
-    def cred_json_text
-      MultiJson.dump(cred_json)
-    end
-
-    it_behaves_like 'it can successfully load credentials'
-    it_behaves_like 'it cannot load misconfigured credentials'
   end
 end

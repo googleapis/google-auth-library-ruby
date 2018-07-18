@@ -13,7 +13,7 @@ Metrics/MethodLength:
   Max: 20
 Metrics/ClassLength:
   Enabled: false
-Style/IndentHeredoc:
+Layout/IndentHeredoc:
   Enabled: false
 Style/FormatString:
   Enabled: false
