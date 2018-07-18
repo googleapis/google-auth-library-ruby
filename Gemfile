@@ -8,7 +8,6 @@ group :development do
   gem 'coveralls', '~> 0.7'
   gem 'fakefs', '~> 0.6'
   gem 'fakeredis', '~> 0.5'
-  gem 'pry', '~> 0.11.3'
   gem 'rack-test', '~> 0.6'
   gem 'rake', '~> 10.0'
   gem 'redis', '~> 3.2'
