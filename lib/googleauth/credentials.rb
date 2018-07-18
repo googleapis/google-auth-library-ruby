@@ -68,7 +68,7 @@ module Google
           json['scope'] ||= scope
           @client = init_client json
         end
-        CredentialsLoader.warn_if_cloud_sdk_credentials(@client.client_id)
+        CredentialsLoader.warn_if_cloud_sdk_credentials @client.client_id
         @client.fetch_access_token!
       end
 
@@ -79,16 +79,16 @@ module Google
       def self.default(options = {})
         scope = options[:scope]
         # First try to find keyfile file from environment variables.
-        client = from_path_vars(scope)
+        client = from_path_vars scope
 
         # Second try to find keyfile json from environment variables.
-        client ||= from_json_vars(scope)
+        client ||= from_json_vars scope
 
         # Third try to find keyfile file from known file paths.
-        client ||= from_default_paths(scope)
+        client ||= from_default_paths scope
 
         # Finally get instantiated client from Google::Auth
-        client ||= from_application_default(scope)
+        client ||= from_application_default scope
         client
       end
 

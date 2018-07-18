@@ -63,7 +63,7 @@ describe '#get_application_default' do
       Dir.mktmpdir do |dir|
         key_path = File.join(dir, 'does-not-exist')
         ENV[@var_name] = key_path
-        expect { Google::Auth.get_application_default(@scope, options) }
+        expect { Google::Auth.get_application_default @scope, options }
           .to raise_error RuntimeError
       end
     end
@@ -76,7 +76,7 @@ describe '#get_application_default' do
         ENV.delete(@var_name) unless ENV[@var_name].nil? # no env var
         ENV['HOME'] = dir # no config present in this tmp dir
         expect do
-          Google::Auth.get_application_default(@scope, options)
+          Google::Auth.get_application_default @scope, options
         end.to raise_error RuntimeError
       end
       expect(stub).to have_been_requested
@@ -90,7 +90,7 @@ describe '#get_application_default' do
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV[@var_name] = key_path
-        expect(Google::Auth.get_application_default(@scope, options))
+        expect(Google::Auth.get_application_default @scope, options)
           .to_not be_nil
       end
     end
@@ -102,7 +102,7 @@ describe '#get_application_default' do
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV['HOME'] = dir
-        expect(Google::Auth.get_application_default(@scope, options))
+        expect(Google::Auth.get_application_default @scope, options)
           .to_not be_nil
       end
     end
@@ -114,7 +114,7 @@ describe '#get_application_default' do
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV['HOME'] = dir
-        expect(Google::Auth.get_application_default(nil, options)).to_not be_nil
+        expect(Google::Auth.get_application_default nil, options).to_not be_nil
       end
     end
 
@@ -125,7 +125,7 @@ describe '#get_application_default' do
       Dir.mktmpdir do |dir|
         ENV.delete(@var_name) unless ENV[@var_name].nil? # no env var
         ENV['HOME'] = dir # no config present in this tmp dir
-        creds = Google::Auth.get_application_default(@scope, options)
+        creds = Google::Auth.get_application_default @scope, options
         expect(creds).to_not be_nil
       end
       expect(stub).to have_been_requested
@@ -137,7 +137,7 @@ describe '#get_application_default' do
         key_path = File.join('/etc/google/auth/', CREDENTIALS_FILE_NAME)
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
-        expect(Google::Auth.get_application_default(@scope, options))
+        expect(Google::Auth.get_application_default @scope, options)
           .to_not be_nil
         File.delete(key_path)
       end
@@ -151,7 +151,7 @@ describe '#get_application_default' do
       ENV[CLIENT_SECRET_VAR] = cred_json[:client_secret]
       ENV[REFRESH_TOKEN_VAR] = cred_json[:refresh_token]
       ENV[ACCOUNT_TYPE_VAR] = cred_json[:type]
-      expect(Google::Auth.get_application_default(@scope, options))
+      expect(Google::Auth.get_application_default @scope, options)
         .to_not be_nil
     end
 
@@ -163,7 +163,7 @@ describe '#get_application_default' do
       ENV[CLIENT_SECRET_VAR] = cred_json[:client_secret]
       ENV[REFRESH_TOKEN_VAR] = cred_json[:refresh_token]
       ENV[ACCOUNT_TYPE_VAR] = cred_json[:type]
-      expect { Google::Auth.get_application_default(@scope, options) }.to output(
+      expect { Google::Auth.get_application_default @scope, options }.to output(
           Google::Auth::CredentialsLoader::CLOUD_SDK_CREDENTIALS_WARNING + "\n"
       ).to_stderr
     end
@@ -229,7 +229,7 @@ describe '#get_application_default' do
         File.write(key_path, cred_json_text)
         ENV[@var_name] = key_path
         expect do
-          Google::Auth.get_application_default(@scope, options)
+          Google::Auth.get_application_default @scope, options
         end.to raise_error RuntimeError
       end
     end
@@ -242,7 +242,7 @@ describe '#get_application_default' do
         File.write(key_path, cred_json_text)
         ENV['HOME'] = dir
         expect do
-          Google::Auth.get_application_default(@scope, options)
+          Google::Auth.get_application_default @scope, options
         end.to raise_error RuntimeError
       end
     end
@@ -251,7 +251,7 @@ describe '#get_application_default' do
       ENV[PRIVATE_KEY_VAR] = cred_json[:private_key]
       ENV[CLIENT_EMAIL_VAR] = cred_json[:client_email]
       expect do
-        Google::Auth.get_application_default(@scope, options)
+        Google::Auth.get_application_default @scope, options
       end.to raise_error RuntimeError
     end
   end

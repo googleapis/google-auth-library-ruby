@@ -64,7 +64,7 @@ module Google
       #       & secrets in source. See {#from_file} to load from
       #       `client_secrets.json` files.
       def initialize(id, secret)
-        CredentialsLoader.warn_if_cloud_sdk_credentials(id)
+        CredentialsLoader.warn_if_cloud_sdk_credentials id
         raise 'Client id can not be nil' if id.nil?
         raise 'Client secret can not be nil' if secret.nil?
         @id = id
@@ -81,7 +81,7 @@ module Google
         raise 'File can not be nil.' if file.nil?
         File.open(file.to_s) do |f|
           json = f.read
-          config = MultiJson.load(json)
+          config = MultiJson.load json
           from_hash(config)
         end
       end

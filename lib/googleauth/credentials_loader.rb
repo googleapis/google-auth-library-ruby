@@ -132,7 +132,7 @@ module Google
 
       # Issues warning if cloud sdk client id is used
       def warn_if_cloud_sdk_credentials(client_id)
-        warn(CLOUD_SDK_CREDENTIALS_WARNING) if client_id == CLOUD_SDK_CLIENT_ID
+        warn CLOUD_SDK_CREDENTIALS_WARNING if client_id == CLOUD_SDK_CLIENT_ID
       end
 
       private
