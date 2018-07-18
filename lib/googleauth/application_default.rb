@@ -29,7 +29,6 @@
 
 require 'googleauth/compute_engine'
 require 'googleauth/default_credentials'
-require 'pry'
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
