@@ -49,9 +49,11 @@ module Google
         json_key_io, scope = options.values_at(:json_key_io, :scope)
         if json_key_io
           json_key, clz = determine_creds_class(json_key_io)
+          warn_if_cloud_sdk_credentials json_key['client_id']
           clz.make_creds(json_key_io: StringIO.new(MultiJson.dump(json_key)),
                          scope: scope)
         else
+          warn_if_cloud_sdk_credentials ENV[CLIENT_ID_VAR]
           clz = read_creds
           clz.make_creds(scope: scope)
         end
@@ -73,7 +75,7 @@ module Google
 
       # Reads the input json and determines which creds class to use.
       def self.determine_creds_class(json_key_io)
-        json_key = MultiJson.load(json_key_io.read)
+        json_key = MultiJson.load json_key_io.read
         key = 'type'
         raise "the json is missing the '#{key}' field" unless json_key.key?(key)
         type = json_key[key]

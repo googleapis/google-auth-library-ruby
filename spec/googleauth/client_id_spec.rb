@@ -48,7 +48,7 @@ describe Google::Auth::ClientId do
 
   shared_examples 'it can successfully load client_id' do
     context 'loaded from hash' do
-      let(:client_id) { Google::Auth::ClientId.from_hash(config) }
+      let(:client_id) { Google::Auth::ClientId.from_hash config }
 
       it_behaves_like 'it has a valid config'
     end
@@ -103,7 +103,7 @@ describe Google::Auth::ClientId do
     end
 
     it 'should raise error' do
-      expect { Google::Auth::ClientId.from_hash(config) }.to raise_error(
+      expect { Google::Auth::ClientId.from_hash config }.to raise_error(
         /Expected top level property/
       )
     end
@@ -119,7 +119,7 @@ describe Google::Auth::ClientId do
     end
 
     it 'should raise error' do
-      expect { Google::Auth::ClientId.from_hash(config) }.to raise_error(
+      expect { Google::Auth::ClientId.from_hash config }.to raise_error(
         /Client id can not be nil/
       )
     end
@@ -135,9 +135,26 @@ describe Google::Auth::ClientId do
     end
 
     it 'should raise error' do
-      expect { Google::Auth::ClientId.from_hash(config) }.to raise_error(
+      expect { Google::Auth::ClientId.from_hash config }.to raise_error(
         /Client secret can not be nil/
       )
+    end
+  end
+
+  context 'with cloud sdk credentials' do
+    let(:config) do
+      {
+        'web' => {
+          'client_id' => Google::Auth::CredentialsLoader::CLOUD_SDK_CLIENT_ID,
+          'client_secret' => 'notasecret'
+        }
+      }
+    end
+
+    it 'should raise warning' do
+      expect { Google::Auth::ClientId.from_hash config }.to output(
+        Google::Auth::CredentialsLoader::CLOUD_SDK_CREDENTIALS_WARNING + "\n"
+      ).to_stderr
     end
   end
 end
