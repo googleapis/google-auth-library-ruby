@@ -164,7 +164,7 @@ describe '#get_application_default' do
       ENV[REFRESH_TOKEN_VAR] = cred_json[:refresh_token]
       ENV[ACCOUNT_TYPE_VAR] = cred_json[:type]
       expect { Google::Auth.get_application_default(@scope, options) }.to output(
-          Google::Auth::CredentialsLoader::CLOUD_SDK_CREDENTIALS_WARNING
+          Google::Auth::CredentialsLoader::CLOUD_SDK_CREDENTIALS_WARNING + "\n"
       ).to_stderr
     end
   end

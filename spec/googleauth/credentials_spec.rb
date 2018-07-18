@@ -253,7 +253,7 @@ describe Google::Auth::Credentials, :private do
     end
     allow(mocked_signet).to receive(:client_id).and_return(Google::Auth::CredentialsLoader::CLOUD_SDK_CLIENT_ID)
     expect { Google::Auth::Credentials.new default_keyfile_hash }.to output(
-      Google::Auth::CredentialsLoader::CLOUD_SDK_CREDENTIALS_WARNING
+      Google::Auth::CredentialsLoader::CLOUD_SDK_CREDENTIALS_WARNING + "\n"
     ).to_stderr
   end
 end

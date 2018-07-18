@@ -153,7 +153,7 @@ describe Google::Auth::ClientId do
 
     it 'should raise warning' do
       expect { Google::Auth::ClientId.from_hash(config) }.to output(
-        Google::Auth::CredentialsLoader::CLOUD_SDK_CREDENTIALS_WARNING
+        Google::Auth::CredentialsLoader::CLOUD_SDK_CREDENTIALS_WARNING + "\n"
       ).to_stderr
     end
   end
