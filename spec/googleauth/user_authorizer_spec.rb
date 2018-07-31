@@ -300,7 +300,7 @@ describe Google::Auth::UserAuthorizer do
     before(:example) do
       token_store.store('user1', token_json)
       stub_request(
-        :get, 'https://accounts.google.com/o/oauth2/revoke?token=refreshtoken'
+        :get, 'https://oauth2.googleapis.com/revoke?token=refreshtoken'
       )
         .to_return(status: 200)
     end
@@ -308,7 +308,7 @@ describe Google::Auth::UserAuthorizer do
     it 'should revoke the grant' do
       authorizer.revoke_authorization('user1')
       expect(a_request(
-               :get, 'https://accounts.google.com/o/oauth2/revoke?token=refreshtoken'
+               :get, 'https://oauth2.googleapis.com/revoke?token=refreshtoken'
       ))
         .to have_been_made
     end

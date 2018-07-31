@@ -46,9 +46,9 @@ module Google
     #
     # cf [Application Default Credentials](http://goo.gl/mkAHpZ)
     class UserRefreshCredentials < Signet::OAuth2::Client
-      TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v4/token'.freeze
+      TOKEN_CRED_URI = 'https://oauth2.googleapis.com/token'.freeze
       AUTHORIZATION_URI = 'https://accounts.google.com/o/oauth2/auth'.freeze
-      REVOKE_TOKEN_URI = 'https://accounts.google.com/o/oauth2/revoke'.freeze
+      REVOKE_TOKEN_URI = 'https://oauth2.googleapis.com/revoke'.freeze
       extend CredentialsLoader
 
       # Create a UserRefreshCredentials.
