@@ -38,8 +38,8 @@ module Google
     # This class is intended to be inherited by API-specific classes
     # which overrides the SCOPE constant.
     class Credentials
-      TOKEN_CREDENTIAL_URI = 'https://accounts.google.com/o/oauth2/token'.freeze
-      AUDIENCE = 'https://accounts.google.com/o/oauth2/token'.freeze
+      TOKEN_CREDENTIAL_URI = 'https://oauth2.googleapis.com/token'.freeze
+      AUDIENCE = 'https://oauth2.googleapis.com/token'.freeze
       SCOPE = [].freeze
       PATH_ENV_VARS = [].freeze
       JSON_ENV_VARS = [].freeze

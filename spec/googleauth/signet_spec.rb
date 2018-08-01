@@ -41,10 +41,10 @@ describe Signet::OAuth2::Client do
   before(:example) do
     @key = OpenSSL::PKey::RSA.new(2048)
     @client = Signet::OAuth2::Client.new(
-      token_credential_uri: 'https://accounts.google.com/o/oauth2/token',
+      token_credential_uri: 'https://oauth2.googleapis.com/token',
       scope: 'https://www.googleapis.com/auth/userinfo.profile',
       issuer: 'app@example.com',
-      audience: 'https://accounts.google.com/o/oauth2/token',
+      audience: 'https://oauth2.googleapis.com/token',
       signing_key: @key
     )
   end
@@ -60,7 +60,7 @@ describe Signet::OAuth2::Client do
                                    @key.public_key, true,
                                    algorithm: 'RS256')
     end
-    stub_request(:post, 'https://accounts.google.com/o/oauth2/token')
+    stub_request(:post, 'https://oauth2.googleapis.com/token')
       .with(body: hash_including(
         'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer'
       ), &blk)

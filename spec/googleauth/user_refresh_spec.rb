@@ -68,7 +68,7 @@ describe Google::Auth::UserRefreshCredentials do
     body = MultiJson.dump('access_token' => access_token,
                           'token_type' => 'Bearer',
                           'expires_in' => 3600)
-    stub_request(:post, 'https://www.googleapis.com/oauth2/v4/token')
+    stub_request(:post, 'https://oauth2.googleapis.com/token')
       .with(body: hash_including('grant_type' => 'refresh_token'))
       .to_return(body: body,
                  status: 200,
@@ -246,7 +246,7 @@ describe Google::Auth::UserRefreshCredentials do
 
   describe 'when revoking a refresh token' do
     let(:stub) do
-      stub_request(:get, 'https://accounts.google.com/o/oauth2/revoke' \
+      stub_request(:get, 'https://oauth2.googleapis.com/revoke' \
                          '?token=refreshtoken')
         .to_return(status: 200,
                    headers: { 'Content-Type' => 'application/json' })
@@ -262,7 +262,7 @@ describe Google::Auth::UserRefreshCredentials do
 
   describe 'when revoking an access token' do
     let(:stub) do
-      stub_request(:get, 'https://accounts.google.com/o/oauth2/revoke' \
+      stub_request(:get, 'https://oauth2.googleapis.com/revoke' \
                          '?token=accesstoken')
         .to_return(status: 200,
                    headers: { 'Content-Type' => 'application/json' })
@@ -280,7 +280,7 @@ describe Google::Auth::UserRefreshCredentials do
 
   describe 'when revoking an invalid token' do
     let(:stub) do
-      stub_request(:get, 'https://accounts.google.com/o/oauth2/revoke' \
+      stub_request(:get, 'https://oauth2.googleapis.com/revoke' \
                          '?token=refreshtoken')
         .to_return(status: 400,
                    headers: { 'Content-Type' => 'application/json' })

@@ -49,8 +49,8 @@ describe Google::Auth::Credentials, :private do
     allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
     allow(mocked_signet).to receive(:client_id)
     allow(Signet::OAuth2::Client).to receive(:new) do |options|
-      expect(options[:token_credential_uri]).to eq('https://accounts.google.com/o/oauth2/token')
-      expect(options[:audience]).to eq('https://accounts.google.com/o/oauth2/token')
+      expect(options[:token_credential_uri]).to eq('https://oauth2.googleapis.com/token')
+      expect(options[:audience]).to eq('https://oauth2.googleapis.com/token')
       expect(options[:scope]).to eq([])
       expect(options[:issuer]).to eq(default_keyfile_hash['client_email'])
       expect(options[:signing_key]).to be_a_kind_of(OpenSSL::PKey::RSA)
@@ -66,8 +66,8 @@ describe Google::Auth::Credentials, :private do
     allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
     allow(mocked_signet).to receive(:client_id)
     allow(Signet::OAuth2::Client).to receive(:new) do |options|
-      expect(options[:token_credential_uri]).to eq('https://accounts.google.com/o/oauth2/token')
-      expect(options[:audience]).to eq('https://accounts.google.com/o/oauth2/token')
+      expect(options[:token_credential_uri]).to eq('https://oauth2.googleapis.com/token')
+      expect(options[:audience]).to eq('https://oauth2.googleapis.com/token')
       expect(options[:scope]).to eq(['http://example.com/scope'])
       expect(options[:issuer]).to eq(default_keyfile_hash['client_email'])
       expect(options[:signing_key]).to be_a_kind_of(OpenSSL::PKey::RSA)
@@ -98,8 +98,8 @@ describe Google::Auth::Credentials, :private do
     allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
     allow(mocked_signet).to receive(:client_id)
     allow(Signet::OAuth2::Client).to receive(:new) do |options|
-      expect(options[:token_credential_uri]).to eq('https://accounts.google.com/o/oauth2/token')
-      expect(options[:audience]).to eq('https://accounts.google.com/o/oauth2/token')
+      expect(options[:token_credential_uri]).to eq('https://oauth2.googleapis.com/token')
+      expect(options[:audience]).to eq('https://oauth2.googleapis.com/token')
       expect(options[:scope]).to eq(['http://example.com/scope'])
       expect(options[:issuer]).to eq(default_keyfile_hash['client_email'])
       expect(options[:signing_key]).to be_a_kind_of(OpenSSL::PKey::RSA)
@@ -130,8 +130,8 @@ describe Google::Auth::Credentials, :private do
     allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
     allow(mocked_signet).to receive(:client_id)
     allow(Signet::OAuth2::Client).to receive(:new) do |options|
-      expect(options[:token_credential_uri]).to eq('https://accounts.google.com/o/oauth2/token')
-      expect(options[:audience]).to eq('https://accounts.google.com/o/oauth2/token')
+      expect(options[:token_credential_uri]).to eq('https://oauth2.googleapis.com/token')
+      expect(options[:audience]).to eq('https://oauth2.googleapis.com/token')
       expect(options[:scope]).to eq(['http://example.com/scope'])
       expect(options[:issuer]).to eq(default_keyfile_hash['client_email'])
       expect(options[:signing_key]).to be_a_kind_of(OpenSSL::PKey::RSA)
@@ -161,8 +161,8 @@ describe Google::Auth::Credentials, :private do
     allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
     allow(mocked_signet).to receive(:client_id)
     allow(Signet::OAuth2::Client).to receive(:new) do |options|
-      expect(options[:token_credential_uri]).to eq('https://accounts.google.com/o/oauth2/token')
-      expect(options[:audience]).to eq('https://accounts.google.com/o/oauth2/token')
+      expect(options[:token_credential_uri]).to eq('https://oauth2.googleapis.com/token')
+      expect(options[:audience]).to eq('https://oauth2.googleapis.com/token')
       expect(options[:scope]).to eq(['http://example.com/scope'])
       expect(options[:issuer]).to eq(default_keyfile_hash['client_email'])
       expect(options[:signing_key]).to be_a_kind_of(OpenSSL::PKey::RSA)
@@ -193,8 +193,8 @@ describe Google::Auth::Credentials, :private do
     allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
     allow(mocked_signet).to receive(:client_id)
     allow(Signet::OAuth2::Client).to receive(:new) do |options|
-      expect(options[:token_credential_uri]).to eq('https://accounts.google.com/o/oauth2/token')
-      expect(options[:audience]).to eq('https://accounts.google.com/o/oauth2/token')
+      expect(options[:token_credential_uri]).to eq('https://oauth2.googleapis.com/token')
+      expect(options[:audience]).to eq('https://oauth2.googleapis.com/token')
       expect(options[:scope]).to eq(['http://example.com/scope'])
       expect(options[:issuer]).to eq(default_keyfile_hash['client_email'])
       expect(options[:signing_key]).to be_a_kind_of(OpenSSL::PKey::RSA)
@@ -231,8 +231,8 @@ describe Google::Auth::Credentials, :private do
       default_keyfile_hash
     end
     allow(Signet::OAuth2::Client).to receive(:new) do |options|
-      expect(options[:token_credential_uri]).to eq('https://accounts.google.com/o/oauth2/token')
-      expect(options[:audience]).to eq('https://accounts.google.com/o/oauth2/token')
+      expect(options[:token_credential_uri]).to eq('https://oauth2.googleapis.com/token')
+      expect(options[:audience]).to eq('https://oauth2.googleapis.com/token')
       expect(options[:scope]).to eq(['http://example.com/scope'])
       expect(options[:issuer]).to eq(default_keyfile_hash['client_email'])
       expect(options[:signing_key]).to be_a_kind_of(OpenSSL::PKey::RSA)
