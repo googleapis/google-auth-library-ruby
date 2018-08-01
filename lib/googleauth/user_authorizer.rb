@@ -198,7 +198,6 @@ module Google
       #  Credentials if exchange is successful
       def get_and_store_credentials_from_code(options = {})
         credentials = get_credentials_from_code(options)
-        monitor_credentials(options[:user_id], credentials)
         store_credentials(options[:user_id], credentials)
       end
 
