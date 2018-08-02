@@ -134,6 +134,7 @@ module Google
       def warn_if_cloud_sdk_credentials(client_id)
         warn CLOUD_SDK_CREDENTIALS_WARNING if client_id == CLOUD_SDK_CLIENT_ID
       end
+      module_function :warn_if_cloud_sdk_credentials
 
       private
 
