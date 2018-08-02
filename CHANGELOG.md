@@ -28,7 +28,7 @@
 ### Changes
 
 * Add retry mechanism when fetching access tokens in `GCECredentials` and `UserRefreshCredentials` classes.
-* Update Google API OAuth2 token credential URI to v4.bund
+* Update Google API OAuth2 token credential URI to v4.
 
 ## 0.5.1 (2016/01/06)
 
