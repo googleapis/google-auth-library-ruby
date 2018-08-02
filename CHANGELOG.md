@@ -1,3 +1,11 @@
+## 0.6.3 (2018/08/02)
+
+* Resolve issue where token_store was being written to twice
+
+## 0.6.2 (2018/08/01)
+
+* Add warning when using cloud sdk credentials
+
 ## 0.6.1 (2017/10/18)
 
 * Fix file permissions
@@ -20,7 +28,7 @@
 ### Changes
 
 * Add retry mechanism when fetching access tokens in `GCECredentials` and `UserRefreshCredentials` classes.
-* Update Google API OAuth2 token credential URI to v4.
+* Update Google API OAuth2 token credential URI to v4.bund
 
 ## 0.5.1 (2016/01/06)
 
