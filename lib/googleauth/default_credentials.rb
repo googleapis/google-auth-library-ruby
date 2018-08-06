@@ -53,7 +53,7 @@ module Google
           clz.make_creds(json_key_io: StringIO.new(MultiJson.dump(json_key)),
                          scope: scope)
         else
-          warn_if_cloud_sdk_credentials ENV[CLIENT_ID_VAR]
+          warn_if_cloud_sdk_credentials ENV[CredentialsLoader::CLIENT_ID_VAR]
           clz = read_creds
           clz.make_creds(scope: scope)
         end

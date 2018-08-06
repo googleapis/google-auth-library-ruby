@@ -1,3 +1,7 @@
+## 0.6.4 (2018/08/03)
+
+* Resolve issue where DefaultCredentials constant was undefined.
+
 ## 0.6.3 (2018/08/02)
 
 * Resolve issue where token_store was being written to twice
