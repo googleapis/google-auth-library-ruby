@@ -299,17 +299,17 @@ describe Google::Auth::UserAuthorizer do
 
     before(:example) do
       token_store.store('user1', token_json)
-      stub_request(
-        :get, 'https://oauth2.googleapis.com/revoke?token=refreshtoken'
-      )
+      stub_request(:post, 'https://oauth2.googleapis.com/revoke')
+        .with(body: hash_including('token' => 'refreshtoken'))
         .to_return(status: 200)
     end
 
     it 'should revoke the grant' do
       authorizer.revoke_authorization('user1')
       expect(a_request(
-               :get, 'https://oauth2.googleapis.com/revoke?token=refreshtoken'
-      ))
+               :post, 'https://oauth2.googleapis.com/revoke'
+             ).with(body: hash_including('token' => 'refreshtoken'))
+      )
         .to have_been_made
     end
 
