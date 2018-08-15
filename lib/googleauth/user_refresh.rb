@@ -94,7 +94,7 @@ module Google
         c = options[:connection] || Faraday.default_connection
 
         retry_with_error do
-          resp = c.get(REVOKE_TOKEN_URI, token: refresh_token || access_token)
+          resp = c.post(REVOKE_TOKEN_URI, token: refresh_token || access_token)
           case resp.status
           when 200
             self.access_token = nil

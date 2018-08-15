@@ -246,8 +246,8 @@ describe Google::Auth::UserRefreshCredentials do
 
   describe 'when revoking a refresh token' do
     let(:stub) do
-      stub_request(:get, 'https://oauth2.googleapis.com/revoke' \
-                         '?token=refreshtoken')
+      stub_request(:post, 'https://oauth2.googleapis.com/revoke')
+        .with(body: hash_including('token' => 'refreshtoken'))
         .to_return(status: 200,
                    headers: { 'Content-Type' => 'application/json' })
     end
@@ -262,8 +262,8 @@ describe Google::Auth::UserRefreshCredentials do
 
   describe 'when revoking an access token' do
     let(:stub) do
-      stub_request(:get, 'https://oauth2.googleapis.com/revoke' \
-                         '?token=accesstoken')
+      stub_request(:post, 'https://oauth2.googleapis.com/revoke')
+        .with(body: hash_including('token' => 'accesstoken'))
         .to_return(status: 200,
                    headers: { 'Content-Type' => 'application/json' })
     end
@@ -280,8 +280,8 @@ describe Google::Auth::UserRefreshCredentials do
 
   describe 'when revoking an invalid token' do
     let(:stub) do
-      stub_request(:get, 'https://oauth2.googleapis.com/revoke' \
-                         '?token=refreshtoken')
+      stub_request(:post, 'https://oauth2.googleapis.com/revoke')
+        .with(body: hash_including('token' => 'refreshtoken'))
         .to_return(status: 400,
                    headers: { 'Content-Type' => 'application/json' })
     end
@@ -296,14 +296,14 @@ describe Google::Auth::UserRefreshCredentials do
 
   describe 'when errors occurred with request' do
     it 'should fail with Signet::AuthorizationError if request times out' do
-      allow_any_instance_of(Faraday::Connection).to receive(:get)
+      allow_any_instance_of(Faraday::Connection).to receive(:post)
         .and_raise(Faraday::TimeoutError)
       expect { @client.revoke! }
         .to raise_error Signet::AuthorizationError
     end
 
     it 'should fail with Signet::AuthorizationError if request fails' do
-      allow_any_instance_of(Faraday::Connection).to receive(:get)
+      allow_any_instance_of(Faraday::Connection).to receive(:post)
         .and_raise(Faraday::ConnectionFailed, nil)
       expect { @client.revoke! }
         .to raise_error Signet::AuthorizationError
