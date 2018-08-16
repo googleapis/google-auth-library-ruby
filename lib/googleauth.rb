@@ -16,7 +16,7 @@
 # this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+# 'AS IS' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
 # LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
 # A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
 # OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
@@ -35,47 +35,50 @@ require 'googleauth/user_authorizer'
 require 'googleauth/web_user_authorizer'
 
 module Google
+  # Module Auth provides classes that provide Google-specific authorization
+  # used to access Google APIs.
   module Auth
-    # In June, 2018, set supported version to 2.3 and recommended to 2.4.
+    # On March 31, 2019, set supported version to 2.4 and recommended to 2.6.
     # Thereafter, follow the MRI support schedule: supported means non-EOL,
     # and recommended means in normal (rather than security) maintenance.
     # See https://www.ruby-lang.org/en/downloads/branches/
-     ##
+    ##
     # Minimum "supported" Ruby version (non-EOL)
     # @private
     #
-    SUPPORTED_VERSION_THRESHOLD = "1.9".freeze
-     ##
+    SUPPORTED_VERSION_THRESHOLD = '1.9'.freeze
+    ##
     # Minimum "recommended" Ruby version (normal maintenance)
     # @private
     #
-    RECOMMENDED_VERSION_THRESHOLD = "2.4".freeze
-     ##
+    RECOMMENDED_VERSION_THRESHOLD = '2.4'.freeze
+    ##
     # Check Ruby version and emit a warning if it is old
     # @private
     #
-    def self.warn_on_old_ruby_version \
+    def self.warn_on_old_ruby_version(
         supported_version: SUPPORTED_VERSION_THRESHOLD,
         recommended_version: RECOMMENDED_VERSION_THRESHOLD
+    )
       cur_version = Gem::Version.new RUBY_VERSION
       if cur_version < Gem::Version.new(supported_version)
         warn "WARNING: You are running Ruby #{cur_version}, which has reached" \
-          " end-of-life and is no longer supported by Ruby Core."
-        warn "It is strongly recommended that you upgrade to Ruby" \
+          ' end-of-life and is no longer supported by Ruby Core.'
+        warn 'It is strongly recommended that you upgrade to Ruby' \
           " #{recommended_version} or later."
-        warn "See https://www.ruby-lang.org/en/downloads/branches/ for more" \
-          " info on the Ruby maintenance schedule."
+        warn 'See https://www.ruby-lang.org/en/downloads/branches/ for more' \
+          ' info on the Ruby maintenance schedule.'
       elsif cur_version < Gem::Version.new(recommended_version)
         warn "WARNING: You are running Ruby #{cur_version}, which is nearing" \
-          " end-of-life."
+          ' end-of-life.'
         warn "Consider upgrading to Ruby #{recommended_version} or later."
-        warn "See https://www.ruby-lang.org/en/downloads/branches/ for more" \
-          " info on the Ruby maintenance schedule."
+        warn 'See https://www.ruby-lang.org/en/downloads/branches/ for more' \
+          ' info on the Ruby maintenance schedule.'
       end
     rescue ArgumentError
-      warn "Unable to determine current Ruby version."
+      warn 'Unable to determine current Ruby version.'
     end
   end
 end
 
-Google::Cloud.warn_on_old_ruby_version
+Google::Auth.warn_on_old_ruby_version
