@@ -1,3 +1,7 @@
+## 0.6.5 (2018/08/16)
+
+* Fix incorrect http verb when revoking credentials.
+
 ## 0.6.4 (2018/08/03)
 
 * Resolve issue where DefaultCredentials constant was undefined.
