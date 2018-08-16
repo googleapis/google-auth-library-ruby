@@ -162,6 +162,17 @@ access and refresh tokens. Two storage implementations are included:
 Custom storage implementations can also be used. See
 [token_store.rb](lib/googleauth/token_store.rb) for additional details.
 
+## Supported Ruby Versions
+
+This library is currently supported on Ruby 1.9+.
+
+However, Ruby 2.4 or later is strongly recommended, as earlier releases have
+reached or are nearing end-of-life. After March 31, 2019, Google will provide
+official support only for Ruby versions that are considered current and
+supported by Ruby Core (that is, Ruby versions that are either in normal
+maintenance or in security maintenance).
+See https://www.ruby-lang.org/en/downloads/branches/ for further details.
+
 ## License
 
 This library is licensed under Apache 2.0. Full license text is

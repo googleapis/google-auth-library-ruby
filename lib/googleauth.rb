@@ -33,3 +33,49 @@ require 'googleauth/credentials'
 require 'googleauth/default_credentials'
 require 'googleauth/user_authorizer'
 require 'googleauth/web_user_authorizer'
+
+module Google
+  module Auth
+    # In June, 2018, set supported version to 2.3 and recommended to 2.4.
+    # Thereafter, follow the MRI support schedule: supported means non-EOL,
+    # and recommended means in normal (rather than security) maintenance.
+    # See https://www.ruby-lang.org/en/downloads/branches/
+     ##
+    # Minimum "supported" Ruby version (non-EOL)
+    # @private
+    #
+    SUPPORTED_VERSION_THRESHOLD = "1.9".freeze
+     ##
+    # Minimum "recommended" Ruby version (normal maintenance)
+    # @private
+    #
+    RECOMMENDED_VERSION_THRESHOLD = "2.4".freeze
+     ##
+    # Check Ruby version and emit a warning if it is old
+    # @private
+    #
+    def self.warn_on_old_ruby_version \
+        supported_version: SUPPORTED_VERSION_THRESHOLD,
+        recommended_version: RECOMMENDED_VERSION_THRESHOLD
+      cur_version = Gem::Version.new RUBY_VERSION
+      if cur_version < Gem::Version.new(supported_version)
+        warn "WARNING: You are running Ruby #{cur_version}, which has reached" \
+          " end-of-life and is no longer supported by Ruby Core."
+        warn "It is strongly recommended that you upgrade to Ruby" \
+          " #{recommended_version} or later."
+        warn "See https://www.ruby-lang.org/en/downloads/branches/ for more" \
+          " info on the Ruby maintenance schedule."
+      elsif cur_version < Gem::Version.new(recommended_version)
+        warn "WARNING: You are running Ruby #{cur_version}, which is nearing" \
+          " end-of-life."
+        warn "Consider upgrading to Ruby #{recommended_version} or later."
+        warn "See https://www.ruby-lang.org/en/downloads/branches/ for more" \
+          " info on the Ruby maintenance schedule."
+      end
+    rescue ArgumentError
+      warn "Unable to determine current Ruby version."
+    end
+  end
+end
+
+Google::Cloud.warn_on_old_ruby_version
