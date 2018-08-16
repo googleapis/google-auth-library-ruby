@@ -58,15 +58,13 @@ module Google
     # Check Ruby version and emit a warning if it is old
     # @private
     #
-    def self.warn_on_old_ruby_version \
-        supported_version: SUPPORTED_VERSION_THRESHOLD,
-        recommended_version: RECOMMENDED_VERSION_THRESHOLD
+    def self.warn_on_old_ruby_version
       return if ENV['GOOGLE_CLOUD_SUPPRESS_RUBY_WARNINGS']
       cur_version = Gem::Version.new RUBY_VERSION
-      if cur_version < Gem::Version.new(supported_version)
-        warn_unsupported_ruby cur_version, recommended_version
-      elsif cur_version < Gem::Version.new(recommended_version)
-        warn_nonrecommended_ruby cur_version, recommended_version
+      if cur_version < Gem::Version.new(SUPPORTED_VERSION_THRESHOLD)
+        warn_unsupported_ruby cur_version, RECOMMENDED_VERSION_THRESHOLD
+      elsif cur_version < Gem::Version.new(RECOMMENDED_VERSION_THRESHOLD)
+        warn_nonrecommended_ruby cur_version, RECOMMENDED_VERSION_THRESHOLD
       end
     rescue ArgumentError
       warn 'Unable to determine current Ruby version.'
