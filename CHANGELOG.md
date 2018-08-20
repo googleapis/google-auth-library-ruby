@@ -1,6 +1,7 @@
 ## 0.6.5 (2018/08/16)
 
 * Fix incorrect http verb when revoking credentials.
+* Warn on EOL ruby versions.
 
 ## 0.6.4 (2018/08/03)
 
