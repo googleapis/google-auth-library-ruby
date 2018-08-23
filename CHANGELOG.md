@@ -1,3 +1,7 @@
+## 0.6.6 (2018/08/22)
+
+* Remove ruby version warnings.
+
 ## 0.6.5 (2018/08/16)
 
 * Fix incorrect http verb when revoking credentials.
