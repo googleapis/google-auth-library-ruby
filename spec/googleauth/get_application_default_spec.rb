@@ -50,12 +50,16 @@ describe '#get_application_default' do
     @original_env_vals = {}
     @credential_vars.each { |var| @original_env_vals[var] = ENV[var] }
     @home = ENV['HOME']
+    @app_data = ENV['APPDATA']
+    @program_data = ENV['ProgramData']
     @scope = 'https://www.googleapis.com/auth/userinfo.profile'
   end
 
   after(:example) do
     @credential_vars.each { |var| ENV[var] = @original_env_vals[var] }
     ENV['HOME'] = @home unless @home == ENV['HOME']
+    ENV['APPDATA'] = @app_data unless @app_data == ENV['APPDATA']
+    ENV['ProgramData'] = @program_data unless @program_data == ENV['ProgramData']
   end
 
   shared_examples 'it cannot load misconfigured credentials' do
@@ -90,7 +94,7 @@ describe '#get_application_default' do
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV[@var_name] = key_path
-        expect(Google::Auth.get_application_default @scope, options)
+        expect(Google::Auth.get_application_default(@scope, options))
           .to_not be_nil
       end
     end
@@ -99,10 +103,12 @@ describe '#get_application_default' do
       ENV.delete(@var_name) unless ENV[@var_name].nil?
       Dir.mktmpdir do |dir|
         key_path = File.join(dir, '.config', WELL_KNOWN_PATH)
+        key_path = File.join(dir, WELL_KNOWN_PATH) if OS.windows?
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV['HOME'] = dir
-        expect(Google::Auth.get_application_default @scope, options)
+        ENV['APPDATA'] = dir
+        expect(Google::Auth.get_application_default(@scope, options))
           .to_not be_nil
       end
     end
@@ -111,10 +117,12 @@ describe '#get_application_default' do
       ENV.delete(@var_name) unless ENV[@var_name].nil?
       Dir.mktmpdir do |dir|
         key_path = File.join(dir, '.config', WELL_KNOWN_PATH)
+        key_path = File.join(dir, WELL_KNOWN_PATH) if OS.windows?
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV['HOME'] = dir
-        expect(Google::Auth.get_application_default nil, options).to_not be_nil
+        ENV['APPDATA'] = dir
+        expect(Google::Auth.get_application_default(nil, options)).to_not be_nil
       end
     end
 
@@ -134,10 +142,12 @@ describe '#get_application_default' do
     it 'succeeds with system default file' do
       ENV.delete(@var_name) unless ENV[@var_name].nil?
       FakeFS do
-        key_path = File.join('/etc/google/auth/', CREDENTIALS_FILE_NAME)
+        ENV['ProgramData'] = '/etc'
+        prefix = OS.windows? ? '/etc/Google/Auth/' : '/etc/google/auth/'
+        key_path = File.join(prefix, CREDENTIALS_FILE_NAME)
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
-        expect(Google::Auth.get_application_default @scope, options)
+        expect(Google::Auth.get_application_default(@scope, options))
           .to_not be_nil
         File.delete(key_path)
       end
@@ -151,7 +161,7 @@ describe '#get_application_default' do
       ENV[CLIENT_SECRET_VAR] = cred_json[:client_secret]
       ENV[REFRESH_TOKEN_VAR] = cred_json[:refresh_token]
       ENV[ACCOUNT_TYPE_VAR] = cred_json[:type]
-      expect(Google::Auth.get_application_default @scope, options)
+      expect(Google::Auth.get_application_default(@scope, options))
         .to_not be_nil
     end
 
@@ -164,7 +174,7 @@ describe '#get_application_default' do
       ENV[REFRESH_TOKEN_VAR] = cred_json[:refresh_token]
       ENV[ACCOUNT_TYPE_VAR] = cred_json[:type]
       expect { Google::Auth.get_application_default @scope, options }.to output(
-          Google::Auth::CredentialsLoader::CLOUD_SDK_CREDENTIALS_WARNING + "\n"
+        Google::Auth::CredentialsLoader::CLOUD_SDK_CREDENTIALS_WARNING + "\n"
       ).to_stderr
     end
   end
@@ -238,9 +248,11 @@ describe '#get_application_default' do
       ENV.delete(@var_name) unless ENV[@var_name].nil?
       Dir.mktmpdir do |dir|
         key_path = File.join(dir, '.config', WELL_KNOWN_PATH)
+        key_path = File.join(dir, WELL_KNOWN_PATH) if OS.windows?
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV['HOME'] = dir
+        ENV['APPDATA'] = dir
         expect do
           Google::Auth.get_application_default @scope, options
         end.to raise_error RuntimeError
