@@ -40,6 +40,7 @@ require 'multi_json'
 require 'openssl'
 require 'spec_helper'
 require 'tmpdir'
+require 'os'
 
 include Google::Auth::CredentialsLoader
 
@@ -223,6 +224,7 @@ describe Google::Auth::ServiceAccountCredentials do
   describe '#from_well_known_path' do
     before(:example) do
       @home = ENV['HOME']
+      @app_data = ENV['APPDATA']
       @scope = 'https://www.googleapis.com/auth/userinfo.profile'
       @known_path = WELL_KNOWN_PATH
       @clz = ServiceAccountCredentials
@@ -230,6 +232,7 @@ describe Google::Auth::ServiceAccountCredentials do
 
     after(:example) do
       ENV['HOME'] = @home unless @home == ENV['HOME']
+      ENV['APPDATA'] = @app_data unless @app_data == ENV['APPDATA']
     end
 
     it 'is nil if no file exists' do
@@ -240,9 +243,11 @@ describe Google::Auth::ServiceAccountCredentials do
     it 'successfully loads the file when it is present' do
       Dir.mktmpdir do |dir|
         key_path = File.join(dir, '.config', @known_path)
+        key_path = File.join(dir, WELL_KNOWN_PATH) if OS.windows?
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV['HOME'] = dir
+        ENV['APPDATA'] = dir
         expect(@clz.from_well_known_path(@scope)).to_not be_nil
       end
     end
@@ -251,8 +256,14 @@ describe Google::Auth::ServiceAccountCredentials do
   describe '#from_system_default_path' do
     before(:example) do
       @scope = 'https://www.googleapis.com/auth/userinfo.profile'
-      @path = File.join('/etc/google/auth/', CREDENTIALS_FILE_NAME)
+      @program_data = ENV['ProgramData']
+      @prefix = OS.windows? ? '/etc/Google/Auth/' : '/etc/google/auth/'
+      @path = File.join(@prefix, CREDENTIALS_FILE_NAME)
       @clz = ServiceAccountCredentials
+    end
+
+    after(:example) do
+      ENV['ProgramData'] = @program_data
     end
 
     it 'is nil if no file exists' do
@@ -264,6 +275,7 @@ describe Google::Auth::ServiceAccountCredentials do
 
     it 'successfully loads the file when it is present' do
       FakeFS do
+        ENV['ProgramData'] = '/etc'
         FileUtils.mkdir_p(File.dirname(@path))
         File.write(@path, cred_json_text)
         expect(@clz.from_system_default_path(@scope)).to_not be_nil
@@ -351,10 +363,12 @@ describe Google::Auth::ServiceAccountJwtHeaderCredentials do
   describe '#from_well_known_path' do
     before(:example) do
       @home = ENV['HOME']
+      @app_data = ENV['APPDATA']
     end
 
     after(:example) do
       ENV['HOME'] = @home unless @home == ENV['HOME']
+      ENV['APPDATA'] = @app_data unless @app_data == ENV['APPDATA']
     end
 
     it 'is nil if no file exists' do
@@ -365,9 +379,11 @@ describe Google::Auth::ServiceAccountJwtHeaderCredentials do
     it 'successfully loads the file when it is present' do
       Dir.mktmpdir do |dir|
         key_path = File.join(dir, '.config', WELL_KNOWN_PATH)
+        key_path = File.join(dir, WELL_KNOWN_PATH) if OS.windows?
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV['HOME'] = dir
+        ENV['APPDATA'] = dir
         expect(clz.from_well_known_path).to_not be_nil
       end
     end

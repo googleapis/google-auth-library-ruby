@@ -40,6 +40,7 @@ require 'multi_json'
 require 'openssl'
 require 'spec_helper'
 require 'tmpdir'
+require 'os'
 
 include Google::Auth::CredentialsLoader
 
@@ -154,6 +155,7 @@ describe Google::Auth::UserRefreshCredentials do
   describe '#from_well_known_path' do
     before(:example) do
       @home = ENV['HOME']
+      @app_data = ENV['APPDATA']
       @scope = 'https://www.googleapis.com/auth/userinfo.profile'
       @known_path = WELL_KNOWN_PATH
       @clz = UserRefreshCredentials
@@ -161,6 +163,7 @@ describe Google::Auth::UserRefreshCredentials do
 
     after(:example) do
       ENV['HOME'] = @home unless @home == ENV['HOME']
+      ENV['APPDATA'] = @app_data unless @app_data == ENV['APPDATA']
     end
 
     it 'is nil if no file exists' do
@@ -173,9 +176,11 @@ describe Google::Auth::UserRefreshCredentials do
       needed.each do |missing|
         Dir.mktmpdir do |dir|
           key_path = File.join(dir, '.config', @known_path)
+          key_path = File.join(dir, @known_path) if OS.windows?
           FileUtils.mkdir_p(File.dirname(key_path))
           File.write(key_path, cred_json_text(missing))
           ENV['HOME'] = dir
+          ENV['APPDATA'] = dir
           expect { @clz.from_well_known_path(@scope) }
             .to raise_error RuntimeError
         end
@@ -185,9 +190,11 @@ describe Google::Auth::UserRefreshCredentials do
     it 'successfully loads the file when it is present' do
       Dir.mktmpdir do |dir|
         key_path = File.join(dir, '.config', @known_path)
+        key_path = File.join(dir, @known_path) if OS.windows?
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV['HOME'] = dir
+        ENV['APPDATA'] = dir
         expect(@clz.from_well_known_path(@scope)).to_not be_nil
       end
     end
@@ -196,8 +203,14 @@ describe Google::Auth::UserRefreshCredentials do
   describe '#from_system_default_path' do
     before(:example) do
       @scope = 'https://www.googleapis.com/auth/userinfo.profile'
-      @path = File.join('/etc/google/auth/', CREDENTIALS_FILE_NAME)
+      @prefix = OS.windows? ? '/etc/Google/Auth/' : '/etc/google/auth/'
+      @path = File.join(@prefix, CREDENTIALS_FILE_NAME)
+      @program_data = ENV['ProgramData']
       @clz = UserRefreshCredentials
+    end
+
+    after(:example) do
+      ENV['ProgramData'] = @program_data
     end
 
     it 'is nil if no file exists' do
@@ -211,6 +224,7 @@ describe Google::Auth::UserRefreshCredentials do
       needed = %w(client_id client_secret refresh_token)
       needed.each do |missing|
         FakeFS do
+          ENV['ProgramData'] = '/etc'
           FileUtils.mkdir_p(File.dirname(@path))
           File.write(@path, cred_json_text(missing))
           expect { @clz.from_system_default_path(@scope) }
@@ -222,6 +236,7 @@ describe Google::Auth::UserRefreshCredentials do
 
     it 'successfully loads the file when it is present' do
       FakeFS do
+        ENV['ProgramData'] = '/etc'
         FileUtils.mkdir_p(File.dirname(@path))
         File.write(@path, cred_json_text)
         expect(@clz.from_system_default_path(@scope)).to_not be_nil
