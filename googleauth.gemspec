@@ -12,11 +12,11 @@ Gem::Specification.new do |s|
   s.homepage      = 'https://github.com/google/google-auth-library-ruby'
   s.summary       = 'Google Auth Library for Ruby'
   s.license       = 'Apache-2.0'
-  s.description   = <<-eos
+  s.description   = <<-DESCRIPTION
    Allows simple authorization for accessing Google APIs.
    Provide support for Application Default Credentials, as described at
    https://developers.google.com/accounts/docs/application-default-credentials
-  eos
+  DESCRIPTION
 
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- spec/*`.split("\n")
@@ -28,7 +28,7 @@ Gem::Specification.new do |s|
 
   s.add_dependency 'faraday', '~> 0.12'
   s.add_dependency 'jwt', '>= 1.4', '< 3.0'
-  s.add_dependency 'memoist', '~> 0.12'
+  s.add_dependency 'memoist', '~> 0.16'
   s.add_dependency 'multi_json', '~> 1.11'
   s.add_dependency 'os', '>= 0.9', '< 2.0'
   s.add_dependency 'signet', '~> 0.7'

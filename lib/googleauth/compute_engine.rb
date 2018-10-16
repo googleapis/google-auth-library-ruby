@@ -35,16 +35,16 @@ module Google
   # Module Auth provides classes that provide Google-specific authorization
   # used to access Google APIs.
   module Auth
-    NO_METADATA_SERVER_ERROR = <<END.freeze
+    NO_METADATA_SERVER_ERROR = <<ERROR.freeze
 Error code 404 trying to get security access token
 from Compute Engine metadata for the default service account. This
 may be because the virtual machine instance does not have permission
 scopes specified.
-END
-    UNEXPECTED_ERROR_SUFFIX = <<END.freeze
+ERROR
+    UNEXPECTED_ERROR_SUFFIX = <<ERROR.freeze
 trying to get security access token from Compute Engine metadata for
 the default service account
-END
+ERROR
 
     # Extends Signet::OAuth2::Client so that the auth token is obtained from
     # the GCE metadata server.
