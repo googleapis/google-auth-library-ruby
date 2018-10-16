@@ -1,3 +1,7 @@
+## 0.6.7 (2018/10/16)
+
+* Remove ruby version warnings.
+
 ## 0.6.6 (2018/08/22)
 
 * Remove ruby version warnings.
