@@ -1,6 +1,6 @@
 ## 0.6.7 (2018/10/16)
 
-* Remove ruby version warnings.
+* Update memoist dependency to ~> 0.16.
 
 ## 0.6.6 (2018/08/22)
 
