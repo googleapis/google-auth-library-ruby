@@ -174,7 +174,7 @@ describe '#get_application_default' do
       ENV[CLIENT_SECRET_VAR] = cred_json[:client_secret]
       ENV[REFRESH_TOKEN_VAR] = cred_json[:refresh_token]
       ENV[ACCOUNT_TYPE_VAR] = cred_json[:type]
-      allow(Google::Auth::CredentialsLoader).to receive(:load_gcloud_project_id).and_return(nil)
+      ENV[PROJECT_ID_VAR] = 'a_project_id'
       expect { Google::Auth.get_application_default @scope, options }.to output(
         Google::Auth::CredentialsLoader::CLOUD_SDK_CREDENTIALS_WARNING + "\n"
       ).to_stderr
