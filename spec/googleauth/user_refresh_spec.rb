@@ -94,6 +94,7 @@ describe Google::Auth::UserRefreshCredentials do
       @credential_vars.each { |var| @original_env_vals[var] = ENV[var] }
       @scope = 'https://www.googleapis.com/auth/userinfo.profile'
       @clz = UserRefreshCredentials
+      @project_id = 'a_project_id'
     end
 
     after(:example) do
@@ -151,6 +152,17 @@ describe Google::Auth::UserRefreshCredentials do
       expect(creds.client_secret).to eq(cred_json[:client_secret])
       expect(creds.refresh_token).to eq(cred_json[:refresh_token])
     end
+
+    it 'sets project_id when the PROJECT_ID_VAR env var is set' do
+      ENV[ENV_VAR] = nil
+      ENV[CLIENT_ID_VAR] = cred_json[:client_id]
+      ENV[CLIENT_SECRET_VAR] = cred_json[:client_secret]
+      ENV[REFRESH_TOKEN_VAR] = cred_json[:refresh_token]
+      ENV[ACCOUNT_TYPE_VAR] = cred_json[:type]
+      ENV[PROJECT_ID_VAR] = @project_id
+      creds = @clz.from_env(@scope)
+      expect(creds.project_id).to eq(@project_id)
+    end
   end
 
   describe '#from_well_known_path' do
@@ -197,6 +209,20 @@ describe Google::Auth::UserRefreshCredentials do
         ENV['HOME'] = dir
         ENV['APPDATA'] = dir
         expect(@clz.from_well_known_path(@scope)).to_not be_nil
+      end
+    end
+
+    it 'checks gcloud config for project_id if none was provided' do
+      Dir.mktmpdir do |dir|
+        key_path = File.join(dir, '.config', @known_path)
+        key_path = File.join(dir, @known_path) if OS.windows?
+        FileUtils.mkdir_p(File.dirname(key_path))
+        File.write(key_path, cred_json_text)
+        ENV['HOME'] = dir
+        ENV['APPDATA'] = dir
+        ENV[PROJECT_ID_VAR] = nil
+        expect(@clz).to receive(:load_gcloud_project_id).with(no_args)
+        @clz.from_well_known_path(@scope)
       end
     end
   end

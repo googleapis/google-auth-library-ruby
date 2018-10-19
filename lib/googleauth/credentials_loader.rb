@@ -145,7 +145,7 @@ module Google
         config = MultiJson.load(`#{gcloud} #{GCLOUD_CONFIG_COMMAND}`)
         config['configuration']['properties']['core']['project']
       rescue
-        nil
+        warn 'Unable to determine project id.'
       end
 
       private
