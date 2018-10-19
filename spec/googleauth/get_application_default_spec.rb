@@ -35,6 +35,7 @@ require 'faraday'
 require 'fakefs/safe'
 require 'googleauth'
 require 'spec_helper'
+require 'os'
 
 describe '#get_application_default' do
   # Pass unique options each time to bypass memoization

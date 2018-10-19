@@ -39,14 +39,14 @@ module Google
     # credentials files on the file system.
     module CredentialsLoader
       extend Memoist
-      ENV_VAR = 'GOOGLE_APPLICATION_CREDENTIALS'.freeze
-
-      PRIVATE_KEY_VAR = 'GOOGLE_PRIVATE_KEY'.freeze
-      CLIENT_EMAIL_VAR = 'GOOGLE_CLIENT_EMAIL'.freeze
-      CLIENT_ID_VAR = 'GOOGLE_CLIENT_ID'.freeze
+      ENV_VAR           = 'GOOGLE_APPLICATION_CREDENTIALS'.freeze
+      PRIVATE_KEY_VAR   = 'GOOGLE_PRIVATE_KEY'.freeze
+      CLIENT_EMAIL_VAR  = 'GOOGLE_CLIENT_EMAIL'.freeze
+      CLIENT_ID_VAR     = 'GOOGLE_CLIENT_ID'.freeze
       CLIENT_SECRET_VAR = 'GOOGLE_CLIENT_SECRET'.freeze
       REFRESH_TOKEN_VAR = 'GOOGLE_REFRESH_TOKEN'.freeze
-      ACCOUNT_TYPE_VAR = 'GOOGLE_ACCOUNT_TYPE'.freeze
+      ACCOUNT_TYPE_VAR  = 'GOOGLE_ACCOUNT_TYPE'.freeze
+      PROJECT_ID_VAR    = 'GOOGLE_CLOUD_PROJECT'.freeze
 
       CREDENTIALS_FILE_NAME = 'application_default_credentials.json'.freeze
       NOT_FOUND_ERROR =

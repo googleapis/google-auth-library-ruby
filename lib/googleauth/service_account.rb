@@ -50,6 +50,7 @@ module Google
       TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v4/token'.freeze
       extend CredentialsLoader
       extend JsonKeyReader
+      attr_reader :project_id
 
       # Creates a ServiceAccountCredentials.
       #
@@ -58,17 +59,19 @@ module Google
       def self.make_creds(options = {})
         json_key_io, scope = options.values_at(:json_key_io, :scope)
         if json_key_io
-          private_key, client_email = read_json_key(json_key_io)
+          private_key, client_email, project_id = read_json_key(json_key_io)
         else
           private_key = unescape ENV[CredentialsLoader::PRIVATE_KEY_VAR]
           client_email = ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
+          project_id = ENV[CredentialsLoader::PROJECT_ID_VAR]
         end
 
         new(token_credential_uri: TOKEN_CRED_URI,
             audience: TOKEN_CRED_URI,
             scope: scope,
             issuer: client_email,
-            signing_key: OpenSSL::PKey::RSA.new(private_key))
+            signing_key: OpenSSL::PKey::RSA.new(private_key),
+            project_id: project_id)
       end
 
       # Handles certain escape sequences that sometimes appear in input.
@@ -82,6 +85,7 @@ module Google
 
       def initialize(options = {})
         super(options)
+        @project_id = options[:project_id]
       end
 
       # Extends the base class.
@@ -144,14 +148,14 @@ module Google
       def initialize(options = {})
         json_key_io = options[:json_key_io]
         if json_key_io
-          private_key, client_email = self.class.read_json_key(json_key_io)
+          @private_key, @issuer, @project_id =
+            self.class.read_json_key(json_key_io)
         else
-          private_key = ENV[CredentialsLoader::PRIVATE_KEY_VAR]
-          client_email = ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
+          @private_key = ENV[CredentialsLoader::PRIVATE_KEY_VAR]
+          @issuer = ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
+          @project_id = ENV[CredentialsLoader::PROJECT_ID_VAR]
         end
-        @private_key = private_key
-        @issuer = client_email
-        @signing_key = OpenSSL::PKey::RSA.new(private_key)
+        @signing_key = OpenSSL::PKey::RSA.new(@private_key)
       end
 
       # Construct a jwt token if the JWT_AUD_URI key is present in the input
