@@ -50,6 +50,7 @@ module Google
       AUTHORIZATION_URI = 'https://accounts.google.com/o/oauth2/auth'.freeze
       REVOKE_TOKEN_URI = 'https://oauth2.googleapis.com/revoke'.freeze
       extend CredentialsLoader
+      attr_reader :project_id
 
       # Create a UserRefreshCredentials.
       #

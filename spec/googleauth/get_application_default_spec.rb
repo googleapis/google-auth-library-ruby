@@ -261,6 +261,7 @@ describe '#get_application_default' do
     end
 
     it 'fails if env vars are set' do
+      ENV[ENV_VAR] = nil
       ENV[PRIVATE_KEY_VAR] = cred_json[:private_key]
       ENV[CLIENT_EMAIL_VAR] = cred_json[:client_email]
       expect do

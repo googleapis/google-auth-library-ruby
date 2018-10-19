@@ -65,6 +65,7 @@ module Google
           client_email = ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
           project_id = ENV[CredentialsLoader::PROJECT_ID_VAR]
         end
+        project_id ||= self.class.load_gcloud_project_id
 
         new(token_credential_uri: TOKEN_CRED_URI,
             audience: TOKEN_CRED_URI,
@@ -84,8 +85,8 @@ module Google
       end
 
       def initialize(options = {})
-        super(options)
         @project_id = options[:project_id]
+        super(options)
       end
 
       # Extends the base class.
@@ -130,6 +131,7 @@ module Google
       EXPIRY = 60
       extend CredentialsLoader
       extend JsonKeyReader
+      attr_reader :project_id
 
       # make_creds proxies the construction of a credentials instance
       #
@@ -155,6 +157,7 @@ module Google
           @issuer = ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
           @project_id = ENV[CredentialsLoader::PROJECT_ID_VAR]
         end
+        @project_id ||= self.class.load_gcloud_project_id
         @signing_key = OpenSSL::PKey::RSA.new(@private_key)
       end
 

@@ -140,6 +140,7 @@ describe Google::Auth::UserRefreshCredentials do
 
     it 'succeeds when GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and '\
       'GOOGLE_REFRESH_TOKEN env vars are valid' do
+      ENV[ENV_VAR] = nil
       ENV[CLIENT_ID_VAR] = cred_json[:client_id]
       ENV[CLIENT_SECRET_VAR] = cred_json[:client_secret]
       ENV[REFRESH_TOKEN_VAR] = cred_json[:refresh_token]
