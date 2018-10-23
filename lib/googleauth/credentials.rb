@@ -62,7 +62,7 @@ module Google
         @project_id = options['project_id'] || options['project']
         if keyfile.is_a? Signet::OAuth2::Client
           @client = keyfile
-          @project_id ||= keyfile.instance_variable_get :@project_id
+          @project_id ||= keyfile.project_id if keyfile.respond_to? :project_id
         elsif keyfile.is_a? Hash
           hash = stringify_hash_keys keyfile
           hash['scope'] ||= scope
