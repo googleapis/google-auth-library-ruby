@@ -27,6 +27,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# rubocop:disable Metrics/AbcSize, MethodLength
+
 require 'forwardable'
 require 'json'
 require 'signet/oauth_2/client'
@@ -46,6 +48,7 @@ module Google
       DEFAULT_PATHS = [].freeze
 
       attr_accessor :client
+      attr_reader   :project_id
 
       # Delegate client methods to the client object.
       extend Forwardable
@@ -56,19 +59,24 @@ module Google
       def initialize(keyfile, options = {})
         scope = options[:scope]
         verify_keyfile_provided! keyfile
+        @project_id = options['project_id'] || options['project']
         if keyfile.is_a? Signet::OAuth2::Client
           @client = keyfile
+          @project_id ||= keyfile.instance_variable_get :@project_id
         elsif keyfile.is_a? Hash
           hash = stringify_hash_keys keyfile
           hash['scope'] ||= scope
           @client = init_client hash
+          @project_id ||= (hash['project_id'] || hash['project'])
         else
           verify_keyfile_exists! keyfile
           json = JSON.parse ::File.read(keyfile)
           json['scope'] ||= scope
+          @project_id ||= (json['project_id'] || json['project'])
           @client = init_client json
         end
         CredentialsLoader.warn_if_cloud_sdk_credentials @client.client_id
+        @project_id ||= CredentialsLoader.load_gcloud_project_id
         @client.fetch_access_token!
       end
 
