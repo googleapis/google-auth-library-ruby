@@ -46,7 +46,7 @@ module Google
       CLIENT_SECRET_VAR         = 'GOOGLE_CLIENT_SECRET'.freeze
       REFRESH_TOKEN_VAR         = 'GOOGLE_REFRESH_TOKEN'.freeze
       ACCOUNT_TYPE_VAR          = 'GOOGLE_ACCOUNT_TYPE'.freeze
-      PROJECT_ID_VAR            = 'GOOGLE_CLOUD_PROJECT'.freeze
+      PROJECT_ID_VAR            = 'GOOGLE_PROJECT_ID'.freeze
       GCLOUD_POSIX_COMMAND      = 'gcloud'.freeze
       GCLOUD_WINDOWS_COMMAND    = 'gcloud.cmd'.freeze
       GCLOUD_CONFIG_COMMAND     = 'config config-helper --format json'.freeze
