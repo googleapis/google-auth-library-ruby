@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# rubocop:disable Metrics/AbcSize, MethodLength
+# rubocop:disable Metrics/AbcSize, Metrics/PerceivedComplexity, MethodLength
 
 require 'forwardable'
 require 'json'
