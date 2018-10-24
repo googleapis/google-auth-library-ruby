@@ -1,3 +1,7 @@
+## 0.7.0 (2018/10/23)
+
+* Add project_id instance variable to UserRefreshCredentials, ServiceAccountCredentials, and Credentials.
+
 ## 0.6.7 (2018/10/16)
 
 * Update memoist dependency to ~> 0.16.

@@ -39,14 +39,17 @@ module Google
     # credentials files on the file system.
     module CredentialsLoader
       extend Memoist
-      ENV_VAR = 'GOOGLE_APPLICATION_CREDENTIALS'.freeze
-
-      PRIVATE_KEY_VAR = 'GOOGLE_PRIVATE_KEY'.freeze
-      CLIENT_EMAIL_VAR = 'GOOGLE_CLIENT_EMAIL'.freeze
-      CLIENT_ID_VAR = 'GOOGLE_CLIENT_ID'.freeze
-      CLIENT_SECRET_VAR = 'GOOGLE_CLIENT_SECRET'.freeze
-      REFRESH_TOKEN_VAR = 'GOOGLE_REFRESH_TOKEN'.freeze
-      ACCOUNT_TYPE_VAR = 'GOOGLE_ACCOUNT_TYPE'.freeze
+      ENV_VAR                   = 'GOOGLE_APPLICATION_CREDENTIALS'.freeze
+      PRIVATE_KEY_VAR           = 'GOOGLE_PRIVATE_KEY'.freeze
+      CLIENT_EMAIL_VAR          = 'GOOGLE_CLIENT_EMAIL'.freeze
+      CLIENT_ID_VAR             = 'GOOGLE_CLIENT_ID'.freeze
+      CLIENT_SECRET_VAR         = 'GOOGLE_CLIENT_SECRET'.freeze
+      REFRESH_TOKEN_VAR         = 'GOOGLE_REFRESH_TOKEN'.freeze
+      ACCOUNT_TYPE_VAR          = 'GOOGLE_ACCOUNT_TYPE'.freeze
+      PROJECT_ID_VAR            = 'GOOGLE_PROJECT_ID'.freeze
+      GCLOUD_POSIX_COMMAND      = 'gcloud'.freeze
+      GCLOUD_WINDOWS_COMMAND    = 'gcloud.cmd'.freeze
+      GCLOUD_CONFIG_COMMAND     = 'config config-helper --format json'.freeze
 
       CREDENTIALS_FILE_NAME = 'application_default_credentials.json'.freeze
       NOT_FOUND_ERROR =
@@ -135,6 +138,15 @@ module Google
         warn CLOUD_SDK_CREDENTIALS_WARNING if client_id == CLOUD_SDK_CLIENT_ID
       end
       module_function :warn_if_cloud_sdk_credentials
+
+      def load_gcloud_project_id
+        gcloud = GCLOUD_WINDOWS_COMMAND if OS.windows?
+        gcloud = GCLOUD_POSIX_COMMAND unless OS.windows?
+        config = MultiJson.load(`#{gcloud} #{GCLOUD_CONFIG_COMMAND}`)
+        config['configuration']['properties']['core']['project']
+      rescue
+        warn 'Unable to determine project id.'
+      end
 
       private
 

@@ -35,6 +35,7 @@ require 'faraday'
 require 'fakefs/safe'
 require 'googleauth'
 require 'spec_helper'
+require 'os'
 
 describe '#get_application_default' do
   # Pass unique options each time to bypass memoization
@@ -173,6 +174,7 @@ describe '#get_application_default' do
       ENV[CLIENT_SECRET_VAR] = cred_json[:client_secret]
       ENV[REFRESH_TOKEN_VAR] = cred_json[:refresh_token]
       ENV[ACCOUNT_TYPE_VAR] = cred_json[:type]
+      ENV[PROJECT_ID_VAR] = 'a_project_id'
       expect { Google::Auth.get_application_default @scope, options }.to output(
         Google::Auth::CredentialsLoader::CLOUD_SDK_CREDENTIALS_WARNING + "\n"
       ).to_stderr
@@ -260,6 +262,7 @@ describe '#get_application_default' do
     end
 
     it 'fails if env vars are set' do
+      ENV[ENV_VAR] = nil
       ENV[PRIVATE_KEY_VAR] = cred_json[:private_key]
       ENV[CLIENT_EMAIL_VAR] = cred_json[:client_email]
       expect do
