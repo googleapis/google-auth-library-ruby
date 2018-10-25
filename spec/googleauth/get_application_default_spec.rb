@@ -38,15 +38,22 @@ require 'spec_helper'
 require 'os'
 
 describe '#get_application_default' do
+  CredentialsLoader = Google::Auth::CredentialsLoader
+
   # Pass unique options each time to bypass memoization
   let(:options) { |example| { dememoize: example } }
 
   before(:example) do
     @key = OpenSSL::PKey::RSA.new(2048)
-    @var_name = ENV_VAR
+    @var_name = CredentialsLoader::ENV_VAR
     @credential_vars = [
-      ENV_VAR, PRIVATE_KEY_VAR, CLIENT_EMAIL_VAR, CLIENT_ID_VAR,
-      CLIENT_SECRET_VAR, REFRESH_TOKEN_VAR, ACCOUNT_TYPE_VAR
+      CredentialsLoader::ENV_VAR,
+      CredentialsLoader::PRIVATE_KEY_VAR,
+      CredentialsLoader::CLIENT_EMAIL_VAR,
+      CredentialsLoader::CLIENT_ID_VAR,
+      CredentialsLoader::CLIENT_SECRET_VAR,
+      CredentialsLoader::REFRESH_TOKEN_VAR,
+      CredentialsLoader::ACCOUNT_TYPE_VAR
     ]
     @original_env_vals = {}
     @credential_vars.each { |var| @original_env_vals[var] = ENV[var] }
@@ -103,8 +110,8 @@ describe '#get_application_default' do
     it 'succeeds with default file without GOOGLE_APPLICATION_CREDENTIALS' do
       ENV.delete(@var_name) unless ENV[@var_name].nil?
       Dir.mktmpdir do |dir|
-        key_path = File.join(dir, '.config', WELL_KNOWN_PATH)
-        key_path = File.join(dir, WELL_KNOWN_PATH) if OS.windows?
+        key_path = File.join(dir, '.config', CredentialsLoader::WELL_KNOWN_PATH)
+        key_path = File.join(dir, CredentialsLoader::WELL_KNOWN_PATH) if OS.windows?
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV['HOME'] = dir
@@ -117,8 +124,8 @@ describe '#get_application_default' do
     it 'succeeds with default file without a scope' do
       ENV.delete(@var_name) unless ENV[@var_name].nil?
       Dir.mktmpdir do |dir|
-        key_path = File.join(dir, '.config', WELL_KNOWN_PATH)
-        key_path = File.join(dir, WELL_KNOWN_PATH) if OS.windows?
+        key_path = File.join(dir, '.config', CredentialsLoader::WELL_KNOWN_PATH)
+        key_path = File.join(dir, CredentialsLoader::WELL_KNOWN_PATH) if OS.windows?
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV['HOME'] = dir
@@ -145,7 +152,7 @@ describe '#get_application_default' do
       FakeFS do
         ENV['ProgramData'] = '/etc'
         prefix = OS.windows? ? '/etc/Google/Auth/' : '/etc/google/auth/'
-        key_path = File.join(prefix, CREDENTIALS_FILE_NAME)
+        key_path = File.join(prefix, CredentialsLoader::CREDENTIALS_FILE_NAME)
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         expect(Google::Auth.get_application_default(@scope, options))
@@ -156,25 +163,25 @@ describe '#get_application_default' do
 
     it 'succeeds if environment vars are valid' do
       ENV.delete(@var_name) unless ENV[@var_name].nil? # no env var
-      ENV[PRIVATE_KEY_VAR] = cred_json[:private_key]
-      ENV[CLIENT_EMAIL_VAR] = cred_json[:client_email]
-      ENV[CLIENT_ID_VAR] = cred_json[:client_id]
-      ENV[CLIENT_SECRET_VAR] = cred_json[:client_secret]
-      ENV[REFRESH_TOKEN_VAR] = cred_json[:refresh_token]
-      ENV[ACCOUNT_TYPE_VAR] = cred_json[:type]
+      ENV[CredentialsLoader::PRIVATE_KEY_VAR] = cred_json[:private_key]
+      ENV[CredentialsLoader::CLIENT_EMAIL_VAR] = cred_json[:client_email]
+      ENV[CredentialsLoader::CLIENT_ID_VAR] = cred_json[:client_id]
+      ENV[CredentialsLoader::CLIENT_SECRET_VAR] = cred_json[:client_secret]
+      ENV[CredentialsLoader::REFRESH_TOKEN_VAR] = cred_json[:refresh_token]
+      ENV[CredentialsLoader::ACCOUNT_TYPE_VAR] = cred_json[:type]
       expect(Google::Auth.get_application_default(@scope, options))
         .to_not be_nil
     end
 
     it 'warns when using cloud sdk credentials' do
       ENV.delete(@var_name) unless ENV[@var_name].nil? # no env var
-      ENV[PRIVATE_KEY_VAR] = cred_json[:private_key]
-      ENV[CLIENT_EMAIL_VAR] = cred_json[:client_email]
-      ENV[CLIENT_ID_VAR] = Google::Auth::CredentialsLoader::CLOUD_SDK_CLIENT_ID
-      ENV[CLIENT_SECRET_VAR] = cred_json[:client_secret]
-      ENV[REFRESH_TOKEN_VAR] = cred_json[:refresh_token]
-      ENV[ACCOUNT_TYPE_VAR] = cred_json[:type]
-      ENV[PROJECT_ID_VAR] = 'a_project_id'
+      ENV[CredentialsLoader::PRIVATE_KEY_VAR] = cred_json[:private_key]
+      ENV[CredentialsLoader::CLIENT_EMAIL_VAR] = cred_json[:client_email]
+      ENV[CredentialsLoader::CLIENT_ID_VAR] = Google::Auth::CredentialsLoader::CLOUD_SDK_CLIENT_ID
+      ENV[CredentialsLoader::CLIENT_SECRET_VAR] = cred_json[:client_secret]
+      ENV[CredentialsLoader::REFRESH_TOKEN_VAR] = cred_json[:refresh_token]
+      ENV[CredentialsLoader::ACCOUNT_TYPE_VAR] = cred_json[:type]
+      ENV[CredentialsLoader::PROJECT_ID_VAR] = 'a_project_id'
       expect { Google::Auth.get_application_default @scope, options }.to output(
         Google::Auth::CredentialsLoader::CLOUD_SDK_CREDENTIALS_WARNING + "\n"
       ).to_stderr
@@ -249,8 +256,8 @@ describe '#get_application_default' do
     it 'fails if the well known file contains the creds' do
       ENV.delete(@var_name) unless ENV[@var_name].nil?
       Dir.mktmpdir do |dir|
-        key_path = File.join(dir, '.config', WELL_KNOWN_PATH)
-        key_path = File.join(dir, WELL_KNOWN_PATH) if OS.windows?
+        key_path = File.join(dir, '.config', CredentialsLoader::WELL_KNOWN_PATH)
+        key_path = File.join(dir, CredentialsLoader::WELL_KNOWN_PATH) if OS.windows?
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV['HOME'] = dir
@@ -262,9 +269,9 @@ describe '#get_application_default' do
     end
 
     it 'fails if env vars are set' do
-      ENV[ENV_VAR] = nil
-      ENV[PRIVATE_KEY_VAR] = cred_json[:private_key]
-      ENV[CLIENT_EMAIL_VAR] = cred_json[:client_email]
+      ENV[CredentialsLoader::ENV_VAR] = nil
+      ENV[CredentialsLoader::PRIVATE_KEY_VAR] = cred_json[:private_key]
+      ENV[CredentialsLoader::CLIENT_EMAIL_VAR] = cred_json[:client_email]
       expect do
         Google::Auth.get_application_default @scope, options
       end.to raise_error RuntimeError

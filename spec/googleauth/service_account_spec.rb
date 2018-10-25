@@ -42,8 +42,6 @@ require 'spec_helper'
 require 'tmpdir'
 require 'os'
 
-include Google::Auth::CredentialsLoader
-
 shared_examples 'jwt header auth' do
   context 'when jwt_aud_uri is present' do
     let(:test_uri) { 'https://www.googleapis.com/myservice' }
@@ -108,6 +106,7 @@ shared_examples 'jwt header auth' do
 end
 
 describe Google::Auth::ServiceAccountCredentials do
+  CredentialsLoader = Google::Auth::CredentialsLoader
   ServiceAccountCredentials = Google::Auth::ServiceAccountCredentials
   let(:client_email) { 'app@developer.gserviceaccount.com' }
   let(:cred_json) do
@@ -166,13 +165,16 @@ describe Google::Auth::ServiceAccountCredentials do
 
   describe '#from_env' do
     before(:example) do
-      @var_name = ENV_VAR
+      @var_name = CredentialsLoader::ENV_VAR
       @credential_vars = [
-        ENV_VAR, PRIVATE_KEY_VAR, CLIENT_EMAIL_VAR, ACCOUNT_TYPE_VAR
+        CredentialsLoader::ENV_VAR,
+        CredentialsLoader::PRIVATE_KEY_VAR,
+        CredentialsLoader::CLIENT_EMAIL_VAR,
+        CredentialsLoader::ACCOUNT_TYPE_VAR
       ]
       @original_env_vals = {}
       @credential_vars.each { |var| @original_env_vals[var] = ENV[var] }
-      ENV[ACCOUNT_TYPE_VAR] = cred_json[:type]
+      ENV[CredentialsLoader::ACCOUNT_TYPE_VAR] = cred_json[:type]
 
       @scope = 'https://www.googleapis.com/auth/userinfo.profile'
       @clz = ServiceAccountCredentials
@@ -209,24 +211,24 @@ describe Google::Auth::ServiceAccountCredentials do
 
     it 'succeeds when GOOGLE_PRIVATE_KEY and GOOGLE_CLIENT_EMAIL env vars are'\
       ' valid' do
-      ENV[PRIVATE_KEY_VAR] = cred_json[:private_key]
-      ENV[CLIENT_EMAIL_VAR] = cred_json[:client_email]
+      ENV[CredentialsLoader::PRIVATE_KEY_VAR] = cred_json[:private_key]
+      ENV[CredentialsLoader::CLIENT_EMAIL_VAR] = cred_json[:client_email]
       expect(@clz.from_env(@scope)).to_not be_nil
     end
 
     it 'sets project_id when the PROJECT_ID_VAR env var is set' do
-      ENV[PRIVATE_KEY_VAR] = cred_json[:private_key]
-      ENV[CLIENT_EMAIL_VAR] = cred_json[:client_email]
-      ENV[PROJECT_ID_VAR] = cred_json[:project_id]
-      ENV[ENV_VAR] = nil
+      ENV[CredentialsLoader::PRIVATE_KEY_VAR] = cred_json[:private_key]
+      ENV[CredentialsLoader::CLIENT_EMAIL_VAR] = cred_json[:client_email]
+      ENV[CredentialsLoader::PROJECT_ID_VAR] = cred_json[:project_id]
+      ENV[CredentialsLoader::ENV_VAR] = nil
       credentials = @clz.from_env(@scope)
       expect(credentials.project_id).to eq(cred_json[:project_id])
     end
 
     it 'succeeds when GOOGLE_PRIVATE_KEY is escaped' do
       escaped_key = cred_json[:private_key].gsub "\n", '\n'
-      ENV[PRIVATE_KEY_VAR] = "\"#{escaped_key}\""
-      ENV[CLIENT_EMAIL_VAR] = cred_json[:client_email]
+      ENV[CredentialsLoader::PRIVATE_KEY_VAR] = "\"#{escaped_key}\""
+      ENV[CredentialsLoader::CLIENT_EMAIL_VAR] = cred_json[:client_email]
       expect(@clz.from_env(@scope)).to_not be_nil
     end
   end
@@ -236,7 +238,7 @@ describe Google::Auth::ServiceAccountCredentials do
       @home = ENV['HOME']
       @app_data = ENV['APPDATA']
       @scope = 'https://www.googleapis.com/auth/userinfo.profile'
-      @known_path = WELL_KNOWN_PATH
+      @known_path = CredentialsLoader::WELL_KNOWN_PATH
       @clz = ServiceAccountCredentials
     end
 
@@ -253,7 +255,7 @@ describe Google::Auth::ServiceAccountCredentials do
     it 'successfully loads the file when it is present' do
       Dir.mktmpdir do |dir|
         key_path = File.join(dir, '.config', @known_path)
-        key_path = File.join(dir, WELL_KNOWN_PATH) if OS.windows?
+        key_path = File.join(dir, CredentialsLoader::WELL_KNOWN_PATH) if OS.windows?
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV['HOME'] = dir
@@ -265,7 +267,7 @@ describe Google::Auth::ServiceAccountCredentials do
     it 'successfully sets project_id when file is present' do
       Dir.mktmpdir do |dir|
         key_path = File.join(dir, '.config', @known_path)
-        key_path = File.join(dir, WELL_KNOWN_PATH) if OS.windows?
+        key_path = File.join(dir, CredentialsLoader::WELL_KNOWN_PATH) if OS.windows?
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV['HOME'] = dir
@@ -281,7 +283,7 @@ describe Google::Auth::ServiceAccountCredentials do
       @scope = 'https://www.googleapis.com/auth/userinfo.profile'
       @program_data = ENV['ProgramData']
       @prefix = OS.windows? ? '/etc/Google/Auth/' : '/etc/google/auth/'
-      @path = File.join(@prefix, CREDENTIALS_FILE_NAME)
+      @path = File.join(@prefix, CredentialsLoader::CREDENTIALS_FILE_NAME)
       @clz = ServiceAccountCredentials
     end
 
@@ -338,13 +340,16 @@ describe Google::Auth::ServiceAccountJwtHeaderCredentials do
 
   describe '#from_env' do
     before(:example) do
-      @var_name = ENV_VAR
+      @var_name = CredentialsLoader::ENV_VAR
       @credential_vars = [
-        ENV_VAR, PRIVATE_KEY_VAR, CLIENT_EMAIL_VAR, ACCOUNT_TYPE_VAR
+        CredentialsLoader::ENV_VAR,
+        CredentialsLoader::PRIVATE_KEY_VAR,
+        CredentialsLoader::CLIENT_EMAIL_VAR,
+        CredentialsLoader::ACCOUNT_TYPE_VAR
       ]
       @original_env_vals = {}
       @credential_vars.each { |var| @original_env_vals[var] = ENV[var] }
-      ENV[ACCOUNT_TYPE_VAR] = cred_json[:type]
+      ENV[CredentialsLoader::ACCOUNT_TYPE_VAR] = cred_json[:type]
     end
 
     after(:example) do
@@ -378,16 +383,16 @@ describe Google::Auth::ServiceAccountJwtHeaderCredentials do
 
     it 'succeeds when GOOGLE_PRIVATE_KEY and GOOGLE_CLIENT_EMAIL env vars are'\
       ' valid' do
-      ENV[PRIVATE_KEY_VAR] = cred_json[:private_key]
-      ENV[CLIENT_EMAIL_VAR] = cred_json[:client_email]
+      ENV[CredentialsLoader::PRIVATE_KEY_VAR] = cred_json[:private_key]
+      ENV[CredentialsLoader::CLIENT_EMAIL_VAR] = cred_json[:client_email]
       expect(clz.from_env(@scope)).to_not be_nil
     end
 
     it 'sets project_id when the PROJECT_ID_VAR env var is set' do
-      ENV[PRIVATE_KEY_VAR] = cred_json[:private_key]
-      ENV[CLIENT_EMAIL_VAR] = cred_json[:client_email]
-      ENV[PROJECT_ID_VAR] = cred_json[:project_id]
-      ENV[ENV_VAR] = nil
+      ENV[CredentialsLoader::PRIVATE_KEY_VAR] = cred_json[:private_key]
+      ENV[CredentialsLoader::CLIENT_EMAIL_VAR] = cred_json[:client_email]
+      ENV[CredentialsLoader::PROJECT_ID_VAR] = cred_json[:project_id]
+      ENV[CredentialsLoader::ENV_VAR] = nil
       credentials = clz.from_env(@scope)
       expect(credentials).to_not be_nil
       expect(credentials.project_id).to eq(cred_json[:project_id])
@@ -412,8 +417,8 @@ describe Google::Auth::ServiceAccountJwtHeaderCredentials do
 
     it 'successfully loads the file when it is present' do
       Dir.mktmpdir do |dir|
-        key_path = File.join(dir, '.config', WELL_KNOWN_PATH)
-        key_path = File.join(dir, WELL_KNOWN_PATH) if OS.windows?
+        key_path = File.join(dir, '.config', CredentialsLoader::WELL_KNOWN_PATH)
+        key_path = File.join(dir, CredentialsLoader::WELL_KNOWN_PATH) if OS.windows?
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV['HOME'] = dir
@@ -424,8 +429,8 @@ describe Google::Auth::ServiceAccountJwtHeaderCredentials do
 
     it 'successfully sets project_id when file is present' do
       Dir.mktmpdir do |dir|
-        key_path = File.join(dir, '.config', WELL_KNOWN_PATH)
-        key_path = File.join(dir, WELL_KNOWN_PATH) if OS.windows?
+        key_path = File.join(dir, '.config', CredentialsLoader::WELL_KNOWN_PATH)
+        key_path = File.join(dir, CredentialsLoader::WELL_KNOWN_PATH) if OS.windows?
         FileUtils.mkdir_p(File.dirname(key_path))
         File.write(key_path, cred_json_text)
         ENV['HOME'] = dir

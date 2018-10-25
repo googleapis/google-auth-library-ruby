@@ -65,7 +65,7 @@ module Google
           client_email = ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
           project_id = ENV[CredentialsLoader::PROJECT_ID_VAR]
         end
-        project_id ||= self.class.load_gcloud_project_id
+        project_id ||= load_gcloud_project_id
 
         new(token_credential_uri: TOKEN_CRED_URI,
             audience: TOKEN_CRED_URI,

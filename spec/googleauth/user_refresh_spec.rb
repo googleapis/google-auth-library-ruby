@@ -42,9 +42,8 @@ require 'spec_helper'
 require 'tmpdir'
 require 'os'
 
-include Google::Auth::CredentialsLoader
-
 describe Google::Auth::UserRefreshCredentials do
+  CredentialsLoader = Google::Auth::CredentialsLoader
   UserRefreshCredentials = Google::Auth::UserRefreshCredentials
 
   let(:cred_json) do
@@ -85,10 +84,13 @@ describe Google::Auth::UserRefreshCredentials do
 
   describe '#from_env' do
     before(:example) do
-      @var_name = ENV_VAR
+      @var_name = CredentialsLoader::ENV_VAR
       @credential_vars = [
-        ENV_VAR, CLIENT_ID_VAR, CLIENT_SECRET_VAR, REFRESH_TOKEN_VAR,
-        ACCOUNT_TYPE_VAR
+        CredentialsLoader::ENV_VAR,
+        CredentialsLoader::CLIENT_ID_VAR,
+        CredentialsLoader::CLIENT_SECRET_VAR,
+        CredentialsLoader::REFRESH_TOKEN_VAR,
+        CredentialsLoader::ACCOUNT_TYPE_VAR
       ]
       @original_env_vals = {}
       @credential_vars.each { |var| @original_env_vals[var] = ENV[var] }
@@ -141,11 +143,11 @@ describe Google::Auth::UserRefreshCredentials do
 
     it 'succeeds when GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and '\
       'GOOGLE_REFRESH_TOKEN env vars are valid' do
-      ENV[ENV_VAR] = nil
-      ENV[CLIENT_ID_VAR] = cred_json[:client_id]
-      ENV[CLIENT_SECRET_VAR] = cred_json[:client_secret]
-      ENV[REFRESH_TOKEN_VAR] = cred_json[:refresh_token]
-      ENV[ACCOUNT_TYPE_VAR] = cred_json[:type]
+      ENV[CredentialsLoader::ENV_VAR] = nil
+      ENV[CredentialsLoader::CLIENT_ID_VAR] = cred_json[:client_id]
+      ENV[CredentialsLoader::CLIENT_SECRET_VAR] = cred_json[:client_secret]
+      ENV[CredentialsLoader::REFRESH_TOKEN_VAR] = cred_json[:refresh_token]
+      ENV[CredentialsLoader::ACCOUNT_TYPE_VAR] = cred_json[:type]
       creds = @clz.from_env(@scope)
       expect(creds).to_not be_nil
       expect(creds.client_id).to eq(cred_json[:client_id])
@@ -154,12 +156,12 @@ describe Google::Auth::UserRefreshCredentials do
     end
 
     it 'sets project_id when the PROJECT_ID_VAR env var is set' do
-      ENV[ENV_VAR] = nil
-      ENV[CLIENT_ID_VAR] = cred_json[:client_id]
-      ENV[CLIENT_SECRET_VAR] = cred_json[:client_secret]
-      ENV[REFRESH_TOKEN_VAR] = cred_json[:refresh_token]
-      ENV[ACCOUNT_TYPE_VAR] = cred_json[:type]
-      ENV[PROJECT_ID_VAR] = @project_id
+      ENV[CredentialsLoader::ENV_VAR] = nil
+      ENV[CredentialsLoader::CLIENT_ID_VAR] = cred_json[:client_id]
+      ENV[CredentialsLoader::CLIENT_SECRET_VAR] = cred_json[:client_secret]
+      ENV[CredentialsLoader::REFRESH_TOKEN_VAR] = cred_json[:refresh_token]
+      ENV[CredentialsLoader::ACCOUNT_TYPE_VAR] = cred_json[:type]
+      ENV[CredentialsLoader::PROJECT_ID_VAR] = @project_id
       creds = @clz.from_env(@scope)
       expect(creds.project_id).to eq(@project_id)
     end
@@ -170,7 +172,7 @@ describe Google::Auth::UserRefreshCredentials do
       @home = ENV['HOME']
       @app_data = ENV['APPDATA']
       @scope = 'https://www.googleapis.com/auth/userinfo.profile'
-      @known_path = WELL_KNOWN_PATH
+      @known_path = CredentialsLoader::WELL_KNOWN_PATH
       @clz = UserRefreshCredentials
     end
 
@@ -220,7 +222,7 @@ describe Google::Auth::UserRefreshCredentials do
         File.write(key_path, cred_json_text)
         ENV['HOME'] = dir
         ENV['APPDATA'] = dir
-        ENV[PROJECT_ID_VAR] = nil
+        ENV[CredentialsLoader::PROJECT_ID_VAR] = nil
         expect(@clz).to receive(:load_gcloud_project_id).with(no_args)
         @clz.from_well_known_path(@scope)
       end
@@ -231,7 +233,7 @@ describe Google::Auth::UserRefreshCredentials do
     before(:example) do
       @scope = 'https://www.googleapis.com/auth/userinfo.profile'
       @prefix = OS.windows? ? '/etc/Google/Auth/' : '/etc/google/auth/'
-      @path = File.join(@prefix, CREDENTIALS_FILE_NAME)
+      @path = File.join(@prefix, CredentialsLoader::CREDENTIALS_FILE_NAME)
       @program_data = ENV['ProgramData']
       @clz = UserRefreshCredentials
     end
