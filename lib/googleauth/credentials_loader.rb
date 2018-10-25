@@ -147,6 +147,7 @@ module Google
       rescue
         warn 'Unable to determine project id.'
       end
+      module_function :load_gcloud_project_id
 
       private
 
