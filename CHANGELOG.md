@@ -1,4 +1,8 @@
-## 0.7.0 (2018/10/23)
+## 0.7.1 (2018/10/25)
+
+* Make load_gcloud_project_id module function.
+
+## 0.7.0 (2018/10/24)
 
 * Add project_id instance variable to UserRefreshCredentials, ServiceAccountCredentials, and Credentials.
 

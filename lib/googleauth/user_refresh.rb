@@ -90,7 +90,7 @@ module Google
         options[:token_credential_uri] ||= TOKEN_CRED_URI
         options[:authorization_uri] ||= AUTHORIZATION_URI
         @project_id = options[:project_id]
-        @project_id ||= self.class.load_gcloud_project_id
+        @project_id ||= CredentialsLoader.load_gcloud_project_id
         super(options)
       end
 

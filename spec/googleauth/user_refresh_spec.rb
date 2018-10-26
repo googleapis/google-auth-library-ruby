@@ -221,7 +221,7 @@ describe Google::Auth::UserRefreshCredentials do
         ENV['HOME'] = dir
         ENV['APPDATA'] = dir
         ENV[PROJECT_ID_VAR] = nil
-        expect(@clz).to receive(:load_gcloud_project_id).with(no_args)
+        expect(Google::Auth::CredentialsLoader).to receive(:load_gcloud_project_id).with(no_args)
         @clz.from_well_known_path(@scope)
       end
     end
