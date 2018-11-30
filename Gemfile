@@ -16,7 +16,7 @@ group :development do
   gem 'rubocop', '>= 0.41', '< 0.50'
   gem 'simplecov', '~> 0.9'
   gem 'sinatra'
-  gem 'webmock', '~> 1.21'
+  gem 'webmock', '~> 3.4'
 end
 
 platforms :jruby do
