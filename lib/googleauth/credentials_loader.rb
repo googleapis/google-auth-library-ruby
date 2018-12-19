@@ -139,13 +139,14 @@ module Google
       end
       module_function :warn_if_cloud_sdk_credentials
 
+      # Finds project_id from gcloud CLI configuration
       def load_gcloud_project_id
         gcloud = GCLOUD_WINDOWS_COMMAND if OS.windows?
         gcloud = GCLOUD_POSIX_COMMAND unless OS.windows?
         config = MultiJson.load(`#{gcloud} #{GCLOUD_CONFIG_COMMAND}`)
         config['configuration']['properties']['core']['project']
       rescue
-        warn 'Unable to determine project id.'
+        nil
       end
       module_function :load_gcloud_project_id
 
