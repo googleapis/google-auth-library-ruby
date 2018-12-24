@@ -76,22 +76,35 @@ module Google
       # By default, it calls #new on the current class, but this behaviour can
       # be modified, allowing different instances to be created.
       def make_creds(*args)
-        new(*args)
+        creds = new(*args)
+        if creds.respond_to?(:configure_connection) && args.size == 1
+          creds = creds.configure_connection(args[0])
+        end
+        creds
       end
 
       # Creates an instance from the path specified in an environment
       # variable.
       #
       # @param scope [string|array|nil] the scope(s) to access
-      def from_env(scope = nil)
+      # @param options [Hash] Connection options. These may be used to configure
+      #     how OAuth tokens are retrieved, by providing a suitable
+      #     `Faraday::Connection`. For example, if a connection proxy must be
+      #     used in the current network, you may provide a connection with
+      #     with the needed proxy options.
+      #     The following keys are recognized:
+      #     * `:default_connection` The connection object to use.
+      #     * `:connection_builder` A `Proc` that returns a connection.
+      def from_env(scope = nil, options = {})
+        options = interpret_options scope, options
         if ENV.key?(ENV_VAR)
           path = ENV[ENV_VAR]
           raise "file #{path} does not exist" unless File.exist?(path)
           File.open(path) do |f|
-            return make_creds(json_key_io: f, scope: scope)
+            return make_creds(options.merge(json_key_io: f))
           end
         elsif service_account_env_vars? || authorized_user_env_vars?
-          return make_creds(scope: scope)
+          return make_creds(options)
         end
       rescue StandardError => e
         raise "#{NOT_FOUND_ERROR}: #{e}"
@@ -100,7 +113,16 @@ module Google
       # Creates an instance from a well known path.
       #
       # @param scope [string|array|nil] the scope(s) to access
-      def from_well_known_path(scope = nil)
+      # @param options [Hash] Connection options. These may be used to configure
+      #     how OAuth tokens are retrieved, by providing a suitable
+      #     `Faraday::Connection`. For example, if a connection proxy must be
+      #     used in the current network, you may provide a connection with
+      #     with the needed proxy options.
+      #     The following keys are recognized:
+      #     * `:default_connection` The connection object to use.
+      #     * `:connection_builder` A `Proc` that returns a connection.
+      def from_well_known_path(scope = nil, options = {})
+        options = interpret_options scope, options
         home_var = OS.windows? ? 'APPDATA' : 'HOME'
         base = WELL_KNOWN_PATH
         root = ENV[home_var].nil? ? '' : ENV[home_var]
@@ -108,7 +130,7 @@ module Google
         path = File.join(root, base)
         return nil unless File.exist?(path)
         File.open(path) do |f|
-          return make_creds(json_key_io: f, scope: scope)
+          return make_creds(options.merge(json_key_io: f))
         end
       rescue StandardError => e
         raise "#{WELL_KNOWN_ERROR}: #{e}"
@@ -117,7 +139,16 @@ module Google
       # Creates an instance from the system default path
       #
       # @param scope [string|array|nil] the scope(s) to access
-      def from_system_default_path(scope = nil)
+      # @param options [Hash] Connection options. These may be used to configure
+      #     how OAuth tokens are retrieved, by providing a suitable
+      #     `Faraday::Connection`. For example, if a connection proxy must be
+      #     used in the current network, you may provide a connection with
+      #     with the needed proxy options.
+      #     The following keys are recognized:
+      #     * `:default_connection` The connection object to use.
+      #     * `:connection_builder` A `Proc` that returns a connection.
+      def from_system_default_path(scope = nil, options = {})
+        options = interpret_options scope, options
         if OS.windows?
           return nil unless ENV['ProgramData']
           prefix = File.join(ENV['ProgramData'], 'Google/Auth')
@@ -127,7 +158,7 @@ module Google
         path = File.join(prefix, CREDENTIALS_FILE_NAME)
         return nil unless File.exist?(path)
         File.open(path) do |f|
-          return make_creds(json_key_io: f, scope: scope)
+          return make_creds(options.merge(json_key_io: f))
         end
       rescue StandardError => e
         raise "#{SYSTEM_DEFAULT_ERROR}: #{e}"
@@ -150,6 +181,18 @@ module Google
       module_function :load_gcloud_project_id
 
       private
+
+      def interpret_options scope, options
+        if scope.is_a? Hash
+          options = scope
+          scope = nil
+        end
+        if scope && !options[:scope]
+          options.merge(scope: scope)
+        else
+          options
+        end
+      end
 
       def service_account_env_vars?
         ([PRIVATE_KEY_VAR, CLIENT_EMAIL_VAR] - ENV.keys).empty?

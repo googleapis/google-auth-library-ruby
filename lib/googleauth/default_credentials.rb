@@ -46,16 +46,16 @@ module Google
       # override CredentialsLoader#make_creds to use the class determined by
       # loading the json.
       def self.make_creds(options = {})
-        json_key_io, scope = options.values_at(:json_key_io, :scope)
+        json_key_io = options[:json_key_io]
         if json_key_io
           json_key, clz = determine_creds_class(json_key_io)
           warn_if_cloud_sdk_credentials json_key['client_id']
-          clz.make_creds(json_key_io: StringIO.new(MultiJson.dump(json_key)),
-                         scope: scope)
+          io = StringIO.new(MultiJson.dump(json_key))
+          clz.make_creds(options.merge(json_key_io: io))
         else
           warn_if_cloud_sdk_credentials ENV[CredentialsLoader::CLIENT_ID_VAR]
           clz = read_creds
-          clz.make_creds(scope: scope)
+          clz.make_creds(options)
         end
       end
 

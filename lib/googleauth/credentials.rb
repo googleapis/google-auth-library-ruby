@@ -66,14 +66,14 @@ module Google
         elsif keyfile.is_a? Hash
           hash = stringify_hash_keys keyfile
           hash['scope'] ||= scope
-          @client = init_client hash
+          @client = init_client hash, options
           @project_id ||= (hash['project_id'] || hash['project'])
         else
           verify_keyfile_exists! keyfile
           json = JSON.parse ::File.read(keyfile)
           json['scope'] ||= scope
           @project_id ||= (json['project_id'] || json['project'])
-          @client = init_client json
+          @client = init_client json, options
         end
         CredentialsLoader.warn_if_cloud_sdk_credentials @client.client_id
         @project_id ||= CredentialsLoader.load_gcloud_project_id
@@ -85,33 +85,32 @@ module Google
       # previously stated locations do not contain keyfile information,
       # this method defaults to use the application default.
       def self.default(options = {})
-        scope = options[:scope]
         # First try to find keyfile file from environment variables.
-        client = from_path_vars scope
+        client = from_path_vars options
 
         # Second try to find keyfile json from environment variables.
-        client ||= from_json_vars scope
+        client ||= from_json_vars options
 
         # Third try to find keyfile file from known file paths.
-        client ||= from_default_paths scope
+        client ||= from_default_paths options
 
         # Finally get instantiated client from Google::Auth
-        client ||= from_application_default scope
+        client ||= from_application_default options
         client
       end
 
-      def self.from_path_vars(scope)
+      def self.from_path_vars(options)
         self::PATH_ENV_VARS
           .map { |v| ENV[v] }
           .compact
           .select { |p| ::File.file? p }
           .each do |file|
-            return new file, scope: scope
+            return new file, options
           end
         nil
       end
 
-      def self.from_json_vars(scope)
+      def self.from_json_vars(options)
         json = lambda do |v|
           unless ENV[v].nil?
             begin
@@ -122,24 +121,24 @@ module Google
           end
         end
         self::JSON_ENV_VARS.map(&json).compact.each do |hash|
-          return new hash, scope: scope
+          return new hash, options
         end
         nil
       end
 
-      def self.from_default_paths(scope)
+      def self.from_default_paths(options)
         self::DEFAULT_PATHS
           .select { |p| ::File.file? p }
           .each do |file|
-            return new file, scope: scope
+            return new file, options
           end
         nil
       end
 
-      def self.from_application_default(scope)
-        scope ||= self::SCOPE
+      def self.from_application_default(options)
+        scope = options[:scope] || self::SCOPE
         client = Google::Auth.get_application_default scope
-        new client
+        new client, options
       end
       private_class_method :from_path_vars,
                            :from_json_vars,
@@ -161,9 +160,10 @@ module Google
       end
 
       # Initializes the Signet client.
-      def init_client(keyfile)
+      def init_client(keyfile, connection_options = {})
         client_opts = client_options keyfile
-        Signet::OAuth2::Client.new client_opts
+        Signet::OAuth2::Client.new(client_opts)
+          .configure_connection(connection_options)
       end
 
       # returns a new Hash with string keys instead of symbol keys.

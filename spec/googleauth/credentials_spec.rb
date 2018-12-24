@@ -47,6 +47,7 @@ describe Google::Auth::Credentials, :private do
 
   it 'uses a default scope' do
     mocked_signet = double('Signet::OAuth2::Client')
+    allow(mocked_signet).to receive(:configure_connection).and_return(mocked_signet)
     allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
     allow(mocked_signet).to receive(:client_id)
     allow(Signet::OAuth2::Client).to receive(:new) do |options|
@@ -64,6 +65,7 @@ describe Google::Auth::Credentials, :private do
 
   it 'uses a custom scope' do
     mocked_signet = double('Signet::OAuth2::Client')
+    allow(mocked_signet).to receive(:configure_connection).and_return(mocked_signet)
     allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
     allow(mocked_signet).to receive(:client_id)
     allow(Signet::OAuth2::Client).to receive(:new) do |options|
@@ -96,6 +98,7 @@ describe Google::Auth::Credentials, :private do
     allow(::File).to receive(:file?).with(TEST_PATH_ENV_VAL) { false }
 
     mocked_signet = double('Signet::OAuth2::Client')
+    allow(mocked_signet).to receive(:configure_connection).and_return(mocked_signet)
     allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
     allow(mocked_signet).to receive(:client_id)
     allow(Signet::OAuth2::Client).to receive(:new) do |options|
@@ -129,6 +132,7 @@ describe Google::Auth::Credentials, :private do
     allow(::File).to receive(:read).with('/unknown/path/to/file.txt') { JSON.generate(default_keyfile_hash) }
 
     mocked_signet = double('Signet::OAuth2::Client')
+    allow(mocked_signet).to receive(:configure_connection).and_return(mocked_signet)
     allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
     allow(mocked_signet).to receive(:client_id)
     allow(Signet::OAuth2::Client).to receive(:new) do |options|
@@ -161,6 +165,7 @@ describe Google::Auth::Credentials, :private do
     allow(::ENV).to receive(:[]).with('JSON_ENV_TEST') { JSON.generate(default_keyfile_hash) }
 
     mocked_signet = double('Signet::OAuth2::Client')
+    allow(mocked_signet).to receive(:configure_connection).and_return(mocked_signet)
     allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
     allow(mocked_signet).to receive(:client_id)
     allow(Signet::OAuth2::Client).to receive(:new) do |options|
@@ -194,6 +199,7 @@ describe Google::Auth::Credentials, :private do
     allow(::File).to receive(:read).with('~/default/path/to/file.txt') { JSON.generate(default_keyfile_hash) }
 
     mocked_signet = double('Signet::OAuth2::Client')
+    allow(mocked_signet).to receive(:configure_connection).and_return(mocked_signet)
     allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
     allow(mocked_signet).to receive(:client_id)
     allow(Signet::OAuth2::Client).to receive(:new) do |options|
@@ -226,6 +232,7 @@ describe Google::Auth::Credentials, :private do
     allow(::File).to receive(:file?).with('~/default/path/to/file.txt') { false }
 
     mocked_signet = double('Signet::OAuth2::Client')
+    allow(mocked_signet).to receive(:configure_connection).and_return(mocked_signet)
     allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
     allow(mocked_signet).to receive(:client_id)
     allow(Google::Auth).to receive(:get_application_default) do |scope|
@@ -253,6 +260,7 @@ describe Google::Auth::Credentials, :private do
 
   it 'warns when cloud sdk credentials are used' do
     mocked_signet = double('Signet::OAuth2::Client')
+    allow(mocked_signet).to receive(:configure_connection).and_return(mocked_signet)
     allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
     allow(Signet::OAuth2::Client).to receive(:new) do |options|
       mocked_signet
