@@ -38,8 +38,9 @@ module Signet
     # This reopens Client to add #apply and #apply! methods which update a
     # hash with the fetched authentication token.
     class Client
-      def configure_connection options
-        @connection_info = options[:connection_builder] || options[:default_connection]
+      def configure_connection(options)
+        @connection_info =
+          options[:connection_builder] || options[:default_connection]
         self
       end
 

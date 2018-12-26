@@ -57,13 +57,13 @@ ERROR_MESSAGE
     #     example, if a connection proxy must be used in the current network,
     #     you may provide a connection with with the needed proxy options.
     #     The following keys are recognized:
-    #     * `:default_connection` The connection object to use for token refresh
-    #       requests.
-    #     * `:connection_builder` A `Proc` that creates and returns a connection
-    #       to use for token refresh requests.
+    #     * `:default_connection` The connection object to use for token
+    #       refresh requests.
+    #     * `:connection_builder` A `Proc` that creates and returns a
+    #       connection to use for token refresh requests.
     #     * `:connection` The connection to use to determine whether GCE
     #       metadata credentials are available.
-      def get_application_default(scope = nil, options = {})
+    def get_application_default(scope = nil, options = {})
       creds = DefaultCredentials.from_env(scope, options) ||
               DefaultCredentials.from_well_known_path(scope, options) ||
               DefaultCredentials.from_system_default_path(scope, options)

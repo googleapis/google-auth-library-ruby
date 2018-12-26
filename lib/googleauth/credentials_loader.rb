@@ -182,7 +182,7 @@ module Google
 
       private
 
-      def interpret_options scope, options
+      def interpret_options(scope, options)
         if scope.is_a? Hash
           options = scope
           scope = nil

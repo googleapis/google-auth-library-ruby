@@ -73,7 +73,7 @@ module Google
             issuer: client_email,
             signing_key: OpenSSL::PKey::RSA.new(private_key),
             project_id: project_id)
-            .configure_connection(options)
+          .configure_connection(options)
       end
 
       # Handles certain escape sequences that sometimes appear in input.

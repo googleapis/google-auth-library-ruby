@@ -163,7 +163,7 @@ module Google
       def init_client(keyfile, connection_options = {})
         client_opts = client_options keyfile
         Signet::OAuth2::Client.new(client_opts)
-          .configure_connection(connection_options)
+                              .configure_connection(connection_options)
       end
 
       # returns a new Hash with string keys instead of symbol keys.
