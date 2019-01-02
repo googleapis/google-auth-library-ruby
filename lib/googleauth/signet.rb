@@ -38,6 +38,12 @@ module Signet
     # This reopens Client to add #apply and #apply! methods which update a
     # hash with the fetched authentication token.
     class Client
+      def configure_connection(options)
+        @connection_info =
+          options[:connection_builder] || options[:default_connection]
+        self
+      end
+
       # Updates a_hash updated with the authentication token
       def apply!(a_hash, opts = {})
         # fetch the access token there is currently not one, or if the client
@@ -66,6 +72,10 @@ module Signet
 
       alias orig_fetch_access_token! fetch_access_token!
       def fetch_access_token!(options = {})
+        unless options[:connection]
+          connection = build_default_connection
+          options = options.merge(connection: connection) if connection
+        end
         info = orig_fetch_access_token!(options)
         notify_refresh_listeners
         info
@@ -75,6 +85,16 @@ module Signet
         listeners = @refresh_listeners || []
         listeners.each do |block|
           block.call(self)
+        end
+      end
+
+      def build_default_connection
+        if !defined?(@connection_info)
+          nil
+        elsif @connection_info.respond_to? :call
+          @connection_info.call
+        else
+          @connection_info
         end
       end
 

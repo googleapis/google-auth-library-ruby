@@ -72,6 +72,7 @@ module Google
             refresh_token: user_creds['refresh_token'],
             project_id:    user_creds['project_id'],
             scope: scope)
+          .configure_connection(options)
       end
 
       # Reads the client_id, client_secret and refresh_token fields from the

@@ -60,14 +60,45 @@ describe Signet::OAuth2::Client do
                                    @key.public_key, true,
                                    algorithm: 'RS256')
     end
+    with_params = {body: hash_including(
+      "grant_type" => "urn:ietf:params:oauth:grant-type:jwt-bearer")}
+    if opts[:user_agent]
+      with_params[:headers] = {"User-Agent" => opts[:user_agent]}
+    end
     stub_request(:post, 'https://oauth2.googleapis.com/token')
-      .with(body: hash_including(
-        'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer'
-      ), &blk)
+      .with(with_params, &blk)
       .to_return(body: body,
                  status: 200,
                  headers: { 'Content-Type' => 'application/json' })
   end
 
   it_behaves_like 'apply/apply! are OK'
+
+  describe "#configure_connection" do
+    it "honors default_connection" do
+      token = "1/abcdef1234567890"
+      stub = make_auth_stubs access_token: token, user_agent: "RubyRocks/1.0"
+      conn = Faraday.new headers: {"User-Agent" => "RubyRocks/1.0"}
+      @client.configure_connection(default_connection: conn)
+      md = { foo: "bar" }
+      @client.apply!(md)
+      want = { foo: "bar", authorization: "Bearer #{token}" }
+      expect(md).to eq(want)
+      expect(stub).to have_been_requested
+    end
+
+    it "honors connection_builder" do
+      token = "1/abcdef1234567890"
+      stub = make_auth_stubs access_token: token, user_agent: "RubyRocks/2.0"
+      connection_builder = proc do
+        Faraday.new headers: {"User-Agent" => "RubyRocks/2.0"}
+      end
+      @client.configure_connection(connection_builder: connection_builder)
+      md = { foo: "bar" }
+      @client.apply!(md)
+      want = { foo: "bar", authorization: "Bearer #{token}" }
+      expect(md).to eq(want)
+      expect(stub).to have_been_requested
+    end
+  end
 end

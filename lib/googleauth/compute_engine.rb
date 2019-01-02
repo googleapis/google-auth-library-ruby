@@ -87,10 +87,9 @@ ERROR
       # fetched.
       def fetch_access_token(options = {})
         c = options[:connection] || Faraday.default_connection
-        c.headers = { 'Metadata-Flavor' => 'Google' }
-
         retry_with_error do
-          resp = c.get(COMPUTE_AUTH_TOKEN_URI)
+          headers = { 'Metadata-Flavor' => 'Google' }
+          resp = c.get(COMPUTE_AUTH_TOKEN_URI, nil, headers)
           case resp.status
           when 200
             Signet::OAuth2.parse_credentials(resp.body,

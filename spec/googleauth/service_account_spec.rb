@@ -229,6 +229,14 @@ describe Google::Auth::ServiceAccountCredentials do
       ENV[CLIENT_EMAIL_VAR] = cred_json[:client_email]
       expect(@clz.from_env(@scope)).to_not be_nil
     end
+
+    it "propagates default_connection option" do
+      ENV[PRIVATE_KEY_VAR] = cred_json[:private_key]
+      ENV[CLIENT_EMAIL_VAR] = cred_json[:client_email]
+      connection = Faraday.new(headers: {"User-Agent" => "hello"})
+      creds = @clz.from_env(@scope, default_connection: connection)
+      expect(creds.build_default_connection).to be connection
+    end
   end
 
   describe '#from_well_known_path' do
@@ -274,6 +282,20 @@ describe Google::Auth::ServiceAccountCredentials do
         expect(credentials.project_id).to eq(cred_json[:project_id])
       end
     end
+
+    it "propagates default_connection option" do
+      Dir.mktmpdir do |dir|
+        key_path = File.join(dir, '.config', @known_path)
+        key_path = File.join(dir, WELL_KNOWN_PATH) if OS.windows?
+        FileUtils.mkdir_p(File.dirname(key_path))
+        File.write(key_path, cred_json_text)
+        ENV['HOME'] = dir
+        ENV['APPDATA'] = dir
+        connection = Faraday.new(headers: {"User-Agent" => "hello"})
+        creds = @clz.from_well_known_path(@scope, default_connection: connection)
+        expect(creds.build_default_connection).to be connection
+      end
+    end
   end
 
   describe '#from_system_default_path' do
@@ -302,6 +324,18 @@ describe Google::Auth::ServiceAccountCredentials do
         FileUtils.mkdir_p(File.dirname(@path))
         File.write(@path, cred_json_text)
         expect(@clz.from_system_default_path(@scope)).to_not be_nil
+        File.delete(@path)
+      end
+    end
+
+    it "propagates default_connection option" do
+      FakeFS do
+        ENV['ProgramData'] = '/etc'
+        FileUtils.mkdir_p(File.dirname(@path))
+        File.write(@path, cred_json_text)
+        connection = Faraday.new(headers: {"User-Agent" => "hello"})
+        creds = @clz.from_system_default_path(@scope, default_connection: connection)
+        expect(creds.build_default_connection).to be connection
         File.delete(@path)
       end
     end
