@@ -1,3 +1,7 @@
+## 0.8.0 (2019/01/02)
+
+* Support connection options :default_connection and :connection_builder when creating credentials that need to refresh OAuth tokens. This lets clients provide connection objects with custom settings, such as proxies, needed for the client environment.
+
 ## 0.7.1 (2018/10/25)
 
 * Make load_gcloud_project_id module function.
