@@ -4,7 +4,7 @@ source 'https://rubygems.org'
 gemspec
 
 group :development do
-  gem 'bundler', '~> 1.9'
+  gem 'bundler', '>= 1.9'
   gem 'coveralls', '~> 0.7'
   gem 'fakefs', '~> 0.6'
   gem 'fakeredis', '~> 0.5'
