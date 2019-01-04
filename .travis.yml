@@ -31,7 +31,7 @@ addons:
     - libeditline-dev
     - libedit-dev
 before_install:
- - gem update bundler
+ - gem install bundler --version 1.17.3
 notifications:
   email:
     recipients:
