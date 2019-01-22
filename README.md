@@ -138,7 +138,7 @@ scope = 'https://www.googleapis.com/auth/androidpublisher'
 authorizer = Google::Auth::ServiceAccountCredentials.make_creds(
   json_key_io: File.open('/path/to/service_account_json_key.json'),
   scope: scope)
-  
+
 authorizer.fetch_access_token!
 ```
 
@@ -149,6 +149,26 @@ export GOOGLE_ACCOUNT_TYPE=service_account
 export GOOGLE_CLIENT_ID=000000000000000000000
 export GOOGLE_CLIENT_EMAIL=xxxx@xxxx.iam.gserviceaccount.com
 export GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+```
+
+```ruby
+require 'googleauth'
+require 'google/apis/drive_v3'
+
+Drive = ::Google::Apis::DriveV3
+drive = Drive::DriveService.new
+
+# Auths with ENV vars:
+# "GOOGLE_CLIENT_ID",
+# "GOOGLE_CLIENT_EMAIL",
+# "GOOGLE_ACCOUNT_TYPE", 
+# "GOOGLE_PRIVATE_KEY"
+auth = ::Google::Auth::ServiceAccountCredentials
+  .make_creds(scope: 'https://www.googleapis.com/auth/drive')
+drive.authorization = auth
+
+list_files = drive.list_files()
+
 ```
 
 ### Storage
