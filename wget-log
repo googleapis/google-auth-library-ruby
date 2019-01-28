@@ -1,0 +1,6 @@
+--2018-12-04 14:07:39--  https://accounts.google.com/o/oauth2/auth?access_type=offline
+Resolving accounts.google.com (accounts.google.com)... 2607:f8b0:4005:807::200d, 172.217.6.77
+Connecting to accounts.google.com (accounts.google.com)|2607:f8b0:4005:807::200d|:443... connected.
+HTTP request sent, awaiting response... 400 Bad Request
+2018-12-04 14:07:39 ERROR 400: Bad Request.
+
