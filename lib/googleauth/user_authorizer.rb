@@ -27,10 +27,10 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-require 'uri'
-require 'multi_json'
-require 'googleauth/signet'
-require 'googleauth/user_refresh'
+require "uri"
+require "multi_json"
+require "googleauth/signet"
+require "googleauth/user_refresh"
 
 module Google
   module Auth
@@ -53,11 +53,11 @@ module Google
     #     ...
     class UserAuthorizer
       MISMATCHED_CLIENT_ID_ERROR =
-        'Token client ID of %s does not match configured client id %s'.freeze
-      NIL_CLIENT_ID_ERROR = 'Client id can not be nil.'.freeze
-      NIL_SCOPE_ERROR = 'Scope can not be nil.'.freeze
-      NIL_USER_ID_ERROR = 'User ID can not be nil.'.freeze
-      NIL_TOKEN_STORE_ERROR = 'Can not call method if token store is nil'.freeze
+        "Token client ID of %s does not match configured client id %s".freeze
+      NIL_CLIENT_ID_ERROR = "Client id can not be nil.".freeze
+      NIL_SCOPE_ERROR = "Scope can not be nil.".freeze
+      NIL_USER_ID_ERROR = "User ID can not be nil.".freeze
+      NIL_TOKEN_STORE_ERROR = "Can not call method if token store is nil".freeze
       MISSING_ABSOLUTE_URL_ERROR =
         'Absolute base url required for relative callback url "%s"'.freeze
 
@@ -79,7 +79,7 @@ module Google
         @client_id = client_id
         @scope = Array(scope)
         @token_store = token_store
-        @callback_uri = callback_uri || '/oauth2callback'
+        @callback_uri = callback_uri || "/oauth2callback"
       end
 
       # Build the URL for requesting authorization.
@@ -105,9 +105,9 @@ module Google
           scope: scope
         )
         redirect_uri = redirect_uri_for(options[:base_url])
-        url = credentials.authorization_uri(access_type: 'offline',
+        url = credentials.authorization_uri(access_type: "offline",
                                             redirect_uri: redirect_uri,
-                                            approval_prompt: 'force',
+                                            approval_prompt: "force",
                                             state: options[:state],
                                             include_granted_scopes: true,
                                             login_hint: options[:login_hint])
@@ -128,18 +128,18 @@ module Google
         return nil if saved_token.nil?
         data = MultiJson.load(saved_token)
 
-        if data.fetch('client_id', @client_id.id) != @client_id.id
+        if data.fetch("client_id", @client_id.id) != @client_id.id
           raise sprintf(MISMATCHED_CLIENT_ID_ERROR,
-                        data['client_id'], @client_id.id)
+                        data["client_id"], @client_id.id)
         end
 
         credentials = UserRefreshCredentials.new(
           client_id: @client_id.id,
           client_secret: @client_id.secret,
-          scope: data['scope'] || @scope,
-          access_token: data['access_token'],
-          refresh_token: data['refresh_token'],
-          expires_at: data.fetch('expiration_time_millis', 0) / 1000
+          scope: data["scope"] || @scope,
+          access_token: data["access_token"],
+          refresh_token: data["refresh_token"],
+          expires_at: data.fetch("expiration_time_millis", 0) / 1000
         )
         scope ||= @scope
         if credentials.includes_scope?(scope)

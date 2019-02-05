@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-require 'signet/oauth_2/client'
+require "signet/oauth_2/client"
 
 module Signet
   # OAuth2 supports OAuth2 authentication.

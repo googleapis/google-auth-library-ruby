@@ -27,10 +27,10 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-require 'googleauth/signet'
-require 'googleauth/credentials_loader'
-require 'googleauth/scope_util'
-require 'multi_json'
+require "googleauth/signet"
+require "googleauth/credentials_loader"
+require "googleauth/scope_util"
+require "multi_json"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
@@ -46,9 +46,9 @@ module Google
     #
     # cf [Application Default Credentials](http://goo.gl/mkAHpZ)
     class UserRefreshCredentials < Signet::OAuth2::Client
-      TOKEN_CRED_URI = 'https://oauth2.googleapis.com/token'.freeze
-      AUTHORIZATION_URI = 'https://accounts.google.com/o/oauth2/auth'.freeze
-      REVOKE_TOKEN_URI = 'https://oauth2.googleapis.com/revoke'.freeze
+      TOKEN_CRED_URI = "https://oauth2.googleapis.com/token".freeze
+      AUTHORIZATION_URI = "https://accounts.google.com/o/oauth2/auth".freeze
+      REVOKE_TOKEN_URI = "https://oauth2.googleapis.com/revoke".freeze
       extend CredentialsLoader
       attr_reader :project_id
 
@@ -60,17 +60,17 @@ module Google
         json_key_io, scope = options.values_at(:json_key_io, :scope)
         user_creds = read_json_key(json_key_io) if json_key_io
         user_creds ||= {
-          'client_id'     => ENV[CredentialsLoader::CLIENT_ID_VAR],
-          'client_secret' => ENV[CredentialsLoader::CLIENT_SECRET_VAR],
-          'refresh_token' => ENV[CredentialsLoader::REFRESH_TOKEN_VAR],
-          'project_id'    => ENV[CredentialsLoader::PROJECT_ID_VAR]
+          "client_id"     => ENV[CredentialsLoader::CLIENT_ID_VAR],
+          "client_secret" => ENV[CredentialsLoader::CLIENT_SECRET_VAR],
+          "refresh_token" => ENV[CredentialsLoader::REFRESH_TOKEN_VAR],
+          "project_id"    => ENV[CredentialsLoader::PROJECT_ID_VAR]
         }
 
         new(token_credential_uri: TOKEN_CRED_URI,
-            client_id: user_creds['client_id'],
-            client_secret: user_creds['client_secret'],
-            refresh_token: user_creds['refresh_token'],
-            project_id:    user_creds['project_id'],
+            client_id: user_creds["client_id"],
+            client_secret: user_creds["client_secret"],
+            refresh_token: user_creds["refresh_token"],
+            project_id:    user_creds["project_id"],
             scope: scope)
           .configure_connection(options)
       end
