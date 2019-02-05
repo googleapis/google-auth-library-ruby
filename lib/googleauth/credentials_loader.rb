@@ -172,8 +172,13 @@ module Google
 
       # Finds project_id from gcloud CLI configuration
       def load_gcloud_project_id
-        gcloud = GCLOUD_WINDOWS_COMMAND if OS.windows?
-        gcloud = GCLOUD_POSIX_COMMAND unless OS.windows?
+        if OS.windows?
+          gcloud = GCLOUD_WINDOWS_COMMAND
+          return nil if `where gcloud`.count("\\").zero?
+        else
+          gcloud = GCLOUD_POSIX_COMMAND
+          return nil if `which gcloud`.empty?
+        end
         config = MultiJson.load(`#{gcloud} #{GCLOUD_CONFIG_COMMAND}`)
         config['configuration']['properties']['core']['project']
       rescue
