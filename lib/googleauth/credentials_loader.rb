@@ -174,7 +174,8 @@ module Google
       def load_gcloud_project_id
         gcloud = GCLOUD_WINDOWS_COMMAND if OS.windows?
         gcloud = GCLOUD_POSIX_COMMAND unless OS.windows?
-        config = MultiJson.load(`#{gcloud} #{GCLOUD_CONFIG_COMMAND}`)
+        gcloud_json = IO.popen("#{gcloud} #{GCLOUD_CONFIG_COMMAND}", &:read)
+        config = MultiJson.load gcloud_json
         config['configuration']['properties']['core']['project']
       rescue
         nil
