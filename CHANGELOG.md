@@ -42,6 +42,20 @@
 
 ## 0.6.0 (2017/10/17)
 
+### 0.7.2 / 2019-02-21
+
+* switch gcloud command to IO.popen from backticks (#194)
+* Remove warning while looking up project_id (#184)
+* Support configuration of the connection object used to fetch tokens (#185)
+* Add example for auth with ENV vars (#156)
+* Fix bundler gem name and pin to 1.17.3
+* use newest ruby versions for kokoro (#172)
+* Update github issue templates (#173)
+* remove travis and add 2.6 to list of rubies to test against (#191)
+* Update version and changelog for 0.8.0 release (#188)
+* Pin bundler to 1.17.3 for now when running travis
+* Loosen bundler dependency to fix travis
+
 ### Changes
 
 * Support ruby-jwt 2.0
