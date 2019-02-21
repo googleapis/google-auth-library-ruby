@@ -42,6 +42,15 @@
 
 ## 0.6.0 (2017/10/17)
 
+### 0.8.1 / 2019-02-21
+
+* Pin bundler to 1.17.3 for now when running travis
+* remove travis and add 2.6 to list of rubies to test against (#191)
+* Fix bundler gem name and pin to 1.17.3
+* switch gcloud command to IO.popen from backticks (#194)
+* Loosen bundler dependency to fix travis
+* Add example for auth with ENV vars (#156)
+
 ### Changes
 
 * Support ruby-jwt 2.0
