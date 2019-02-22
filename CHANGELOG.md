@@ -42,6 +42,10 @@
 
 ## 0.6.0 (2017/10/17)
 
+### 0.8.1 / 2019-02-22
+
+* switch gcloud command to IO.popen from backticks (#194)
+
 ### Changes
 
 * Support ruby-jwt 2.0
