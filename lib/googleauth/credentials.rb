@@ -29,19 +29,19 @@
 
 # rubocop:disable Metrics/AbcSize, Metrics/PerceivedComplexity, MethodLength
 
-require 'forwardable'
-require 'json'
-require 'signet/oauth_2/client'
+require "forwardable"
+require "json"
+require "signet/oauth_2/client"
 
-require 'googleauth/credentials_loader'
+require "googleauth/credentials_loader"
 
 module Google
   module Auth
     # This class is intended to be inherited by API-specific classes
     # which overrides the SCOPE constant.
     class Credentials
-      TOKEN_CREDENTIAL_URI = 'https://oauth2.googleapis.com/token'.freeze
-      AUDIENCE = 'https://oauth2.googleapis.com/token'.freeze
+      TOKEN_CREDENTIAL_URI = "https://oauth2.googleapis.com/token".freeze
+      AUDIENCE = "https://oauth2.googleapis.com/token".freeze
       SCOPE = [].freeze
       PATH_ENV_VARS = [].freeze
       JSON_ENV_VARS = [].freeze
@@ -59,20 +59,20 @@ module Google
       def initialize(keyfile, options = {})
         scope = options[:scope]
         verify_keyfile_provided! keyfile
-        @project_id = options['project_id'] || options['project']
+        @project_id = options["project_id"] || options["project"]
         if keyfile.is_a? Signet::OAuth2::Client
           @client = keyfile
           @project_id ||= keyfile.project_id if keyfile.respond_to? :project_id
         elsif keyfile.is_a? Hash
           hash = stringify_hash_keys keyfile
-          hash['scope'] ||= scope
+          hash["scope"] ||= scope
           @client = init_client hash, options
-          @project_id ||= (hash['project_id'] || hash['project'])
+          @project_id ||= (hash["project_id"] || hash["project"])
         else
           verify_keyfile_exists! keyfile
           json = JSON.parse ::File.read(keyfile)
-          json['scope'] ||= scope
-          @project_id ||= (json['project_id'] || json['project'])
+          json["scope"] ||= scope
+          @project_id ||= (json["project_id"] || json["project"])
           @client = init_client json, options
         end
         CredentialsLoader.warn_if_cloud_sdk_credentials @client.client_id
@@ -150,7 +150,7 @@ module Google
       # Verify that the keyfile argument is provided.
       def verify_keyfile_provided!(keyfile)
         return unless keyfile.nil?
-        raise 'The keyfile passed to Google::Auth::Credentials.new was nil.'
+        raise "The keyfile passed to Google::Auth::Credentials.new was nil."
       end
 
       # Verify that the keyfile argument is a file.
@@ -173,16 +173,16 @@ module Google
 
       def client_options(options)
         # Keyfile options have higher priority over constructor defaults
-        options['token_credential_uri'] ||= self.class::TOKEN_CREDENTIAL_URI
-        options['audience'] ||= self.class::AUDIENCE
-        options['scope'] ||= self.class::SCOPE
+        options["token_credential_uri"] ||= self.class::TOKEN_CREDENTIAL_URI
+        options["audience"] ||= self.class::AUDIENCE
+        options["scope"] ||= self.class::SCOPE
 
         # client options for initializing signet client
-        { token_credential_uri: options['token_credential_uri'],
-          audience: options['audience'],
-          scope: Array(options['scope']),
-          issuer: options['client_email'],
-          signing_key: OpenSSL::PKey::RSA.new(options['private_key']) }
+        { token_credential_uri: options["token_credential_uri"],
+          audience: options["audience"],
+          scope: Array(options["scope"]),
+          issuer: options["client_email"],
+          signing_key: OpenSSL::PKey::RSA.new(options["private_key"]) }
       end
     end
   end

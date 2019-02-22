@@ -27,9 +27,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-require 'googleauth/signet'
-require 'googleauth/credentials_loader'
-require 'multi_json'
+require "googleauth/signet"
+require "googleauth/credentials_loader"
+require "multi_json"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
@@ -37,8 +37,8 @@ module Google
   module Auth
     # Authenticates requests using IAM credentials.
     class IAMCredentials
-      SELECTOR_KEY = 'x-goog-iam-authority-selector'.freeze
-      TOKEN_KEY = 'x-goog-iam-authorization-token'.freeze
+      SELECTOR_KEY = "x-goog-iam-authority-selector".freeze
+      TOKEN_KEY = "x-goog-iam-authorization-token".freeze
 
       # Initializes an IAMCredentials.
       #

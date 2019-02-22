@@ -27,11 +27,11 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-require 'multi_json'
-require 'googleauth/signet'
-require 'googleauth/user_authorizer'
-require 'googleauth/user_refresh'
-require 'securerandom'
+require "multi_json"
+require "googleauth/signet"
+require "googleauth/user_authorizer"
+require "googleauth/user_refresh"
+require "securerandom"
 
 module Google
   module Auth
@@ -66,21 +66,21 @@ module Google
     # @see {Google::Auth::ControllerHelpers}
     # @note Requires sessions are enabled
     class WebUserAuthorizer < Google::Auth::UserAuthorizer
-      STATE_PARAM = 'state'.freeze
-      AUTH_CODE_KEY = 'code'.freeze
-      ERROR_CODE_KEY = 'error'.freeze
-      SESSION_ID_KEY = 'session_id'.freeze
-      CALLBACK_STATE_KEY = 'g-auth-callback'.freeze
-      CURRENT_URI_KEY = 'current_uri'.freeze
-      XSRF_KEY = 'g-xsrf-token'.freeze
-      SCOPE_KEY = 'scope'.freeze
+      STATE_PARAM = "state".freeze
+      AUTH_CODE_KEY = "code".freeze
+      ERROR_CODE_KEY = "error".freeze
+      SESSION_ID_KEY = "session_id".freeze
+      CALLBACK_STATE_KEY = "g-auth-callback".freeze
+      CURRENT_URI_KEY = "current_uri".freeze
+      XSRF_KEY = "g-xsrf-token".freeze
+      SCOPE_KEY = "scope".freeze
 
-      NIL_REQUEST_ERROR = 'Request is required.'.freeze
-      NIL_SESSION_ERROR = 'Sessions must be enabled'.freeze
-      MISSING_AUTH_CODE_ERROR = 'Missing authorization code in request'.freeze
-      AUTHORIZATION_ERROR = 'Authorization error: %s'.freeze
+      NIL_REQUEST_ERROR = "Request is required.".freeze
+      NIL_SESSION_ERROR = "Sessions must be enabled".freeze
+      MISSING_AUTH_CODE_ERROR = "Missing authorization code in request".freeze
+      AUTHORIZATION_ERROR = "Authorization error: %s".freeze
       INVALID_STATE_TOKEN_ERROR =
-        'State token does not match expected value'.freeze
+        "State token does not match expected value".freeze
 
       class << self
         attr_accessor :default
@@ -205,7 +205,7 @@ module Google
       end
 
       def self.extract_callback_state(request)
-        state = MultiJson.load(request[STATE_PARAM] || '{}')
+        state = MultiJson.load(request[STATE_PARAM] || "{}")
         redirect_uri = state[CURRENT_URI_KEY]
         callback_state = {
           AUTH_CODE_KEY => request[AUTH_CODE_KEY],
@@ -259,7 +259,7 @@ module Google
       #
       # @see {Google::Auth::WebUserAuthorizer}
       class CallbackApp
-        LOCATION_HEADER = 'Location'.freeze
+        LOCATION_HEADER = "Location".freeze
         REDIR_STATUS = 302
         ERROR_STATUS = 500
 
@@ -281,7 +281,7 @@ module Google
           if return_url
             [REDIR_STATUS, { LOCATION_HEADER => return_url }, []]
           else
-            [ERROR_STATUS, {}, ['No return URL is present in the request.']]
+            [ERROR_STATUS, {}, ["No return URL is present in the request."]]
           end
         end
 

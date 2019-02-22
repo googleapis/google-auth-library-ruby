@@ -27,12 +27,12 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-require 'googleauth/signet'
-require 'googleauth/credentials_loader'
-require 'googleauth/json_key_reader'
-require 'jwt'
-require 'multi_json'
-require 'stringio'
+require "googleauth/signet"
+require "googleauth/credentials_loader"
+require "googleauth/json_key_reader"
+require "jwt"
+require "multi_json"
+require "stringio"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
@@ -47,7 +47,7 @@ module Google
     #
     # cf [Application Default Credentials](http://goo.gl/mkAHpZ)
     class ServiceAccountCredentials < Signet::OAuth2::Client
-      TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v4/token'.freeze
+      TOKEN_CRED_URI = "https://www.googleapis.com/oauth2/v4/token".freeze
       extend CredentialsLoader
       extend JsonKeyReader
       attr_reader :project_id
@@ -127,8 +127,8 @@ module Google
     class ServiceAccountJwtHeaderCredentials
       JWT_AUD_URI_KEY = :jwt_aud_uri
       AUTH_METADATA_KEY = Signet::OAuth2::AUTH_METADATA_KEY
-      TOKEN_CRED_URI = 'https://www.googleapis.com/oauth2/v4/token'.freeze
-      SIGNING_ALGORITHM = 'RS256'.freeze
+      TOKEN_CRED_URI = "https://www.googleapis.com/oauth2/v4/token".freeze
+      SIGNING_ALGORITHM = "RS256".freeze
       EXPIRY = 60
       extend CredentialsLoader
       extend JsonKeyReader
@@ -194,11 +194,11 @@ module Google
         now = Time.new
         skew = options[:skew] || 60
         assertion = {
-          'iss' => @issuer,
-          'sub' => @issuer,
-          'aud' => jwt_aud_uri,
-          'exp' => (now + EXPIRY).to_i,
-          'iat' => (now - skew).to_i
+          "iss" => @issuer,
+          "sub" => @issuer,
+          "aud" => jwt_aud_uri,
+          "exp" => (now + EXPIRY).to_i,
+          "iat" => (now - skew).to_i
         }
         JWT.encode(assertion, @signing_key, SIGNING_ALGORITHM)
       end
