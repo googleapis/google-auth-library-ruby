@@ -1,6 +1,7 @@
 AllCops:
   Exclude:
     - "spec/**/*"
+    - "Rakefile"
 
 Metrics/AbcSize:
   Max: 25
