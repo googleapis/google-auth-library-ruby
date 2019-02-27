@@ -1,6 +1,6 @@
 ### 0.8.1 / 2019-02-27
 
-* silence unnecessary gcloud warning
+* Silence unnecessary gcloud warning
 
 ### 0.8.0 / 2019-01-02
 
