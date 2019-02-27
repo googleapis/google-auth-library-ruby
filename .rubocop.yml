@@ -24,6 +24,7 @@ Style/GuardClause:
   Enabled: false
 Style/PercentLiteralDelimiters: # Contradicting rule
   Enabled: false
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
 Style/SymbolArray: # Undefined syntax in Ruby 1.9.3
   Enabled: false
-

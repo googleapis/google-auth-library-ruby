@@ -27,18 +27,18 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-require 'multi_json'
-require 'googleauth/credentials_loader'
+require "multi_json"
+require "googleauth/credentials_loader"
 
 module Google
   module Auth
     # Representation of an application's identity for user authorization
     # flows.
     class ClientId
-      INSTALLED_APP = 'installed'.freeze
-      WEB_APP = 'web'.freeze
-      CLIENT_ID = 'client_id'.freeze
-      CLIENT_SECRET = 'client_secret'.freeze
+      INSTALLED_APP = "installed".freeze
+      WEB_APP = "web".freeze
+      CLIENT_ID = "client_id".freeze
+      CLIENT_SECRET = "client_secret".freeze
       MISSING_TOP_LEVEL_ELEMENT_ERROR =
         "Expected top level property 'installed' or 'web' to be present.".freeze
 
@@ -65,8 +65,8 @@ module Google
       #       `client_secrets.json` files.
       def initialize(id, secret)
         CredentialsLoader.warn_if_cloud_sdk_credentials id
-        raise 'Client id can not be nil' if id.nil?
-        raise 'Client secret can not be nil' if secret.nil?
+        raise "Client id can not be nil" if id.nil?
+        raise "Client secret can not be nil" if secret.nil?
         @id = id
         @secret = secret
       end
@@ -78,7 +78,7 @@ module Google
       #  Path of file to read from
       # @return [Google::Auth::ClientID]
       def self.from_file(file)
-        raise 'File can not be nil.' if file.nil?
+        raise "File can not be nil." if file.nil?
         File.open(file.to_s) do |f|
           json = f.read
           config = MultiJson.load json
@@ -94,7 +94,7 @@ module Google
       #  Parsed contents of the JSON file
       # @return [Google::Auth::ClientID]
       def self.from_hash(config)
-        raise 'Hash can not be nil.' if config.nil?
+        raise "Hash can not be nil." if config.nil?
         raw_detail = config[INSTALLED_APP] || config[WEB_APP]
         raise MISSING_TOP_LEVEL_ELEMENT_ERROR if raw_detail.nil?
         ClientId.new(raw_detail[CLIENT_ID], raw_detail[CLIENT_SECRET])

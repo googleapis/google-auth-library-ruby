@@ -27,9 +27,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-require 'googleauth/application_default'
-require 'googleauth/client_id'
-require 'googleauth/credentials'
-require 'googleauth/default_credentials'
-require 'googleauth/user_authorizer'
-require 'googleauth/web_user_authorizer'
+require "googleauth/application_default"
+require "googleauth/client_id"
+require "googleauth/credentials"
+require "googleauth/default_credentials"
+require "googleauth/user_authorizer"
+require "googleauth/web_user_authorizer"

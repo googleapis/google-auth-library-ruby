@@ -27,8 +27,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-require 'yaml/store'
-require 'googleauth/token_store'
+require "yaml/store"
+require "googleauth/token_store"
 
 module Google
   module Auth

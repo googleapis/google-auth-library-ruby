@@ -27,9 +27,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-require 'faraday'
-require 'googleauth/signet'
-require 'memoist'
+require "faraday"
+require "googleauth/signet"
+require "memoist"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
@@ -51,9 +51,9 @@ ERROR
     class GCECredentials < Signet::OAuth2::Client
       # The IP Address is used in the URIs to speed up failures on non-GCE
       # systems.
-      COMPUTE_AUTH_TOKEN_URI = 'http://169.254.169.254/computeMetadata/v1/'\
-      'instance/service-accounts/default/token'.freeze
-      COMPUTE_CHECK_URI = 'http://169.254.169.254'.freeze
+      COMPUTE_AUTH_TOKEN_URI = "http://169.254.169.254/computeMetadata/v1/"\
+      "instance/service-accounts/default/token".freeze
+      COMPUTE_CHECK_URI = "http://169.254.169.254".freeze
 
       class << self
         extend Memoist
@@ -74,8 +74,8 @@ ERROR
             req.options.timeout = 0.1
           end
           return false unless resp.status == 200
-          return false unless resp.headers.key?('Metadata-Flavor')
-          return resp.headers['Metadata-Flavor'] == 'Google'
+          return false unless resp.headers.key?("Metadata-Flavor")
+          return resp.headers["Metadata-Flavor"] == "Google"
         rescue Faraday::TimeoutError, Faraday::ConnectionFailed
           return false
         end
@@ -88,12 +88,12 @@ ERROR
       def fetch_access_token(options = {})
         c = options[:connection] || Faraday.default_connection
         retry_with_error do
-          headers = { 'Metadata-Flavor' => 'Google' }
+          headers = { "Metadata-Flavor" => "Google" }
           resp = c.get(COMPUTE_AUTH_TOKEN_URI, nil, headers)
           case resp.status
           when 200
             Signet::OAuth2.parse_credentials(resp.body,
-                                             resp.headers['content-type'])
+                                             resp.headers["content-type"])
           when 404
             raise(Signet::AuthorizationError, NO_METADATA_SERVER_ERROR)
           else

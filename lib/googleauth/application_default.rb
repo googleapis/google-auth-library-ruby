@@ -27,8 +27,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-require 'googleauth/compute_engine'
-require 'googleauth/default_credentials'
+require "googleauth/compute_engine"
+require "googleauth/default_credentials"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization

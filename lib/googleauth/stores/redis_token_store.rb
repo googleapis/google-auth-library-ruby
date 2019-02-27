@@ -27,8 +27,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-require 'redis'
-require 'googleauth/token_store'
+require "redis"
+require "googleauth/token_store"
 
 module Google
   module Auth
@@ -37,7 +37,7 @@ module Google
       # are stored as JSON using the supplied key, prefixed with
       # `g-user-token:`
       class RedisTokenStore < Google::Auth::TokenStore
-        DEFAULT_KEY_PREFIX = 'g-user-token:'.freeze
+        DEFAULT_KEY_PREFIX = "g-user-token:".freeze
 
         # Create a new store with the supplied redis client.
         #

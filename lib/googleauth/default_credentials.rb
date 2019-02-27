@@ -27,12 +27,12 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-require 'multi_json'
-require 'stringio'
+require "multi_json"
+require "stringio"
 
-require 'googleauth/credentials_loader'
-require 'googleauth/service_account'
-require 'googleauth/user_refresh'
+require "googleauth/credentials_loader"
+require "googleauth/service_account"
+require "googleauth/user_refresh"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
@@ -49,7 +49,7 @@ module Google
         json_key_io = options[:json_key_io]
         if json_key_io
           json_key, clz = determine_creds_class(json_key_io)
-          warn_if_cloud_sdk_credentials json_key['client_id']
+          warn_if_cloud_sdk_credentials json_key["client_id"]
           io = StringIO.new(MultiJson.dump(json_key))
           clz.make_creds(options.merge(json_key_io: io))
         else
@@ -64,9 +64,9 @@ module Google
         type = ENV[env_var]
         raise "#{env_var} is undefined in env" unless type
         case type
-        when 'service_account'
+        when "service_account"
           ServiceAccountCredentials
-        when 'authorized_user'
+        when "authorized_user"
           UserRefreshCredentials
         else
           raise "credentials type '#{type}' is not supported"
@@ -76,13 +76,13 @@ module Google
       # Reads the input json and determines which creds class to use.
       def self.determine_creds_class(json_key_io)
         json_key = MultiJson.load json_key_io.read
-        key = 'type'
+        key = "type"
         raise "the json is missing the '#{key}' field" unless json_key.key?(key)
         type = json_key[key]
         case type
-        when 'service_account'
+        when "service_account"
           [json_key, ServiceAccountCredentials]
-        when 'authorized_user'
+        when "authorized_user"
           [json_key, UserRefreshCredentials]
         else
           raise "credentials type '#{type}' is not supported"
