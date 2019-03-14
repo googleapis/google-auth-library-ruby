@@ -34,11 +34,13 @@ module Google
   # Module Auth provides classes that provide Google-specific authorization
   # used to access Google APIs.
   module Auth
-    NOT_FOUND_ERROR = <<ERROR_MESSAGE.freeze
-Could not load the default credentials. Browse to
-https://developers.google.com/accounts/docs/application-default-credentials
-for more information
-ERROR_MESSAGE
+    NOT_FOUND_ERROR = <<~ERROR_MESSAGE.freeze
+      Could not load the default credentials. Browse to
+      https://developers.google.com/accounts/docs/application-default-credentials
+      for more information
+    ERROR_MESSAGE
+
+    module_function
 
     # Obtains the default credentials implementation to use in this
     # environment.
@@ -63,19 +65,17 @@ ERROR_MESSAGE
     #       connection to use for token refresh requests.
     #     * `:connection` The connection to use to determine whether GCE
     #       metadata credentials are available.
-    def get_application_default(scope = nil, options = {})
+    def get_application_default scope = nil, options = {}
       creds = DefaultCredentials.from_env(scope, options) ||
               DefaultCredentials.from_well_known_path(scope, options) ||
               DefaultCredentials.from_system_default_path(scope, options)
       return creds unless creds.nil?
-      unless GCECredentials.on_gce?(options)
+      unless GCECredentials.on_gce? options
         # Clear cache of the result of GCECredentials.on_gce?
         GCECredentials.unmemoize_all
         raise NOT_FOUND_ERROR
       end
       GCECredentials.new
     end
-
-    module_function :get_application_default
   end
 end

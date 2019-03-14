@@ -27,54 +27,54 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-spec_dir = File.expand_path(File.join(File.dirname(__FILE__)))
-$LOAD_PATH.unshift(spec_dir)
+spec_dir = File.expand_path File.join(File.dirname(__FILE__))
+$LOAD_PATH.unshift spec_dir
 $LOAD_PATH.uniq!
 
-require 'googleauth/iam'
+require "googleauth/iam"
 
 describe Google::Auth::IAMCredentials do
   IAMCredentials = Google::Auth::IAMCredentials
-  let(:test_selector) { 'the-test-selector' }
-  let(:test_token) { 'the-test-token' }
-  let(:test_creds) { IAMCredentials.new(test_selector, test_token) }
+  let(:test_selector) { "the-test-selector" }
+  let(:test_token) { "the-test-token" }
+  let(:test_creds) { IAMCredentials.new test_selector, test_token }
 
-  describe '#apply!' do
-    it 'should update the target hash with the iam values' do
-      md = { foo: 'bar' }
-      test_creds.apply!(md)
+  describe "#apply!" do
+    it "should update the target hash with the iam values" do
+      md = { foo: "bar" }
+      test_creds.apply! md
       expect(md[IAMCredentials::SELECTOR_KEY]).to eq test_selector
       expect(md[IAMCredentials::TOKEN_KEY]).to eq test_token
-      expect(md[:foo]).to eq 'bar'
+      expect(md[:foo]).to eq "bar"
     end
   end
 
-  describe 'updater_proc' do
-    it 'should provide a proc that updates a hash with the iam values' do
-      md = { foo: 'bar' }
+  describe "updater_proc" do
+    it "should provide a proc that updates a hash with the iam values" do
+      md = { foo: "bar" }
       the_proc = test_creds.updater_proc
-      got = the_proc.call(md)
+      got = the_proc.call md
       expect(got[IAMCredentials::SELECTOR_KEY]).to eq test_selector
       expect(got[IAMCredentials::TOKEN_KEY]).to eq test_token
-      expect(got[:foo]).to eq 'bar'
+      expect(got[:foo]).to eq "bar"
     end
   end
 
-  describe '#apply' do
-    it 'should not update the original hash with the iam values' do
-      md = { foo: 'bar' }
-      test_creds.apply(md)
+  describe "#apply" do
+    it "should not update the original hash with the iam values" do
+      md = { foo: "bar" }
+      test_creds.apply md
       expect(md[IAMCredentials::SELECTOR_KEY]).to be_nil
       expect(md[IAMCredentials::TOKEN_KEY]).to be_nil
-      expect(md[:foo]).to eq 'bar'
+      expect(md[:foo]).to eq "bar"
     end
 
-    it 'should return a with the iam values' do
-      md = { foo: 'bar' }
-      got = test_creds.apply(md)
+    it "should return a with the iam values" do
+      md = { foo: "bar" }
+      got = test_creds.apply md
       expect(got[IAMCredentials::SELECTOR_KEY]).to eq test_selector
       expect(got[IAMCredentials::TOKEN_KEY]).to eq test_token
-      expect(got[:foo]).to eq 'bar'
+      expect(got[:foo]).to eq "bar"
     end
   end
 end

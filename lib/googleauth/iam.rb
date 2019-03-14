@@ -44,7 +44,7 @@ module Google
       #
       # @param selector the IAM selector.
       # @param token the IAM token.
-      def initialize(selector, token)
+      def initialize selector, token
         raise TypeError unless selector.is_a? String
         raise TypeError unless token.is_a? String
         @selector = selector
@@ -52,16 +52,16 @@ module Google
       end
 
       # Adds the credential fields to the hash.
-      def apply!(a_hash)
+      def apply! a_hash
         a_hash[SELECTOR_KEY] = @selector
         a_hash[TOKEN_KEY] = @token
         a_hash
       end
 
       # Returns a clone of a_hash updated with the authoriation header
-      def apply(a_hash)
+      def apply a_hash
         a_copy = a_hash.clone
-        apply!(a_copy)
+        apply! a_copy
         a_copy
       end
 

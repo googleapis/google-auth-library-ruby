@@ -45,17 +45,17 @@ module Google
 
       # override CredentialsLoader#make_creds to use the class determined by
       # loading the json.
-      def self.make_creds(options = {})
+      def self.make_creds options = {}
         json_key_io = options[:json_key_io]
         if json_key_io
-          json_key, clz = determine_creds_class(json_key_io)
+          json_key, clz = determine_creds_class json_key_io
           warn_if_cloud_sdk_credentials json_key["client_id"]
-          io = StringIO.new(MultiJson.dump(json_key))
-          clz.make_creds(options.merge(json_key_io: io))
+          io = StringIO.new MultiJson.dump(json_key)
+          clz.make_creds options.merge(json_key_io: io)
         else
           warn_if_cloud_sdk_credentials ENV[CredentialsLoader::CLIENT_ID_VAR]
           clz = read_creds
-          clz.make_creds(options)
+          clz.make_creds options
         end
       end
 
@@ -74,10 +74,10 @@ module Google
       end
 
       # Reads the input json and determines which creds class to use.
-      def self.determine_creds_class(json_key_io)
+      def self.determine_creds_class json_key_io
         json_key = MultiJson.load json_key_io.read
         key = "type"
-        raise "the json is missing the '#{key}' field" unless json_key.key?(key)
+        raise "the json is missing the '#{key}' field" unless json_key.key? key
         type = json_key[key]
         case type
         when "service_account"

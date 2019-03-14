@@ -38,24 +38,24 @@ module Signet
     # This reopens Client to add #apply and #apply! methods which update a
     # hash with the fetched authentication token.
     class Client
-      def configure_connection(options)
+      def configure_connection options
         @connection_info =
           options[:connection_builder] || options[:default_connection]
         self
       end
 
       # Updates a_hash updated with the authentication token
-      def apply!(a_hash, opts = {})
+      def apply! a_hash, opts = {}
         # fetch the access token there is currently not one, or if the client
         # has expired
-        fetch_access_token!(opts) if access_token.nil? || expires_within?(60)
+        fetch_access_token! opts if access_token.nil? || expires_within?(60)
         a_hash[AUTH_METADATA_KEY] = "Bearer #{access_token}"
       end
 
       # Returns a clone of a_hash updated with the authentication token
-      def apply(a_hash, opts = {})
+      def apply a_hash, opts = {}
         a_copy = a_hash.clone
-        apply!(a_copy, opts)
+        apply! a_copy, opts
         a_copy
       end
 
@@ -65,18 +65,18 @@ module Signet
         lambda(&method(:apply))
       end
 
-      def on_refresh(&block)
+      def on_refresh &block
         @refresh_listeners ||= []
         @refresh_listeners << block
       end
 
       alias orig_fetch_access_token! fetch_access_token!
-      def fetch_access_token!(options = {})
+      def fetch_access_token! options = {}
         unless options[:connection]
           connection = build_default_connection
-          options = options.merge(connection: connection) if connection
+          options = options.merge connection: connection if connection
         end
-        info = orig_fetch_access_token!(options)
+        info = orig_fetch_access_token! options
         notify_refresh_listeners
         info
       end
@@ -84,7 +84,7 @@ module Signet
       def notify_refresh_listeners
         listeners = @refresh_listeners || []
         listeners.each do |block|
-          block.call(self)
+          block.call self
         end
       end
 
@@ -98,15 +98,13 @@ module Signet
         end
       end
 
-      def retry_with_error(max_retry_count = 5)
+      def retry_with_error max_retry_count = 5
         retry_count = 0
 
         begin
           yield
-        rescue => e
-          if e.is_a?(Signet::AuthorizationError) || e.is_a?(Signet::ParseError)
-            raise e
-          end
+        rescue StandardError => e
+          raise e if e.is_a?(Signet::AuthorizationError) || e.is_a?(Signet::ParseError)
 
           if retry_count < max_retry_count
             retry_count += 1
@@ -114,7 +112,7 @@ module Signet
             retry
           else
             msg = "Unexpected error: #{e.inspect}"
-            raise(Signet::AuthorizationError, msg)
+            raise Signet::AuthorizationError, msg
           end
         end
       end

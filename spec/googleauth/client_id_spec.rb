@@ -27,131 +27,131 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-spec_dir = File.expand_path(File.join(File.dirname(__FILE__)))
-$LOAD_PATH.unshift(spec_dir)
+spec_dir = File.expand_path File.join(File.dirname(__FILE__))
+$LOAD_PATH.unshift spec_dir
 $LOAD_PATH.uniq!
 
-require 'spec_helper'
-require 'fakefs/safe'
-require 'googleauth'
+require "spec_helper"
+require "fakefs/safe"
+require "googleauth"
 
 describe Google::Auth::ClientId do
-  shared_examples 'it has a valid config' do
-    it 'should include a valid id' do
-      expect(client_id.id).to eql 'abc@example.com'
+  shared_examples "it has a valid config" do
+    it "should include a valid id" do
+      expect(client_id.id).to eql "abc@example.com"
     end
 
-    it 'should include a valid secret' do
-      expect(client_id.secret).to eql 'notasecret'
+    it "should include a valid secret" do
+      expect(client_id.secret).to eql "notasecret"
     end
   end
 
-  shared_examples 'it can successfully load client_id' do
-    context 'loaded from hash' do
+  shared_examples "it can successfully load client_id" do
+    context "loaded from hash" do
       let(:client_id) { Google::Auth::ClientId.from_hash config }
 
-      it_behaves_like 'it has a valid config'
+      it_behaves_like "it has a valid config"
     end
 
-    context 'loaded from file' do
-      file_path = '/client_secrets.json'
+    context "loaded from file" do
+      file_path = "/client_secrets.json"
 
-      let(:client_id) do
+      let :client_id do
         FakeFS do
-          content = MultiJson.dump(config)
-          File.write(file_path, content)
-          Google::Auth::ClientId.from_file(file_path)
+          content = MultiJson.dump config
+          File.write file_path, content
+          Google::Auth::ClientId.from_file file_path
         end
       end
 
-      it_behaves_like 'it has a valid config'
+      it_behaves_like "it has a valid config"
     end
   end
 
-  describe 'with web config' do
-    let(:config) do
+  describe "with web config" do
+    let :config do
       {
-        'web' => {
-          'client_id' => 'abc@example.com',
-          'client_secret' => 'notasecret'
+        "web" => {
+          "client_id"     => "abc@example.com",
+          "client_secret" => "notasecret"
         }
       }
     end
-    it_behaves_like 'it can successfully load client_id'
+    it_behaves_like "it can successfully load client_id"
   end
 
-  describe 'with installed app config' do
-    let(:config) do
+  describe "with installed app config" do
+    let :config do
       {
-        'installed' => {
-          'client_id' => 'abc@example.com',
-          'client_secret' => 'notasecret'
+        "installed" => {
+          "client_id"     => "abc@example.com",
+          "client_secret" => "notasecret"
         }
       }
     end
-    it_behaves_like 'it can successfully load client_id'
+    it_behaves_like "it can successfully load client_id"
   end
 
-  context 'with missing top level property' do
-    let(:config) do
+  context "with missing top level property" do
+    let :config do
       {
-        'notvalid' => {
-          'client_id' => 'abc@example.com',
-          'client_secret' => 'notasecret'
+        "notvalid" => {
+          "client_id"     => "abc@example.com",
+          "client_secret" => "notasecret"
         }
       }
     end
 
-    it 'should raise error' do
+    it "should raise error" do
       expect { Google::Auth::ClientId.from_hash config }.to raise_error(
         /Expected top level property/
       )
     end
   end
 
-  context 'with missing client id' do
-    let(:config) do
+  context "with missing client id" do
+    let :config do
       {
-        'web' => {
-          'client_secret' => 'notasecret'
+        "web" => {
+          "client_secret" => "notasecret"
         }
       }
     end
 
-    it 'should raise error' do
+    it "should raise error" do
       expect { Google::Auth::ClientId.from_hash config }.to raise_error(
         /Client id can not be nil/
       )
     end
   end
 
-  context 'with missing client secret' do
-    let(:config) do
+  context "with missing client secret" do
+    let :config do
       {
-        'web' => {
-          'client_id' => 'abc@example.com'
+        "web" => {
+          "client_id" => "abc@example.com"
         }
       }
     end
 
-    it 'should raise error' do
+    it "should raise error" do
       expect { Google::Auth::ClientId.from_hash config }.to raise_error(
         /Client secret can not be nil/
       )
     end
   end
 
-  context 'with cloud sdk credentials' do
-    let(:config) do
+  context "with cloud sdk credentials" do
+    let :config do
       {
-        'web' => {
-          'client_id' => Google::Auth::CredentialsLoader::CLOUD_SDK_CLIENT_ID,
-          'client_secret' => 'notasecret'
+        "web" => {
+          "client_id"     => Google::Auth::CredentialsLoader::CLOUD_SDK_CLIENT_ID,
+          "client_secret" => "notasecret"
         }
       }
     end
 
-    it 'should raise warning' do
+    it "should raise warning" do
       expect { Google::Auth::ClientId.from_hash config }.to output(
         Google::Auth::CredentialsLoader::CLOUD_SDK_CREDENTIALS_WARNING + "\n"
       ).to_stderr

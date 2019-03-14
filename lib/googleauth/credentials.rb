@@ -27,8 +27,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# rubocop:disable Metrics/AbcSize, Metrics/PerceivedComplexity, MethodLength
-
 require "forwardable"
 require "json"
 require "signet/oauth_2/client"
@@ -56,7 +54,8 @@ module Google
                      :token_credential_uri, :audience,
                      :scope, :issuer, :signing_key, :updater_proc
 
-      def initialize(keyfile, options = {})
+      # rubocop:disable Metrics/AbcSize
+      def initialize keyfile, options = {}
         scope = options[:scope]
         verify_keyfile_provided! keyfile
         @project_id = options["project_id"] || options["project"]
@@ -79,12 +78,13 @@ module Google
         @project_id ||= CredentialsLoader.load_gcloud_project_id
         @client.fetch_access_token!
       end
+      # rubocop:enable Metrics/AbcSize
 
       # Returns the default credentials checking, in this order, the path env
       # evironment variables, json environment variables, default paths. If the
       # previously stated locations do not contain keyfile information,
       # this method defaults to use the application default.
-      def self.default(options = {})
+      def self.default options = {}
         # First try to find keyfile file from environment variables.
         client = from_path_vars options
 
@@ -99,7 +99,7 @@ module Google
         client
       end
 
-      def self.from_path_vars(options)
+      def self.from_path_vars options
         self::PATH_ENV_VARS
           .map { |v| ENV[v] }
           .compact
@@ -110,23 +110,21 @@ module Google
         nil
       end
 
-      def self.from_json_vars(options)
+      def self.from_json_vars options
         json = lambda do |v|
           unless ENV[v].nil?
             begin
               JSON.parse ENV[v]
-            rescue
+            rescue StandardError
               nil
             end
           end
         end
-        self::JSON_ENV_VARS.map(&json).compact.each do |hash|
-          return new hash, options
-        end
+        self::JSON_ENV_VARS.map(&json).compact.each { |hash| return new hash, options }
         nil
       end
 
-      def self.from_default_paths(options)
+      def self.from_default_paths options
         self::DEFAULT_PATHS
           .select { |p| ::File.file? p }
           .each do |file|
@@ -135,7 +133,7 @@ module Google
         nil
       end
 
-      def self.from_application_default(options)
+      def self.from_application_default options
         scope = options[:scope] || self::SCOPE
         client = Google::Auth.get_application_default scope
         new client, options
@@ -148,30 +146,30 @@ module Google
       protected
 
       # Verify that the keyfile argument is provided.
-      def verify_keyfile_provided!(keyfile)
+      def verify_keyfile_provided! keyfile
         return unless keyfile.nil?
         raise "The keyfile passed to Google::Auth::Credentials.new was nil."
       end
 
       # Verify that the keyfile argument is a file.
-      def verify_keyfile_exists!(keyfile)
+      def verify_keyfile_exists! keyfile
         exists = ::File.file? keyfile
         raise "The keyfile '#{keyfile}' is not a valid file." unless exists
       end
 
       # Initializes the Signet client.
-      def init_client(keyfile, connection_options = {})
+      def init_client keyfile, connection_options = {}
         client_opts = client_options keyfile
         Signet::OAuth2::Client.new(client_opts)
                               .configure_connection(connection_options)
       end
 
       # returns a new Hash with string keys instead of symbol keys.
-      def stringify_hash_keys(hash)
+      def stringify_hash_keys hash
         Hash[hash.map { |k, v| [k.to_s, v] }]
       end
 
-      def client_options(options)
+      def client_options options
         # Keyfile options have higher priority over constructor defaults
         options["token_credential_uri"] ||= self.class::TOKEN_CREDENTIAL_URI
         options["audience"] ||= self.class::AUDIENCE
@@ -179,10 +177,10 @@ module Google
 
         # client options for initializing signet client
         { token_credential_uri: options["token_credential_uri"],
-          audience: options["audience"],
-          scope: Array(options["scope"]),
-          issuer: options["client_email"],
-          signing_key: OpenSSL::PKey::RSA.new(options["private_key"]) }
+          audience:             options["audience"],
+          scope:                Array(options["scope"]),
+          issuer:               options["client_email"],
+          signing_key:          OpenSSL::PKey::RSA.new(options["private_key"]) }
       end
     end
   end

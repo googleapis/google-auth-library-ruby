@@ -27,61 +27,60 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-spec_dir = File.expand_path(File.join(File.dirname(__FILE__)))
-$LOAD_PATH.unshift(spec_dir)
+spec_dir = File.expand_path File.join(File.dirname(__FILE__))
+$LOAD_PATH.unshift spec_dir
 $LOAD_PATH.uniq!
 
-require 'apply_auth_examples'
-require 'googleauth/signet'
-require 'jwt'
-require 'openssl'
-require 'spec_helper'
+require "apply_auth_examples"
+require "googleauth/signet"
+require "jwt"
+require "openssl"
+require "spec_helper"
 
 describe Signet::OAuth2::Client do
-  before(:example) do
-    @key = OpenSSL::PKey::RSA.new(2048)
+  before :example do
+    @key = OpenSSL::PKey::RSA.new 2048
     @client = Signet::OAuth2::Client.new(
-      token_credential_uri: 'https://oauth2.googleapis.com/token',
-      scope: 'https://www.googleapis.com/auth/userinfo.profile',
-      issuer: 'app@example.com',
-      audience: 'https://oauth2.googleapis.com/token',
-      signing_key: @key
+      token_credential_uri: "https://oauth2.googleapis.com/token",
+      scope:                "https://www.googleapis.com/auth/userinfo.profile",
+      issuer:               "app@example.com",
+      audience:             "https://oauth2.googleapis.com/token",
+      signing_key:          @key
     )
   end
 
-  def make_auth_stubs(opts)
-    access_token = opts[:access_token] || ''
-    body = MultiJson.dump('access_token' => access_token,
-                          'token_type' => 'Bearer',
-                          'expires_in' => 3600)
+  def make_auth_stubs opts
+    access_token = opts[:access_token] || ""
+    body = MultiJson.dump("access_token" => access_token,
+                          "token_type"   => "Bearer",
+                          "expires_in"   => 3600)
     blk = proc do |request|
-      params = Addressable::URI.form_unencode(request.body)
-      _claim, _header = JWT.decode(params.assoc('assertion').last,
+      params = Addressable::URI.form_unencode request.body
+      _claim, _header = JWT.decode(params.assoc("assertion").last,
                                    @key.public_key, true,
-                                   algorithm: 'RS256')
+                                   algorithm: "RS256")
     end
-    with_params = {body: hash_including(
-      "grant_type" => "urn:ietf:params:oauth:grant-type:jwt-bearer")}
-    if opts[:user_agent]
-      with_params[:headers] = {"User-Agent" => opts[:user_agent]}
-    end
-    stub_request(:post, 'https://oauth2.googleapis.com/token')
+    with_params = { body: hash_including(
+      "grant_type" => "urn:ietf:params:oauth:grant-type:jwt-bearer"
+    ) }
+    with_params[:headers] = { "User-Agent" => opts[:user_agent] } if opts[:user_agent]
+    stub_request(:post, "https://oauth2.googleapis.com/token")
       .with(with_params, &blk)
-      .to_return(body: body,
-                 status: 200,
-                 headers: { 'Content-Type' => 'application/json' })
+      .to_return(body:    body,
+                 status:  200,
+                 headers: { "Content-Type" => "application/json" })
   end
 
-  it_behaves_like 'apply/apply! are OK'
+  it_behaves_like "apply/apply! are OK"
 
   describe "#configure_connection" do
     it "honors default_connection" do
       token = "1/abcdef1234567890"
       stub = make_auth_stubs access_token: token, user_agent: "RubyRocks/1.0"
-      conn = Faraday.new headers: {"User-Agent" => "RubyRocks/1.0"}
-      @client.configure_connection(default_connection: conn)
+      conn = Faraday.new headers: { "User-Agent" => "RubyRocks/1.0" }
+      @client.configure_connection default_connection: conn
       md = { foo: "bar" }
-      @client.apply!(md)
+      @client.apply! md
       want = { foo: "bar", authorization: "Bearer #{token}" }
       expect(md).to eq(want)
       expect(stub).to have_been_requested
@@ -91,11 +90,11 @@ describe Signet::OAuth2::Client do
       token = "1/abcdef1234567890"
       stub = make_auth_stubs access_token: token, user_agent: "RubyRocks/2.0"
       connection_builder = proc do
-        Faraday.new headers: {"User-Agent" => "RubyRocks/2.0"}
+        Faraday.new headers: { "User-Agent" => "RubyRocks/2.0" }
       end
-      @client.configure_connection(connection_builder: connection_builder)
+      @client.configure_connection connection_builder: connection_builder
       md = { foo: "bar" }
-      @client.apply!(md)
+      @client.apply! md
       want = { foo: "bar", authorization: "Bearer #{token}" }
       expect(md).to eq(want)
       expect(stub).to have_been_requested

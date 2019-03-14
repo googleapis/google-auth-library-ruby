@@ -27,24 +27,24 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-spec_dir = File.expand_path(File.join(File.dirname(__FILE__)))
-$LOAD_PATH.unshift(spec_dir)
+spec_dir = File.expand_path File.join(File.dirname(__FILE__))
+$LOAD_PATH.unshift spec_dir
 $LOAD_PATH.uniq!
 
-require 'googleauth'
-require 'googleauth/stores/redis_token_store'
-require 'spec_helper'
-require 'fakeredis/rspec'
-require 'googleauth/stores/store_examples'
+require "googleauth"
+require "googleauth/stores/redis_token_store"
+require "spec_helper"
+require "fakeredis/rspec"
+require "googleauth/stores/store_examples"
 
 describe Google::Auth::Stores::RedisTokenStore do
-  let(:redis) do
+  let :redis do
     Redis.new
   end
 
-  let(:store) do
-    Google::Auth::Stores::RedisTokenStore.new(redis: redis)
+  let :store do
+    Google::Auth::Stores::RedisTokenStore.new redis: redis
   end
 
-  it_behaves_like 'token store'
+  it_behaves_like "token store"
 end

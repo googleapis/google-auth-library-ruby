@@ -1,30 +1,11 @@
+inherit_gem:
+  google-style: google-style.yml
+
 AllCops:
   Exclude:
     - "spec/**/*"
     - "Rakefile"
-
-Metrics/AbcSize:
-  Max: 25
-Metrics/BlockLength:
-  Exclude:
-    - "googleauth.gemspec"
-Metrics/CyclomaticComplexity:
-  Max: 8
-Metrics/MethodLength:
-  Max: 20
-Metrics/ModuleLength:
-  Max: 150
 Metrics/ClassLength:
-  Enabled: false
-Layout/IndentHeredoc:
-  Enabled: false
-Style/FormatString:
-  Enabled: false
-Style/GuardClause:
-  Enabled: false
-Style/PercentLiteralDelimiters: # Contradicting rule
-  Enabled: false
-Style/StringLiterals:
-  EnforcedStyle: double_quotes
-Style/SymbolArray: # Undefined syntax in Ruby 1.9.3
-  Enabled: false
+  Max: 110
+Metrics/ModuleLength:
+  Max: 105
