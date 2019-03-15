@@ -27,12 +27,13 @@ function set_failed_status {
 
 if [ "$JOB_TYPE" = "release" ]; then
     git fetch --depth=10000
-    python3 -m pip install git+https://github.com/googleapis/releasetool
+    python3 -m pip install gcp-releasetool
     python3 -m releasetool publish-reporter-script > /tmp/publisher-script; source /tmp/publisher-script
     (bundle update && bundle exec rake kokoro:release) || set_failed_status
 else
     for version in "${versions[@]}"; do
         rbenv global "$version"
+        echo "Using Ruby $version"
         (bundle update && bundle exec rake) || set_failed_status
     done
 fi
