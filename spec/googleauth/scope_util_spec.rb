@@ -27,51 +27,51 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-spec_dir = File.expand_path(File.join(File.dirname(__FILE__)))
-$LOAD_PATH.unshift(spec_dir)
+spec_dir = File.expand_path File.join(File.dirname(__FILE__))
+$LOAD_PATH.unshift spec_dir
 $LOAD_PATH.uniq!
 
-require 'googleauth/scope_util'
+require "googleauth/scope_util"
 
 describe Google::Auth::ScopeUtil do
-  shared_examples 'normalizes scopes' do
-    let(:normalized) { Google::Auth::ScopeUtil.normalize(source) }
+  shared_examples "normalizes scopes" do
+    let(:normalized) { Google::Auth::ScopeUtil.normalize source }
 
-    it 'normalizes the email scope' do
+    it "normalizes the email scope" do
       expect(normalized).to include(
-        'https://www.googleapis.com/auth/userinfo.email'
+        "https://www.googleapis.com/auth/userinfo.email"
       )
-      expect(normalized).to_not include 'email'
+      expect(normalized).to_not include "email"
     end
 
-    it 'normalizes the profile scope' do
+    it "normalizes the profile scope" do
       expect(normalized).to include(
-        'https://www.googleapis.com/auth/userinfo.profile'
+        "https://www.googleapis.com/auth/userinfo.profile"
       )
-      expect(normalized).to_not include 'profile'
+      expect(normalized).to_not include "profile"
     end
 
-    it 'normalizes the openid scope' do
-      expect(normalized).to include 'https://www.googleapis.com/auth/plus.me'
-      expect(normalized).to_not include 'openid'
+    it "normalizes the openid scope" do
+      expect(normalized).to include "https://www.googleapis.com/auth/plus.me"
+      expect(normalized).to_not include "openid"
     end
 
-    it 'leaves other other scopes as-is' do
-      expect(normalized).to include 'https://www.googleapis.com/auth/drive'
+    it "leaves other other scopes as-is" do
+      expect(normalized).to include "https://www.googleapis.com/auth/drive"
     end
   end
 
-  context 'with scope as string' do
-    let(:source) do
-      'email profile openid https://www.googleapis.com/auth/drive'
+  context "with scope as string" do
+    let :source do
+      "email profile openid https://www.googleapis.com/auth/drive"
     end
-    it_behaves_like 'normalizes scopes'
+    it_behaves_like "normalizes scopes"
   end
 
-  context 'with scope as Array' do
-    let(:source) do
-      %w(email profile openid https://www.googleapis.com/auth/drive)
+  context "with scope as Array" do
+    let :source do
+      %w[email profile openid https://www.googleapis.com/auth/drive]
     end
-    it_behaves_like 'normalizes scopes'
+    it_behaves_like "normalizes scopes"
   end
 end

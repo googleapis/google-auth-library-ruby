@@ -27,32 +27,32 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-spec_dir = File.expand_path(File.join(File.dirname(__FILE__)))
-$LOAD_PATH.unshift(spec_dir)
+spec_dir = File.expand_path File.join(File.dirname(__FILE__))
+$LOAD_PATH.unshift spec_dir
 $LOAD_PATH.uniq!
 
-require 'spec_helper'
+require "spec_helper"
 
-shared_examples 'token store' do
-  before(:each) do
-    store.store('default', 'test')
+shared_examples "token store" do
+  before :each do
+    store.store "default", "test"
   end
 
-  it 'should return a stored value' do
-    expect(store.load('default')).to eq 'test'
+  it "should return a stored value" do
+    expect(store.load("default")).to eq "test"
   end
 
-  it 'should return nil for missing tokens' do
-    expect(store.load('notavalidkey')).to be_nil
+  it "should return nil for missing tokens" do
+    expect(store.load("notavalidkey")).to be_nil
   end
 
-  it 'should return nil for deleted tokens' do
-    store.delete('default')
-    expect(store.load('default')).to be_nil
+  it "should return nil for deleted tokens" do
+    store.delete "default"
+    expect(store.load("default")).to be_nil
   end
 
-  it 'should save overwrite values on store' do
-    store.store('default', 'test2')
-    expect(store.load('default')).to eq 'test2'
+  it "should save overwrite values on store" do
+    store.store "default", "test2"
+    expect(store.load("default")).to eq "test2"
   end
 end

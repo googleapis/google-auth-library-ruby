@@ -56,9 +56,9 @@ module Google
       #
       # @param json_key_io [IO] an IO from which the JSON key can be read
       # @param scope [string|array|nil] the scope(s) to access
-      def self.make_creds(options = {})
-        json_key_io, scope = options.values_at(:json_key_io, :scope)
-        user_creds = read_json_key(json_key_io) if json_key_io
+      def self.make_creds options = {}
+        json_key_io, scope = options.values_at :json_key_io, :scope
+        user_creds = read_json_key json_key_io if json_key_io
         user_creds ||= {
           "client_id"     => ENV[CredentialsLoader::CLIENT_ID_VAR],
           "client_secret" => ENV[CredentialsLoader::CLIENT_SECRET_VAR],
@@ -67,36 +67,36 @@ module Google
         }
 
         new(token_credential_uri: TOKEN_CRED_URI,
-            client_id: user_creds["client_id"],
-            client_secret: user_creds["client_secret"],
-            refresh_token: user_creds["refresh_token"],
-            project_id:    user_creds["project_id"],
-            scope: scope)
+            client_id:            user_creds["client_id"],
+            client_secret:        user_creds["client_secret"],
+            refresh_token:        user_creds["refresh_token"],
+            project_id:           user_creds["project_id"],
+            scope:                scope)
           .configure_connection(options)
       end
 
       # Reads the client_id, client_secret and refresh_token fields from the
       # JSON key.
-      def self.read_json_key(json_key_io)
-        json_key = MultiJson.load(json_key_io.read)
-        wanted = %w(client_id client_secret refresh_token)
+      def self.read_json_key json_key_io
+        json_key = MultiJson.load json_key_io.read
+        wanted = %w[client_id client_secret refresh_token]
         wanted.each do |key|
-          raise "the json is missing the #{key} field" unless json_key.key?(key)
+          raise "the json is missing the #{key} field" unless json_key.key? key
         end
         json_key
       end
 
-      def initialize(options = {})
+      def initialize options = {}
         options ||= {}
         options[:token_credential_uri] ||= TOKEN_CRED_URI
         options[:authorization_uri] ||= AUTHORIZATION_URI
         @project_id = options[:project_id]
         @project_id ||= CredentialsLoader.load_gcloud_project_id
-        super(options)
+        super options
       end
 
       # Revokes the credential
-      def revoke!(options = {})
+      def revoke! options = {}
         c = options[:connection] || Faraday.default_connection
 
         retry_with_error do
@@ -119,7 +119,7 @@ module Google
       #  Scope to verify
       # @return [Boolean]
       #  True if scope is granted
-      def includes_scope?(required_scope)
+      def includes_scope? required_scope
         missing_scope = Google::Auth::ScopeUtil.normalize(required_scope) -
                         Google::Auth::ScopeUtil.normalize(scope)
         missing_scope.empty?

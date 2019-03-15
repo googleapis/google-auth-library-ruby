@@ -75,11 +75,9 @@ module Google
       #
       # By default, it calls #new on the current class, but this behaviour can
       # be modified, allowing different instances to be created.
-      def make_creds(*args)
+      def make_creds *args
         creds = new(*args)
-        if creds.respond_to?(:configure_connection) && args.size == 1
-          creds = creds.configure_connection(args[0])
-        end
+        creds = creds.configure_connection args[0] if creds.respond_to?(:configure_connection) && args.size == 1
         creds
       end
 
@@ -95,16 +93,16 @@ module Google
       #     The following keys are recognized:
       #     * `:default_connection` The connection object to use.
       #     * `:connection_builder` A `Proc` that returns a connection.
-      def from_env(scope = nil, options = {})
+      def from_env scope = nil, options = {}
         options = interpret_options scope, options
-        if ENV.key?(ENV_VAR)
+        if ENV.key? ENV_VAR
           path = ENV[ENV_VAR]
-          raise "file #{path} does not exist" unless File.exist?(path)
-          File.open(path) do |f|
-            return make_creds(options.merge(json_key_io: f))
+          raise "file #{path} does not exist" unless File.exist? path
+          File.open path do |f|
+            return make_creds options.merge(json_key_io: f)
           end
         elsif service_account_env_vars? || authorized_user_env_vars?
-          return make_creds(options)
+          return make_creds options
         end
       rescue StandardError => e
         raise "#{NOT_FOUND_ERROR}: #{e}"
@@ -121,16 +119,16 @@ module Google
       #     The following keys are recognized:
       #     * `:default_connection` The connection object to use.
       #     * `:connection_builder` A `Proc` that returns a connection.
-      def from_well_known_path(scope = nil, options = {})
+      def from_well_known_path scope = nil, options = {}
         options = interpret_options scope, options
         home_var = OS.windows? ? "APPDATA" : "HOME"
         base = WELL_KNOWN_PATH
         root = ENV[home_var].nil? ? "" : ENV[home_var]
-        base = File.join(".config", base) unless OS.windows?
-        path = File.join(root, base)
-        return nil unless File.exist?(path)
-        File.open(path) do |f|
-          return make_creds(options.merge(json_key_io: f))
+        base = File.join ".config", base unless OS.windows?
+        path = File.join root, base
+        return nil unless File.exist? path
+        File.open path do |f|
+          return make_creds options.merge(json_key_io: f)
         end
       rescue StandardError => e
         raise "#{WELL_KNOWN_ERROR}: #{e}"
@@ -147,28 +145,29 @@ module Google
       #     The following keys are recognized:
       #     * `:default_connection` The connection object to use.
       #     * `:connection_builder` A `Proc` that returns a connection.
-      def from_system_default_path(scope = nil, options = {})
+      def from_system_default_path scope = nil, options = {}
         options = interpret_options scope, options
         if OS.windows?
           return nil unless ENV["ProgramData"]
-          prefix = File.join(ENV["ProgramData"], "Google/Auth")
+          prefix = File.join ENV["ProgramData"], "Google/Auth"
         else
           prefix = "/etc/google/auth/"
         end
-        path = File.join(prefix, CREDENTIALS_FILE_NAME)
-        return nil unless File.exist?(path)
-        File.open(path) do |f|
-          return make_creds(options.merge(json_key_io: f))
+        path = File.join prefix, CREDENTIALS_FILE_NAME
+        return nil unless File.exist? path
+        File.open path do |f|
+          return make_creds options.merge(json_key_io: f)
         end
       rescue StandardError => e
         raise "#{SYSTEM_DEFAULT_ERROR}: #{e}"
       end
 
+      module_function
+
       # Issues warning if cloud sdk client id is used
-      def warn_if_cloud_sdk_credentials(client_id)
+      def warn_if_cloud_sdk_credentials client_id
         warn CLOUD_SDK_CREDENTIALS_WARNING if client_id == CLOUD_SDK_CLIENT_ID
       end
-      module_function :warn_if_cloud_sdk_credentials
 
       # Finds project_id from gcloud CLI configuration
       def load_gcloud_project_id
@@ -177,23 +176,19 @@ module Google
         gcloud_json = IO.popen("#{gcloud} #{GCLOUD_CONFIG_COMMAND}", &:read)
         config = MultiJson.load gcloud_json
         config["configuration"]["properties"]["core"]["project"]
-      rescue
+      rescue StandardError
         nil
       end
-      module_function :load_gcloud_project_id
 
       private
 
-      def interpret_options(scope, options)
+      def interpret_options scope, options
         if scope.is_a? Hash
           options = scope
           scope = nil
         end
-        if scope && !options[:scope]
-          options.merge(scope: scope)
-        else
-          options
-        end
+        return options.merge scope: scope if scope && !options[:scope]
+        options
       end
 
       def service_account_env_vars?
@@ -201,8 +196,7 @@ module Google
       end
 
       def authorized_user_env_vars?
-        ([CLIENT_ID_VAR, CLIENT_SECRET_VAR, REFRESH_TOKEN_VAR] -
-          ENV.keys).empty?
+        ([CLIENT_ID_VAR, CLIENT_SECRET_VAR, REFRESH_TOKEN_VAR] - ENV.keys).empty?
       end
     end
   end

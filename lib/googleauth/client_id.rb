@@ -63,7 +63,7 @@ module Google
       # @note Direction instantion is discouraged to avoid embedding IDs
       #       & secrets in source. See {#from_file} to load from
       #       `client_secrets.json` files.
-      def initialize(id, secret)
+      def initialize id, secret
         CredentialsLoader.warn_if_cloud_sdk_credentials id
         raise "Client id can not be nil" if id.nil?
         raise "Client secret can not be nil" if secret.nil?
@@ -77,12 +77,12 @@ module Google
       # @param [String, File] file
       #  Path of file to read from
       # @return [Google::Auth::ClientID]
-      def self.from_file(file)
+      def self.from_file file
         raise "File can not be nil." if file.nil?
-        File.open(file.to_s) do |f|
+        File.open file.to_s do |f|
           json = f.read
           config = MultiJson.load json
-          from_hash(config)
+          from_hash config
         end
       end
 
@@ -93,11 +93,11 @@ module Google
       # @param [hash] config
       #  Parsed contents of the JSON file
       # @return [Google::Auth::ClientID]
-      def self.from_hash(config)
+      def self.from_hash config
         raise "Hash can not be nil." if config.nil?
         raw_detail = config[INSTALLED_APP] || config[WEB_APP]
         raise MISSING_TOP_LEVEL_ELEMENT_ERROR if raw_detail.nil?
-        ClientId.new(raw_detail[CLIENT_ID], raw_detail[CLIENT_SECRET])
+        ClientId.new raw_detail[CLIENT_ID], raw_detail[CLIENT_SECRET]
       end
     end
   end

@@ -43,7 +43,7 @@ module Google
       #  ID of token data to load.
       # @return [String]
       #  The loaded token data.
-      def load(_id)
+      def load _id
         raise "Not implemented"
       end
 
@@ -53,7 +53,7 @@ module Google
       #  ID of token data to store.
       # @param [String] token
       #  The token data to store.
-      def store(_id, _token)
+      def store _id, _token
         raise "Not implemented"
       end
 
@@ -61,7 +61,7 @@ module Google
       #
       # @param [String] id
       #  ID of the token data to delete
-      def delete(_id)
+      def delete _id
         raise "Not implemented"
       end
     end

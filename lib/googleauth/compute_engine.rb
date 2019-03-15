@@ -35,16 +35,16 @@ module Google
   # Module Auth provides classes that provide Google-specific authorization
   # used to access Google APIs.
   module Auth
-    NO_METADATA_SERVER_ERROR = <<ERROR.freeze
-Error code 404 trying to get security access token
-from Compute Engine metadata for the default service account. This
-may be because the virtual machine instance does not have permission
-scopes specified.
-ERROR
-    UNEXPECTED_ERROR_SUFFIX = <<ERROR.freeze
-trying to get security access token from Compute Engine metadata for
-the default service account
-ERROR
+    NO_METADATA_SERVER_ERROR = <<~ERROR.freeze
+      Error code 404 trying to get security access token
+      from Compute Engine metadata for the default service account. This
+      may be because the virtual machine instance does not have permission
+      scopes specified.
+    ERROR
+    UNEXPECTED_ERROR_SUFFIX = <<~ERROR.freeze
+      trying to get security access token from Compute Engine metadata for
+      the default service account
+    ERROR
 
     # Extends Signet::OAuth2::Client so that the auth token is obtained from
     # the GCE metadata server.
@@ -60,9 +60,9 @@ ERROR
 
         # Detect if this appear to be a GCE instance, by checking if metadata
         # is available
-        def on_gce?(options = {})
+        def on_gce? options = {}
           c = options[:connection] || Faraday.default_connection
-          resp = c.get(COMPUTE_CHECK_URI) do |req|
+          resp = c.get COMPUTE_CHECK_URI do |req|
             # Comment from: oauth2client/client.py
             #
             # Note: the explicit `timeout` below is a workaround. The underlying
@@ -74,10 +74,10 @@ ERROR
             req.options.timeout = 0.1
           end
           return false unless resp.status == 200
-          return false unless resp.headers.key?("Metadata-Flavor")
-          return resp.headers["Metadata-Flavor"] == "Google"
+          return false unless resp.headers.key? "Metadata-Flavor"
+          resp.headers["Metadata-Flavor"] == "Google"
         rescue Faraday::TimeoutError, Faraday::ConnectionFailed
-          return false
+          false
         end
 
         memoize :on_gce?
@@ -85,21 +85,21 @@ ERROR
 
       # Overrides the super class method to change how access tokens are
       # fetched.
-      def fetch_access_token(options = {})
+      def fetch_access_token options = {}
         c = options[:connection] || Faraday.default_connection
         retry_with_error do
           headers = { "Metadata-Flavor" => "Google" }
-          resp = c.get(COMPUTE_AUTH_TOKEN_URI, nil, headers)
+          resp = c.get COMPUTE_AUTH_TOKEN_URI, nil, headers
           case resp.status
           when 200
             Signet::OAuth2.parse_credentials(resp.body,
                                              resp.headers["content-type"])
           when 404
-            raise(Signet::AuthorizationError, NO_METADATA_SERVER_ERROR)
+            raise Signet::AuthorizationError, NO_METADATA_SERVER_ERROR
           else
             msg = "Unexpected error code #{resp.status}" \
               "#{UNEXPECTED_ERROR_SUFFIX}"
-            raise(Signet::AuthorizationError, msg)
+            raise Signet::AuthorizationError, msg
           end
         end
       end

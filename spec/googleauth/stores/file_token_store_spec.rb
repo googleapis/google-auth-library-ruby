@@ -27,31 +27,31 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-spec_dir = File.expand_path(File.join(File.dirname(__FILE__)))
-$LOAD_PATH.unshift(spec_dir)
+spec_dir = File.expand_path File.join(File.dirname(__FILE__))
+$LOAD_PATH.unshift spec_dir
 $LOAD_PATH.uniq!
 
-require 'googleauth'
-require 'googleauth/stores/file_token_store'
-require 'spec_helper'
-require 'fakefs/safe'
-require 'fakefs/spec_helpers'
-require 'googleauth/stores/store_examples'
+require "googleauth"
+require "googleauth/stores/file_token_store"
+require "spec_helper"
+require "fakefs/safe"
+require "fakefs/spec_helpers"
+require "googleauth/stores/store_examples"
 
 module FakeFS
   class File
     # FakeFS doesn't implement. And since we don't need to actually lock,
     # just stub out...
-    def flock(*); end
+    def flock *; end
   end
 end
 
 describe Google::Auth::Stores::FileTokenStore do
   include FakeFS::SpecHelpers
 
-  let(:store) do
-    Google::Auth::Stores::FileTokenStore.new(file: '/tokens.yaml')
+  let :store do
+    Google::Auth::Stores::FileTokenStore.new file: "/tokens.yaml"
   end
 
-  it_behaves_like 'token store'
+  it_behaves_like "token store"
 end

@@ -36,22 +36,22 @@ module Google
     # Small utility for normalizing scopes into canonical form
     module ScopeUtil
       ALIASES = {
-        "email" => "https://www.googleapis.com/auth/userinfo.email",
+        "email"   => "https://www.googleapis.com/auth/userinfo.email",
         "profile" => "https://www.googleapis.com/auth/userinfo.profile",
-        "openid" => "https://www.googleapis.com/auth/plus.me"
+        "openid"  => "https://www.googleapis.com/auth/plus.me"
       }.freeze
 
-      def self.normalize(scope)
-        list = as_array(scope)
+      def self.normalize scope
+        list = as_array scope
         list.map { |item| ALIASES[item] || item }
       end
 
-      def self.as_array(scope)
+      def self.as_array scope
         case scope
         when Array
           scope
         when String
-          scope.split(" ")
+          scope.split " "
         else
           raise "Invalid scope value. Must be string or array"
         end

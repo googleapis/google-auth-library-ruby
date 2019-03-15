@@ -27,14 +27,14 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-spec_dir = File.expand_path(File.join(File.dirname(__FILE__)))
-$LOAD_PATH.unshift(spec_dir)
+spec_dir = File.expand_path File.join(File.dirname(__FILE__))
+$LOAD_PATH.unshift spec_dir
 $LOAD_PATH.uniq!
 
-require 'faraday'
-require 'spec_helper'
+require "faraday"
+require "spec_helper"
 
-shared_examples 'apply/apply! are OK' do
+shared_examples "apply/apply! are OK" do
   let(:auth_key) { :authorization }
 
   # tests that use these examples need to define
@@ -43,103 +43,103 @@ shared_examples 'apply/apply! are OK' do
   #
   # @make_auth_stubs, which should stub out the expected http behaviour of the
   # auth client
-  describe '#fetch_access_token' do
-    let(:token) { '1/abcdef1234567890' }
-    let(:stub) do
+  describe "#fetch_access_token" do
+    let(:token) { "1/abcdef1234567890" }
+    let :stub do
       make_auth_stubs access_token: token
     end
 
-    it 'should set access_token to the fetched value' do
+    it "should set access_token to the fetched value" do
       stub
       @client.fetch_access_token!
       expect(@client.access_token).to eq(token)
       expect(stub).to have_been_requested
     end
 
-    it 'should notify refresh listeners after updating' do
+    it "should notify refresh listeners after updating" do
       stub
       expect do |b|
         @client.on_refresh(&b)
         @client.fetch_access_token!
       end.to yield_with_args(have_attributes(
-                               access_token: '1/abcdef1234567890'
-      ))
+                               access_token: "1/abcdef1234567890"
+                             ))
       expect(stub).to have_been_requested
     end
   end
 
-  describe '#apply!' do
-    it 'should update the target hash with fetched access token' do
-      token = '1/abcdef1234567890'
+  describe "#apply!" do
+    it "should update the target hash with fetched access token" do
+      token = "1/abcdef1234567890"
       stub = make_auth_stubs access_token: token
 
-      md = { foo: 'bar' }
-      @client.apply!(md)
-      want = { :foo => 'bar', auth_key => "Bearer #{token}" }
+      md = { foo: "bar" }
+      @client.apply! md
+      want = { :foo => "bar", auth_key => "Bearer #{token}" }
       expect(md).to eq(want)
       expect(stub).to have_been_requested
     end
   end
 
-  describe 'updater_proc' do
-    it 'should provide a proc that updates a hash with the access token' do
-      token = '1/abcdef1234567890'
+  describe "updater_proc" do
+    it "should provide a proc that updates a hash with the access token" do
+      token = "1/abcdef1234567890"
       stub = make_auth_stubs access_token: token
-      md = { foo: 'bar' }
+      md = { foo: "bar" }
       the_proc = @client.updater_proc
-      got = the_proc.call(md)
-      want = { :foo => 'bar', auth_key => "Bearer #{token}" }
+      got = the_proc.call md
+      want = { :foo => "bar", auth_key => "Bearer #{token}" }
       expect(got).to eq(want)
       expect(stub).to have_been_requested
     end
   end
 
-  describe '#apply' do
-    it 'should not update the original hash with the access token' do
-      token = '1/abcdef1234567890'
+  describe "#apply" do
+    it "should not update the original hash with the access token" do
+      token = "1/abcdef1234567890"
       stub = make_auth_stubs access_token: token
 
-      md = { foo: 'bar' }
-      @client.apply(md)
-      want = { foo: 'bar' }
+      md = { foo: "bar" }
+      @client.apply md
+      want = { foo: "bar" }
       expect(md).to eq(want)
       expect(stub).to have_been_requested
     end
 
-    it 'should add the token to the returned hash' do
-      token = '1/abcdef1234567890'
+    it "should add the token to the returned hash" do
+      token = "1/abcdef1234567890"
       stub = make_auth_stubs access_token: token
 
-      md = { foo: 'bar' }
-      got = @client.apply(md)
-      want = { :foo => 'bar', auth_key => "Bearer #{token}" }
+      md = { foo: "bar" }
+      got = @client.apply md
+      want = { :foo => "bar", auth_key => "Bearer #{token}" }
       expect(got).to eq(want)
       expect(stub).to have_been_requested
     end
 
-    it 'should not fetch a new token if the current is not expired' do
-      token = '1/abcdef1234567890'
+    it "should not fetch a new token if the current is not expired" do
+      token = "1/abcdef1234567890"
       stub = make_auth_stubs access_token: token
 
       n = 5 # arbitrary
       n.times do |_t|
-        md = { foo: 'bar' }
-        got = @client.apply(md)
-        want = { :foo => 'bar', auth_key => "Bearer #{token}" }
+        md = { foo: "bar" }
+        got = @client.apply md
+        want = { :foo => "bar", auth_key => "Bearer #{token}" }
         expect(got).to eq(want)
       end
       expect(stub).to have_been_requested
     end
 
-    it 'should fetch a new token if the current one is expired' do
-      token1 = '1/abcdef1234567890'
-      token2 = '2/abcdef1234567891'
+    it "should fetch a new token if the current one is expired" do
+      token1 = "1/abcdef1234567890"
+      token2 = "2/abcdef1234567891"
 
       [token1, token2].each do |t|
         make_auth_stubs access_token: t
-        md = { foo: 'bar' }
-        got = @client.apply(md)
-        want = { :foo => 'bar', auth_key => "Bearer #{t}" }
+        md = { foo: "bar" }
+        got = @client.apply md
+        want = { :foo => "bar", auth_key => "Bearer #{t}" }
         expect(got).to eq(want)
         @client.expires_at -= 3601 # default is to expire in 1hr
       end
