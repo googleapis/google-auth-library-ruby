@@ -95,7 +95,7 @@ module Google
       #     * `:connection_builder` A `Proc` that returns a connection.
       def from_env scope = nil, options = {}
         options = interpret_options scope, options
-        if ENV.key? ENV_VAR
+        if ENV.key?(ENV_VAR) && !ENV[ENV_VAR].empty?
           path = ENV[ENV_VAR]
           raise "file #{path} does not exist" unless File.exist? path
           File.open path do |f|
@@ -192,11 +192,13 @@ module Google
       end
 
       def service_account_env_vars?
-        ([PRIVATE_KEY_VAR, CLIENT_EMAIL_VAR] - ENV.keys).empty?
+        ([PRIVATE_KEY_VAR, CLIENT_EMAIL_VAR] - ENV.keys).empty? &&
+          !ENV.to_h.fetch_values(PRIVATE_KEY_VAR, CLIENT_EMAIL_VAR).join(" ").empty?
       end
 
       def authorized_user_env_vars?
-        ([CLIENT_ID_VAR, CLIENT_SECRET_VAR, REFRESH_TOKEN_VAR] - ENV.keys).empty?
+        ([CLIENT_ID_VAR, CLIENT_SECRET_VAR, REFRESH_TOKEN_VAR] - ENV.keys).empty? &&
+          !ENV.to_h.fetch_values(CLIENT_ID_VAR, CLIENT_SECRET_VAR, REFRESH_TOKEN_VAR).join(" ").empty?
       end
     end
   end

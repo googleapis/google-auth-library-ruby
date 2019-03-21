@@ -106,6 +106,11 @@ describe Google::Auth::UserRefreshCredentials do
       expect(UserRefreshCredentials.from_env(@scope)).to be_nil
     end
 
+    it "returns nil if the GOOGLE_APPLICATION_CREDENTIALS is empty" do
+      ENV[@var_name] = ""
+      expect(UserRefreshCredentials.from_env(@scope)).to be_nil
+    end
+
     it "fails if the GOOGLE_APPLICATION_CREDENTIALS path does not exist" do
       ENV.delete @var_name unless ENV[@var_name].nil?
       expect(UserRefreshCredentials.from_env(@scope)).to be_nil
