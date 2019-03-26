@@ -1,24 +1,17 @@
 # -*- ruby -*-
-require "rspec/core/rake_task"
-require "rubocop/rake_task"
 require "bundler/gem_tasks"
 
-desc "Run Rubocop to check for style violations"
-RuboCop::RakeTask.new
-
-desc "Run rake task"
-RSpec::Core::RakeTask.new :spec
-
-desc "Does rubocop lint and runs the specs"
-task all: %i[rubocop spec]
-
-task default: :all
+task :ci do
+  header "Using Ruby - #{RUBY_VERSION}"
+  sh "bundle exec rubocop"
+  sh "bundle exec rspec"
+end
 
 task :release, :tag do |_t, args|
   tag = args[:tag]
   raise "You must provide a tag to release." if tag.nil?
 
-  # Verify the tag format "PACKAGE/vVERSION"
+  # Verify the tag format "vVERSION"
   m = tag.match(/v(?<version>\S*)/)
   raise "Tag #{tag} does not match the expected format." if m.nil?
 
@@ -60,6 +53,18 @@ namespace :kokoro do
     filename = "#{ENV['KOKORO_GFILE_DIR']}/env_vars.json"
     env_vars = JSON.parse File.read(filename)
     env_vars.each { |k, v| ENV[k] = v }
+  end
+
+  task :presubmit do
+    Rake::Task["ci"].invoke
+  end
+
+  task :continuous do
+    Rake::Task["ci"].invoke
+  end
+
+  task :nightly do
+    Rake::Task["ci"].invoke
   end
 
   task :release do
