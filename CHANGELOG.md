@@ -1,3 +1,8 @@
+### 0.8.1 / 2019-03-27
+
+* Silence unnecessary gcloud warning
+* Treat empty credentials environment variables as unset
+
 ### 0.8.0 / 2019-01-02
 
 * Support connection options :default_connection and :connection_builder when creating credentials that need to refresh OAuth tokens. This lets clients provide connection objects with custom settings, such as proxies, needed for the client environment.
