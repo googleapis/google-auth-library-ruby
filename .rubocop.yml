@@ -8,4 +8,4 @@ AllCops:
 Metrics/ClassLength:
   Max: 110
 Metrics/ModuleLength:
-  Max: 105
+  Max: 110

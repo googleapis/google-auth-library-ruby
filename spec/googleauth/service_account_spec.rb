@@ -187,6 +187,11 @@ describe Google::Auth::ServiceAccountCredentials do
       expect(ServiceAccountCredentials.from_env(@scope)).to be_nil
     end
 
+    it "returns nil if the GOOGLE_APPLICATION_CREDENTIALS is empty" do
+      ENV[@var_name] = ""
+      expect(ServiceAccountCredentials.from_env(@scope)).to be_nil
+    end
+
     it "fails if the GOOGLE_APPLICATION_CREDENTIALS path does not exist" do
       ENV.delete @var_name unless ENV[@var_name].nil?
       expect(ServiceAccountCredentials.from_env(@scope)).to be_nil
@@ -387,6 +392,11 @@ describe Google::Auth::ServiceAccountJwtHeaderCredentials do
 
     it "returns nil if the GOOGLE_APPLICATION_CREDENTIALS is unset" do
       ENV.delete @var_name unless ENV[@var_name].nil?
+      expect(clz.from_env).to be_nil
+    end
+
+    it "returns nil if the GOOGLE_APPLICATION_CREDENTIALS is empty" do
+      ENV[@var_name] = ""
       expect(clz.from_env).to be_nil
     end
 
