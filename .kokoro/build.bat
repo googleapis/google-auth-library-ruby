@@ -11,6 +11,6 @@ SET "download=powershell -C Invoke-WebRequest -Uri %url% -OutFile master-build.b
 
 SET EXIT_STATUS=1
 
-download && master-build.bat && SET EXIT_STATUS=0
+%download% && master-build.bat && SET EXIT_STATUS=0
 
 EXIT %EXIT_STATUS%
