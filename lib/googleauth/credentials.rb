@@ -100,27 +100,20 @@ module Google
       end
 
       def self.from_path_vars options
-        self::PATH_ENV_VARS
-          .map { |v| ENV[v] }
-          .compact
-          .select { |p| ::File.file? p }
-          .each do |file|
-            return new file, options
-          end
+        self::PATH_ENV_VARS.each do |env_var|
+          str = ENV[env_var]
+          next if str.nil?
+          return new str, options if ::File.file? str
+        end
         nil
       end
 
       def self.from_json_vars options
-        json = lambda do |v|
-          unless ENV[v].nil?
-            begin
-              JSON.parse ENV[v]
-            rescue StandardError
-              nil
-            end
-          end
+        self::JSON_ENV_VARS.each do |env_var|
+          str = ENV[env_var]
+          next if str.nil?
+          return new ::JSON.parse(str), options rescue nil
         end
-        self::JSON_ENV_VARS.map(&json).compact.each { |hash| return new hash, options }
         nil
       end
 
