@@ -7,6 +7,8 @@ AllCops:
     - "Rakefile"
 Metrics/ClassLength:
   Max: 110
+  Exclude:
+    - "lib/googleauth/credentials.rb"
 Metrics/ModuleLength:
   Max: 110
 Metrics/BlockLength:

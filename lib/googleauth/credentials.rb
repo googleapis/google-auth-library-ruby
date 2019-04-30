@@ -40,10 +40,55 @@ module Google
     class Credentials
       TOKEN_CREDENTIAL_URI = "https://oauth2.googleapis.com/token".freeze
       AUDIENCE = "https://oauth2.googleapis.com/token".freeze
-      SCOPE = [].freeze
-      PATH_ENV_VARS = [].freeze
-      JSON_ENV_VARS = [].freeze
-      DEFAULT_PATHS = [].freeze
+
+      def self.scope
+        if @scope.nil?
+          tmp_scope = []
+          # Pull in values is the SCOPE constant exists.
+          tmp_scope << const_get(:SCOPE) if const_defined? :SCOPE
+          @scope = tmp_scope.flatten.uniq
+        end
+
+        @scope
+      end
+
+      def self.scope= new_scope
+        new_scope = Array new_scope unless new_scope.nil?
+        @scope = new_scope
+      end
+
+      def self.env_vars
+        if @env_vars.nil?
+          tmp_env_vars = []
+          # Pull values when PATH_ENV_VARS or JSON_ENV_VARS constants exists.
+          tmp_env_vars << const_get(:PATH_ENV_VARS) if const_defined? :PATH_ENV_VARS
+          tmp_env_vars << const_get(:JSON_ENV_VARS) if const_defined? :JSON_ENV_VARS
+          @env_vars = tmp_env_vars.flatten.uniq
+        end
+
+        @env_vars
+      end
+
+      def self.env_vars= new_env_vars
+        new_env_vars = Array new_env_vars unless new_env_vars.nil?
+        @env_vars = new_env_vars
+      end
+
+      def self.paths
+        if @paths.nil?
+          tmp_paths = []
+          # Pull in values is the DEFAULT_PATHS constant exists.
+          tmp_paths << const_get(:DEFAULT_PATHS) if const_defined? :DEFAULT_PATHS
+          @paths = tmp_paths.flatten.uniq
+        end
+
+        @paths
+      end
+
+      def self.paths= new_paths
+        new_paths = Array new_paths unless new_paths.nil?
+        @paths = new_paths
+      end
 
       attr_accessor :client
       attr_reader   :project_id
@@ -97,7 +142,7 @@ module Google
       end
 
       def self.from_env_vars options
-        (self::PATH_ENV_VARS + self::JSON_ENV_VARS).each do |env_var|
+        env_vars.each do |env_var|
           str = ENV[env_var]
           next if str.nil?
           return new str, options if ::File.file? str
@@ -107,7 +152,7 @@ module Google
       end
 
       def self.from_default_paths options
-        self::DEFAULT_PATHS
+        paths
           .select { |p| ::File.file? p }
           .each do |file|
             return new file, options
@@ -116,7 +161,7 @@ module Google
       end
 
       def self.from_application_default options
-        scope = options[:scope] || self::SCOPE
+        scope = options[:scope] || self.scope
         client = Google::Auth.get_application_default scope
         new client, options
       end
@@ -154,7 +199,7 @@ module Google
         # Keyfile options have higher priority over constructor defaults
         options["token_credential_uri"] ||= self.class::TOKEN_CREDENTIAL_URI
         options["audience"] ||= self.class::AUDIENCE
-        options["scope"] ||= self.class::SCOPE
+        options["scope"] ||= self.class.scope
 
         # client options for initializing signet client
         { token_credential_uri: options["token_credential_uri"],
