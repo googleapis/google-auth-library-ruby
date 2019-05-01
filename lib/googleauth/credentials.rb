@@ -85,13 +85,10 @@ module Google
       # previously stated locations do not contain keyfile information,
       # this method defaults to use the application default.
       def self.default options = {}
-        # First try to find keyfile file from environment variables.
-        client = from_path_vars options
+        # First try to find keyfile file or json from environment variables.
+        client = from_env_vars options
 
-        # Second try to find keyfile json from environment variables.
-        client ||= from_json_vars options
-
-        # Third try to find keyfile file from known file paths.
+        # Second try to find keyfile file from known file paths.
         client ||= from_default_paths options
 
         # Finally get instantiated client from Google::Auth
@@ -99,28 +96,13 @@ module Google
         client
       end
 
-      def self.from_path_vars options
-        self::PATH_ENV_VARS
-          .map { |v| ENV[v] }
-          .compact
-          .select { |p| ::File.file? p }
-          .each do |file|
-            return new file, options
-          end
-        nil
-      end
-
-      def self.from_json_vars options
-        json = lambda do |v|
-          unless ENV[v].nil?
-            begin
-              JSON.parse ENV[v]
-            rescue StandardError
-              nil
-            end
-          end
+      def self.from_env_vars options
+        (self::PATH_ENV_VARS + self::JSON_ENV_VARS).each do |env_var|
+          str = ENV[env_var]
+          next if str.nil?
+          return new str, options if ::File.file? str
+          return new ::JSON.parse(str), options rescue nil
         end
-        self::JSON_ENV_VARS.map(&json).compact.each { |hash| return new hash, options }
         nil
       end
 
@@ -138,8 +120,7 @@ module Google
         client = Google::Auth.get_application_default scope
         new client, options
       end
-      private_class_method :from_path_vars,
-                           :from_json_vars,
+      private_class_method :from_env_vars,
                            :from_default_paths,
                            :from_application_default
 

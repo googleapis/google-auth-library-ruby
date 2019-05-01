@@ -81,13 +81,14 @@ describe Google::Auth::Credentials, :private do
     Google::Auth::Credentials.new default_keyfile_hash, scope: "http://example.com/scope"
   end
 
-  it "can be subclassed to pass in other env paths" do
-    TEST_PATH_ENV_VAR = "TEST_PATH".freeze
-    TEST_PATH_ENV_VAL = "/unknown/path/to/file.txt".freeze
-    TEST_JSON_ENV_VAR = "TEST_JSON_VARS".freeze
+  it 'can be subclassed to pass in other env paths' do
+    TEST_PATH_ENV_VAR = 'TEST_PATH'.freeze
+    TEST_PATH_ENV_VAL = '/unknown/path/to/file.txt'.freeze
+    TEST_JSON_ENV_VAR = 'TEST_JSON_VARS'.freeze
+    TEST_JSON_ENV_VAL = JSON.generate(default_keyfile_hash)
 
     ENV[TEST_PATH_ENV_VAR] = TEST_PATH_ENV_VAL
-    ENV[TEST_JSON_ENV_VAR] = JSON.generate default_keyfile_hash
+    ENV[TEST_JSON_ENV_VAR] = TEST_JSON_ENV_VAL
 
     class TestCredentials < Google::Auth::Credentials
       SCOPE = "http://example.com/scope".freeze
@@ -96,6 +97,7 @@ describe Google::Auth::Credentials, :private do
     end
 
     allow(::File).to receive(:file?).with(TEST_PATH_ENV_VAL) { false }
+    allow(::File).to receive(:file?).with(TEST_JSON_ENV_VAL) { false }
 
     mocked_signet = double "Signet::OAuth2::Client"
     allow(mocked_signet).to receive(:configure_connection).and_return(mocked_signet)
@@ -151,7 +153,9 @@ describe Google::Auth::Credentials, :private do
     expect(creds.project_id).to eq(default_keyfile_hash["project_id"])
   end
 
-  it "subclasses can use JSON_ENV_VARS to get keyfile contents" do
+  it 'subclasses can use JSON_ENV_VARS to get keyfile contents' do
+    TEST_JSON_ENV_VAL = JSON.generate(default_keyfile_hash)
+
     class TestCredentials < Google::Auth::Credentials
       SCOPE = "http://example.com/scope".freeze
       PATH_ENV_VARS = ["PATH_ENV_DUMMY"].freeze
@@ -159,10 +163,11 @@ describe Google::Auth::Credentials, :private do
       DEFAULT_PATHS = ["~/default/path/to/file.txt"].freeze
     end
 
-    allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
-    allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
-    allow(::ENV).to receive(:[]).with("JSON_ENV_DUMMY") { nil }
-    allow(::ENV).to receive(:[]).with("JSON_ENV_TEST") { JSON.generate default_keyfile_hash }
+    allow(::ENV).to receive(:[]).with('PATH_ENV_DUMMY') { '/fake/path/to/file.txt' }
+    allow(::File).to receive(:file?).with('/fake/path/to/file.txt') { false }
+    allow(::File).to receive(:file?).with(TEST_JSON_ENV_VAL) { false }
+    allow(::ENV).to receive(:[]).with('JSON_ENV_DUMMY') { nil }
+    allow(::ENV).to receive(:[]).with('JSON_ENV_TEST') { TEST_JSON_ENV_VAL }
 
     mocked_signet = double "Signet::OAuth2::Client"
     allow(mocked_signet).to receive(:configure_connection).and_return(mocked_signet)
