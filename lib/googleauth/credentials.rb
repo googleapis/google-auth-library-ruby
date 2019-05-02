@@ -42,14 +42,12 @@ module Google
       AUDIENCE = "https://oauth2.googleapis.com/token".freeze
 
       def self.scope
-        if @scope.nil?
-          tmp_scope = []
-          # Pull in values is the SCOPE constant exists.
-          tmp_scope << const_get(:SCOPE) if const_defined? :SCOPE
-          @scope = tmp_scope.flatten.uniq
-        end
+        return @scope unless @scope.nil?
 
-        @scope
+        tmp_scope = []
+        # Pull in values is the SCOPE constant exists.
+        tmp_scope << const_get(:SCOPE) if const_defined? :SCOPE
+        tmp_scope.flatten.uniq
       end
 
       def self.scope= new_scope
@@ -58,15 +56,13 @@ module Google
       end
 
       def self.env_vars
-        if @env_vars.nil?
-          tmp_env_vars = []
-          # Pull values when PATH_ENV_VARS or JSON_ENV_VARS constants exists.
-          tmp_env_vars << const_get(:PATH_ENV_VARS) if const_defined? :PATH_ENV_VARS
-          tmp_env_vars << const_get(:JSON_ENV_VARS) if const_defined? :JSON_ENV_VARS
-          @env_vars = tmp_env_vars.flatten.uniq
-        end
+        return @env_vars unless @env_vars.nil?
 
-        @env_vars
+        # Pull values when PATH_ENV_VARS or JSON_ENV_VARS constants exists.
+        tmp_env_vars = []
+        tmp_env_vars << const_get(:PATH_ENV_VARS) if const_defined? :PATH_ENV_VARS
+        tmp_env_vars << const_get(:JSON_ENV_VARS) if const_defined? :JSON_ENV_VARS
+        tmp_env_vars.flatten.uniq
       end
 
       def self.env_vars= new_env_vars
@@ -75,14 +71,12 @@ module Google
       end
 
       def self.paths
-        if @paths.nil?
-          tmp_paths = []
-          # Pull in values is the DEFAULT_PATHS constant exists.
-          tmp_paths << const_get(:DEFAULT_PATHS) if const_defined? :DEFAULT_PATHS
-          @paths = tmp_paths.flatten.uniq
-        end
+        return @paths unless @paths.nil?
 
-        @paths
+        tmp_paths = []
+        # Pull in values is the DEFAULT_PATHS constant exists.
+        tmp_paths << const_get(:DEFAULT_PATHS) if const_defined? :DEFAULT_PATHS
+        tmp_paths.flatten.uniq
       end
 
       def self.paths= new_paths
