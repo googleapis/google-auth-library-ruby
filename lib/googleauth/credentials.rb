@@ -41,6 +41,14 @@ module Google
       TOKEN_CREDENTIAL_URI = "https://oauth2.googleapis.com/token".freeze
       AUDIENCE = "https://oauth2.googleapis.com/token".freeze
 
+      def self.token_credential_uri
+        const_get :TOKEN_CREDENTIAL_URI if const_defined? :TOKEN_CREDENTIAL_URI
+      end
+
+      def self.audience
+        const_get :AUDIENCE if const_defined? :AUDIENCE
+      end
+
       def self.scope
         return @scope unless @scope.nil?
 
@@ -191,8 +199,8 @@ module Google
 
       def client_options options
         # Keyfile options have higher priority over constructor defaults
-        options["token_credential_uri"] ||= self.class::TOKEN_CREDENTIAL_URI
-        options["audience"] ||= self.class::AUDIENCE
+        options["token_credential_uri"] ||= self.class.token_credential_uri
+        options["audience"] ||= self.class.audience
         options["scope"] ||= self.class.scope
 
         # client options for initializing signet client
