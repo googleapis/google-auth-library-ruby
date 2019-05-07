@@ -79,7 +79,7 @@ module Google
       # JSON key.
       def self.read_json_key json_key_io
         json_key = MultiJson.load json_key_io.read
-        wanted = %w[client_id client_secret refresh_token]
+        wanted = ["client_id", "client_secret", "refresh_token"]
         wanted.each do |key|
           raise "the json is missing the #{key} field" unless json_key.key? key
         end
