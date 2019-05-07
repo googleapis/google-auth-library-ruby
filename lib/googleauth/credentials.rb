@@ -42,11 +42,23 @@ module Google
       AUDIENCE = "https://oauth2.googleapis.com/token".freeze
 
       def self.token_credential_uri
+        return @token_credential_uri unless @token_credential_uri.nil?
+
         const_get :TOKEN_CREDENTIAL_URI if const_defined? :TOKEN_CREDENTIAL_URI
       end
 
+      def self.token_credential_uri= new_token_credential_uri
+        @token_credential_uri = new_token_credential_uri
+      end
+
       def self.audience
+        return @audience unless @audience.nil?
+
         const_get :AUDIENCE if const_defined? :AUDIENCE
+      end
+
+      def self.audience= new_audience
+        @audience = new_audience
       end
 
       def self.scope

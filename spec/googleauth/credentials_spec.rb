@@ -274,6 +274,8 @@ describe Google::Auth::Credentials, :private do
       ENV["TEST_JSON_VARS"] = test_json_env_val
 
       class TestCredentials11 < Google::Auth::Credentials
+        self.token_credential_uri = "https://example.com/token"
+        self.audience = "https://example.com/audience"
         self.scope = "http://example.com/scope"
         self.env_vars = ["TEST_PATH", "TEST_JSON_VARS"]
       end
@@ -286,8 +288,8 @@ describe Google::Auth::Credentials, :private do
       allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
       allow(mocked_signet).to receive(:client_id)
       allow(Signet::OAuth2::Client).to receive(:new) do |options|
-        expect(options[:token_credential_uri]).to eq("https://oauth2.googleapis.com/token")
-        expect(options[:audience]).to eq("https://oauth2.googleapis.com/token")
+        expect(options[:token_credential_uri]).to eq("https://example.com/token")
+        expect(options[:audience]).to eq("https://example.com/audience")
         expect(options[:scope]).to eq(["http://example.com/scope"])
         expect(options[:issuer]).to eq(default_keyfile_hash["client_email"])
         expect(options[:signing_key]).to be_a_kind_of(OpenSSL::PKey::RSA)
