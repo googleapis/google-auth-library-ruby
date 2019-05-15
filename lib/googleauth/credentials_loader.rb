@@ -49,7 +49,8 @@ module Google
       PROJECT_ID_VAR            = "GOOGLE_PROJECT_ID".freeze
       GCLOUD_POSIX_COMMAND      = "gcloud".freeze
       GCLOUD_WINDOWS_COMMAND    = "gcloud.cmd".freeze
-      GCLOUD_CONFIG_COMMAND     = "config config-helper --format json".freeze
+      GCLOUD_CONFIG_COMMAND     =
+        "config config-helper --format json --verbosity none".freeze
 
       CREDENTIALS_FILE_NAME = "application_default_credentials.json".freeze
       NOT_FOUND_ERROR =
