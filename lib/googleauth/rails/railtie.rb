@@ -9,7 +9,7 @@ module Google
     module Rails
       # Railtie for simplified integration with Rails. Exposes configuration
       # via Rails config and performs initialiation on startup.
-      class Railtie < Rails::Railtie
+      class Railtie < ::Rails::Railtie
         MISSING_CLIENT_ID_ERROR =
           'Unable to configure googleauth library, no client secret available'
         MISSING_TOKEN_STORE_ERROR =
@@ -30,9 +30,9 @@ module Google
           client_id = load_client_id
           token_store = load_token_store
           if client_id.nil?
-            Rails.logger.warn(MISSING_CLIENT_ID_ERROR)
+            ::Rails.logger.warn(MISSING_CLIENT_ID_ERROR)
           elsif token_store.nil?
-            Rails.logger.warn(MISING_TOKEN_STORE_ERROR)
+            ::Rails.logger.warn(MISING_TOKEN_STORE_ERROR)
           else
             Google::Auth::WebUserAuthorizer.default =
               Google::Auth::WebUserAuthorizer.new(
@@ -52,9 +52,9 @@ module Google
           opts = config.googleauth
           return Google::Auth::ClientId.new(opts.id, opts.secret) if opts.id
           client_secret = config.googleauth.client_secret_path ||
-                          File.join(Rails.root, 'config', 'client_secret.json')
+                          File.join(::Rails.root, 'config', 'client_secret.json')
           return nil unless File.exist?(client_secret)
-          Rails.logger.info("Initializing client ID from #{client_secret}")
+          ::Rails.logger.info("Initializing client ID from #{client_secret}")
           Google::Auth::ClientId.from_file(client_secret)
         end
 
