@@ -1,4 +1,4 @@
-# Copyright 2015, Google Inc.
+# Copyright 2014, Google Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -27,10 +27,42 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-require "googleauth/application_default"
-require "googleauth/client_id"
-require "googleauth/credentials"
-require "googleauth/default_credentials"
-require "googleauth/user_authorizer"
-require "googleauth/web_user_authorizer"
-require 'googleauth/rails/railtie' if defined?(Rails)
+require 'active_record'
+require 'googleauth/token_store'
+
+module Google
+  module Auth
+    module Stores
+      # Simple model for storing tokens
+      class GoogleAuthToken < ActiveRecord::Base
+        validates :user_id, presence: true
+        validates :token, presence: true
+      end
+
+      # Implementation of user token storage using ActiveRecord.
+      class ActiveRecordTokenStore < Google::Auth::TokenStore
+        def initialize(*)
+        end
+
+        # (see Google::Auth::Stores::TokenStore#load)
+        def load(id)
+          entry = GoogleAuthToken.find_by(user_id: id)
+          return nil if entry.nil?
+          entry.token
+        end
+
+        # (see Google::Auth::Stores::TokenStore#store)
+        def store(id, token)
+          entry = GoogleAuthToken.find_or_initialize_by(user_id: id)
+          entry.update(token: token)
+        end
+
+        # (see Google::Auth::Stores::TokenStore#delete)
+        def delete(id)
+          entry = GoogleAuthToken.find_by(user_id: id)
+          entry.destroy unless entry.nil?
+        end
+      end
+    end
+  end
+end
