@@ -100,4 +100,35 @@ describe Signet::OAuth2::Client do
       expect(stub).to have_been_requested
     end
   end
+
+  describe "#fetch_access_token!" do
+    it "retries when orig_fetch_access_token! raises Signet::RemoteServerError" do
+      mocked_responses = [:raise, :raise, "success"]
+      allow(@client).to receive(:orig_fetch_access_token!).exactly(3).times do
+        response = mocked_responses.shift
+        response == :raise ? raise(Signet::RemoteServerError) : response
+      end
+      expect(@client.fetch_access_token!).to eq("success")
+    end
+
+    it "raises when the max retry count is exceeded" do
+      mocked_responses = [:raise, :raise, :raise, :raise, :raise, :raise, "success"]
+      allow(@client).to receive(:orig_fetch_access_token!).exactly(6).times do
+        response = mocked_responses.shift
+        response == :raise ? raise(Signet::RemoteServerError) : response
+      end
+      expect { @client.fetch_access_token! }.to raise_error Signet::AuthorizationError
+    end
+
+    it "does not retry and raises right away if it encounters a Signet::AuthorizationError" do
+      allow(@client).to receive(:orig_fetch_access_token!).at_most(:once)
+        .and_raise(Signet::AuthorizationError.new("Some Message"))
+      expect { @client.fetch_access_token! }.to raise_error Signet::AuthorizationError
+    end
+
+    it "does not retry and raises right away if it encounters a Signet::ParseError" do
+      allow(@client).to receive(:orig_fetch_access_token!).at_most(:once).and_raise(Signet::ParseError)
+      expect { @client.fetch_access_token! }.to raise_error Signet::ParseError
+    end
+  end
 end

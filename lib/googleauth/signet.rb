@@ -76,7 +76,9 @@ module Signet
           connection = build_default_connection
           options = options.merge connection: connection if connection
         end
-        info = orig_fetch_access_token! options
+        info = retry_with_error do
+          orig_fetch_access_token! options
+        end
         notify_refresh_listeners
         info
       end
