@@ -154,6 +154,8 @@ module Google
       # @param [String, Array<String>] scope
       #  Authorization scope to request. Overrides the instance scopes if
       #  not nil.
+      # @param [Hash] state
+      #  Optional key-values to be returned to the oauth callback.
       # @return [String]
       #  Authorization url
       def get_authorization_url options = {}
@@ -162,12 +164,14 @@ module Google
         raise NIL_REQUEST_ERROR if request.nil?
         raise NIL_SESSION_ERROR if request.session.nil?
 
+        state = options[:state] || {}
+
         redirect_to = options[:redirect_to] || request.url
         request.session[XSRF_KEY] = SecureRandom.base64
-        options[:state] = MultiJson.dump(
-          SESSION_ID_KEY  => request.session[XSRF_KEY],
-          CURRENT_URI_KEY => redirect_to
-        )
+        options[:state] = MultiJson.dump(state.merge(
+                                           SESSION_ID_KEY  => request.session[XSRF_KEY],
+                                           CURRENT_URI_KEY => redirect_to
+                                         ))
         options[:base_url] = request.url
         super options
       end

@@ -63,6 +63,12 @@ describe Google::Auth::WebUserAuthorizer do
       )
     end
 
+    it "should allow adding custom state key-value pairs" do
+      url = authorizer.get_authorization_url request: request, state: { james: "bond", kind: 1 }
+      expect(url).to match(%r{%22james%22:%22bond%22})
+      expect(url).to match(%r{%22kind%22:1})
+    end
+
     it "should include request forgery token in state" do
       expect(SecureRandom).to receive(:base64).and_return("aGVsbG8=")
       url = authorizer.get_authorization_url request: request
