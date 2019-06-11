@@ -8,7 +8,6 @@
 </dl>
 
 [![Gem Version](https://badge.fury.io/rb/googleauth.svg)](http://badge.fury.io/rb/googleauth)
-[![Build Status](https://secure.travis-ci.org/google/google-auth-library-ruby.svg)](http://travis-ci.org/google/google-auth-library-ruby)
 [![Coverage Status](https://coveralls.io/repos/google/google-auth-library-ruby/badge.svg)](https://coveralls.io/r/google/google-auth-library-ruby)
 
 ## Description
