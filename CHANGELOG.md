@@ -1,3 +1,27 @@
+### 0.9.0 / 2019-06-24
+
+add retry on error for fetch_access_token (#213)
+
+allow specifying custom state key-values (#218)
+
+add verbosity none to gcloud command (#215)
+
+Credentials: Use methods instead of constants (#212)
+Update Credentials to use methods for values that are intended to
+be changed by users, replacing constants.
+Add Credentials documentation.
+
+Credentials Environment Variable Refactor (#211)
+* Refactor env var methods
+Have the iteration return for the first match, instead of comparing
+all elements and choosing the first one that matches.
+* Combine file and json credentials detection
+Allow an environment variable to contain either a file path
+or JSON to describe the credentials.
+This change matches how these variables are used in Google Cloud.
+
+Bump the minimum supported Ruby version from 1.9 to 2.3 (#208)
+
 ### 0.8.1 / 2019-03-27
 
 * Silence unnecessary gcloud warning
