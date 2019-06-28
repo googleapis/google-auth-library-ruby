@@ -217,7 +217,6 @@ module Google
       # @param [Rack::Request] request
       #  Current request
       def self.validate_callback_state state, request
-        raise Signet::AuthorizationError, MISSING_AUTH_CODE_ERROR if state[AUTH_CODE_KEY].nil?
         if state[ERROR_CODE_KEY]
           raise Signet::AuthorizationError,
                 format(AUTHORIZATION_ERROR, state[ERROR_CODE_KEY])
