@@ -191,21 +191,7 @@ module Google
       #  May raise an error if an authorization code is present in the session
       #  and exchange of the code fails
       def get_credentials user_id, request, scope = nil
-        if request.session.key? CALLBACK_STATE_KEY
-          # Note - in theory, no need to check required scope as this is
-          # expected to be called immediately after a return from authorization
-          state_json = request.session.delete CALLBACK_STATE_KEY
-          callback_state = MultiJson.load state_json
-          WebUserAuthorizer.validate_callback_state callback_state, request
-          get_and_store_credentials_from_code(
-            user_id:  user_id,
-            code:     callback_state[AUTH_CODE_KEY],
-            scope:    callback_state[SCOPE_KEY],
-            base_url: request.url
-          )
-        else
-          super user_id, scope
-        end
+        super user_id, scope
       end
 
       def self.extract_callback_state request
