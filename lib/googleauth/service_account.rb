@@ -71,6 +71,7 @@ module Google
             audience:             TOKEN_CRED_URI,
             scope:                scope,
             issuer:               client_email,
+            additional_claims:    options.delete(:additional_claims),
             signing_key:          OpenSSL::PKey::RSA.new(private_key),
             project_id:           project_id)
           .configure_connection(options)
@@ -110,7 +111,7 @@ module Google
         }
         alt_clz = ServiceAccountJwtHeaderCredentials
         key_io = StringIO.new MultiJson.dump(cred_json)
-        alt = alt_clz.make_creds json_key_io: key_io
+        alt = alt_clz.make_creds json_key_io: key_io, additional_claims: @additional_claims
         alt.apply! a_hash
       end
     end
@@ -160,6 +161,7 @@ module Google
         end
         @project_id ||= CredentialsLoader.load_gcloud_project_id
         @signing_key = OpenSSL::PKey::RSA.new @private_key
+        @additional_claims = options[:additional_claims] || {}
       end
 
       # Construct a jwt token if the JWT_AUD_URI key is present in the input
@@ -200,6 +202,7 @@ module Google
           "exp" => (now + EXPIRY).to_i,
           "iat" => (now - skew).to_i
         }
+        assertion.merge!(@additional_claims)
         JWT.encode assertion, @signing_key, SIGNING_ALGORITHM
       end
     end

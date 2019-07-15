@@ -125,7 +125,8 @@ describe Google::Auth::ServiceAccountCredentials do
     @key = OpenSSL::PKey::RSA.new 2048
     @client = ServiceAccountCredentials.make_creds(
       json_key_io: StringIO.new(cred_json_text),
-      scope:       "https://www.googleapis.com/auth/userinfo.profile"
+      scope:       "https://www.googleapis.com/auth/userinfo.profile",
+      additional_claims: 'foobar'
     )
   end
 
@@ -366,7 +367,10 @@ describe Google::Auth::ServiceAccountJwtHeaderCredentials do
 
   before :example do
     @key = OpenSSL::PKey::RSA.new 2048
-    @client = clz.make_creds json_key_io: StringIO.new(cred_json_text)
+    @client = clz.make_creds(
+      json_key_io: StringIO.new(cred_json_text),
+      additional_claims: { target_audience: 'foobar' }
+    )
   end
 
   def cred_json_text
