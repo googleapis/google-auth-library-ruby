@@ -2,49 +2,23 @@
 require "bundler/gem_tasks"
 
 task :ci do
-  header "Using Ruby - #{RUBY_VERSION}"
-  sh "bundle exec rubocop"
   sh "bundle exec rspec"
 end
 
-task :release, :tag do |_t, args|
-  tag = args[:tag]
-  raise "You must provide a tag to release." if tag.nil?
+# build, release:guard_clean and release:rubygem_push are the upstream
+# release task minus the git push.
+task :ci_release => ['generate_rubygems_credentials', 'build', 'release:guard_clean', 'release:rubygem_push']
 
-  # Verify the tag format "vVERSION"
-  m = tag.match(/v(?<version>\S*)/)
-  raise "Tag #{tag} does not match the expected format." if m.nil?
-
-  version = m[:version]
-  raise "You must provide a version." if version.nil?
-
-  api_token = ENV["RUBYGEMS_API_TOKEN"]
-
-  require "gems"
-  if api_token
-    ::Gems.configure do |config|
-      config.key = api_token
-    end
+task :generate_rubygems_credentials do
+  require 'base64'
+  GEM_CREDENTIALS = ENV['HOME'] + '/.gem/credentials'
+  b64_authorization = Base64.encode64("#{ENV.fetch('ARTIFACTORY_USERNAME')}:#{ENV.fetch('ARTIFACTORY_PASSWORD')}")
+  open(GEM_CREDENTIALS, 'w') do |f|
+    f.puts "---\n:rubygems_api_key: Basic #{b64_authorization}\n"
   end
-
-  Bundler.with_clean_env do
-    sh "rm -rf pkg"
-    sh "bundle update"
-    sh "bundle exec rake build"
-  end
-
-  path_to_be_pushed = "pkg/#{version}.gem"
-  if File.file? path_to_be_pushed
-    begin
-      ::Gems.push File.new(path_to_be_pushed)
-      puts "Successfully built and pushed googleauth for version #{version}"
-    rescue StandardError => e
-      puts "Error while releasing googleauth version #{version}: #{e.message}"
-    end
-  else
-    raise "Cannot build googleauth for version #{version}"
-  end
+  File.chmod 0600, GEM_CREDENTIALS
 end
+# end LiveRamp Jenkins CI changes
 
 namespace :kokoro do
   task :load_env_vars do
