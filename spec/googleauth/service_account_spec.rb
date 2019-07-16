@@ -126,7 +126,7 @@ describe Google::Auth::ServiceAccountCredentials do
     @client = ServiceAccountCredentials.make_creds(
       json_key_io: StringIO.new(cred_json_text),
       scope:       "https://www.googleapis.com/auth/userinfo.profile",
-      additional_claims: 'foobar'
+      additional_claims: { foo: 'bar' }
     )
   end
 
