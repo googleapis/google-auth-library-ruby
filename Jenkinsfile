@@ -32,7 +32,7 @@ pipeline {
     }
 
     stage('gem:release') {
-      when { branch 'master' }
+      // when { branch 'master' }
       steps {
         withCredentials( bindings:
           // CredentialsId was found through the credentials page for
