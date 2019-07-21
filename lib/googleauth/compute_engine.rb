@@ -75,7 +75,6 @@ module Google
             req.options.timeout = 0.1
           end
           return false unless resp.status == 200
-          return false unless resp.headers.key? "Metadata-Flavor"
           resp.headers["Metadata-Flavor"] == "Google"
         rescue Faraday::TimeoutError, Faraday::ConnectionFailed
           false
