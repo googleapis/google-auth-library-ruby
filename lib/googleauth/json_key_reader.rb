@@ -34,12 +34,14 @@ module Google
     # JsonKeyReader contains the behaviour used to read private key and
     # client email fields from the service account
     module JsonKeyReader
-      def read_json_key json_key_io
+      def read_json_key(json_key_io, include_key_id = false)
         json_key = MultiJson.load json_key_io.read
         raise "missing client_email" unless json_key.key? "client_email"
         raise "missing private_key" unless json_key.key? "private_key"
         project_id = json_key["project_id"]
-        [json_key["private_key"], json_key["client_email"], project_id]
+        [json_key["private_key"], json_key["client_email"], project_id].tap do |arr|
+          arr << json_key["private_key_id"] if include_key_id
+        end
       end
     end
   end

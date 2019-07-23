@@ -31,6 +31,6 @@ module Google
   # Module Auth provides classes that provide Google-specific authorization
   # used to access Google APIs.
   module Auth
-    VERSION = "0.8.1.liveramp-001".freeze
+    VERSION = "0.8.1.liveramp-002".freeze
   end
 end

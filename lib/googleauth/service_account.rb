@@ -51,6 +51,7 @@ module Google
       extend CredentialsLoader
       extend JsonKeyReader
       attr_reader :project_id
+      attr_reader :signing_key_id
 
       # Creates a ServiceAccountCredentials.
       #
@@ -59,11 +60,13 @@ module Google
       def self.make_creds options = {}
         json_key_io, scope = options.values_at :json_key_io, :scope
         if json_key_io
-          private_key, client_email, project_id = read_json_key json_key_io
+          private_key, client_email, project_id, private_key_id =
+            read_json_key json_key_io, true
         else
           private_key = unescape ENV[CredentialsLoader::PRIVATE_KEY_VAR]
           client_email = ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
           project_id = ENV[CredentialsLoader::PROJECT_ID_VAR]
+          private_key_id = nil # TODO: autoload from environment?
         end
         project_id ||= CredentialsLoader.load_gcloud_project_id
 
@@ -73,6 +76,7 @@ module Google
             issuer:               client_email,
             additional_claims:    options.delete(:additional_claims),
             signing_key:          OpenSSL::PKey::RSA.new(private_key),
+            signing_key_id:       private_key_id,
             project_id:           project_id)
           .configure_connection(options)
       end
@@ -88,6 +92,7 @@ module Google
 
       def initialize options = {}
         @project_id = options[:project_id]
+        @signing_key_id = options[:signing_key_id]
         super options
       end
 
@@ -176,7 +181,7 @@ module Google
         a_hash
       end
 
-      # Returns a clone of a_hash updated with the authoriation header
+      # Returns a clone of a_hash updated with the authorization header
       def apply a_hash, opts = {}
         a_copy = a_hash.clone
         apply! a_copy, opts
