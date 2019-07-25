@@ -14,3 +14,5 @@ Metrics/ModuleLength:
 Metrics/BlockLength:
   Exclude:
     - "googleauth.gemspec"
+Style/SafeNavigation:
+  Enabled: false

@@ -190,8 +190,8 @@ module Google
       # @raise [Signet::AuthorizationError]
       #  May raise an error if an authorization code is present in the session
       #  and exchange of the code fails
-      def get_credentials user_id, request, scope = nil
-        if request.session.key? CALLBACK_STATE_KEY
+      def get_credentials user_id, request = nil, scope = nil
+        if request && request.session.key?(CALLBACK_STATE_KEY)
           # Note - in theory, no need to check required scope as this is
           # expected to be called immediately after a return from authorization
           state_json = request.session.delete CALLBACK_STATE_KEY
