@@ -176,12 +176,13 @@ module Google
         super options
       end
 
-      # Fetch stored credentials for the user.
+      # Fetch stored credentials for the user from the given request session.
       #
       # @param [String] user_id
       #  Unique ID of the user for loading/storing credentials.
       # @param [Rack::Request] request
-      #  Current request
+      #  Current request. Optional. If omitted, this will attempt to fall back
+      #  on the base class behavior of reading from the token store.
       # @param [Array<String>, String] scope
       #  If specified, only returns credentials that have all the \
       #  requested scopes
