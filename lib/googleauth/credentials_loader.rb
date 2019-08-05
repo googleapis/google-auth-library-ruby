@@ -193,13 +193,15 @@ module Google
       end
 
       def service_account_env_vars?
-        ([PRIVATE_KEY_VAR, CLIENT_EMAIL_VAR] - ENV.keys).empty? &&
-          !ENV.to_h.fetch_values(PRIVATE_KEY_VAR, CLIENT_EMAIL_VAR).join(" ").empty?
+        [PRIVATE_KEY_VAR, CLIENT_EMAIL_VAR].all? do |key|
+          ENV[key] && !ENV[key].empty?
+        end
       end
 
       def authorized_user_env_vars?
-        ([CLIENT_ID_VAR, CLIENT_SECRET_VAR, REFRESH_TOKEN_VAR] - ENV.keys).empty? &&
-          !ENV.to_h.fetch_values(CLIENT_ID_VAR, CLIENT_SECRET_VAR, REFRESH_TOKEN_VAR).join(" ").empty?
+        [CLIENT_ID_VAR, CLIENT_SECRET_VAR, REFRESH_TOKEN_VAR].all? do |key|
+          ENV[key] && !ENV[key].empty?
+        end
       end
     end
   end
