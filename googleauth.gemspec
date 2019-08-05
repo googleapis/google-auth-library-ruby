@@ -1,7 +1,7 @@
 # -*- ruby -*-
 # encoding: utf-8
 
-$LOAD_PATH.push File.expand_path("lib", __dir__)
+$LOAD_PATH.push File.expand_path("../lib", __FILE__)
 require "googleauth/version"
 
 Gem::Specification.new do |gem|
@@ -25,7 +25,6 @@ Gem::Specification.new do |gem|
   end
   gem.require_paths = ["lib"]
   gem.platform      = Gem::Platform::RUBY
-  gem.required_ruby_version = ">= 2.3.0"
 
   gem.add_dependency "faraday", "~> 0.12"
   gem.add_dependency "jwt", ">= 1.4", "< 3.0"

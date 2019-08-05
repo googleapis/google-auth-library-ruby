@@ -91,9 +91,8 @@ module Signet
       end
 
       def build_default_connection
-        if !defined?(@connection_info)
-          nil
-        elsif @connection_info.respond_to? :call
+        return nil unless defined?(@connection_info)
+        if @connection_info.respond_to? :call
           @connection_info.call
         else
           @connection_info

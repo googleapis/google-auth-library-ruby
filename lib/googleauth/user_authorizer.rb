@@ -129,8 +129,8 @@ module Google
         data = MultiJson.load saved_token
 
         if data.fetch("client_id", @client_id.id) != @client_id.id
-          raise format(MISMATCHED_CLIENT_ID_ERROR,
-                       data["client_id"], @client_id.id)
+          raise sprintf(MISMATCHED_CLIENT_ID_ERROR,
+                        data["client_id"], @client_id.id)
         end
 
         credentials = UserRefreshCredentials.new(

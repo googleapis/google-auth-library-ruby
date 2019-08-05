@@ -163,12 +163,11 @@ module Google
         raise "#{SYSTEM_DEFAULT_ERROR}: #{e}"
       end
 
-      module_function
-
       # Issues warning if cloud sdk client id is used
       def warn_if_cloud_sdk_credentials client_id
         warn CLOUD_SDK_CREDENTIALS_WARNING if client_id == CLOUD_SDK_CLIENT_ID
       end
+      module_function :warn_if_cloud_sdk_credentials
 
       # Finds project_id from gcloud CLI configuration
       def load_gcloud_project_id
@@ -180,6 +179,7 @@ module Google
       rescue StandardError
         nil
       end
+      module_function :load_gcloud_project_id
 
       private
 

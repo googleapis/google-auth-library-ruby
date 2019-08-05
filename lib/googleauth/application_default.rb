@@ -34,13 +34,11 @@ module Google
   # Module Auth provides classes that provide Google-specific authorization
   # used to access Google APIs.
   module Auth
-    NOT_FOUND_ERROR = <<~ERROR_MESSAGE.freeze
-      Could not load the default credentials. Browse to
-      https://developers.google.com/accounts/docs/application-default-credentials
-      for more information
-    ERROR_MESSAGE
-
-    module_function
+    NOT_FOUND_ERROR = <<-ERROR_MESSAGE.freeze
+Could not load the default credentials. Browse to
+https://developers.google.com/accounts/docs/application-default-credentials
+for more information
+ERROR_MESSAGE
 
     # Obtains the default credentials implementation to use in this
     # environment.
@@ -77,5 +75,7 @@ module Google
       end
       GCECredentials.new
     end
+
+    module_function :get_application_default
   end
 end
