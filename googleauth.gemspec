@@ -25,7 +25,7 @@ Gem::Specification.new do |gem|
   end
   gem.require_paths = ["lib"]
   gem.platform      = Gem::Platform::RUBY
-  gem.required_ruby_version = ">= 2.3.0"
+  gem.required_ruby_version = ">= 2.4"
 
   gem.add_dependency "faraday", "~> 0.12"
   gem.add_dependency "jwt", ">= 1.4", "< 3.0"

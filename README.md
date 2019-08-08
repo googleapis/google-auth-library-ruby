@@ -183,13 +183,11 @@ Custom storage implementations can also be used. See
 
 ## Supported Ruby Versions
 
-This library is currently supported on Ruby 2.3+.
+This library is currently supported on Ruby 2.4+.
 
-However, Ruby 2.4 or later is strongly recommended, as earlier releases have
-reached or are nearing end-of-life. After March 31, 2019, Google will provide
-official support only for Ruby versions that are considered current and
-supported by Ruby Core (that is, Ruby versions that are either in normal
-maintenance or in security maintenance).
+Google will provide official support only for Ruby versions that are considered
+current and supported by Ruby Core (that is, Ruby versions that are either in
+normal maintenance or in security maintenance).
 See https://www.ruby-lang.org/en/downloads/branches/ for further details.
 
 ## License
