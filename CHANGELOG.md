@@ -1,3 +1,16 @@
+### 0.10.0 / Unreleased
+
+* Requires Ruby 2.4 or later.
+
+### 0.9.0 / 2019-08-05
+
+* Restore compatibility with Ruby 2.0. This is the last release that will work on end-of-lifed versions of Ruby. The 0.10 release will require Ruby 2.4 or later.
+* Update Credentials to use methods for values that are intended to be changed by users, replacing constants.
+* Add retry on error for fetch_access_token
+* Allow specifying custom state key-values
+* Add verbosity none to gcloud command
+* Make arity of WebUserAuthorizer#get_credentials compatible with the base class
+
 ### 0.8.1 / 2019-03-27
 
 * Silence unnecessary gcloud warning
