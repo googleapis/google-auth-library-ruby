@@ -38,6 +38,11 @@ module Signet
     # This reopens Client to add #apply and #apply! methods which update a
     # hash with the fetched authentication token.
     class Client
+      def initialize
+        super
+        @refresh_listeners = nil
+      end
+
       def configure_connection options
         @connection_info =
           options[:connection_builder] || options[:default_connection]
