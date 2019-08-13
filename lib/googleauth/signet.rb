@@ -38,11 +38,6 @@ module Signet
     # This reopens Client to add #apply and #apply! methods which update a
     # hash with the fetched authentication token.
     class Client
-      def initialize
-        super
-        @refresh_listeners = nil
-      end
-
       def configure_connection options
         @connection_info =
           options[:connection_builder] || options[:default_connection]
@@ -71,7 +66,7 @@ module Signet
       end
 
       def on_refresh &block
-        @refresh_listeners ||= []
+        @refresh_listeners = [] unless defined? @refresh_listeners
         @refresh_listeners << block
       end
 
@@ -89,7 +84,11 @@ module Signet
       end
 
       def notify_refresh_listeners
-        listeners = @refresh_listeners || []
+        if defined? @refresh_listeners
+          listeners = @refresh_listeners
+        else
+          listeners = []
+        end
         listeners.each do |block|
           block.call self
         end
