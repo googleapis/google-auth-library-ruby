@@ -62,7 +62,8 @@ ERROR
         # is available
         def on_gce? options = {}
           c = options[:connection] || Faraday.default_connection
-          resp = c.get COMPUTE_CHECK_URI do |req|
+          headers = { "Metadata-Flavor" => "Google" }
+          resp = c.get COMPUTE_CHECK_URI, nil, headers do |req|
             # Comment from: oauth2client/client.py
             #
             # Note: the explicit `timeout` below is a workaround. The underlying
