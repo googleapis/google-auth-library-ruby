@@ -97,6 +97,7 @@ describe Google::Auth::GCECredentials do
   describe "#on_gce?" do
     it "should be true when Metadata-Flavor is Google" do
       stub = stub_request(:get, "http://169.254.169.254")
+             .with(headers: { "Metadata-Flavor" => "Google" })
              .to_return(status:  200,
                         headers: { "Metadata-Flavor" => "Google" })
       expect(GCECredentials.on_gce?({}, true)).to eq(true)
@@ -105,6 +106,7 @@ describe Google::Auth::GCECredentials do
 
     it "should be false when Metadata-Flavor is not Google" do
       stub = stub_request(:get, "http://169.254.169.254")
+             .with(headers: { "Metadata-Flavor" => "Google" })
              .to_return(status:  200,
                         headers: { "Metadata-Flavor" => "NotGoogle" })
       expect(GCECredentials.on_gce?({}, true)).to eq(false)
@@ -113,6 +115,7 @@ describe Google::Auth::GCECredentials do
 
     it "should be false if the response is not 200" do
       stub = stub_request(:get, "http://169.254.169.254")
+             .with(headers: { "Metadata-Flavor" => "Google" })
              .to_return(status:  404,
                         headers: { "Metadata-Flavor" => "NotGoogle" })
       expect(GCECredentials.on_gce?({}, true)).to eq(false)
