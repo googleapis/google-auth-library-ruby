@@ -84,11 +84,7 @@ module Signet
       end
 
       def notify_refresh_listeners
-        if defined? @refresh_listeners
-          listeners = @refresh_listeners
-        else
-          listeners = []
-        end
+        listeners = defined?(@refresh_listeners) ? @refresh_listeners : []
         listeners.each do |block|
           block.call self
         end
