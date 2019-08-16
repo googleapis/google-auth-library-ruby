@@ -66,7 +66,7 @@ module Signet
       end
 
       def on_refresh &block
-        @refresh_listeners ||= []
+        @refresh_listeners = [] unless defined? @refresh_listeners
         @refresh_listeners << block
       end
 
@@ -84,7 +84,7 @@ module Signet
       end
 
       def notify_refresh_listeners
-        listeners = @refresh_listeners || []
+        listeners = defined?(@refresh_listeners) ? @refresh_listeners : []
         listeners.each do |block|
           block.call self
         end
