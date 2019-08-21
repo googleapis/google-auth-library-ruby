@@ -257,6 +257,9 @@ module Google
         CredentialsLoader.warn_if_cloud_sdk_credentials @client.client_id
         @project_id ||= CredentialsLoader.load_gcloud_project_id
         @client.fetch_access_token!
+        @env_vars = nil
+        @paths = nil
+        @scope = nil
       end
       # rubocop:enable Metrics/AbcSize
 
