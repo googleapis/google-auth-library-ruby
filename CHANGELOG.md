@@ -1,3 +1,7 @@
+### 0.9.1 / 2019-08-23
+
+* Add GKE Metadata-Flavor fix
+
 ### 0.9.0 / 2019-08-05
 
 * Restore compatibility with Ruby 2.0. This is the last release that will work on end-of-lifed versions of Ruby. The 0.10 release will require Ruby 2.4 or later.
