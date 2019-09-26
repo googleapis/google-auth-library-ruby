@@ -70,7 +70,9 @@ module Google
         "application continues to use end user credentials from Cloud SDK, "\
         'you might receive a "quota exceeded" or "API not enabled" error. For'\
         " more information about service accounts, see "\
-        "https://cloud.google.com/docs/authentication/.".freeze
+        "https://cloud.google.com/docs/authentication/. "\
+        "To suppress this message, set the "\
+        "GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS environment variable".freeze
 
       # make_creds proxies the construction of a credentials instance
       #
@@ -167,6 +169,7 @@ module Google
 
       # Issues warning if cloud sdk client id is used
       def warn_if_cloud_sdk_credentials client_id
+        return if ENV["GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS"]
         warn CLOUD_SDK_CREDENTIALS_WARNING if client_id == CLOUD_SDK_CLIENT_ID
       end
 
