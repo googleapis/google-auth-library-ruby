@@ -60,9 +60,8 @@ module Google
 
         # Detect if this appear to be a GCE instance, by checking if metadata
         # is available.
-        #
-        # TODO: This should use google-cloud-env.
         def on_gce? options = {}
+          # TODO: This should use google-cloud-env instead.
           c = options[:connection] || Faraday.default_connection
           headers = { "Metadata-Flavor" => "Google" }
           resp = c.get COMPUTE_CHECK_URI, nil, headers do |req|
