@@ -59,20 +59,15 @@ module Google
         extend Memoist
 
         # Detect if this appear to be a GCE instance, by checking if metadata
-        # is available
+        # is available.
+        #
+        # TODO: This should use google-cloud-env.
         def on_gce? options = {}
           c = options[:connection] || Faraday.default_connection
           headers = { "Metadata-Flavor" => "Google" }
           resp = c.get COMPUTE_CHECK_URI, nil, headers do |req|
-            # Comment from: oauth2client/client.py
-            #
-            # Note: the explicit `timeout` below is a workaround. The underlying
-            # issue is that resolving an unknown host on some networks will take
-            # 20-30 seconds; making this timeout short fixes the issue, but
-            # could lead to false negatives in the event that we are on GCE, but
-            # the metadata resolution was particularly slow. The latter case is
-            # "unlikely".
-            req.options.timeout = 0.1
+            req.options.timeout = 1.0
+            req.options.open_timeout = 0.1
           end
           return false unless resp.status == 200
           resp.headers["Metadata-Flavor"] == "Google"
