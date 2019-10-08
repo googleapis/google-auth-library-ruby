@@ -128,6 +128,7 @@ describe Google::Auth::Credentials, :private do
         DEFAULT_PATHS = ["~/default/path/to/file.txt"].freeze
       end
 
+      allow(::ENV).to receive(:[]).with("GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS") { "true" }
       allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
       allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
       allow(::ENV).to receive(:[]).with("PATH_ENV_TEST") { "/unknown/path/to/file.txt" }
@@ -164,6 +165,7 @@ describe Google::Auth::Credentials, :private do
         DEFAULT_PATHS = ["~/default/path/to/file.txt"].freeze
       end
 
+      allow(::ENV).to receive(:[]).with("GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS") { "true" }
       allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
       allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
       allow(::File).to receive(:file?).with(test_json_env_val) { false }
@@ -198,6 +200,7 @@ describe Google::Auth::Credentials, :private do
         DEFAULT_PATHS = ["~/default/path/to/file.txt"].freeze
       end
 
+      allow(::ENV).to receive(:[]).with("GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS") { "true" }
       allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
       allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
       allow(::ENV).to receive(:[]).with("JSON_ENV_DUMMY") { nil }
@@ -232,6 +235,7 @@ describe Google::Auth::Credentials, :private do
         DEFAULT_PATHS = ["~/default/path/to/file.txt"].freeze
       end
 
+      allow(::ENV).to receive(:[]).with("GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS") { "true" }
       allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
       allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
       allow(::ENV).to receive(:[]).with("JSON_ENV_DUMMY") { nil }
@@ -310,6 +314,7 @@ describe Google::Auth::Credentials, :private do
         self.paths = ["~/default/path/to/file.txt"]
       end
 
+      allow(::ENV).to receive(:[]).with("GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS") { "true" }
       allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
       allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
       allow(::ENV).to receive(:[]).with("PATH_ENV_TEST") { "/unknown/path/to/file.txt" }
@@ -345,6 +350,7 @@ describe Google::Auth::Credentials, :private do
         self.paths = ["~/default/path/to/file.txt"]
       end
 
+      allow(::ENV).to receive(:[]).with("GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS") { "true" }
       allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
       allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
       allow(::File).to receive(:file?).with(test_json_env_val) { false }
@@ -378,6 +384,7 @@ describe Google::Auth::Credentials, :private do
         self.paths = ["~/default/path/to/file.txt"]
       end
 
+      allow(::ENV).to receive(:[]).with("GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS") { "true" }
       allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
       allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
       allow(::ENV).to receive(:[]).with("JSON_ENV_DUMMY") { nil }
@@ -411,6 +418,7 @@ describe Google::Auth::Credentials, :private do
         self.paths = ["~/default/path/to/file.txt"]
       end
 
+      allow(::ENV).to receive(:[]).with("GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS") { "true" }
       allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
       allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
       allow(::ENV).to receive(:[]).with("JSON_ENV_DUMMY") { nil }
