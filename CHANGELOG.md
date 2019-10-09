@@ -1,3 +1,13 @@
+### 0.10.0 / 2019-10-09
+
+Note: This release now requires Ruby 2.4 or later
+
+* Increase metadata timeout to improve reliability in some hosting environments
+* Support an environment variable to suppress Cloud SDK credentials warnings
+* Make the header check case insensitive
+* Set instance variables at initialization to avoid spamming warnings
+* Pass "Metadata-Flavor" header to metadata server when checking for GCE
+
 ### 0.10.0 / Unreleased
 
 * Requires Ruby 2.4 or later.
