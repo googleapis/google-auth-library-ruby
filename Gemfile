@@ -23,3 +23,5 @@ platforms :jruby do
   group :development do
   end
 end
+
+gem "gems", "~> 1.2"
