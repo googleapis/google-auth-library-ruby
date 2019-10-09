@@ -8,7 +8,7 @@ group :development do
   gem "coveralls", "~> 0.7"
   gem "fakefs", "~> 0.6"
   gem "fakeredis", "~> 0.5"
-  gem "google-style", "~> 0.3"
+  gem "google-style", "~> 1.24.0"
   gem "logging", "~> 2.0"
   gem "rack-test", "~> 0.6"
   gem "rake", "~> 10.0"
