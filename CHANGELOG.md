@@ -8,10 +8,6 @@ Note: This release now requires Ruby 2.4 or later
 * Set instance variables at initialization to avoid spamming warnings
 * Pass "Metadata-Flavor" header to metadata server when checking for GCE
 
-### 0.10.0 / Unreleased
-
-* Requires Ruby 2.4 or later.
-
 ### 0.9.0 / 2019-08-05
 
 * Restore compatibility with Ruby 2.0. This is the last release that will work on end-of-lifed versions of Ruby. The 0.10 release will require Ruby 2.4 or later.
