@@ -13,7 +13,7 @@ task :release_gem, :tag do |_t, args|
   raise "You must provide a tag to release." if tag.nil?
 
   # Verify the tag format "vVERSION"
-  m = tag.match(/googleauth\/v(?<version>\S*)/)
+  m = tag.match(/google-auth-library-ruby\/v(?<version>\S*)/)
   raise "Tag #{tag} does not match the expected format." if m.nil?
 
   version = m[:version]
@@ -76,7 +76,7 @@ namespace :kokoro do
                 .first.split("(").last.split(")").first || "0.1.0"
     end
     Rake::Task["kokoro:load_env_vars"].invoke
-    Rake::Task["release_gem"].invoke "googleauth/v#{version}"
+    Rake::Task["release_gem"].invoke "google-auth-library-ruby/v#{version}"
   end
 end
 
