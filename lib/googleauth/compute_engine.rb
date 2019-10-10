@@ -93,7 +93,7 @@ module Google
           else
             msg = "Unexpected error code #{resp.status}" \
               "#{UNEXPECTED_ERROR_SUFFIX}"
-            raise Signet::AuthorizationError, msg
+            raise Signet::UnexpectedStatusError, msg
           end
         end
       end
