@@ -1,6 +1,8 @@
 require "json"
 
 class RepoMetadata
+  attr_reader :data
+
   def initialize data
     @data = data
     normalize_data!
@@ -33,10 +35,6 @@ class RepoMetadata
 
   def []= key, value
     @data[key] = value
-  end
-
-  def data
-    Marshal.load Marshal.dump(@data)
   end
 
   def cmd line
