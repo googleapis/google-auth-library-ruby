@@ -44,7 +44,7 @@ module Google
     # 'gcloud auth login' saves a file with these contents in well known
     # location
     #
-    # cf [Application Default Credentials](http://goo.gl/mkAHpZ)
+    # cf [Application Default Credentials](https://cloud.google.com/docs/authentication/production)
     class UserRefreshCredentials < Signet::OAuth2::Client
       TOKEN_CRED_URI = "https://oauth2.googleapis.com/token".freeze
       AUTHORIZATION_URI = "https://accounts.google.com/o/oauth2/auth".freeze

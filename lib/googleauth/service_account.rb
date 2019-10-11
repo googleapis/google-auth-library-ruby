@@ -45,7 +45,7 @@ module Google
     # from credentials from a json key file downloaded from the developer
     # console (via 'Generate new Json Key').
     #
-    # cf [Application Default Credentials](http://goo.gl/mkAHpZ)
+    # cf [Application Default Credentials](https://cloud.google.com/docs/authentication/production)
     class ServiceAccountCredentials < Signet::OAuth2::Client
       TOKEN_CRED_URI = "https://www.googleapis.com/oauth2/v4/token".freeze
       extend CredentialsLoader
@@ -123,7 +123,7 @@ module Google
     # console (via 'Generate new Json Key').  It is not part of any OAuth2
     # flow, rather it creates a JWT and sends that as a credential.
     #
-    # cf [Application Default Credentials](http://goo.gl/mkAHpZ)
+    # cf [Application Default Credentials](https://cloud.google.com/docs/authentication/production)
     class ServiceAccountJwtHeaderCredentials
       JWT_AUD_URI_KEY = :jwt_aud_uri
       AUTH_METADATA_KEY = Signet::OAuth2::AUTH_METADATA_KEY

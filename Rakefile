@@ -71,6 +71,14 @@ namespace :kokoro do
     Rake::Task["ci"].invoke
   end
 
+  task :post do
+    require_relative "rakelib/link_checker.rb"
+
+    link_checker = LinkChecker.new
+    link_checker.run
+    exit link_checker.exit_status
+  end
+
   task :nightly do
     Rake::Task["ci"].invoke
   end
