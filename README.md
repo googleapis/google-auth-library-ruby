@@ -178,7 +178,7 @@ access and refresh tokens. Two storage implementations are included:
 *   Google::Auth::Stores::RedisTokenStore
 
 Custom storage implementations can also be used. See
-[token_store.rb](lib/googleauth/token_store.rb) for additional details.
+[token_store.rb](https://googleapis.dev/ruby/googleauth/latest/Google/Auth/TokenStore.html) for additional details.
 
 ## Supported Ruby Versions
 
@@ -206,7 +206,6 @@ hesitate to
 [ask questions](http://stackoverflow.com/questions/tagged/google-auth-library-ruby)
 about the client or APIs on [StackOverflow](http://stackoverflow.com).
 
-[google-apis-ruby-client]: (https://github.com/google/google-api-ruby-client)
-[application default credentials]: (https://developers.google.com/accounts/docs/application-default-credentials)
-[contributing]: https://github.com/google/google-auth-library-ruby/tree/master/CONTRIBUTING.md
-[copying]: https://github.com/google/google-auth-library-ruby/tree/master/COPYING
+[application default credentials]: https://developers.google.com/accounts/docs/application-default-credentials
+[contributing]: https://github.com/googleapis/google-auth-library-ruby/tree/master/.github/CONTRIBUTING.md
+[copying]: https://github.com/googleapis/google-auth-library-ruby/tree/master/COPYING

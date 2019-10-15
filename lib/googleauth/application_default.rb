@@ -47,7 +47,7 @@ module Google
     #
     # Use this to obtain the Application Default Credentials for accessing
     # Google APIs.  Application Default Credentials are described in detail
-    # at http://goo.gl/IUuyuX.
+    # at https://cloud.google.com/docs/authentication/production.
     #
     # If supplied, scope is used to create the credentials instance, when it can
     # be applied.  E.g, on google compute engine and for user credentials the

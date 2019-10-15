@@ -5,6 +5,7 @@ AllCops:
   Exclude:
     - "spec/**/*"
     - "Rakefile"
+    - "rakelib/**/*"
 Metrics/ClassLength:
   Max: 110
   Exclude:
