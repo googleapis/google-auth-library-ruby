@@ -159,7 +159,7 @@ drive = Drive::DriveService.new
 # Auths with ENV vars:
 # "GOOGLE_CLIENT_ID",
 # "GOOGLE_CLIENT_EMAIL",
-# "GOOGLE_ACCOUNT_TYPE", 
+# "GOOGLE_ACCOUNT_TYPE",
 # "GOOGLE_PRIVATE_KEY"
 auth = ::Google::Auth::ServiceAccountCredentials
   .make_creds(scope: 'https://www.googleapis.com/auth/drive')
@@ -167,6 +167,23 @@ drive.authorization = auth
 
 list_files = drive.list_files()
 
+```
+
+### Example (Oauth 2.0 Web Server application)
+
+```ruby
+  require 'google/api_client/client_secrets.rb'
+  require "google/apis/oauth2_v2"
+
+  Google::Apis::Oauth2V2::Oauth2Service.new.tap do |client|
+    authorization = Google::APIClient::ClientSecrets.new(
+      web: {
+        access_token: access_token
+        }
+    ).to_authorization
+
+    client.authorization = authorization
+  end
 ```
 
 ### Storage
