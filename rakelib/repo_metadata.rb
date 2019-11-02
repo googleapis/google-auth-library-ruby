@@ -26,7 +26,7 @@ class RepoMetadata
     require_relative "../lib/googleauth/version.rb"
 
     @data.delete_if { |k, _| !allowed_fields.include?(k) }
-    @data["version"] = Google::Auth::VERSION
+    @data["version"] = "v#{Google::Auth::VERSION}"
   end
 
   def [] key
