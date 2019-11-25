@@ -206,7 +206,13 @@ module Google
       #  Unique ID of the user for loading/storing credentials.
       def revoke_authorization user_id
         credentials = get_credentials user_id
-        begin @token_store.delete user_id ensure credentials.revoke! end if credentials
+        if credentials
+          begin
+            @token_store.delete user_id
+          ensure
+            credentials.revoke!
+          end
+        end
         nil
       end
 
