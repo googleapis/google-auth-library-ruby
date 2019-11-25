@@ -80,7 +80,7 @@ describe Google::Auth::UserAuthorizer do
       expect(URI(uri).query).to_not match(/client_secret/)
     end
 
-    it "should include the callback uri" do
+    it "should include the redirect_uri" do
       expect(URI(uri).query).to match(
         %r{redirect_uri=https://www.example.com/oauth/callback}
       )
@@ -88,6 +88,25 @@ describe Google::Auth::UserAuthorizer do
 
     it "should include the scope" do
       expect(URI(uri).query).to match(/scope=email%20profile/)
+    end
+  end
+
+  context "when generating authorization URLs and callback_uri is 'postmessage'" do
+    let(:callback_uri) { "postmessage" }
+    let :authorizer do
+      Google::Auth::UserAuthorizer.new(client_id,
+                                       scope,
+                                       token_store,
+                                       callback_uri)
+    end
+    let :uri do
+      authorizer.get_authorization_url login_hint: "user1", state: "mystate"
+    end
+
+    it "should include the redirect_uri 'postmessage'" do
+      expect(URI(uri).query).to match(
+        %r{redirect_uri=postmessage}
+      )
     end
   end
 
@@ -253,6 +272,7 @@ describe Google::Auth::UserAuthorizer do
         user_id: "user1", code: "code"
       )
       expect(credentials.access_token).to eq "1/abc123"
+      expect(credentials.redirect_uri.to_s).to eq "https://www.example.com/oauth/callback"
     end
 
     it "should not store credentials when get only requested" do
