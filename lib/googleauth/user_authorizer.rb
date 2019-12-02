@@ -271,9 +271,14 @@ module Google
       # @return [String]
       #  Redirect URI
       def redirect_uri_for base_url
-        return @callback_uri unless URI(@callback_uri).scheme.nil?
+        return @callback_uri if uri_is_postmessage?(@callback_uri) || !URI(@callback_uri).scheme.nil?
         raise format(MISSING_ABSOLUTE_URL_ERROR, @callback_uri) if base_url.nil? || URI(base_url).scheme.nil?
         URI.join(base_url, @callback_uri).to_s
+      end
+
+      # Check if URI is Google's postmessage flow (not a valid redirect_uri by spec, but allowed)
+      def uri_is_postmessage? uri
+        uri.to_s.casecmp("postmessage").zero?
       end
     end
   end

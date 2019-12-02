@@ -7,9 +7,7 @@ AllCops:
     - "Rakefile"
     - "rakelib/**/*"
 Metrics/ClassLength:
-  Max: 110
-  Exclude:
-    - "lib/googleauth/credentials.rb"
+  Max: 200
 Metrics/ModuleLength:
   Max: 110
 Metrics/BlockLength:
