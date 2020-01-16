@@ -69,13 +69,31 @@ describe Google::Auth::GCECredentials do
         expect(stub).to have_been_requested
       end
 
+      it "should fail if the metadata request returns a 403" do
+        stub = stub_request(:get, MD_URI)
+                 .to_return(status:  403,
+                            headers: { "Metadata-Flavor" => "Google" })
+        expect { @client.fetch_access_token! }
+          .to raise_error Signet::AuthorizationError
+        expect(stub).to have_been_requested.times(6)
+      end
+
+      it "should fail if the metadata request returns a 500" do
+        stub = stub_request(:get, MD_URI)
+                 .to_return(status:  500,
+                            headers: { "Metadata-Flavor" => "Google" })
+        expect { @client.fetch_access_token! }
+          .to raise_error Signet::AuthorizationError
+        expect(stub).to have_been_requested.times(6)
+      end
+
       it "should fail if the metadata request returns an unexpected code" do
         stub = stub_request(:get, MD_URI)
                .to_return(status:  503,
                           headers: { "Metadata-Flavor" => "Google" })
         expect { @client.fetch_access_token! }
           .to raise_error Signet::AuthorizationError
-        expect(stub).to have_been_requested.times(6)
+        expect(stub).to have_been_requested
       end
 
       it "should fail with Signet::AuthorizationError if request times out" do
