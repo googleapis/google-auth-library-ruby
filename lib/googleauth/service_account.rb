@@ -63,15 +63,17 @@ module Google
           private_key = json_key["private_key"]
           client_email = json_key["client_email"]
           project_id = json_key["project_id"]
+          token_uri = json_key["token_uri"]
         else
           private_key = unescape ENV[CredentialsLoader::PRIVATE_KEY_VAR]
           client_email = ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
           project_id = ENV[CredentialsLoader::PROJECT_ID_VAR]
         end
         project_id ||= CredentialsLoader.load_gcloud_project_id
+        token_uri ||= TOKEN_CRED_URI
 
-        new(token_credential_uri: TOKEN_CRED_URI,
-            audience:             TOKEN_CRED_URI,
+        new(token_credential_uri: token_uri,
+            audience:             token_uri,
             scope:                scope,
             issuer:               client_email,
             signing_key:          OpenSSL::PKey::RSA.new(private_key),
@@ -158,6 +160,8 @@ module Google
           @private_key = json_key["private_key"]
           @issuer = json_key["client_email"]
           @project_id = json_key["project_id"]
+          @token_credential_uri = json_key["token_uri"] || TOKEN_CRED_URI
+          @audience = json_key["token_uri"] || TOKEN_CRED_URI
         else
           @private_key = ENV[CredentialsLoader::PRIVATE_KEY_VAR]
           @issuer = ENV[CredentialsLoader::CLIENT_EMAIL_VAR]

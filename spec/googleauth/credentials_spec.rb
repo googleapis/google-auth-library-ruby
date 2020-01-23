@@ -41,6 +41,7 @@ describe Google::Auth::Credentials, :private do
       "client_email"   => "credz-testabc1234567890xyz@developer.gserviceaccount.com",
       "client_id"      => "credz-testabc1234567890xyz.apps.googleusercontent.com",
       "type"           => "service_account",
+      "token_uri"      => "https://oauth2.googleapis.com/token",
       "project_id"     => "a_project_id"
     }
   end

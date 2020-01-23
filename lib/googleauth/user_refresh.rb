@@ -67,7 +67,7 @@ module Google
           "project_id"    => ENV[CredentialsLoader::PROJECT_ID_VAR]
         }
 
-        new(token_credential_uri: TOKEN_CRED_URI,
+        new(token_credential_uri: user_creds["token_uri"],
             client_id:            user_creds["client_id"],
             client_secret:        user_creds["client_secret"],
             refresh_token:        user_creds["refresh_token"],

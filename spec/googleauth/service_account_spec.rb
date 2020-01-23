@@ -117,6 +117,7 @@ describe Google::Auth::ServiceAccountCredentials do
       client_email:   client_email,
       client_id:      "app.apps.googleusercontent.com",
       type:           "service_account",
+      token_uri:      "https://oauth2.googleapis.com/token",
       project_id:     "a_project_id"
     }
   end
@@ -140,7 +141,7 @@ describe Google::Auth::ServiceAccountCredentials do
                                    @key.public_key, true,
                                    algorithm: "RS256")
     end
-    stub_request(:post, "https://www.googleapis.com/oauth2/v4/token")
+    stub_request(:post, cred_json[:token_uri])
       .with(body: hash_including(
         "grant_type" => "urn:ietf:params:oauth:grant-type:jwt-bearer"
       ),
@@ -162,6 +163,20 @@ describe Google::Auth::ServiceAccountCredentials do
     end
 
     it_behaves_like "jwt header auth"
+  end
+
+  context "when token_uri is provided in the JSON" do
+    it "sets token_credential_uri based on the JSON" do
+      expect(@client.token_credential_uri.to_s).to eq(cred_json[:token_uri])
+    end
+  end
+
+  context "when token_uri is not provided in the JSON" do
+    let(:cred_json) { super().tap { |j| j.delete(:token_uri) } }
+
+    it "sets token_credential_uri to a default value" do
+      expect(@client.token_credential_uri.to_s).to eq(ServiceAccountCredentials::TOKEN_CRED_URI)
+    end
   end
 
   describe "#from_env" do
