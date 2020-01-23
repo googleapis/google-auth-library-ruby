@@ -59,7 +59,10 @@ module Google
       def self.make_creds options = {}
         json_key_io, scope = options.values_at :json_key_io, :scope
         if json_key_io
-          private_key, client_email, project_id = read_json_key json_key_io
+          json_key = read_json_key(json_key_io, %w[client_email private_key])
+          private_key = json_key["private_key"]
+          client_email = json_key["client_email"]
+          project_id = json_key["project_id"]
         else
           private_key = unescape ENV[CredentialsLoader::PRIVATE_KEY_VAR]
           client_email = ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
@@ -151,8 +154,10 @@ module Google
       def initialize options = {}
         json_key_io = options[:json_key_io]
         if json_key_io
-          @private_key, @issuer, @project_id =
-            self.class.read_json_key json_key_io
+          json_key = self.class.read_json_key(json_key_io, %w[client_email private_key])
+          @private_key = json_key["private_key"]
+          @issuer = json_key["client_email"]
+          @project_id = json_key["project_id"]
         else
           @private_key = ENV[CredentialsLoader::PRIVATE_KEY_VAR]
           @issuer = ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
