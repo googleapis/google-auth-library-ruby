@@ -1,3 +1,8 @@
+### 0.11.0 / 2020-02-24
+
+* Support Faraday 1.x.
+* Allow special "postmessage" value for redirect_uri.
+
 ### 0.10.0 / 2019-10-09
 
 Note: This release now requires Ruby 2.4 or later
