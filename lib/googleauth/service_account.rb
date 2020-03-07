@@ -51,6 +51,7 @@ module Google
       extend CredentialsLoader
       extend JsonKeyReader
       attr_reader :project_id
+      attr_reader :quota_project_id
 
       # Creates a ServiceAccountCredentials.
       #
@@ -59,11 +60,12 @@ module Google
       def self.make_creds options = {}
         json_key_io, scope = options.values_at :json_key_io, :scope
         if json_key_io
-          private_key, client_email, project_id = read_json_key json_key_io
+          private_key, client_email, project_id, quota_project_id = read_json_key json_key_io
         else
           private_key = unescape ENV[CredentialsLoader::PRIVATE_KEY_VAR]
           client_email = ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
           project_id = ENV[CredentialsLoader::PROJECT_ID_VAR]
+          quota_project_id = nil
         end
         project_id ||= CredentialsLoader.load_gcloud_project_id
 
@@ -72,7 +74,8 @@ module Google
             scope:                scope,
             issuer:               client_email,
             signing_key:          OpenSSL::PKey::RSA.new(private_key),
-            project_id:           project_id)
+            project_id:           project_id,
+            quota_project_id:     quota_project_id)
           .configure_connection(options)
       end
 
@@ -87,6 +90,7 @@ module Google
 
       def initialize options = {}
         @project_id = options[:project_id]
+        @quota_project_id = options[:quota_project_id]
         super options
       end
 
@@ -133,6 +137,7 @@ module Google
       extend CredentialsLoader
       extend JsonKeyReader
       attr_reader :project_id
+      attr_reader :quota_project_id
 
       # make_creds proxies the construction of a credentials instance
       #
@@ -151,12 +156,13 @@ module Google
       def initialize options = {}
         json_key_io = options[:json_key_io]
         if json_key_io
-          @private_key, @issuer, @project_id =
+          @private_key, @issuer, @project_id, @quota_project_id =
             self.class.read_json_key json_key_io
         else
           @private_key = ENV[CredentialsLoader::PRIVATE_KEY_VAR]
           @issuer = ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
           @project_id = ENV[CredentialsLoader::PROJECT_ID_VAR]
+          @quota_project_id = nil
         end
         @project_id ||= CredentialsLoader.load_gcloud_project_id
         @signing_key = OpenSSL::PKey::RSA.new @private_key

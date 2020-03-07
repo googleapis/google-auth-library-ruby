@@ -36,12 +36,13 @@ require "googleauth"
 describe Google::Auth::Credentials, :private do
   let :default_keyfile_hash do
     {
-      "private_key_id" => "testabc1234567890xyz",
-      "private_key"    => "-----BEGIN RSA PRIVATE KEY-----\nMIIBOwIBAAJBAOyi0Hy1l4Ym2m2o71Q0TF4O9E81isZEsX0bb+Bqz1SXEaSxLiXM\nUZE8wu0eEXivXuZg6QVCW/5l+f2+9UPrdNUCAwEAAQJAJkqubA/Chj3RSL92guy3\nktzeodarLyw8gF8pOmpuRGSiEo/OLTeRUMKKD1/kX4f9sxf3qDhB4e7dulXR1co/\nIQIhAPx8kMW4XTTL6lJYd2K5GrH8uBMp8qL5ya3/XHrBgw3dAiEA7+3Iw3ULTn2I\n1J34WlJ2D5fbzMzB4FAHUNEV7Ys3f1kCIQDtUahCMChrl7+H5t9QS+xrn77lRGhs\nB50pjvy95WXpgQIhAI2joW6JzTfz8fAapb+kiJ/h9Vcs1ZN3iyoRlNFb61JZAiA8\nNy5NyNrMVwtB/lfJf1dAK/p/Bwd8LZLtgM6PapRfgw==\n-----END RSA PRIVATE KEY-----\n",
-      "client_email"   => "credz-testabc1234567890xyz@developer.gserviceaccount.com",
-      "client_id"      => "credz-testabc1234567890xyz.apps.googleusercontent.com",
-      "type"           => "service_account",
-      "project_id"     => "a_project_id"
+      "private_key_id"   => "testabc1234567890xyz",
+      "private_key"      => "-----BEGIN RSA PRIVATE KEY-----\nMIIBOwIBAAJBAOyi0Hy1l4Ym2m2o71Q0TF4O9E81isZEsX0bb+Bqz1SXEaSxLiXM\nUZE8wu0eEXivXuZg6QVCW/5l+f2+9UPrdNUCAwEAAQJAJkqubA/Chj3RSL92guy3\nktzeodarLyw8gF8pOmpuRGSiEo/OLTeRUMKKD1/kX4f9sxf3qDhB4e7dulXR1co/\nIQIhAPx8kMW4XTTL6lJYd2K5GrH8uBMp8qL5ya3/XHrBgw3dAiEA7+3Iw3ULTn2I\n1J34WlJ2D5fbzMzB4FAHUNEV7Ys3f1kCIQDtUahCMChrl7+H5t9QS+xrn77lRGhs\nB50pjvy95WXpgQIhAI2joW6JzTfz8fAapb+kiJ/h9Vcs1ZN3iyoRlNFb61JZAiA8\nNy5NyNrMVwtB/lfJf1dAK/p/Bwd8LZLtgM6PapRfgw==\n-----END RSA PRIVATE KEY-----\n",
+      "client_email"     => "credz-testabc1234567890xyz@developer.gserviceaccount.com",
+      "client_id"        => "credz-testabc1234567890xyz.apps.googleusercontent.com",
+      "type"             => "service_account",
+      "project_id"       => "a_project_id",
+      "quota_project_id" => "b_project_id"
     }
   end
 
@@ -118,6 +119,7 @@ describe Google::Auth::Credentials, :private do
       expect(creds).to be_a_kind_of(TestCredentials1)
       expect(creds.client).to eq(mocked_signet)
       expect(creds.project_id).to eq(default_keyfile_hash["project_id"])
+      expect(creds.quota_project_id).to eq(default_keyfile_hash["quota_project_id"])
     end
 
     it "subclasses can use PATH_ENV_VARS to get keyfile path" do
@@ -153,6 +155,7 @@ describe Google::Auth::Credentials, :private do
       expect(creds).to be_a_kind_of(TestCredentials2)
       expect(creds.client).to eq(mocked_signet)
       expect(creds.project_id).to eq(default_keyfile_hash["project_id"])
+      expect(creds.quota_project_id).to eq(default_keyfile_hash["quota_project_id"])
     end
 
     it "subclasses can use JSON_ENV_VARS to get keyfile contents" do
@@ -190,6 +193,7 @@ describe Google::Auth::Credentials, :private do
       expect(creds).to be_a_kind_of(TestCredentials3)
       expect(creds.client).to eq(mocked_signet)
       expect(creds.project_id).to eq(default_keyfile_hash["project_id"])
+      expect(creds.quota_project_id).to eq(default_keyfile_hash["quota_project_id"])
     end
 
     it "subclasses can use DEFAULT_PATHS to get keyfile path" do
@@ -225,6 +229,7 @@ describe Google::Auth::Credentials, :private do
       expect(creds).to be_a_kind_of(TestCredentials4)
       expect(creds.client).to eq(mocked_signet)
       expect(creds.project_id).to eq(default_keyfile_hash["project_id"])
+      expect(creds.quota_project_id).to eq(default_keyfile_hash["quota_project_id"])
     end
 
     it "subclasses that find no matches default to Google::Auth.get_application_default" do
@@ -266,6 +271,7 @@ describe Google::Auth::Credentials, :private do
       expect(creds).to be_a_kind_of(TestCredentials5)
       expect(creds.client).to eq(mocked_signet)
       expect(creds.project_id).to eq(default_keyfile_hash["project_id"])
+      expect(creds.quota_project_id).to eq(default_keyfile_hash["quota_project_id"])
     end
   end
 
@@ -305,6 +311,7 @@ describe Google::Auth::Credentials, :private do
       expect(creds).to be_a_kind_of(TestCredentials11)
       expect(creds.client).to eq(mocked_signet)
       expect(creds.project_id).to eq(default_keyfile_hash["project_id"])
+      expect(creds.quota_project_id).to eq(default_keyfile_hash["quota_project_id"])
     end
 
     it "subclasses can use PATH_ENV_VARS to get keyfile path" do
@@ -339,6 +346,7 @@ describe Google::Auth::Credentials, :private do
       expect(creds).to be_a_kind_of(TestCredentials12)
       expect(creds.client).to eq(mocked_signet)
       expect(creds.project_id).to eq(default_keyfile_hash["project_id"])
+      expect(creds.quota_project_id).to eq(default_keyfile_hash["quota_project_id"])
     end
 
     it "subclasses can use JSON_ENV_VARS to get keyfile contents" do
@@ -375,6 +383,7 @@ describe Google::Auth::Credentials, :private do
       expect(creds).to be_a_kind_of(TestCredentials13)
       expect(creds.client).to eq(mocked_signet)
       expect(creds.project_id).to eq(default_keyfile_hash["project_id"])
+      expect(creds.quota_project_id).to eq(default_keyfile_hash["quota_project_id"])
     end
 
     it "subclasses can use DEFAULT_PATHS to get keyfile path" do
@@ -409,6 +418,7 @@ describe Google::Auth::Credentials, :private do
       expect(creds).to be_a_kind_of(TestCredentials14)
       expect(creds.client).to eq(mocked_signet)
       expect(creds.project_id).to eq(default_keyfile_hash["project_id"])
+      expect(creds.quota_project_id).to eq(default_keyfile_hash["quota_project_id"])
     end
 
     it "subclasses that find no matches default to Google::Auth.get_application_default" do
@@ -449,6 +459,7 @@ describe Google::Auth::Credentials, :private do
       expect(creds).to be_a_kind_of(TestCredentials15)
       expect(creds.client).to eq(mocked_signet)
       expect(creds.project_id).to eq(default_keyfile_hash["project_id"])
+      expect(creds.quota_project_id).to eq(default_keyfile_hash["quota_project_id"])
     end
   end
 
