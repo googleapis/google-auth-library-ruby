@@ -112,12 +112,13 @@ describe Google::Auth::ServiceAccountCredentials do
   let(:client_email) { "app@developer.gserviceaccount.com" }
   let :cred_json do
     {
-      private_key_id: "a_private_key_id",
-      private_key:    @key.to_pem,
-      client_email:   client_email,
-      client_id:      "app.apps.googleusercontent.com",
-      type:           "service_account",
-      project_id:     "a_project_id"
+      private_key_id:   "a_private_key_id",
+      private_key:      @key.to_pem,
+      client_email:     client_email,
+      client_id:        "app.apps.googleusercontent.com",
+      type:             "service_account",
+      project_id:       "a_project_id",
+      quota_project_id: "b_project_id"
     }
   end
 
@@ -285,6 +286,7 @@ describe Google::Auth::ServiceAccountCredentials do
         ENV["APPDATA"] = dir
         credentials = @clz.from_well_known_path @scope
         expect(credentials.project_id).to eq(cred_json[:project_id])
+        expect(credentials.quota_project_id).to eq(cred_json[:quota_project_id])
       end
     end
 
@@ -476,6 +478,7 @@ describe Google::Auth::ServiceAccountJwtHeaderCredentials do
         ENV["APPDATA"] = dir
         credentials = clz.from_well_known_path @scope
         expect(credentials.project_id).to eq(cred_json[:project_id])
+        expect(credentials.quota_project_id).to be_nil
       end
     end
   end
