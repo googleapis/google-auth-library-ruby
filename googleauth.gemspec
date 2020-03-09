@@ -27,7 +27,7 @@ Gem::Specification.new do |gem|
   gem.platform      = Gem::Platform::RUBY
   gem.required_ruby_version = ">= 2.4.0"
 
-  gem.add_dependency "faraday", "~> 0.12"
+  gem.add_dependency "faraday", ">= 0.17.3", "< 2.0"
   gem.add_dependency "jwt", ">= 1.4", "< 3.0"
   gem.add_dependency "memoist", "~> 0.16"
   gem.add_dependency "multi_json", "~> 1.11"

@@ -185,6 +185,13 @@ module Google
       #
       attr_reader :project_id
 
+      ##
+      # Identifier for a separate project used for billing/quota, if any.
+      #
+      # @return [String,nil]
+      #
+      attr_reader :quota_project_id
+
       # @private Delegate client methods to the client object.
       extend Forwardable
 
@@ -215,8 +222,6 @@ module Google
                      :token_credential_uri, :audience,
                      :scope, :issuer, :signing_key, :updater_proc
 
-      # rubocop:disable Metrics/AbcSize
-
       ##
       # Creates a new Credentials instance with the provided auth credentials, and with the default
       # values configured on the class.
@@ -236,23 +241,15 @@ module Google
       #   * +:default_connection+ - the default connection to use for the client
       #
       def initialize keyfile, options = {}
-        scope = options[:scope]
         verify_keyfile_provided! keyfile
         @project_id = options["project_id"] || options["project"]
+        @quota_project_id = options["quota_project_id"]
         if keyfile.is_a? Signet::OAuth2::Client
-          @client = keyfile
-          @project_id ||= keyfile.project_id if keyfile.respond_to? :project_id
+          update_from_signet keyfile
         elsif keyfile.is_a? Hash
-          hash = stringify_hash_keys keyfile
-          hash["scope"] ||= scope
-          @client = init_client hash, options
-          @project_id ||= (hash["project_id"] || hash["project"])
+          update_from_hash keyfile, options
         else
-          verify_keyfile_exists! keyfile
-          json = JSON.parse ::File.read(keyfile)
-          json["scope"] ||= scope
-          @project_id ||= (json["project_id"] || json["project"])
-          @client = init_client json, options
+          update_from_filepath keyfile, options
         end
         CredentialsLoader.warn_if_cloud_sdk_credentials @client.client_id
         @project_id ||= CredentialsLoader.load_gcloud_project_id
@@ -261,7 +258,6 @@ module Google
         @paths = nil
         @scope = nil
       end
-      # rubocop:enable Metrics/AbcSize
 
       ##
       # Creates a new Credentials instance with auth credentials acquired by searching the
@@ -369,6 +365,29 @@ module Google
           scope:                Array(options["scope"]),
           issuer:               options["client_email"],
           signing_key:          OpenSSL::PKey::RSA.new(options["private_key"]) }
+      end
+
+      def update_from_signet client
+        @project_id ||= client.project_id if client.respond_to? :project_id
+        @quota_project_id ||= client.quota_project_id if client.respond_to? :quota_project_id
+        @client = client
+      end
+
+      def update_from_hash hash, options
+        hash = stringify_hash_keys hash
+        hash["scope"] ||= options[:scope]
+        @project_id ||= (hash["project_id"] || hash["project"])
+        @quota_project_id ||= hash["quota_project_id"]
+        @client = init_client hash, options
+      end
+
+      def update_from_filepath path, options
+        verify_keyfile_exists! path
+        json = JSON.parse ::File.read(path)
+        json["scope"] ||= options[:scope]
+        @project_id ||= (json["project_id"] || json["project"])
+        @quota_project_id ||= json["quota_project_id"]
+        @client = init_client json, options
       end
     end
   end
