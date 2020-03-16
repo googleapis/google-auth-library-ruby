@@ -9,7 +9,7 @@ Gem::Specification.new do |gem|
   gem.version       = Google::Auth::VERSION
   gem.authors       = ["Tim Emiola"]
   gem.email         = "temiola@google.com"
-  gem.homepage      = "https://github.com/google/google-auth-library-ruby"
+  gem.homepage      = "https://github.com/googleapis/google-auth-library-ruby"
   gem.summary       = "Google Auth Library for Ruby"
   gem.license       = "Apache-2.0"
   gem.description   = <<-DESCRIPTION
