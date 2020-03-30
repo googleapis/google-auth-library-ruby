@@ -37,23 +37,32 @@ require "googleauth/compute_engine"
 require "spec_helper"
 
 describe Google::Auth::GCECredentials do
-  MD_URI = "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token".freeze
+  MD_ACCESS_URI = "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token".freeze
+  MD_ID_URI = "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/identity?audience=https://pubsub.googleapis.com/".freeze
   GCECredentials = Google::Auth::GCECredentials
 
   before :example do
     @client = GCECredentials.new
+    @id_client = GCECredentials.new target_audience: "https://pubsub.googleapis.com/"
   end
 
-  def make_auth_stubs opts = {}
-    access_token = opts[:access_token] || ""
-    body = MultiJson.dump("access_token" => access_token,
-                          "token_type"   => "Bearer",
-                          "expires_in"   => 3600)
-    stub_request(:get, MD_URI)
-      .with(headers: { "Metadata-Flavor" => "Google" })
-      .to_return(body:    body,
-                 status:  200,
-                 headers: { "Content-Type" => "application/json" })
+  def make_auth_stubs opts
+    if opts[:access_token]
+      body = MultiJson.dump("access_token" => opts[:access_token],
+                            "token_type"   => "Bearer",
+                            "expires_in"   => 3600)
+      stub_request(:get, MD_ACCESS_URI)
+        .with(headers: { "Metadata-Flavor" => "Google" })
+        .to_return(body:    body,
+                   status:  200,
+                   headers: { "Content-Type" => "application/json" })
+    elsif opts[:id_token]
+      stub_request(:get, MD_ID_URI)
+        .with(headers: { "Metadata-Flavor" => "Google" })
+        .to_return(body:    opts[:id_token],
+                   status:  200,
+                   headers: { "Content-Type" => "text/html" })
+    end
   end
 
   it_behaves_like "apply/apply! are OK"
@@ -61,7 +70,7 @@ describe Google::Auth::GCECredentials do
   context "metadata is unavailable" do
     describe "#fetch_access_token" do
       it "should fail if the metadata request returns a 404" do
-        stub = stub_request(:get, MD_URI)
+        stub = stub_request(:get, MD_ACCESS_URI)
                .to_return(status:  404,
                           headers: { "Metadata-Flavor" => "Google" })
         expect { @client.fetch_access_token! }
@@ -70,7 +79,7 @@ describe Google::Auth::GCECredentials do
       end
 
       it "should fail if the metadata request returns an unexpected code" do
-        stub = stub_request(:get, MD_URI)
+        stub = stub_request(:get, MD_ACCESS_URI)
                .to_return(status:  503,
                           headers: { "Metadata-Flavor" => "Google" })
         expect { @client.fetch_access_token! }

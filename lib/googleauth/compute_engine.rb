@@ -51,8 +51,10 @@ module Google
     class GCECredentials < Signet::OAuth2::Client
       # The IP Address is used in the URIs to speed up failures on non-GCE
       # systems.
-      COMPUTE_AUTH_TOKEN_URI = "http://169.254.169.254/computeMetadata/v1/"\
-      "instance/service-accounts/default/token".freeze
+      COMPUTE_AUTH_TOKEN_URI =
+        "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token".freeze
+      COMPUTE_ID_TOKEN_URI =
+        "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/identity".freeze
       COMPUTE_CHECK_URI = "http://169.254.169.254".freeze
 
       class << self
@@ -83,11 +85,20 @@ module Google
         c = options[:connection] || Faraday.default_connection
         retry_with_error do
           headers = { "Metadata-Flavor" => "Google" }
-          resp = c.get COMPUTE_AUTH_TOKEN_URI, nil, headers
+          resp =
+            if target_audience
+              c.get COMPUTE_ID_TOKEN_URI, { "audience" => target_audience }, headers
+            else
+              c.get COMPUTE_AUTH_TOKEN_URI, nil, headers
+            end
           case resp.status
           when 200
-            Signet::OAuth2.parse_credentials(resp.body,
-                                             resp.headers["content-type"])
+            content_type = resp.headers["content-type"]
+            if content_type == "text/html"
+              { (target_audience ? "id_token" : "access_token") => resp.body }
+            else
+              Signet::OAuth2.parse_credentials resp.body, content_type
+            end
           when 404
             raise Signet::AuthorizationError, NO_METADATA_SERVER_ERROR
           else

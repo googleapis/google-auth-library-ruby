@@ -64,11 +64,11 @@ describe Google::Auth::UserRefreshCredentials do
     )
   end
 
-  def make_auth_stubs opts = {}
-    access_token = opts[:access_token] || ""
-    body = MultiJson.dump("access_token" => access_token,
-                          "token_type"   => "Bearer",
-                          "expires_in"   => 3600)
+  def make_auth_stubs opts
+    body_fields = { "token_type" => "Bearer", "expires_in" => 3600 }
+    body_fields["access_token"] = opts[:access_token] if opts[:access_token]
+    body_fields["id_token"] = opts[:id_token] if opts[:id_token]
+    body = MultiJson.dump body_fields
     stub_request(:post, "https://oauth2.googleapis.com/token")
       .with(body: hash_including("grant_type" => "refresh_token"))
       .to_return(body:    body,
