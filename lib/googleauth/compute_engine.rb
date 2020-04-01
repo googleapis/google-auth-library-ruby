@@ -84,13 +84,10 @@ module Google
       def fetch_access_token options = {}
         c = options[:connection] || Faraday.default_connection
         retry_with_error do
+          uri = target_audience ? COMPUTE_ID_TOKEN_URI : COMPUTE_AUTH_TOKEN_URI
+          query = target_audience ? { "audience" => target_audience, "format" => "full" } : nil
           headers = { "Metadata-Flavor" => "Google" }
-          resp =
-            if target_audience
-              c.get COMPUTE_ID_TOKEN_URI, { "audience" => target_audience }, headers
-            else
-              c.get COMPUTE_AUTH_TOKEN_URI, nil, headers
-            end
+          resp = c.get uri, query, headers
           case resp.status
           when 200
             content_type = resp.headers["content-type"]

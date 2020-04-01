@@ -57,7 +57,7 @@ module Google
       # @param json_key_io [IO] an IO from which the JSON key can be read
       # @param scope [string|array|nil] the scope(s) to access
       def self.make_creds options = {}
-        json_key_io, scope, target_audience = options.values_at :json_key_io, :scope, :target_audience
+        json_key_io, scope = options.values_at :json_key_io, :scope
         user_creds = read_json_key json_key_io if json_key_io
         user_creds ||= {
           "client_id"     => ENV[CredentialsLoader::CLIENT_ID_VAR],
@@ -71,8 +71,7 @@ module Google
             client_secret:        user_creds["client_secret"],
             refresh_token:        user_creds["refresh_token"],
             project_id:           user_creds["project_id"],
-            scope:                scope,
-            target_audience:      target_audience)
+            scope:                scope)
           .configure_connection(options)
       end
 

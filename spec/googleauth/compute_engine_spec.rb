@@ -38,7 +38,7 @@ require "spec_helper"
 
 describe Google::Auth::GCECredentials do
   MD_ACCESS_URI = "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token".freeze
-  MD_ID_URI = "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/identity?audience=https://pubsub.googleapis.com/".freeze
+  MD_ID_URI = "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/identity?audience=https://pubsub.googleapis.com/&format=full".freeze
   GCECredentials = Google::Auth::GCECredentials
 
   before :example do

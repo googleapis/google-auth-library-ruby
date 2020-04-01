@@ -59,6 +59,8 @@ module Google
       # @param scope [string|array|nil] the scope(s) to access
       def self.make_creds options = {}
         json_key_io, scope, target_audience = options.values_at :json_key_io, :scope, :target_audience
+        raise ArgumentError, "Cannot specify both scope and target_audience" if scope && target_audience
+
         if json_key_io
           private_key, client_email, project_id, quota_project_id = read_json_key json_key_io
         else

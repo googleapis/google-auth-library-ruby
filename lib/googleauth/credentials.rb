@@ -399,6 +399,10 @@ module Google
         options["scope"] ||= self.class.scope
         options["target_audience"] ||= self.class.target_audience
 
+        if !Array(options["scope"]).empty? && options["target_audience"]
+          raise ArgumentError, "Cannot specify both scope and target_audience"
+        end
+
         needs_scope = options["target_audience"].nil?
         # client options for initializing signet client
         { token_credential_uri: options["token_credential_uri"],
