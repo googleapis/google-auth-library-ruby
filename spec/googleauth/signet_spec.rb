@@ -47,18 +47,26 @@ describe Signet::OAuth2::Client do
       audience:             "https://oauth2.googleapis.com/token",
       signing_key:          @key
     )
+    @id_client = Signet::OAuth2::Client.new(
+      token_credential_uri: "https://oauth2.googleapis.com/token",
+      target_audience:      "https://pubsub.googleapis.com/",
+      issuer:               "app@example.com",
+      audience:             "https://oauth2.googleapis.com/token",
+      signing_key:          @key
+    )
   end
 
   def make_auth_stubs opts
-    access_token = opts[:access_token] || ""
-    body = MultiJson.dump("access_token" => access_token,
-                          "token_type"   => "Bearer",
-                          "expires_in"   => 3600)
+    body_fields = { "token_type" => "Bearer", "expires_in" => 3600 }
+    body_fields["access_token"] = opts[:access_token] if opts[:access_token]
+    body_fields["id_token"] = opts[:id_token] if opts[:id_token]
+    body = MultiJson.dump body_fields
     blk = proc do |request|
       params = Addressable::URI.form_unencode request.body
-      _claim, _header = JWT.decode(params.assoc("assertion").last,
-                                   @key.public_key, true,
-                                   algorithm: "RS256")
+      claim, _header = JWT.decode(params.assoc("assertion").last,
+                                  @key.public_key, true,
+                                  algorithm: "RS256")
+      !opts[:id_token] || claim["target_audience"] == "https://pubsub.googleapis.com/"
     end
     with_params = { body: hash_including(
       "grant_type" => "urn:ietf:params:oauth:grant-type:jwt-bearer"

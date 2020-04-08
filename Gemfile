@@ -24,4 +24,5 @@ platforms :jruby do
   end
 end
 
+gem "faraday", "~> 0.17"
 gem "gems", "~> 1.2"

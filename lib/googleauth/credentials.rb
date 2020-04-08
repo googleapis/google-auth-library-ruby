@@ -47,6 +47,8 @@ module Google
       # The default target audience ID to be used when none is provided during initialization.
       AUDIENCE = "https://oauth2.googleapis.com/token".freeze
 
+      @audience = @scope = @target_audience = @env_vars = @paths = nil
+
       ##
       # The default token credential URI to be used when none is provided during initialization.
       # The URI is the authorization server's HTTP endpoint capable of issuing tokens and
@@ -97,19 +99,24 @@ module Google
       # A scope is an access range defined by the authorization server.
       # The scope can be a single value or a list of values.
       #
+      # Either {#scope} or {#target_audience}, but not both, should be non-nil.
+      # If {#scope} is set, this credential will produce access tokens.
+      # If {#target_audience} is set, this credential will produce ID tokens.
+      #
       # @return [String, Array<String>]
       #
       def self.scope
         return @scope unless @scope.nil?
 
-        tmp_scope = []
-        # Pull in values is the SCOPE constant exists.
-        tmp_scope << const_get(:SCOPE) if const_defined? :SCOPE
-        tmp_scope.flatten.uniq
+        Array(const_get(:SCOPE)).flatten.uniq if const_defined? :SCOPE
       end
 
       ##
       # Sets the default scope to be used when none is provided during initialization.
+      #
+      # Either {#scope} or {#target_audience}, but not both, should be non-nil.
+      # If {#scope} is set, this credential will produce access tokens.
+      # If {#target_audience} is set, this credential will produce ID tokens.
       #
       # @param [String, Array<String>] new_scope
       # @return [String, Array<String>]
@@ -117,6 +124,34 @@ module Google
       def self.scope= new_scope
         new_scope = Array new_scope unless new_scope.nil?
         @scope = new_scope
+      end
+
+      ##
+      # The default final target audience for ID tokens, to be used when none
+      # is provided during initialization.
+      #
+      # Either {#scope} or {#target_audience}, but not both, should be non-nil.
+      # If {#scope} is set, this credential will produce access tokens.
+      # If {#target_audience} is set, this credential will produce ID tokens.
+      #
+      # @return [String]
+      #
+      def self.target_audience
+        @target_audience
+      end
+
+      ##
+      # Sets the default final target audience for ID tokens, to be used when none
+      # is provided during initialization.
+      #
+      # Either {#scope} or {#target_audience}, but not both, should be non-nil.
+      # If {#scope} is set, this credential will produce access tokens.
+      # If {#target_audience} is set, this credential will produce ID tokens.
+      #
+      # @param [String] new_target_audience
+      #
+      def self.target_audience= new_target_audience
+        @target_audience = new_target_audience
       end
 
       ##
@@ -208,6 +243,9 @@ module Google
       #   @return [String, Array<String>] The scope for this client. A scope is an access range
       #     defined by the authorization server. The scope can be a single value or a list of values.
       #
+      # @!attribute [r] target_audience
+      #   @return [String] The final target audience for ID tokens returned by this credential.
+      #
       # @!attribute [r] issuer
       #   @return [String] The issuer ID associated with this client.
       #
@@ -220,7 +258,7 @@ module Google
       #
       def_delegators :@client,
                      :token_credential_uri, :audience,
-                     :scope, :issuer, :signing_key, :updater_proc
+                     :scope, :issuer, :signing_key, :updater_proc, :target_audience
 
       ##
       # Creates a new Credentials instance with the provided auth credentials, and with the default
@@ -319,7 +357,8 @@ module Google
       # @private Lookup Credentials using Google::Auth.get_application_default.
       def self.from_application_default options
         scope = options[:scope] || self.scope
-        client = Google::Auth.get_application_default scope
+        auth_opts = { target_audience: options[:target_audience] || target_audience }
+        client = Google::Auth.get_application_default scope, auth_opts
         new client, options
       end
 
@@ -358,11 +397,18 @@ module Google
         options["token_credential_uri"] ||= self.class.token_credential_uri
         options["audience"] ||= self.class.audience
         options["scope"] ||= self.class.scope
+        options["target_audience"] ||= self.class.target_audience
 
+        if !Array(options["scope"]).empty? && options["target_audience"]
+          raise ArgumentError, "Cannot specify both scope and target_audience"
+        end
+
+        needs_scope = options["target_audience"].nil?
         # client options for initializing signet client
         { token_credential_uri: options["token_credential_uri"],
           audience:             options["audience"],
-          scope:                Array(options["scope"]),
+          scope:                (needs_scope ? Array(options["scope"]) : nil),
+          target_audience:      options["target_audience"],
           issuer:               options["client_email"],
           signing_key:          OpenSSL::PKey::RSA.new(options["private_key"]) }
       end
@@ -376,6 +422,7 @@ module Google
       def update_from_hash hash, options
         hash = stringify_hash_keys hash
         hash["scope"] ||= options[:scope]
+        hash["target_audience"] ||= options[:target_audience]
         @project_id ||= (hash["project_id"] || hash["project"])
         @quota_project_id ||= hash["quota_project_id"]
         @client = init_client hash, options
@@ -385,6 +432,7 @@ module Google
         verify_keyfile_exists! path
         json = JSON.parse ::File.read(path)
         json["scope"] ||= options[:scope]
+        json["target_audience"] ||= options[:target_audience]
         @project_id ||= (json["project_id"] || json["project"])
         @quota_project_id ||= json["quota_project_id"]
         @client = init_client json, options

@@ -48,8 +48,9 @@ module Signet
       def apply! a_hash, opts = {}
         # fetch the access token there is currently not one, or if the client
         # has expired
-        fetch_access_token! opts if access_token.nil? || expires_within?(60)
-        a_hash[AUTH_METADATA_KEY] = "Bearer #{access_token}"
+        token_type = target_audience ? :id_token : :access_token
+        fetch_access_token! opts if send(token_type).nil? || expires_within?(60)
+        a_hash[AUTH_METADATA_KEY] = "Bearer #{send token_type}"
       end
 
       # Returns a clone of a_hash updated with the authentication token

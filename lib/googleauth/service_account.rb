@@ -58,7 +58,9 @@ module Google
       # @param json_key_io [IO] an IO from which the JSON key can be read
       # @param scope [string|array|nil] the scope(s) to access
       def self.make_creds options = {}
-        json_key_io, scope = options.values_at :json_key_io, :scope
+        json_key_io, scope, target_audience = options.values_at :json_key_io, :scope, :target_audience
+        raise ArgumentError, "Cannot specify both scope and target_audience" if scope && target_audience
+
         if json_key_io
           private_key, client_email, project_id, quota_project_id = read_json_key json_key_io
         else
@@ -72,6 +74,7 @@ module Google
         new(token_credential_uri: TOKEN_CRED_URI,
             audience:             TOKEN_CRED_URI,
             scope:                scope,
+            target_audience:      target_audience,
             issuer:               client_email,
             signing_key:          OpenSSL::PKey::RSA.new(private_key),
             project_id:           project_id,
