@@ -1,3 +1,8 @@
+### 0.10.0 / 2020-04-08
+
+* Support for ID token credentials.
+* Support reading quota_id_project from service account credentials.
+
 ### 0.11.0 / 2020-02-24
 
 * Support Faraday 1.x.
