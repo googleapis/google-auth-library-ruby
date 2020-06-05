@@ -73,7 +73,7 @@ module Google
         # @param aud [String,nil] If given, override the `aud` check.
         # @param azp [String,nil] If given, override the `azp` check.
         # @param iss [String,nil] If given, override the `iss` check.
-        # 
+        #
         # @return [Hash] the decoded payload, if verification succeeded.
         # @raise [KeySourceError] if the key source failed to obtain public keys
         # @raise [VerificationError] if the token verification failed.

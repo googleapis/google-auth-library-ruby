@@ -109,8 +109,8 @@ module Google
           #
           # @param jwk [Hash,String] The JWK Set specification.
           # @return [Array<KeyInfo>]
-          # @raise [KeySourceError] If a key could not be extracted from the 
-          #     WK Set.
+          # @raise [KeySourceError] If a key could not be extracted from the
+          #     JWK Set.
           #
           def from_jwk_set jwk_set
             jwk_set = symbolize_keys ensure_json_parsed jwk_set
