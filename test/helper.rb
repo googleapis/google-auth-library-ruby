@@ -1,5 +1,4 @@
-# Copyright 2015, Google Inc.
-# All rights reserved.
+# Copyright 2020 Google LLC
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
@@ -27,10 +26,8 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-require "googleauth/application_default"
-require "googleauth/client_id"
-require "googleauth/credentials"
-require "googleauth/default_credentials"
-require "googleauth/id_tokens"
-require "googleauth/user_authorizer"
-require "googleauth/web_user_authorizer"
+require "minitest/autorun"
+require "minitest/focus"
+require "webmock/minitest"
+
+require "googleauth"
