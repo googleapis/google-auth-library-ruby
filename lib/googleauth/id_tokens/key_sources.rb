@@ -71,7 +71,7 @@ module Google
         # @return [OpenSSL::PKey::RSA,OpenSSL::PKey::EC]
         #
         attr_reader :key
-        
+
         ##
         # The signature algorithm. (normally `RS256` or `ES256`)
         # @return [String]
