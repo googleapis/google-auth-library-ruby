@@ -104,7 +104,7 @@ module Google
       # authenticate instead.
       def apply! a_hash, opts = {}
         # Use the base implementation if scopes are set
-        unless scope.nil?
+        unless scope.nil? && target_audience.nil?
           super
           return
         end
