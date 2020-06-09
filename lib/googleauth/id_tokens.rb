@@ -71,7 +71,7 @@ module Google
     # To point to a custom URI that returns a JWK set:
     #
     #     source = Google::Auth::IDTokens::JwkHttpKeySource.new "https://example.com/jwk"
-    #     verifier = Google::Auth::IDTokens::Verifier key_source: source
+    #     verifier = Google::Auth::IDTokens::Verifier.new key_source: source
     #     payload = verifier.verify the_token, aud: "my-app-client-id"
     #
     # To provide key data directly:
