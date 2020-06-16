@@ -46,7 +46,30 @@ describe Google::Auth::IDTokens do
     end
   end
 
-  describe "DownloadX509CertSource" do
+  describe "HttpKeySource" do
+    let(:certs_uri) { "https://example.com/my-certs" }
+    let(:certs_body) { "{}" }
+
+    it "raises an error when failing to parse json from the site" do
+      source = Google::Auth::IDTokens::HttpKeySource.new certs_uri
+      stub = stub_request(:get, certs_uri).to_return(body: "whoops")
+      error = assert_raises Google::Auth::IDTokens::KeySourceError do
+        source.refresh_keys
+      end
+      assert_equal "Unable to parse JSON", error.message
+      assert_requested stub
+    end
+
+    it "downloads data but gets no keys" do
+      source = Google::Auth::IDTokens::HttpKeySource.new certs_uri
+      stub = stub_request(:get, certs_uri).to_return(body: certs_body)
+      keys = source.refresh_keys
+      assert_empty keys
+      assert_requested stub
+    end
+  end
+
+  describe "X509CertHttpKeySource" do
     let(:certs_uri) { "https://example.com/my-certs" }
     let(:key1) { OpenSSL::PKey::RSA.new 2048 }
     let(:key2) { OpenSSL::PKey::RSA.new 2048 }
@@ -116,7 +139,7 @@ describe Google::Auth::IDTokens do
     end
   end
 
-  describe "DownloadJwkSource" do
+  describe "JwkHttpKeySource" do
     let(:jwk_uri) { "https://example.com/my-jwk" }
     let(:id1) { "fb8ca5b7d8d9a5c6c6788071e866c6c40f3fc1f9" }
     let(:id2) { "LYyP2g" }

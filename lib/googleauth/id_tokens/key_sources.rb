@@ -295,7 +295,7 @@ module Google
 
         protected
 
-        def interpret_json
+        def interpret_json _data
           nil
         end
       end
