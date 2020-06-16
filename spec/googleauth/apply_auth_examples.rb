@@ -90,6 +90,18 @@ shared_examples "apply/apply! are OK" do
       expect(md).to eq(want)
       expect(stub).to have_been_requested
     end
+
+    it "should update the target hash with fetched ID token" do
+      skip unless @id_client
+      token = "1/abcdef1234567890"
+      stub = make_auth_stubs id_token: token
+
+      md = { foo: "bar" }
+      @id_client.apply! md
+      want = { :foo => "bar", auth_key => "Bearer #{token}" }
+      expect(md).to eq(want)
+      expect(stub).to have_been_requested
+    end
   end
 
   describe "updater_proc" do
