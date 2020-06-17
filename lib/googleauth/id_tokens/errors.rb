@@ -1,5 +1,6 @@
-# Copyright 2015, Google Inc.
-# All rights reserved.
+# frozen_string_literal: true
+
+# Copyright 2020 Google LLC
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
@@ -27,10 +28,44 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-require "googleauth/application_default"
-require "googleauth/client_id"
-require "googleauth/credentials"
-require "googleauth/default_credentials"
-require "googleauth/id_tokens"
-require "googleauth/user_authorizer"
-require "googleauth/web_user_authorizer"
+
+module Google
+  module Auth
+    module IDTokens
+      ##
+      # Failed to obtain keys from the key source.
+      #
+      class KeySourceError < StandardError; end
+
+      ##
+      # Failed to verify a token.
+      #
+      class VerificationError < StandardError; end
+
+      ##
+      # Failed to verify a token because it is expired.
+      #
+      class ExpiredTokenError < VerificationError; end
+
+      ##
+      # Failed to verify a token because its signature did not match.
+      #
+      class SignatureError < VerificationError; end
+
+      ##
+      # Failed to verify a token because its issuer did not match.
+      #
+      class IssuerMismatchError < VerificationError; end
+
+      ##
+      # Failed to verify a token because its audience did not match.
+      #
+      class AudienceMismatchError < VerificationError; end
+
+      ##
+      # Failed to verify a token because its authorized party did not match.
+      #
+      class AuthorizedPartyMismatchError < VerificationError; end
+    end
+  end
+end
