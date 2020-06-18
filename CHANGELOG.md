@@ -1,3 +1,8 @@
+### 0.13.0 / 2020-06-17
+
+* Support for validating ID tokens.
+* Fixed header application of ID tokens from service accounts.
+
 ### 0.12.0 / 2020-04-08
 
 * Support for ID token credentials.
