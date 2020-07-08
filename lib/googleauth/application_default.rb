@@ -75,7 +75,7 @@ module Google
         GCECredentials.unmemoize_all
         raise NOT_FOUND_ERROR
       end
-      GCECredentials.new
+      GCECredentials.new scope: scope
     end
   end
 end

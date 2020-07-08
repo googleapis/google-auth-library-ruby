@@ -85,7 +85,8 @@ module Google
         c = options[:connection] || Faraday.default_connection
         retry_with_error do
           uri = target_audience ? COMPUTE_ID_TOKEN_URI : COMPUTE_AUTH_TOKEN_URI
-          query = target_audience ? { "audience" => target_audience, "format" => "full" } : nil
+          query = target_audience ? { "audience" => target_audience, "format" => "full" } : {}
+          query[:scopes] = Array(scope).join " " if scope
           headers = { "Metadata-Flavor" => "Google" }
           resp = c.get uri, query, headers
           case resp.status

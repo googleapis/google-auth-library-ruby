@@ -51,7 +51,11 @@ describe Google::Auth::GCECredentials do
       body = MultiJson.dump("access_token" => opts[:access_token],
                             "token_type"   => "Bearer",
                             "expires_in"   => 3600)
-      stub_request(:get, MD_ACCESS_URI)
+
+      uri = MD_ACCESS_URI
+      uri += "?scopes=#{opts[:scope]}" if opts[:scope]
+
+      stub_request(:get, uri)
         .with(headers: { "Metadata-Flavor" => "Google" })
         .to_return(body:    body,
                    status:  200,
@@ -69,6 +73,14 @@ describe Google::Auth::GCECredentials do
 
   context "metadata is unavailable" do
     describe "#fetch_access_token" do
+      it "should pass scopes when requesting an access token" do
+        scope = "https://www.googleapis.com/auth/drive"
+        stub = make_auth_stubs access_token: "1/abcdef1234567890", scope: scope
+        @client = GCECredentials.new(scope: [scope])
+        @client.fetch_access_token!
+        expect(stub).to have_been_requested
+      end
+
       it "should fail if the metadata request returns a 404" do
         stub = stub_request(:get, MD_ACCESS_URI)
                .to_return(status:  404,
