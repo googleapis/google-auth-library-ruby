@@ -91,13 +91,13 @@ module Google
           when 403, 500
             msg = "Unexpected error code #{resp.status}" \
               "#{UNEXPECTED_ERROR_SUFFIX}"
-            raise Signet::UnexpectedStatusError, msg            
+            raise Signet::UnexpectedStatusError, msg
           when 404
             raise Signet::AuthorizationError, NO_METADATA_SERVER_ERROR
           else
             msg = "Unexpected error code #{resp.status}" \
               "#{UNEXPECTED_ERROR_SUFFIX}"
-            raise Signet:: AuthorizationError, msg
+            raise Signet::AuthorizationError, msg
           end
         end
       end
