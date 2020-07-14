@@ -128,24 +128,28 @@ describe Google::Auth::ServiceAccountCredentials do
       json_key_io: StringIO.new(cred_json_text),
       scope:       "https://www.googleapis.com/auth/userinfo.profile"
     )
+    @id_client = ServiceAccountCredentials.make_creds(
+      json_key_io:     StringIO.new(cred_json_text),
+      target_audience: "https://pubsub.googleapis.com/"
+    )
   end
 
-  def make_auth_stubs opts = {}
-    access_token = opts[:access_token] || ""
-    body = MultiJson.dump("access_token" => access_token,
-                          "token_type"   => "Bearer",
-                          "expires_in"   => 3600)
+  def make_auth_stubs opts
+    body_fields = { "token_type" => "Bearer", "expires_in" => 3600 }
+    body_fields["access_token"] = opts[:access_token] if opts[:access_token]
+    body_fields["id_token"] = opts[:id_token] if opts[:id_token]
+    body = MultiJson.dump body_fields
     blk = proc do |request|
       params = Addressable::URI.form_unencode request.body
-      _claim, _header = JWT.decode(params.assoc("assertion").last,
-                                   @key.public_key, true,
-                                   algorithm: "RS256")
+      claim, _header = JWT.decode(params.assoc("assertion").last,
+                                  @key.public_key, true,
+                                  algorithm: "RS256")
+      !opts[:id_token] || claim["target_audience"] == "https://pubsub.googleapis.com/"
     end
     stub_request(:post, "https://www.googleapis.com/oauth2/v4/token")
       .with(body: hash_including(
         "grant_type" => "urn:ietf:params:oauth:grant-type:jwt-bearer"
-      ),
-            &blk)
+      ), &blk)
       .to_return(body:    body,
                  status:  200,
                  headers: { "Content-Type" => "application/json" })

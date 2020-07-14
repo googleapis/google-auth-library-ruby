@@ -2,9 +2,30 @@
 require "json"
 require "bundler/gem_tasks"
 
+require "rubocop/rake_task"
+RuboCop::RakeTask.new
+
+require "rake/testtask"
+
+desc "Run tests."
+Rake::TestTask.new do |t|
+  t.libs << "test"
+  t.test_files = FileList["test/**/*_test.rb"]
+  t.warning = false
+end
+
+desc "Run integration tests."
+Rake::TestTask.new("integration") do |t|
+  t.libs << "integration"
+  t.test_files = FileList["integration/**/*_test.rb"]
+  t.warning = false
+end
+
 task :ci do
   header "Using Ruby - #{RUBY_VERSION}"
   sh "bundle exec rubocop"
+  Rake::Task["test"].invoke
+  Rake::Task["integration"].invoke
   sh "bundle exec rspec"
 end
 

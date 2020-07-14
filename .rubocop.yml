@@ -3,9 +3,11 @@ inherit_gem:
 
 AllCops:
   Exclude:
-    - "spec/**/*"
     - "Rakefile"
+    - "integration/**/*"
     - "rakelib/**/*"
+    - "spec/**/*"
+    - "test/**/*"
 Metrics/ClassLength:
   Max: 200
 Metrics/ModuleLength:

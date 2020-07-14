@@ -45,26 +45,37 @@ shared_examples "apply/apply! are OK" do
   # auth client
   describe "#fetch_access_token" do
     let(:token) { "1/abcdef1234567890" }
-    let :stub do
+    let :access_stub do
       make_auth_stubs access_token: token
+    end
+    let :id_stub do
+      make_auth_stubs id_token: token
     end
 
     it "should set access_token to the fetched value" do
-      stub
+      access_stub
       @client.fetch_access_token!
       expect(@client.access_token).to eq(token)
-      expect(stub).to have_been_requested
+      expect(access_stub).to have_been_requested
+    end
+
+    it "should set id_token to the fetched value" do
+      skip unless @id_client
+      id_stub
+      @id_client.fetch_access_token!
+      expect(@id_client.id_token).to eq(token)
+      expect(id_stub).to have_been_requested
     end
 
     it "should notify refresh listeners after updating" do
-      stub
+      access_stub
       expect do |b|
         @client.on_refresh(&b)
         @client.fetch_access_token!
       end.to yield_with_args(have_attributes(
                                access_token: "1/abcdef1234567890"
                              ))
-      expect(stub).to have_been_requested
+      expect(access_stub).to have_been_requested
     end
   end
 
@@ -75,6 +86,18 @@ shared_examples "apply/apply! are OK" do
 
       md = { foo: "bar" }
       @client.apply! md
+      want = { :foo => "bar", auth_key => "Bearer #{token}" }
+      expect(md).to eq(want)
+      expect(stub).to have_been_requested
+    end
+
+    it "should update the target hash with fetched ID token" do
+      skip unless @id_client
+      token = "1/abcdef1234567890"
+      stub = make_auth_stubs id_token: token
+
+      md = { foo: "bar" }
+      @id_client.apply! md
       want = { :foo => "bar", auth_key => "Bearer #{token}" }
       expect(md).to eq(want)
       expect(stub).to have_been_requested

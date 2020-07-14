@@ -64,7 +64,7 @@ describe Google::Auth::UserRefreshCredentials do
     )
   end
 
-  def make_auth_stubs opts = {}
+  def make_auth_stubs opts
     access_token = opts[:access_token] || ""
     body = MultiJson.dump("access_token" => access_token,
                           "token_type"   => "Bearer",

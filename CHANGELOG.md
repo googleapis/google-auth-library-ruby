@@ -1,3 +1,17 @@
+### Unreleased
+
+* Support scopes when using GCE Metadata Server authentication ([@ball-hayden][])
+
+### 0.13.0 / 2020-06-17
+
+* Support for validating ID tokens.
+* Fixed header application of ID tokens from service accounts.
+
+### 0.12.0 / 2020-04-08
+
+* Support for ID token credentials.
+* Support reading quota_id_project from service account credentials.
+
 ### 0.11.0 / 2020-02-24
 
 * Support Faraday 1.x.
@@ -133,3 +147,4 @@ Note: This release now requires Ruby 2.4 or later
 [@tbetbetbe]: https://github.com/tbetbetbe
 [@murgatroid99]: https://github.com/murgatroid99
 [@vsubramani]: https://github.com/vsubramani
+[@ball-hayden]: https://github.com/ball-hayden

@@ -51,8 +51,10 @@ module Google
     class GCECredentials < Signet::OAuth2::Client
       # The IP Address is used in the URIs to speed up failures on non-GCE
       # systems.
-      COMPUTE_AUTH_TOKEN_URI = "http://169.254.169.254/computeMetadata/v1/"\
-      "instance/service-accounts/default/token".freeze
+      COMPUTE_AUTH_TOKEN_URI =
+        "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token".freeze
+      COMPUTE_ID_TOKEN_URI =
+        "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/identity".freeze
       COMPUTE_CHECK_URI = "http://169.254.169.254".freeze
 
       class << self
@@ -82,12 +84,19 @@ module Google
       def fetch_access_token options = {}
         c = options[:connection] || Faraday.default_connection
         retry_with_error do
+          uri = target_audience ? COMPUTE_ID_TOKEN_URI : COMPUTE_AUTH_TOKEN_URI
+          query = target_audience ? { "audience" => target_audience, "format" => "full" } : {}
+          query[:scopes] = Array(scope).join " " if scope
           headers = { "Metadata-Flavor" => "Google" }
-          resp = c.get COMPUTE_AUTH_TOKEN_URI, nil, headers
+          resp = c.get uri, query, headers
           case resp.status
           when 200
-            Signet::OAuth2.parse_credentials(resp.body,
-                                             resp.headers["content-type"])
+            content_type = resp.headers["content-type"]
+            if content_type == "text/html"
+              { (target_audience ? "id_token" : "access_token") => resp.body }
+            else
+              Signet::OAuth2.parse_credentials resp.body, content_type
+            end
           when 403, 500
             msg = "Unexpected error code #{resp.status}" \
               "#{UNEXPECTED_ERROR_SUFFIX}"
