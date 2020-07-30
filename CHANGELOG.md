@@ -1,4 +1,6 @@
-### Unreleased
+# Release History
+
+### 0.13.1 / 2020-07-30
 
 * Support scopes when using GCE Metadata Server authentication ([@ball-hayden][])
 
