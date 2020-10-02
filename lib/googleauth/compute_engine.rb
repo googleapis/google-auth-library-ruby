@@ -86,9 +86,11 @@ module Google
         retry_with_error do
           uri = target_audience ? COMPUTE_ID_TOKEN_URI : COMPUTE_AUTH_TOKEN_URI
           query = target_audience ? { "audience" => target_audience, "format" => "full" } : {}
-          query[:scopes] = Array(scope).join " " if scope
+          query[:scopes] = scope if scope
           headers = { "Metadata-Flavor" => "Google" }
-          resp = c.get uri, query, headers
+          resp = c.get uri, query, headers do |req|
+            req.options.params_encoder = Faraday::FlatParamsEncoder
+          end
           case resp.status
           when 200
             content_type = resp.headers["content-type"]
@@ -100,7 +102,7 @@ module Google
           when 404
             raise Signet::AuthorizationError, NO_METADATA_SERVER_ERROR
           else
-            msg = "Unexpected error code #{resp.status}" \
+            msg = "Unexpected error code #{resp.status} " \
               "#{UNEXPECTED_ERROR_SUFFIX}"
             raise Signet::AuthorizationError, msg
           end

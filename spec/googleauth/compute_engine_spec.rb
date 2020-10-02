@@ -53,7 +53,10 @@ describe Google::Auth::GCECredentials do
                             "expires_in"   => 3600)
 
       uri = MD_ACCESS_URI
-      uri += "?scopes=#{opts[:scope]}" if opts[:scope]
+      if opts[:scope]
+        query = Faraday::FlatParamsEncoder.encode(scopes: opts[:scope])
+        uri += "?#{query}"
+      end
 
       stub_request(:get, uri)
         .with(headers: { "Metadata-Flavor" => "Google" })
@@ -74,9 +77,12 @@ describe Google::Auth::GCECredentials do
   context "metadata is unavailable" do
     describe "#fetch_access_token" do
       it "should pass scopes when requesting an access token" do
-        scope = "https://www.googleapis.com/auth/drive"
-        stub = make_auth_stubs access_token: "1/abcdef1234567890", scope: scope
-        @client = GCECredentials.new(scope: [scope])
+        scopes = [
+          "https://www.googleapis.com/auth/cloud-platform",
+          "https://www.googleapis.com/auth/drive"
+        ]
+        stub = make_auth_stubs access_token: "1/abcdef1234567890", scope: scopes
+        @client = GCECredentials.new(scope: scopes)
         @client.fetch_access_token!
         expect(stub).to have_been_requested
       end

@@ -1,5 +1,10 @@
 # Release History
 
+### Unreleased
+
+* Fix issue with passing multiple scopes in metadata server authentication
+([@danielroseman][])
+
 ### 0.13.1 / 2020-07-30
 
 * Support scopes when using GCE Metadata Server authentication ([@ball-hayden][])
@@ -150,3 +155,4 @@ Note: This release now requires Ruby 2.4 or later
 [@murgatroid99]: https://github.com/murgatroid99
 [@vsubramani]: https://github.com/vsubramani
 [@ball-hayden]: https://github.com/ball-hayden
+[@danielroseman]: https://github.com/danielroseman
