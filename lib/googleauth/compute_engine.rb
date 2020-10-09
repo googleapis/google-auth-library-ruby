@@ -107,7 +107,7 @@ module Google
         retry_with_error do
           uri = target_audience ? GCECredentials.compute_id_token_uri : GCECredentials.compute_auth_token_uri
           query = target_audience ? { "audience" => target_audience, "format" => "full" } : {}
-          query[:scopes] = Array(scope).join " " if scope
+          query[:scopes] = Array(scope).join "," if scope
           headers = { "Metadata-Flavor" => "Google" }
           resp = c.get uri, query, headers
           case resp.status
