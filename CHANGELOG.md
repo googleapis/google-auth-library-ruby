@@ -1,5 +1,10 @@
 # Release History
 
+### 0.14.0 / 2020-10-09
+
+* Honor GCE_METADATA_HOST environment variable
+* Fix errors in some environments when requesting an access token for multiple scopes
+
 ### 0.13.1 / 2020-07-30
 
 * Support scopes when using GCE Metadata Server authentication ([@ball-hayden][])
