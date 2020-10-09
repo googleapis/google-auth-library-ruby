@@ -142,5 +142,19 @@ describe Google::Auth::GCECredentials do
       expect(GCECredentials.on_gce?({}, true)).to eq(false)
       expect(stub).to have_been_requested
     end
+
+    it "should honor GCE_METADATA_HOST environment variable" do
+      ENV["GCE_METADATA_HOST"] = "mymetadata.example.com"
+      begin
+        stub = stub_request(:get, "http://mymetadata.example.com")
+               .with(headers: { "Metadata-Flavor" => "Google" })
+               .to_return(status:  200,
+                          headers: { "Metadata-Flavor" => "Google" })
+        expect(GCECredentials.on_gce?({}, true)).to eq(true)
+        expect(stub).to have_been_requested
+      ensure
+        ENV.delete "GCE_METADATA_HOST"
+      end
+    end
   end
 end
