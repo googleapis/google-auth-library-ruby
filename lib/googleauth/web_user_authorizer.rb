@@ -58,12 +58,9 @@ module Google
     #    end
     #
     # Instead of implementing the callback directly, applications are
-    # encouraged to use {Google::Auth::Web::AuthCallbackApp} instead.
+    # encouraged to use {Google::Auth::Web::CallbackApp} instead.
     #
-    # For rails apps, see {Google::Auth::ControllerHelpers}
-    #
-    # @see {Google::Auth::AuthCallbackApp}
-    # @see {Google::Auth::ControllerHelpers}
+    # @see CallbackApp
     # @note Requires sessions are enabled
     class WebUserAuthorizer < Google::Auth::UserAuthorizer
       STATE_PARAM = "state".freeze
@@ -261,7 +258,7 @@ module Google
       #       Google::Auth::WebUserAuthorizer::CallbackApp.call(env)
       #     end
       #
-      # @see {Google::Auth::WebUserAuthorizer}
+      # @see Google::Auth::WebUserAuthorizer
       class CallbackApp
         LOCATION_HEADER = "Location".freeze
         REDIR_STATUS = 302
