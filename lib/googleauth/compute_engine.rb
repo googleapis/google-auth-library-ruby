@@ -51,14 +51,35 @@ module Google
     class GCECredentials < Signet::OAuth2::Client
       # The IP Address is used in the URIs to speed up failures on non-GCE
       # systems.
+      DEFAULT_METADATA_HOST = "169.254.169.254".freeze
+
+      # @private Unused and deprecated
       COMPUTE_AUTH_TOKEN_URI =
         "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token".freeze
+      # @private Unused and deprecated
       COMPUTE_ID_TOKEN_URI =
         "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/identity".freeze
+      # @private Unused and deprecated
       COMPUTE_CHECK_URI = "http://169.254.169.254".freeze
 
       class << self
         extend Memoist
+
+        def metadata_host
+          ENV.fetch "GCE_METADATA_HOST", DEFAULT_METADATA_HOST
+        end
+
+        def compute_check_uri
+          "http://#{metadata_host}".freeze
+        end
+
+        def compute_auth_token_uri
+          "#{compute_check_uri}/computeMetadata/v1/instance/service-accounts/default/token".freeze
+        end
+
+        def compute_id_token_uri
+          "#{compute_check_uri}/computeMetadata/v1/instance/service-accounts/default/identity".freeze
+        end
 
         # Detect if this appear to be a GCE instance, by checking if metadata
         # is available.
@@ -66,7 +87,7 @@ module Google
           # TODO: This should use google-cloud-env instead.
           c = options[:connection] || Faraday.default_connection
           headers = { "Metadata-Flavor" => "Google" }
-          resp = c.get COMPUTE_CHECK_URI, nil, headers do |req|
+          resp = c.get compute_check_uri, nil, headers do |req|
             req.options.timeout = 1.0
             req.options.open_timeout = 0.1
           end
@@ -84,9 +105,9 @@ module Google
       def fetch_access_token options = {}
         c = options[:connection] || Faraday.default_connection
         retry_with_error do
-          uri = target_audience ? COMPUTE_ID_TOKEN_URI : COMPUTE_AUTH_TOKEN_URI
+          uri = target_audience ? GCECredentials.compute_id_token_uri : GCECredentials.compute_auth_token_uri
           query = target_audience ? { "audience" => target_audience, "format" => "full" } : {}
-          query[:scopes] = Array(scope).join " " if scope
+          query[:scopes] = Array(scope).join "," if scope
           headers = { "Metadata-Flavor" => "Google" }
           resp = c.get uri, query, headers
           case resp.status
