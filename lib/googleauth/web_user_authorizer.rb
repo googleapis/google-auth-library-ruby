@@ -58,7 +58,7 @@ module Google
     #    end
     #
     # Instead of implementing the callback directly, applications are
-    # encouraged to use {Google::Auth::Web::CallbackApp} instead.
+    # encouraged to use {Google::Auth::WebUserAuthorizer::CallbackApp} instead.
     #
     # @see CallbackApp
     # @note Requires sessions are enabled
