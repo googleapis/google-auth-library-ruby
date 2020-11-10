@@ -108,7 +108,7 @@ module Google
           uri = target_audience ? GCECredentials.compute_id_token_uri : GCECredentials.compute_auth_token_uri
           query = target_audience ? { "audience" => target_audience, "format" => "full" } : {}
           query[:scopes] = Array(scope).join "," if scope
-          resp = c.get uri, query, { "Metadata-Flavor" => "Google" }
+          resp = c.get uri, query, "Metadata-Flavor" => "Google"
           case resp.status
           when 200
             content_type = resp.headers["content-type"]
