@@ -108,8 +108,7 @@ module Google
           uri = target_audience ? GCECredentials.compute_id_token_uri : GCECredentials.compute_auth_token_uri
           query = target_audience ? { "audience" => target_audience, "format" => "full" } : {}
           query[:scopes] = Array(scope).join "," if scope
-          headers = { "Metadata-Flavor" => "Google" }
-          resp = c.get uri, query, headers
+          resp = c.get uri, query, "Metadata-Flavor" => "Google"
           case resp.status
           when 200
             content_type = resp.headers["content-type"]
@@ -118,11 +117,13 @@ module Google
             else
               Signet::OAuth2.parse_credentials resp.body, content_type
             end
+          when 403, 500
+            msg = "Unexpected error code #{resp.status} #{UNEXPECTED_ERROR_SUFFIX}"
+            raise Signet::UnexpectedStatusError, msg
           when 404
             raise Signet::AuthorizationError, NO_METADATA_SERVER_ERROR
           else
-            msg = "Unexpected error code #{resp.status}" \
-              "#{UNEXPECTED_ERROR_SUFFIX}"
+            msg = "Unexpected error code #{resp.status} #{UNEXPECTED_ERROR_SUFFIX}"
             raise Signet::AuthorizationError, msg
           end
         end
