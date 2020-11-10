@@ -91,7 +91,7 @@ describe Google::Auth::GCECredentials do
       end
 
       it "should fail if the metadata request returns a 403" do
-        stub = stub_request(:get, MD_URI)
+        stub = stub_request(:get, MD_ACCESS_URI)
                  .to_return(status:  403,
                             headers: { "Metadata-Flavor" => "Google" })
         expect { @client.fetch_access_token! }
@@ -100,7 +100,7 @@ describe Google::Auth::GCECredentials do
       end
 
       it "should fail if the metadata request returns a 500" do
-        stub = stub_request(:get, MD_URI)
+        stub = stub_request(:get, MD_ACCESS_URI)
                  .to_return(status:  500,
                             headers: { "Metadata-Flavor" => "Google" })
         expect { @client.fetch_access_token! }
