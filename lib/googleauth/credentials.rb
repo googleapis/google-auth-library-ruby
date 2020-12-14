@@ -75,7 +75,7 @@ module Google
     #     creds2 = SubCredentials.default
     #     creds2.scope  # => ["http://example.com/sub_scope"]
     #
-    class Credentials
+    class Credentials # rubocop:disable Metrics/ClassLength
       ##
       # The default token credential URI to be used when none is provided during initialization.
       TOKEN_CREDENTIAL_URI = "https://oauth2.googleapis.com/token".freeze
@@ -426,7 +426,12 @@ module Google
       # @private Lookup Credentials using Google::Auth.get_application_default.
       def self.from_application_default options
         scope = options[:scope] || self.scope
-        auth_opts = { target_audience: options[:target_audience] || target_audience }
+        auth_opts = {
+          token_credential_uri:   options[:token_credential_uri] || token_credential_uri,
+          audience:               options[:audience] || audience,
+          target_audience:        options[:target_audience] || target_audience,
+          enable_self_signed_jwt: options[:enable_self_signed_jwt] && options[:scope].nil?
+        }
         client = Google::Auth.get_application_default scope, auth_opts
         new client, options
       end

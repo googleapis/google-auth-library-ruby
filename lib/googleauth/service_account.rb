@@ -53,12 +53,18 @@ module Google
       attr_reader :project_id
       attr_reader :quota_project_id
 
+      def enable_self_signed_jwt?
+        @enable_self_signed_jwt
+      end
+
       # Creates a ServiceAccountCredentials.
       #
       # @param json_key_io [IO] an IO from which the JSON key can be read
       # @param scope [string|array|nil] the scope(s) to access
       def self.make_creds options = {}
-        json_key_io, scope, target_audience = options.values_at :json_key_io, :scope, :target_audience
+        json_key_io, scope, enable_self_signed_jwt, target_audience, audience, token_credential_uri =
+          options.values_at :json_key_io, :scope, :enable_self_signed_jwt, :target_audience,
+                            :audience, :token_credential_uri
         raise ArgumentError, "Cannot specify both scope and target_audience" if scope && target_audience
 
         if json_key_io
@@ -71,14 +77,15 @@ module Google
         end
         project_id ||= CredentialsLoader.load_gcloud_project_id
 
-        new(token_credential_uri: TOKEN_CRED_URI,
-            audience:             TOKEN_CRED_URI,
-            scope:                scope,
-            target_audience:      target_audience,
-            issuer:               client_email,
-            signing_key:          OpenSSL::PKey::RSA.new(private_key),
-            project_id:           project_id,
-            quota_project_id:     quota_project_id)
+        new(token_credential_uri:   token_credential_uri || TOKEN_CRED_URI,
+            audience:               audience || TOKEN_CRED_URI,
+            scope:                  scope,
+            enable_self_signed_jwt: enable_self_signed_jwt,
+            target_audience:        target_audience,
+            issuer:                 client_email,
+            signing_key:            OpenSSL::PKey::RSA.new(private_key),
+            project_id:             project_id,
+            quota_project_id:       quota_project_id)
           .configure_connection(options)
       end
 
@@ -94,30 +101,33 @@ module Google
       def initialize options = {}
         @project_id = options[:project_id]
         @quota_project_id = options[:quota_project_id]
+        @enable_self_signed_jwt = options[:enable_self_signed_jwt] ? true : false
         super options
       end
 
-      # Extends the base class.
-      #
-      # If scope(s) is not set, it creates a transient
-      # ServiceAccountJwtHeaderCredentials instance and uses that to
-      # authenticate instead.
+      # Extends the base class to use a transient
+      # ServiceAccountJwtHeaderCredentials for certain cases.
       def apply! a_hash, opts = {}
-        # Use the base implementation if scopes are set
-        unless scope.nil? && target_audience.nil?
+        # Use a self-singed JWT if there's no information that can be used to
+        # obtain an OAuth token, OR if there are scopes but also an assertion
+        # that they are default scopes that shouldn't be used to fetch a token.
+        if target_audience.nil? && (scope.nil? || enable_self_signed_jwt?)
+          apply_self_signed_jwt! a_hash
+        else
           super
-          return
         end
+      end
 
+      private
+
+      def apply_self_signed_jwt! a_hash
         # Use the ServiceAccountJwtHeaderCredentials using the same cred values
-        # if no scopes are set.
         cred_json = {
           private_key:  @signing_key.to_s,
           client_email: @issuer
         }
-        alt_clz = ServiceAccountJwtHeaderCredentials
         key_io = StringIO.new MultiJson.dump(cred_json)
-        alt = alt_clz.make_creds json_key_io: key_io
+        alt = ServiceAccountJwtHeaderCredentials.make_creds json_key_io: key_io
         alt.apply! a_hash
       end
     end

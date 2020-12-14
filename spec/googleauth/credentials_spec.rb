@@ -46,37 +46,37 @@ describe Google::Auth::Credentials, :private do
     }
   end
 
-  it "uses a default scope" do
+  def mock_signet
     mocked_signet = double "Signet::OAuth2::Client"
     allow(mocked_signet).to receive(:configure_connection).and_return(mocked_signet)
     allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
     allow(mocked_signet).to receive(:client_id)
     allow(Signet::OAuth2::Client).to receive(:new) do |options|
+      yield options if block_given?
+      mocked_signet
+    end
+    mocked_signet
+  end
+
+  it "uses a default scope" do
+    mock_signet do |options|
       expect(options[:token_credential_uri]).to eq("https://oauth2.googleapis.com/token")
       expect(options[:audience]).to eq("https://oauth2.googleapis.com/token")
       expect(options[:scope]).to eq([])
       expect(options[:issuer]).to eq(default_keyfile_hash["client_email"])
       expect(options[:signing_key]).to be_a_kind_of(OpenSSL::PKey::RSA)
-
-      mocked_signet
     end
 
     Google::Auth::Credentials.new default_keyfile_hash
   end
 
   it "uses a custom scope" do
-    mocked_signet = double "Signet::OAuth2::Client"
-    allow(mocked_signet).to receive(:configure_connection).and_return(mocked_signet)
-    allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
-    allow(mocked_signet).to receive(:client_id)
-    allow(Signet::OAuth2::Client).to receive(:new) do |options|
+    mock_signet do |options|
       expect(options[:token_credential_uri]).to eq("https://oauth2.googleapis.com/token")
       expect(options[:audience]).to eq("https://oauth2.googleapis.com/token")
       expect(options[:scope]).to eq(["http://example.com/scope"])
       expect(options[:issuer]).to eq(default_keyfile_hash["client_email"])
       expect(options[:signing_key]).to be_a_kind_of(OpenSSL::PKey::RSA)
-
-      mocked_signet
     end
 
     Google::Auth::Credentials.new default_keyfile_hash, scope: "http://example.com/scope"
@@ -246,25 +246,17 @@ describe Google::Auth::Credentials, :private do
       allow(::ENV).to receive(:[]).with("JSON_ENV_DUMMY") { nil }
       allow(::File).to receive(:file?).with("~/default/path/to/file.txt") { false }
 
-      mocked_signet = double "Signet::OAuth2::Client"
-      allow(mocked_signet).to receive(:configure_connection).and_return(mocked_signet)
-      allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
-      allow(mocked_signet).to receive(:client_id)
-      allow(Google::Auth).to receive(:get_application_default) do |scope|
+      mocked_signet = mock_signet
+
+      allow(Google::Auth).to receive(:get_application_default) do |scope, options|
         expect(scope).to eq([TestCredentials5::SCOPE])
+        expect(options[:enable_self_signed_jwt]).to be_nil
+        expect(options[:token_credential_uri]).to eq("https://oauth2.googleapis.com/token")
+        expect(options[:audience]).to eq("https://oauth2.googleapis.com/token")
 
         # This should really be a Signet::OAuth2::Client object,
         # but mocking is making that difficult, so return a valid hash instead.
         default_keyfile_hash
-      end
-      allow(Signet::OAuth2::Client).to receive(:new) do |options|
-        expect(options[:token_credential_uri]).to eq("https://oauth2.googleapis.com/token")
-        expect(options[:audience]).to eq("https://oauth2.googleapis.com/token")
-        expect(options[:scope]).to eq(["http://example.com/scope"])
-        expect(options[:issuer]).to eq(default_keyfile_hash["client_email"])
-        expect(options[:signing_key]).to be_a_kind_of(OpenSSL::PKey::RSA)
-
-        mocked_signet
       end
 
       creds = TestCredentials5.default
@@ -446,7 +438,7 @@ describe Google::Auth::Credentials, :private do
       expect(creds.quota_project_id).to eq(default_keyfile_hash["quota_project_id"])
     end
 
-    it "subclasses that find no matches default to Google::Auth.get_application_default" do
+    it "subclasses that find no matches default to Google::Auth.get_application_default with self-signed jwt enabled" do
       class TestCredentials15 < Google::Auth::Credentials
         self.scope = "http://example.com/scope"
         self.env_vars = %w[PATH_ENV_DUMMY JSON_ENV_DUMMY]
@@ -459,54 +451,116 @@ describe Google::Auth::Credentials, :private do
       allow(::ENV).to receive(:[]).with("JSON_ENV_DUMMY") { nil }
       allow(::File).to receive(:file?).with("~/default/path/to/file.txt") { false }
 
-      mocked_signet = double "Signet::OAuth2::Client"
-      allow(mocked_signet).to receive(:configure_connection).and_return(mocked_signet)
-      allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
-      allow(mocked_signet).to receive(:client_id)
-      allow(Google::Auth).to receive(:get_application_default) do |scope|
+      mocked_signet = mock_signet
+
+      allow(Google::Auth).to receive(:get_application_default) do |scope, options|
         expect(scope).to eq(TestCredentials15.scope)
+        expect(options[:enable_self_signed_jwt]).to eq(true)
+        expect(options[:token_credential_uri]).to eq("https://oauth2.googleapis.com/token")
+        expect(options[:audience]).to eq("https://oauth2.googleapis.com/token")
 
         # This should really be a Signet::OAuth2::Client object,
         # but mocking is making that difficult, so return a valid hash instead.
         default_keyfile_hash
       end
-      allow(Signet::OAuth2::Client).to receive(:new) do |options|
-        expect(options[:token_credential_uri]).to eq("https://oauth2.googleapis.com/token")
-        expect(options[:audience]).to eq("https://oauth2.googleapis.com/token")
-        expect(options[:scope]).to eq(["http://example.com/scope"])
-        expect(options[:issuer]).to eq(default_keyfile_hash["client_email"])
-        expect(options[:signing_key]).to be_a_kind_of(OpenSSL::PKey::RSA)
 
-        mocked_signet
-      end
-
-      creds = TestCredentials15.default
+      creds = TestCredentials15.default enable_self_signed_jwt: true
       expect(creds).to be_a_kind_of(TestCredentials15)
       expect(creds.client).to eq(mocked_signet)
       expect(creds.project_id).to eq(default_keyfile_hash["project_id"])
       expect(creds.quota_project_id).to eq(default_keyfile_hash["quota_project_id"])
     end
 
-    it "subclasses delegate up the class hierarchy" do
+    it "subclasses that find no matches default to Google::Auth.get_application_default with self-signed jwt disabled" do
       class TestCredentials16 < Google::Auth::Credentials
+        self.scope = "http://example.com/scope"
+        self.env_vars = %w[PATH_ENV_DUMMY JSON_ENV_DUMMY]
+        self.paths = ["~/default/path/to/file.txt"]
+      end
+
+      allow(::ENV).to receive(:[]).with("GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS") { "true" }
+      allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
+      allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
+      allow(::ENV).to receive(:[]).with("JSON_ENV_DUMMY") { nil }
+      allow(::File).to receive(:file?).with("~/default/path/to/file.txt") { false }
+
+      mocked_signet = mock_signet
+
+      allow(Google::Auth).to receive(:get_application_default) do |scope, options|
+        expect(scope).to eq(TestCredentials16.scope)
+        expect(options[:enable_self_signed_jwt]).to be_nil
+        expect(options[:token_credential_uri]).to eq("https://oauth2.googleapis.com/token")
+        expect(options[:audience]).to eq("https://oauth2.googleapis.com/token")
+
+        # This should really be a Signet::OAuth2::Client object,
+        # but mocking is making that difficult, so return a valid hash instead.
+        default_keyfile_hash
+      end
+
+      creds = TestCredentials16.default
+      expect(creds).to be_a_kind_of(TestCredentials16)
+      expect(creds.client).to eq(mocked_signet)
+      expect(creds.project_id).to eq(default_keyfile_hash["project_id"])
+      expect(creds.quota_project_id).to eq(default_keyfile_hash["quota_project_id"])
+    end
+
+    it "subclasses that find no matches default to Google::Auth.get_application_default with custom values" do
+      scope2 = "http://example.com/scope2"
+
+      class TestCredentials17 < Google::Auth::Credentials
+        self.scope = "http://example.com/scope"
+        self.env_vars = %w[PATH_ENV_DUMMY JSON_ENV_DUMMY]
+        self.paths = ["~/default/path/to/file.txt"]
+        self.token_credential_uri = "https://example.com/token2"
+        self.audience = "https://example.com/token3"
+      end
+
+      allow(::ENV).to receive(:[]).with("GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS") { "true" }
+      allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
+      allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
+      allow(::ENV).to receive(:[]).with("JSON_ENV_DUMMY") { nil }
+      allow(::File).to receive(:file?).with("~/default/path/to/file.txt") { false }
+
+      mocked_signet = mock_signet
+
+      allow(Google::Auth).to receive(:get_application_default) do |scope, options|
+        expect(scope).to eq(scope2)
+        expect(options[:enable_self_signed_jwt]).to eq(false)
+        expect(options[:token_credential_uri]).to eq("https://example.com/token2")
+        expect(options[:audience]).to eq("https://example.com/token3")
+
+        # This should really be a Signet::OAuth2::Client object,
+        # but mocking is making that difficult, so return a valid hash instead.
+        default_keyfile_hash
+      end
+
+      creds = TestCredentials17.default scope: scope2, enable_self_signed_jwt: true
+      expect(creds).to be_a_kind_of(TestCredentials17)
+      expect(creds.client).to eq(mocked_signet)
+      expect(creds.project_id).to eq(default_keyfile_hash["project_id"])
+      expect(creds.quota_project_id).to eq(default_keyfile_hash["quota_project_id"])
+    end
+
+    it "subclasses delegate up the class hierarchy" do
+      class TestCredentials18 < Google::Auth::Credentials
         self.scope = "http://example.com/scope"
         self.target_audience = "https://example.com/target_audience"
         self.env_vars = ["TEST_PATH", "TEST_JSON_VARS"]
         self.paths = ["~/default/path/to/file.txt"]
       end
 
-      class TestCredentials17 < TestCredentials16
+      class TestCredentials19 < TestCredentials18
       end
 
-      expect(TestCredentials17.scope).to eq(["http://example.com/scope"])
-      expect(TestCredentials17.target_audience).to eq("https://example.com/target_audience")
-      expect(TestCredentials17.env_vars).to eq(["TEST_PATH", "TEST_JSON_VARS"])
-      expect(TestCredentials17.paths).to eq(["~/default/path/to/file.txt"])
+      expect(TestCredentials19.scope).to eq(["http://example.com/scope"])
+      expect(TestCredentials19.target_audience).to eq("https://example.com/target_audience")
+      expect(TestCredentials19.env_vars).to eq(["TEST_PATH", "TEST_JSON_VARS"])
+      expect(TestCredentials19.paths).to eq(["~/default/path/to/file.txt"])
 
-      TestCredentials17.token_credential_uri = "https://example.com/token2"
-      expect(TestCredentials17.token_credential_uri).to eq("https://example.com/token2")
-      TestCredentials17.token_credential_uri = nil
-      expect(TestCredentials17.token_credential_uri).to eq("https://oauth2.googleapis.com/token")
+      TestCredentials19.token_credential_uri = "https://example.com/token2"
+      expect(TestCredentials19.token_credential_uri).to eq("https://example.com/token2")
+      TestCredentials19.token_credential_uri = nil
+      expect(TestCredentials19.token_credential_uri).to eq("https://oauth2.googleapis.com/token")
     end
   end
 
