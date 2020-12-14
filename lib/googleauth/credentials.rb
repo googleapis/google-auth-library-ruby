@@ -405,8 +405,15 @@ module Google
         env_vars.each do |env_var|
           str = ENV[env_var]
           next if str.nil?
-          return new str, options if ::File.file? str
-          return new ::JSON.parse(str), options rescue nil
+          io =
+            if ::File.file? str
+              ::StringIO.new ::File.read str
+            else
+              json = ::JSON.parse str rescue nil
+              json ? ::StringIO.new(str) : nil
+            end
+          next if io.nil?
+          return from_io io, options
         end
         nil
       end
@@ -414,11 +421,11 @@ module Google
       ##
       # @private Lookup Credentials from default file paths.
       def self.from_default_paths options
-        paths
-          .select { |p| ::File.file? p }
-          .each do |file|
-            return new file, options
-          end
+        paths.each do |path|
+          next unless path && ::File.file?(path)
+          io = ::StringIO.new ::File.read path
+          return from_io io, options
+        end
         nil
       end
 
@@ -436,9 +443,24 @@ module Google
         new client, options
       end
 
+      # @private Read credentials from a JSON stream.
+      def self.from_io io, options
+        creds_input = {
+          json_key_io:            io,
+          scope:                  options[:scope] || scope,
+          target_audience:        options[:target_audience] || target_audience,
+          enable_self_signed_jwt: options[:enable_self_signed_jwt] && options[:scope].nil?,
+          token_credential_uri:   options[:token_credential_uri] || token_credential_uri,
+          audience:               options[:audience] || audience
+        }
+        client = Google::Auth::DefaultCredentials.make_creds creds_input
+        new client
+      end
+
       private_class_method :from_env_vars,
                            :from_default_paths,
-                           :from_application_default
+                           :from_application_default,
+                           :from_io
 
       protected
 

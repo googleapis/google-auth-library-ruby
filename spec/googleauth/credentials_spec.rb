@@ -101,21 +101,22 @@ describe Google::Auth::Credentials, :private do
       allow(::File).to receive(:file?).with(test_path_env_val) { false }
       allow(::File).to receive(:file?).with(test_json_env_val) { false }
 
-      mocked_signet = double "Signet::OAuth2::Client"
-      allow(mocked_signet).to receive(:configure_connection).and_return(mocked_signet)
-      allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
-      allow(mocked_signet).to receive(:client_id)
-      allow(Signet::OAuth2::Client).to receive(:new) do |options|
+      mocked_signet = mock_signet
+
+      allow(Google::Auth::ServiceAccountCredentials).to receive(:make_creds) do |options|
         expect(options[:token_credential_uri]).to eq("https://example.com/token")
         expect(options[:audience]).to eq("https://example.com/audience")
         expect(options[:scope]).to eq(["http://example.com/scope"])
-        expect(options[:issuer]).to eq(default_keyfile_hash["client_email"])
-        expect(options[:signing_key]).to be_a_kind_of(OpenSSL::PKey::RSA)
+        expect(options[:enable_self_signed_jwt]).to eq(true)
+        expect(options[:target_audience]).to be_nil
+        expect(options[:json_key_io].read).to eq(test_json_env_val)
 
-        mocked_signet
+        # This should really be a Signet::OAuth2::Client object,
+        # but mocking is making that difficult, so return a valid hash instead.
+        default_keyfile_hash
       end
 
-      creds = TestCredentials1.default
+      creds = TestCredentials1.default enable_self_signed_jwt: true
       expect(creds).to be_a_kind_of(TestCredentials1)
       expect(creds.client).to eq(mocked_signet)
       expect(creds.project_id).to eq(default_keyfile_hash["project_id"])
@@ -130,25 +131,28 @@ describe Google::Auth::Credentials, :private do
         DEFAULT_PATHS = ["~/default/path/to/file.txt"].freeze
       end
 
+      json_content = JSON.generate default_keyfile_hash
+
       allow(::ENV).to receive(:[]).with("GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS") { "true" }
       allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
       allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
       allow(::ENV).to receive(:[]).with("PATH_ENV_TEST") { "/unknown/path/to/file.txt" }
       allow(::File).to receive(:file?).with("/unknown/path/to/file.txt") { true }
-      allow(::File).to receive(:read).with("/unknown/path/to/file.txt") { JSON.generate default_keyfile_hash }
+      allow(::File).to receive(:read).with("/unknown/path/to/file.txt") { json_content }
 
-      mocked_signet = double "Signet::OAuth2::Client"
-      allow(mocked_signet).to receive(:configure_connection).and_return(mocked_signet)
-      allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
-      allow(mocked_signet).to receive(:client_id)
-      allow(Signet::OAuth2::Client).to receive(:new) do |options|
+      mocked_signet = mock_signet
+
+      allow(Google::Auth::ServiceAccountCredentials).to receive(:make_creds) do |options|
         expect(options[:token_credential_uri]).to eq("https://oauth2.googleapis.com/token")
         expect(options[:audience]).to eq("https://oauth2.googleapis.com/token")
         expect(options[:scope]).to eq(["http://example.com/scope"])
-        expect(options[:issuer]).to eq(default_keyfile_hash["client_email"])
-        expect(options[:signing_key]).to be_a_kind_of(OpenSSL::PKey::RSA)
+        expect(options[:enable_self_signed_jwt]).to be_nil
+        expect(options[:target_audience]).to be_nil
+        expect(options[:json_key_io].read).to eq(json_content)
 
-        mocked_signet
+        # This should really be a Signet::OAuth2::Client object,
+        # but mocking is making that difficult, so return a valid hash instead.
+        default_keyfile_hash
       end
 
       creds = TestCredentials2.default
@@ -175,18 +179,19 @@ describe Google::Auth::Credentials, :private do
       allow(::ENV).to receive(:[]).with("JSON_ENV_DUMMY") { nil }
       allow(::ENV).to receive(:[]).with("JSON_ENV_TEST") { test_json_env_val }
 
-      mocked_signet = double "Signet::OAuth2::Client"
-      allow(mocked_signet).to receive(:configure_connection).and_return(mocked_signet)
-      allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
-      allow(mocked_signet).to receive(:client_id)
-      allow(Signet::OAuth2::Client).to receive(:new) do |options|
+      mocked_signet = mock_signet
+
+      allow(Google::Auth::ServiceAccountCredentials).to receive(:make_creds) do |options|
         expect(options[:token_credential_uri]).to eq("https://oauth2.googleapis.com/token")
         expect(options[:audience]).to eq("https://oauth2.googleapis.com/token")
         expect(options[:scope]).to eq(["http://example.com/scope"])
-        expect(options[:issuer]).to eq(default_keyfile_hash["client_email"])
-        expect(options[:signing_key]).to be_a_kind_of(OpenSSL::PKey::RSA)
+        expect(options[:enable_self_signed_jwt]).to be_nil
+        expect(options[:target_audience]).to be_nil
+        expect(options[:json_key_io].read).to eq(test_json_env_val)
 
-        mocked_signet
+        # This should really be a Signet::OAuth2::Client object,
+        # but mocking is making that difficult, so return a valid hash instead.
+        default_keyfile_hash
       end
 
       creds = TestCredentials3.default
@@ -204,25 +209,28 @@ describe Google::Auth::Credentials, :private do
         DEFAULT_PATHS = ["~/default/path/to/file.txt"].freeze
       end
 
+      json_content = JSON.generate default_keyfile_hash
+
       allow(::ENV).to receive(:[]).with("GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS") { "true" }
       allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
       allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
       allow(::ENV).to receive(:[]).with("JSON_ENV_DUMMY") { nil }
       allow(::File).to receive(:file?).with("~/default/path/to/file.txt") { true }
-      allow(::File).to receive(:read).with("~/default/path/to/file.txt") { JSON.generate default_keyfile_hash }
+      allow(::File).to receive(:read).with("~/default/path/to/file.txt") { json_content }
 
-      mocked_signet = double "Signet::OAuth2::Client"
-      allow(mocked_signet).to receive(:configure_connection).and_return(mocked_signet)
-      allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
-      allow(mocked_signet).to receive(:client_id)
-      allow(Signet::OAuth2::Client).to receive(:new) do |options|
+      mocked_signet = mock_signet
+
+      allow(Google::Auth::ServiceAccountCredentials).to receive(:make_creds) do |options|
         expect(options[:token_credential_uri]).to eq("https://oauth2.googleapis.com/token")
         expect(options[:audience]).to eq("https://oauth2.googleapis.com/token")
         expect(options[:scope]).to eq(["http://example.com/scope"])
-        expect(options[:issuer]).to eq(default_keyfile_hash["client_email"])
-        expect(options[:signing_key]).to be_a_kind_of(OpenSSL::PKey::RSA)
+        expect(options[:enable_self_signed_jwt]).to be_nil
+        expect(options[:target_audience]).to be_nil
+        expect(options[:json_key_io].read).to eq(json_content)
 
-        mocked_signet
+        # This should really be a Signet::OAuth2::Client object,
+        # but mocking is making that difficult, so return a valid hash instead.
+        default_keyfile_hash
       end
 
       creds = TestCredentials4.default
@@ -310,18 +318,19 @@ describe Google::Auth::Credentials, :private do
       allow(::File).to receive(:file?).with(test_path_env_val) { false }
       allow(::File).to receive(:file?).with(test_json_env_val) { false }
 
-      mocked_signet = double "Signet::OAuth2::Client"
-      allow(mocked_signet).to receive(:configure_connection).and_return(mocked_signet)
-      allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
-      allow(mocked_signet).to receive(:client_id)
-      allow(Signet::OAuth2::Client).to receive(:new) do |options|
+      mocked_signet = mock_signet
+
+      allow(Google::Auth::ServiceAccountCredentials).to receive(:make_creds) do |options|
         expect(options[:token_credential_uri]).to eq("https://example.com/token")
         expect(options[:audience]).to eq("https://example.com/audience")
         expect(options[:scope]).to eq(["http://example.com/scope"])
-        expect(options[:issuer]).to eq(default_keyfile_hash["client_email"])
-        expect(options[:signing_key]).to be_a_kind_of(OpenSSL::PKey::RSA)
+        expect(options[:enable_self_signed_jwt]).to be_nil
+        expect(options[:target_audience]).to be_nil
+        expect(options[:json_key_io].read).to eq(test_json_env_val)
 
-        mocked_signet
+        # This should really be a Signet::OAuth2::Client object,
+        # but mocking is making that difficult, so return a valid hash instead.
+        default_keyfile_hash
       end
 
       creds = TestCredentials11.default
@@ -338,25 +347,28 @@ describe Google::Auth::Credentials, :private do
         self.paths = ["~/default/path/to/file.txt"]
       end
 
+      json_content = JSON.generate default_keyfile_hash
+
       allow(::ENV).to receive(:[]).with("GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS") { "true" }
       allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
       allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
       allow(::ENV).to receive(:[]).with("PATH_ENV_TEST") { "/unknown/path/to/file.txt" }
       allow(::File).to receive(:file?).with("/unknown/path/to/file.txt") { true }
-      allow(::File).to receive(:read).with("/unknown/path/to/file.txt") { JSON.generate default_keyfile_hash }
+      allow(::File).to receive(:read).with("/unknown/path/to/file.txt") { json_content }
 
-      mocked_signet = double "Signet::OAuth2::Client"
-      allow(mocked_signet).to receive(:configure_connection).and_return(mocked_signet)
-      allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
-      allow(mocked_signet).to receive(:client_id)
-      allow(Signet::OAuth2::Client).to receive(:new) do |options|
+      mocked_signet = mock_signet
+
+      allow(Google::Auth::ServiceAccountCredentials).to receive(:make_creds) do |options|
         expect(options[:token_credential_uri]).to eq("https://oauth2.googleapis.com/token")
         expect(options[:audience]).to eq("https://oauth2.googleapis.com/token")
         expect(options[:scope]).to eq(["http://example.com/scope"])
-        expect(options[:issuer]).to eq(default_keyfile_hash["client_email"])
-        expect(options[:signing_key]).to be_a_kind_of(OpenSSL::PKey::RSA)
+        expect(options[:enable_self_signed_jwt]).to be_nil
+        expect(options[:target_audience]).to be_nil
+        expect(options[:json_key_io].read).to eq(json_content)
 
-        mocked_signet
+        # This should really be a Signet::OAuth2::Client object,
+        # but mocking is making that difficult, so return a valid hash instead.
+        default_keyfile_hash
       end
 
       creds = TestCredentials12.default
@@ -382,18 +394,19 @@ describe Google::Auth::Credentials, :private do
       allow(::ENV).to receive(:[]).with("JSON_ENV_DUMMY") { nil }
       allow(::ENV).to receive(:[]).with("JSON_ENV_TEST") { test_json_env_val }
 
-      mocked_signet = double "Signet::OAuth2::Client"
-      allow(mocked_signet).to receive(:configure_connection).and_return(mocked_signet)
-      allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
-      allow(mocked_signet).to receive(:client_id)
-      allow(Signet::OAuth2::Client).to receive(:new) do |options|
+      mocked_signet = mock_signet
+
+      allow(Google::Auth::ServiceAccountCredentials).to receive(:make_creds) do |options|
         expect(options[:token_credential_uri]).to eq("https://oauth2.googleapis.com/token")
         expect(options[:audience]).to eq("https://oauth2.googleapis.com/token")
         expect(options[:scope]).to eq(["http://example.com/scope"])
-        expect(options[:issuer]).to eq(default_keyfile_hash["client_email"])
-        expect(options[:signing_key]).to be_a_kind_of(OpenSSL::PKey::RSA)
+        expect(options[:enable_self_signed_jwt]).to be_nil
+        expect(options[:target_audience]).to be_nil
+        expect(options[:json_key_io].read).to eq(test_json_env_val)
 
-        mocked_signet
+        # This should really be a Signet::OAuth2::Client object,
+        # but mocking is making that difficult, so return a valid hash instead.
+        default_keyfile_hash
       end
 
       creds = TestCredentials13.default
@@ -410,25 +423,28 @@ describe Google::Auth::Credentials, :private do
         self.paths = ["~/default/path/to/file.txt"]
       end
 
+      json_content = JSON.generate default_keyfile_hash
+
       allow(::ENV).to receive(:[]).with("GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS") { "true" }
       allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
       allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
       allow(::ENV).to receive(:[]).with("JSON_ENV_DUMMY") { nil }
       allow(::File).to receive(:file?).with("~/default/path/to/file.txt") { true }
-      allow(::File).to receive(:read).with("~/default/path/to/file.txt") { JSON.generate default_keyfile_hash }
+      allow(::File).to receive(:read).with("~/default/path/to/file.txt") { json_content }
 
-      mocked_signet = double "Signet::OAuth2::Client"
-      allow(mocked_signet).to receive(:configure_connection).and_return(mocked_signet)
-      allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
-      allow(mocked_signet).to receive(:client_id)
-      allow(Signet::OAuth2::Client).to receive(:new) do |options|
+      mocked_signet = mock_signet
+
+      allow(Google::Auth::ServiceAccountCredentials).to receive(:make_creds) do |options|
         expect(options[:token_credential_uri]).to eq("https://oauth2.googleapis.com/token")
         expect(options[:audience]).to eq("https://oauth2.googleapis.com/token")
         expect(options[:scope]).to eq(["http://example.com/scope"])
-        expect(options[:issuer]).to eq(default_keyfile_hash["client_email"])
-        expect(options[:signing_key]).to be_a_kind_of(OpenSSL::PKey::RSA)
+        expect(options[:enable_self_signed_jwt]).to be_nil
+        expect(options[:target_audience]).to be_nil
+        expect(options[:json_key_io].read).to eq(json_content)
 
-        mocked_signet
+        # This should really be a Signet::OAuth2::Client object,
+        # but mocking is making that difficult, so return a valid hash instead.
+        default_keyfile_hash
       end
 
       creds = TestCredentials14.default
