@@ -169,6 +169,14 @@ describe Google::Auth::ServiceAccountCredentials do
     it_behaves_like "jwt header auth"
   end
 
+  context "when enable_self_signed_jwt is set" do
+    before :example do
+      @client.instance_variable_set(:@enable_self_signed_jwt, true)
+    end
+
+    it_behaves_like "jwt header auth"
+  end
+
   describe "#from_env" do
     before :example do
       @var_name = ENV_VAR
