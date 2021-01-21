@@ -273,6 +273,31 @@ describe Google::Auth::Credentials, :private do
       expect(creds.project_id).to eq(default_keyfile_hash["project_id"])
       expect(creds.quota_project_id).to eq(default_keyfile_hash["quota_project_id"])
     end
+
+    it "can be subclassed to pass in other env paths" do
+      class TestCredentials6 < Google::Auth::Credentials
+        TOKEN_CREDENTIAL_URI = "https://example.com/token".freeze
+        AUDIENCE = "https://example.com/audience".freeze
+        SCOPE = "http://example.com/scope".freeze
+        PATH_ENV_VARS = ["TEST_PATH"].freeze
+        JSON_ENV_VARS = ["TEST_JSON_VARS"].freeze
+        DEFAULT_PATHS = ["~/default/path/to/file.txt"]
+      end
+
+      class TestCredentials7 < TestCredentials6
+      end
+
+      expect(TestCredentials7.token_credential_uri).to eq("https://example.com/token")
+      expect(TestCredentials7.audience).to eq("https://example.com/audience")
+      expect(TestCredentials7.scope).to eq(["http://example.com/scope"])
+      expect(TestCredentials7.env_vars).to eq(["TEST_PATH", "TEST_JSON_VARS"])
+      expect(TestCredentials7.paths).to eq(["~/default/path/to/file.txt"])
+
+      TestCredentials7::TOKEN_CREDENTIAL_URI = "https://example.com/token2"
+      expect(TestCredentials7.token_credential_uri).to eq("https://example.com/token2")
+      TestCredentials7::AUDIENCE = nil
+      expect(TestCredentials7.audience).to eq("https://example.com/audience")
+    end
   end
 
   describe "using class methods" do
@@ -460,6 +485,28 @@ describe Google::Auth::Credentials, :private do
       expect(creds.client).to eq(mocked_signet)
       expect(creds.project_id).to eq(default_keyfile_hash["project_id"])
       expect(creds.quota_project_id).to eq(default_keyfile_hash["quota_project_id"])
+    end
+
+    it "subclasses delegate up the class hierarchy" do
+      class TestCredentials16 < Google::Auth::Credentials
+        self.scope = "http://example.com/scope"
+        self.target_audience = "https://example.com/target_audience"
+        self.env_vars = ["TEST_PATH", "TEST_JSON_VARS"]
+        self.paths = ["~/default/path/to/file.txt"]
+      end
+
+      class TestCredentials17 < TestCredentials16
+      end
+
+      expect(TestCredentials17.scope).to eq(["http://example.com/scope"])
+      expect(TestCredentials17.target_audience).to eq("https://example.com/target_audience")
+      expect(TestCredentials17.env_vars).to eq(["TEST_PATH", "TEST_JSON_VARS"])
+      expect(TestCredentials17.paths).to eq(["~/default/path/to/file.txt"])
+
+      TestCredentials17.token_credential_uri = "https://example.com/token2"
+      expect(TestCredentials17.token_credential_uri).to eq("https://example.com/token2")
+      TestCredentials17.token_credential_uri = nil
+      expect(TestCredentials17.token_credential_uri).to eq("https://oauth2.googleapis.com/token")
     end
   end
 

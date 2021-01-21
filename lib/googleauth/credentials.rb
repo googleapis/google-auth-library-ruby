@@ -47,7 +47,7 @@ module Google
       # The default target audience ID to be used when none is provided during initialization.
       AUDIENCE = "https://oauth2.googleapis.com/token".freeze
 
-      @audience = @scope = @target_audience = @env_vars = @paths = nil
+      @audience = @scope = @target_audience = @env_vars = @paths = @token_credential_uri = nil
 
       ##
       # The default token credential URI to be used when none is provided during initialization.
@@ -57,9 +57,9 @@ module Google
       # @return [String]
       #
       def self.token_credential_uri
-        return @token_credential_uri unless @token_credential_uri.nil?
-
-        const_get :TOKEN_CREDENTIAL_URI if const_defined? :TOKEN_CREDENTIAL_URI
+        lookup_auth_param :token_credential_uri do
+          const_get :TOKEN_CREDENTIAL_URI if const_defined? :TOKEN_CREDENTIAL_URI
+        end
       end
 
       ##
@@ -79,9 +79,9 @@ module Google
       # @return [String]
       #
       def self.audience
-        return @audience unless @audience.nil?
-
-        const_get :AUDIENCE if const_defined? :AUDIENCE
+        lookup_auth_param :audience do
+          const_get :AUDIENCE if const_defined? :AUDIENCE
+        end
       end
 
       ##
@@ -106,9 +106,10 @@ module Google
       # @return [String, Array<String>]
       #
       def self.scope
-        return @scope unless @scope.nil?
-
-        Array(const_get(:SCOPE)).flatten.uniq if const_defined? :SCOPE
+        lookup_auth_param :scope do
+          vals = const_get :SCOPE if const_defined? :SCOPE
+          vals ? Array(vals).flatten.uniq : nil
+        end
       end
 
       ##
@@ -137,7 +138,7 @@ module Google
       # @return [String]
       #
       def self.target_audience
-        @target_audience
+        lookup_auth_param :target_audience
       end
 
       ##
@@ -161,13 +162,14 @@ module Google
       # @return [Array<String>]
       #
       def self.env_vars
-        return @env_vars unless @env_vars.nil?
-
-        # Pull values when PATH_ENV_VARS or JSON_ENV_VARS constants exists.
-        tmp_env_vars = []
-        tmp_env_vars << const_get(:PATH_ENV_VARS) if const_defined? :PATH_ENV_VARS
-        tmp_env_vars << const_get(:JSON_ENV_VARS) if const_defined? :JSON_ENV_VARS
-        tmp_env_vars.flatten.uniq
+        lookup_auth_param :env_vars do
+          # Pull values when PATH_ENV_VARS or JSON_ENV_VARS constants exists.
+          path_env_vars = const_get :PATH_ENV_VARS if const_defined? :PATH_ENV_VARS
+          json_env_vars = const_get :JSON_ENV_VARS if const_defined? :JSON_ENV_VARS
+          if path_env_vars || json_env_vars
+            (Array(path_env_vars) + Array(json_env_vars)).flatten.uniq
+          end
+        end
       end
 
       ##
@@ -187,12 +189,11 @@ module Google
       # @return [Array<String>]
       #
       def self.paths
-        return @paths unless @paths.nil?
-
-        tmp_paths = []
-        # Pull in values is the DEFAULT_PATHS constant exists.
-        tmp_paths << const_get(:DEFAULT_PATHS) if const_defined? :DEFAULT_PATHS
-        tmp_paths.flatten.uniq
+        lookup_auth_param :paths do
+          # Pull in values if the DEFAULT_PATHS constant exists.
+          vals = const_get :DEFAULT_PATHS if const_defined? :DEFAULT_PATHS
+          vals ? Array(vals).flatten.uniq : nil
+        end
       end
 
       ##
@@ -204,6 +205,27 @@ module Google
       def self.paths= new_paths
         new_paths = Array new_paths unless new_paths.nil?
         @paths = new_paths
+      end
+
+      ##
+      # @private
+      # Return the given parameter value, defaulting up the class hierarchy.
+      #
+      # First returns the value of the instance variable, if set.
+      # Next, calls the given block if provided. (This is generally used to
+      # look up legacy constant-based values.)
+      # Otherwise, calls the superclass method if present.
+      # Returns nil if all steps fail.
+      #
+      # @param [Symbol] The parameter name
+      # @return [Object] The value
+      #
+      def self.lookup_auth_param name
+        val = instance_variable_get "@#{name}".to_sym
+        val = yield if val.nil? && block_given?
+        return val unless val.nil?
+        return superclass.send name if superclass.respond_to? name
+        nil
       end
 
       ##
