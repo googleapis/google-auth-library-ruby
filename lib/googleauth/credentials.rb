@@ -41,6 +41,8 @@ module Google
     # In most cases, it is subclassed by API-specific credential classes that
     # can be instantiated by clients.
     #
+    # ## Options
+    #
     # Credentials classes are configured with options that generally dictate
     # default values for parameters such as scope and audience. These defaults
     # are expressed as class attributes, and may differ from endpoint to
@@ -52,6 +54,25 @@ module Google
     # Older users of this class may set options via constants. This usage is
     # deprecated. For example, instead of setting the `AUDIENCE` constant on
     # your subclass, call the `audience=` method.
+    #
+    # ## Example
+    #
+    #     class MyCredentials < Google::Auth::Credentials
+    #       # Set the default scope for these credentials
+    #       self.scope = "http://example.com/my_scope"
+    #     end
+    #
+    #     # creds is a credentials object suitable for Google API clients
+    #     creds = MyCredentials.default
+    #     creds.scope  # => ["http://example.com/my_scope"]
+    #
+    #     class SubCredentials < MyCredentials
+    #       # Override the default scope for this subclass
+    #       self.scope = "http://example.com/sub_scope"
+    #     end
+    #
+    #     creds2 = SubCredentials.default
+    #     creds2.scope  # => ["http://example.com/sub_scope"]
     #
     class Credentials
       ##
