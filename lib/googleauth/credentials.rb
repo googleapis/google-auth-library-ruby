@@ -166,9 +166,7 @@ module Google
           # Pull values when PATH_ENV_VARS or JSON_ENV_VARS constants exists.
           path_env_vars = const_get :PATH_ENV_VARS if const_defined? :PATH_ENV_VARS
           json_env_vars = const_get :JSON_ENV_VARS if const_defined? :JSON_ENV_VARS
-          if path_env_vars || json_env_vars
-            (Array(path_env_vars) + Array(json_env_vars)).flatten.uniq
-          end
+          (Array(path_env_vars) + Array(json_env_vars)).flatten.uniq if path_env_vars || json_env_vars
         end
       end
 
