@@ -36,8 +36,45 @@ require "googleauth/credentials_loader"
 module Google
   module Auth
     ##
-    # Credentials is responsible for representing the authentication when connecting to an API. This
-    # class is also intended to be inherited by API-specific classes.
+    # Credentials is a high-level base class used by Google's API client
+    # libraries to represent the authentication when connecting to an API.
+    # In most cases, it is subclassed by API-specific credential classes that
+    # can be instantiated by clients.
+    #
+    # ## Options
+    #
+    # Credentials classes are configured with options that dictate default
+    # values for parameters such as scope and audience. These defaults are
+    # expressed as class attributes, and may differ from endpoint to endpoint.
+    # Normally, an API client will provide subclasses specific to each
+    # endpoint, configured with appropriate values.
+    #
+    # Note that these options inherit up the class hierarchy. If a particular
+    # options is not set for a subclass, its superclass is queried.
+    #
+    # Some older users of this class set options via constants. This usage is
+    # deprecated. For example, instead of setting the `AUDIENCE` constant on
+    # your subclass, call the `audience=` method.
+    #
+    # ## Example
+    #
+    #     class MyCredentials < Google::Auth::Credentials
+    #       # Set the default scope for these credentials
+    #       self.scope = "http://example.com/my_scope"
+    #     end
+    #
+    #     # creds is a credentials object suitable for Google API clients
+    #     creds = MyCredentials.default
+    #     creds.scope  # => ["http://example.com/my_scope"]
+    #
+    #     class SubCredentials < MyCredentials
+    #       # Override the default scope for this subclass
+    #       self.scope = "http://example.com/sub_scope"
+    #     end
+    #
+    #     creds2 = SubCredentials.default
+    #     creds2.scope  # => ["http://example.com/sub_scope"]
+    #
     class Credentials
       ##
       # The default token credential URI to be used when none is provided during initialization.
@@ -47,7 +84,7 @@ module Google
       # The default target audience ID to be used when none is provided during initialization.
       AUDIENCE = "https://oauth2.googleapis.com/token".freeze
 
-      @audience = @scope = @target_audience = @env_vars = @paths = nil
+      @audience = @scope = @target_audience = @env_vars = @paths = @token_credential_uri = nil
 
       ##
       # The default token credential URI to be used when none is provided during initialization.
@@ -57,9 +94,9 @@ module Google
       # @return [String]
       #
       def self.token_credential_uri
-        return @token_credential_uri unless @token_credential_uri.nil?
-
-        const_get :TOKEN_CREDENTIAL_URI if const_defined? :TOKEN_CREDENTIAL_URI
+        lookup_auth_param :token_credential_uri do
+          lookup_local_constant :TOKEN_CREDENTIAL_URI
+        end
       end
 
       ##
@@ -79,9 +116,9 @@ module Google
       # @return [String]
       #
       def self.audience
-        return @audience unless @audience.nil?
-
-        const_get :AUDIENCE if const_defined? :AUDIENCE
+        lookup_auth_param :audience do
+          lookup_local_constant :AUDIENCE
+        end
       end
 
       ##
@@ -106,9 +143,10 @@ module Google
       # @return [String, Array<String>]
       #
       def self.scope
-        return @scope unless @scope.nil?
-
-        Array(const_get(:SCOPE)).flatten.uniq if const_defined? :SCOPE
+        lookup_auth_param :scope do
+          vals = lookup_local_constant :SCOPE
+          vals ? Array(vals).flatten.uniq : nil
+        end
       end
 
       ##
@@ -137,7 +175,7 @@ module Google
       # @return [String]
       #
       def self.target_audience
-        @target_audience
+        lookup_auth_param :target_audience
       end
 
       ##
@@ -161,13 +199,12 @@ module Google
       # @return [Array<String>]
       #
       def self.env_vars
-        return @env_vars unless @env_vars.nil?
-
-        # Pull values when PATH_ENV_VARS or JSON_ENV_VARS constants exists.
-        tmp_env_vars = []
-        tmp_env_vars << const_get(:PATH_ENV_VARS) if const_defined? :PATH_ENV_VARS
-        tmp_env_vars << const_get(:JSON_ENV_VARS) if const_defined? :JSON_ENV_VARS
-        tmp_env_vars.flatten.uniq
+        lookup_auth_param :env_vars do
+          # Pull values when PATH_ENV_VARS or JSON_ENV_VARS constants exists.
+          path_env_vars = lookup_local_constant :PATH_ENV_VARS
+          json_env_vars = lookup_local_constant :JSON_ENV_VARS
+          (Array(path_env_vars) + Array(json_env_vars)).flatten.uniq if path_env_vars || json_env_vars
+        end
       end
 
       ##
@@ -187,12 +224,11 @@ module Google
       # @return [Array<String>]
       #
       def self.paths
-        return @paths unless @paths.nil?
-
-        tmp_paths = []
-        # Pull in values is the DEFAULT_PATHS constant exists.
-        tmp_paths << const_get(:DEFAULT_PATHS) if const_defined? :DEFAULT_PATHS
-        tmp_paths.flatten.uniq
+        lookup_auth_param :paths do
+          # Pull in values if the DEFAULT_PATHS constant exists.
+          vals = lookup_local_constant :DEFAULT_PATHS
+          vals ? Array(vals).flatten.uniq : nil
+        end
       end
 
       ##
@@ -204,6 +240,39 @@ module Google
       def self.paths= new_paths
         new_paths = Array new_paths unless new_paths.nil?
         @paths = new_paths
+      end
+
+      ##
+      # @private
+      # Return the given parameter value, defaulting up the class hierarchy.
+      #
+      # First returns the value of the instance variable, if set.
+      # Next, calls the given block if provided. (This is generally used to
+      # look up legacy constant-based values.)
+      # Otherwise, calls the superclass method if present.
+      # Returns nil if all steps fail.
+      #
+      # @param [Symbol] The parameter name
+      # @return [Object] The value
+      #
+      def self.lookup_auth_param name
+        val = instance_variable_get "@#{name}".to_sym
+        val = yield if val.nil? && block_given?
+        return val unless val.nil?
+        return superclass.send name if superclass.respond_to? name
+        nil
+      end
+
+      ##
+      # @private
+      # Return the value of the given constant if it is defined directly in
+      # this class, or nil if not.
+      #
+      # @param [Symbol] Name of the constant
+      # @return [Object] The value
+      #
+      def self.lookup_local_constant name
+        const_defined?(name, false) ? const_get(name) : nil
       end
 
       ##
