@@ -36,8 +36,23 @@ require "googleauth/credentials_loader"
 module Google
   module Auth
     ##
-    # Credentials is responsible for representing the authentication when connecting to an API. This
-    # class is also intended to be inherited by API-specific classes.
+    # Credentials is a high-level base class used by Google's API client
+    # libraries to represent the authentication when connecting to an API.
+    # In most cases, it is subclassed by API-specific credential classes that
+    # can be instantiated by clients.
+    #
+    # Credentials classes are configured with options that generally dictate
+    # default values for parameters such as scope and audience. These defaults
+    # are expressed as class attributes, and may differ from endpoint to
+    # endpoint. Thus, generally, subclasses are created specific to each
+    # endpoint, and configured with appropriate values. Note that these
+    # attributes inherit up the class hierarchy. If a particular attribute is
+    # not set for a subclass, its superclass is queried.
+    #
+    # Older users of this class may set options via constants. This usage is
+    # deprecated. For example, instead of setting the `AUDIENCE` constant on
+    # your subclass, call the `audience=` method.
+    #
     class Credentials
       ##
       # The default token credential URI to be used when none is provided during initialization.
@@ -58,7 +73,7 @@ module Google
       #
       def self.token_credential_uri
         lookup_auth_param :token_credential_uri do
-          const_get :TOKEN_CREDENTIAL_URI if const_defined? :TOKEN_CREDENTIAL_URI
+          lookup_local_constant :TOKEN_CREDENTIAL_URI
         end
       end
 
@@ -80,7 +95,7 @@ module Google
       #
       def self.audience
         lookup_auth_param :audience do
-          const_get :AUDIENCE if const_defined? :AUDIENCE
+          lookup_local_constant :AUDIENCE
         end
       end
 
@@ -107,7 +122,7 @@ module Google
       #
       def self.scope
         lookup_auth_param :scope do
-          vals = const_get :SCOPE if const_defined? :SCOPE
+          vals = lookup_local_constant :SCOPE
           vals ? Array(vals).flatten.uniq : nil
         end
       end
@@ -164,8 +179,8 @@ module Google
       def self.env_vars
         lookup_auth_param :env_vars do
           # Pull values when PATH_ENV_VARS or JSON_ENV_VARS constants exists.
-          path_env_vars = const_get :PATH_ENV_VARS if const_defined? :PATH_ENV_VARS
-          json_env_vars = const_get :JSON_ENV_VARS if const_defined? :JSON_ENV_VARS
+          path_env_vars = lookup_local_constant :PATH_ENV_VARS
+          json_env_vars = lookup_local_constant :JSON_ENV_VARS
           (Array(path_env_vars) + Array(json_env_vars)).flatten.uniq if path_env_vars || json_env_vars
         end
       end
@@ -189,7 +204,7 @@ module Google
       def self.paths
         lookup_auth_param :paths do
           # Pull in values if the DEFAULT_PATHS constant exists.
-          vals = const_get :DEFAULT_PATHS if const_defined? :DEFAULT_PATHS
+          vals = lookup_local_constant :DEFAULT_PATHS
           vals ? Array(vals).flatten.uniq : nil
         end
       end
@@ -224,6 +239,18 @@ module Google
         return val unless val.nil?
         return superclass.send name if superclass.respond_to? name
         nil
+      end
+
+      ##
+      # @private
+      # Return the value of the given constant if it is defined directly in
+      # this class, or nil if not.
+      #
+      # @param [Symbol] Name of the constant
+      # @return [Object] The value
+      #
+      def self.lookup_local_constant name
+        const_defined?(name, false) ? const_get(name) : nil
       end
 
       ##
