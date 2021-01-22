@@ -43,15 +43,16 @@ module Google
     #
     # ## Options
     #
-    # Credentials classes are configured with options that generally dictate
-    # default values for parameters such as scope and audience. These defaults
-    # are expressed as class attributes, and may differ from endpoint to
-    # endpoint. Thus, generally, subclasses are created specific to each
-    # endpoint, and configured with appropriate values. Note that these
-    # attributes inherit up the class hierarchy. If a particular attribute is
-    # not set for a subclass, its superclass is queried.
+    # Credentials classes are configured with options that dictate default
+    # values for parameters such as scope and audience. These defaults are
+    # expressed as class attributes, and may differ from endpoint to endpoint.
+    # Normally, an API client will provide subclasses specific to each
+    # endpoint, configured with appropriate values.
     #
-    # Older users of this class may set options via constants. This usage is
+    # Note that these options inherit up the class hierarchy. If a particular
+    # options is not set for a subclass, its superclass is queried.
+    #
+    # Some older users of this class set options via constants. This usage is
     # deprecated. For example, instead of setting the `AUDIENCE` constant on
     # your subclass, call the `audience=` method.
     #
