@@ -1,0 +1,21 @@
+on:
+  schedule:
+    - cron: '29 9 * * 1'
+  workflow_dispatch:
+
+name: release
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ReleasePlease
+        id: release-please
+        uses: GoogleCloudPlatform/release-please-action@v2
+        with:
+          command: release-pr
+          token: ${{ secrets.YOSHI_CODE_BOT_TOKEN }}
+          fork: true
+          release-type: ruby
+          package-name: googleauth
+          version-file: lib/googleauth/version.rb
+          bump-minor-pre-major: true
