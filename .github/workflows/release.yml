@@ -18,6 +18,7 @@ jobs:
           release-type: ruby
           package-name: googleauth
           version-file: lib/googleauth/version.rb
+          monorepo-tags: true
           bump-minor-pre-major: true
       - name: ReleaseLabel
         id: release-label
