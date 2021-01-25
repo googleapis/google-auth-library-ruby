@@ -1,5 +1,27 @@
 # Release History
 
+## [0.11.0](https://www.github.com/googleapis/google-auth-library-ruby/compare/v0.10.0...v0.11.0) (2021-01-25)
+
+
+### Features
+
+* Credential parameters inherit from superclasses ([4fa4720](https://www.github.com/googleapis/google-auth-library-ruby/commit/4fa47206dbd62f8bbdd1b9d3721f6baee9fd1d62))
+* Honor GCE_METADATA_HOST environment variable ([3cdb5a8](https://www.github.com/googleapis/google-auth-library-ruby/commit/3cdb5a8de7dfeeded3c83f4a24a7e3bd96120b2f))
+* read quota_project_id from credentials ([61c1e64](https://www.github.com/googleapis/google-auth-library-ruby/commit/61c1e64d5b39fec80f1adf758caf32a0239bb262))
+* Service accounts apply a self-signed JWT if scopes are marked as default ([d22acb8](https://www.github.com/googleapis/google-auth-library-ruby/commit/d22acb8a510e6711b5674545c31a4816e5a9168f))
+* support Faraday 1.x ([de8e9e4](https://www.github.com/googleapis/google-auth-library-ruby/commit/de8e9e42afc74fef211147154fd366f0f2c69757))
+* Support for ID token credentials. ([c7f82f2](https://www.github.com/googleapis/google-auth-library-ruby/commit/c7f82f29f8547acd64b94c524c845cb9dd490e04))
+* Support for ID token validation ([4df6209](https://www.github.com/googleapis/google-auth-library-ruby/commit/4df620978cf38b40ffbacbd9d04b2870b2faab94))
+
+
+### Bug Fixes
+
+* Fix errors when requesting an access token for multiple scopes ([6f71d62](https://www.github.com/googleapis/google-auth-library-ruby/commit/6f71d62a6a850aeffd7a829935dab43aae209611))
+* Pass scope through when getting metadata-based access tokens ([48c689a](https://www.github.com/googleapis/google-auth-library-ruby/commit/48c689aa93bfe81c5a6ae23362d86fc25ba098cf))
+* Retry fetch_access_token when GCE metadata server returns unexpected errors ([cd9b012](https://www.github.com/googleapis/google-auth-library-ruby/commit/cd9b0126d3419b9953982f71edc9e6ba3f640e3c))
+* Service account credentials properly apply ID tokens ([a3f3b99](https://www.github.com/googleapis/google-auth-library-ruby/commit/a3f3b994ab2180af573f8b3680d4da0840e200ee))
+* Support correct service account and user refresh behavior for custom credential env variables ([d2dffe5](https://www.github.com/googleapis/google-auth-library-ruby/commit/d2dffe592112b45006291ad9a57f56e00fb208c3))
+
 ### 0.14.0 / 2020-10-09
 
 * Honor GCE_METADATA_HOST environment variable
