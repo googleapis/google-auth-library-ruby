@@ -1,16 +1,9 @@
 # Release History
 
-## [0.15.0](https://www.github.com/googleapis/google-auth-library-ruby/compare/v0.14.0...v0.15.0) (2021-01-25)
-
-
-### Features
+### 0.15.0 (2021-01-25)
 
 * Credential parameters inherit from superclasses ([4fa4720](https://www.github.com/googleapis/google-auth-library-ruby/commit/4fa47206dbd62f8bbdd1b9d3721f6baee9fd1d62))
 * Service accounts apply a self-signed JWT if scopes are marked as default ([d22acb8](https://www.github.com/googleapis/google-auth-library-ruby/commit/d22acb8a510e6711b5674545c31a4816e5a9168f))
-
-
-### Bug Fixes
-
 * Retry fetch_access_token when GCE metadata server returns unexpected errors ([cd9b012](https://www.github.com/googleapis/google-auth-library-ruby/commit/cd9b0126d3419b9953982f71edc9e6ba3f640e3c))
 * Support correct service account and user refresh behavior for custom credential env variables ([d2dffe5](https://www.github.com/googleapis/google-auth-library-ruby/commit/d2dffe592112b45006291ad9a57f56e00fb208c3))
 
