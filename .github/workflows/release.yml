@@ -19,3 +19,17 @@ jobs:
           package-name: googleauth
           version-file: lib/googleauth/version.rb
           bump-minor-pre-major: true
+      - name: ReleaseLabel
+        id: release-label
+        if: ${{ steps.release-please.outputs.pr }}
+        uses: actions/github-script@v2
+        with:
+          github-token: ${{secrets.YOSHI_APPROVER_TOKEN}}
+          script: |
+            core.info("Labeling release");
+            github.issues.addLabels({
+              owner: 'googleapis',
+              repo: 'google-api-ruby-client',
+              issue_number: ${{ steps.release-please.outputs.pr }},
+              labels: ["autorelease: pending", "kokoro:force-run"]
+            });
