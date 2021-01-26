@@ -16,7 +16,7 @@ jobs:
           token: ${{ secrets.YOSHI_CODE_BOT_TOKEN }}
           fork: true
           release-type: ruby
-          package-name: googleauth
+          package-name: google-auth-library-ruby
           version-file: lib/googleauth/version.rb
           monorepo-tags: true
           bump-minor-pre-major: true
