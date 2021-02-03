@@ -103,7 +103,6 @@ module Google
       # Set the default token credential URI to be used when none is provided during initialization.
       #
       # @param [String] new_token_credential_uri
-      # @return [String]
       #
       def self.token_credential_uri= new_token_credential_uri
         @token_credential_uri = new_token_credential_uri
@@ -125,7 +124,6 @@ module Google
       # Sets the default target audience ID to be used when none is provided during initialization.
       #
       # @param [String] new_audience
-      # @return [String]
       #
       def self.audience= new_audience
         @audience = new_audience
@@ -140,7 +138,7 @@ module Google
       # If {#scope} is set, this credential will produce access tokens.
       # If {#target_audience} is set, this credential will produce ID tokens.
       #
-      # @return [String, Array<String>]
+      # @return [String, Array<String>, nil]
       #
       def self.scope
         lookup_auth_param :scope do
@@ -156,8 +154,7 @@ module Google
       # If {#scope} is set, this credential will produce access tokens.
       # If {#target_audience} is set, this credential will produce ID tokens.
       #
-      # @param [String, Array<String>] new_scope
-      # @return [String, Array<String>]
+      # @param [String, Array<String>, nil] new_scope
       #
       def self.scope= new_scope
         new_scope = Array new_scope unless new_scope.nil?
@@ -172,7 +169,7 @@ module Google
       # If {#scope} is set, this credential will produce access tokens.
       # If {#target_audience} is set, this credential will produce ID tokens.
       #
-      # @return [String]
+      # @return [String, nil]
       #
       def self.target_audience
         lookup_auth_param :target_audience
@@ -186,7 +183,7 @@ module Google
       # If {#scope} is set, this credential will produce access tokens.
       # If {#target_audience} is set, this credential will produce ID tokens.
       #
-      # @param [String] new_target_audience
+      # @param [String, nil] new_target_audience
       #
       def self.target_audience= new_target_audience
         @target_audience = new_target_audience
@@ -195,11 +192,20 @@ module Google
       ##
       # The environment variables to search for credentials. Values can either be a file path to the
       # credentials file, or the JSON contents of the credentials file.
+      # The env_vars will never be nil. If there are no vars, the empty array is returned.
       #
       # @return [Array<String>]
       #
       def self.env_vars
-        lookup_auth_param :env_vars do
+        env_vars_internal || []
+      end
+
+      ##
+      # @private
+      # Internal recursive lookup for env_vars.
+      #
+      def self.env_vars_internal
+        lookup_auth_param :env_vars, :env_vars_internal do
           # Pull values when PATH_ENV_VARS or JSON_ENV_VARS constants exists.
           path_env_vars = lookup_local_constant :PATH_ENV_VARS
           json_env_vars = lookup_local_constant :JSON_ENV_VARS
@@ -209,9 +215,10 @@ module Google
 
       ##
       # Sets the environment variables to search for credentials.
+      # Setting to `nil` "unsets" the value, and defaults to the superclass
+      # (or to the empty array if there is no superclass).
       #
-      # @param [Array<String>] new_env_vars
-      # @return [Array<String>]
+      # @param [String, Array<String>, nil] new_env_vars
       #
       def self.env_vars= new_env_vars
         new_env_vars = Array new_env_vars unless new_env_vars.nil?
@@ -220,11 +227,20 @@ module Google
 
       ##
       # The file paths to search for credentials files.
+      # The paths will never be nil. If there are no paths, the empty array is returned.
       #
       # @return [Array<String>]
       #
       def self.paths
-        lookup_auth_param :paths do
+        paths_internal || []
+      end
+
+      ##
+      # @private
+      # Internal recursive lookup for paths.
+      #
+      def self.paths_internal
+        lookup_auth_param :paths, :paths_internal do
           # Pull in values if the DEFAULT_PATHS constant exists.
           vals = lookup_local_constant :DEFAULT_PATHS
           vals ? Array(vals).flatten.uniq : nil
@@ -233,9 +249,10 @@ module Google
 
       ##
       # Set the file paths to search for credentials files.
+      # Setting to `nil` "unsets" the value, and defaults to the superclass
+      # (or to the empty array if there is no superclass).
       #
-      # @param [Array<String>] new_paths
-      # @return [Array<String>]
+      # @param [String, Array<String>, nil] new_paths
       #
       def self.paths= new_paths
         new_paths = Array new_paths unless new_paths.nil?
@@ -252,14 +269,15 @@ module Google
       # Otherwise, calls the superclass method if present.
       # Returns nil if all steps fail.
       #
-      # @param [Symbol] The parameter name
+      # @param name [Symbol] The parameter name
+      # @param method_name [Symbol] The lookup method name, if different
       # @return [Object] The value
       #
-      def self.lookup_auth_param name
+      def self.lookup_auth_param name, method_name = name
         val = instance_variable_get "@#{name}".to_sym
         val = yield if val.nil? && block_given?
         return val unless val.nil?
-        return superclass.send name if superclass.respond_to? name
+        return superclass.send method_name if superclass.respond_to? method_name
         nil
       end
 

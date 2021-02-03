@@ -82,6 +82,11 @@ describe Google::Auth::Credentials, :private do
     Google::Auth::Credentials.new default_keyfile_hash, scope: "http://example.com/scope"
   end
 
+  it "uses empty paths and env_vars by default" do
+    expect(Google::Auth::Credentials.paths).to eq([])
+    expect(Google::Auth::Credentials.env_vars).to eq([])
+  end
+
   describe "using CONSTANTS" do
     it "can be subclassed to pass in other env paths" do
       test_path_env_val = "/unknown/path/to/file.txt".freeze
