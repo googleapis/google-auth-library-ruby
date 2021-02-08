@@ -1,5 +1,12 @@
 # Release History
 
+### [0.15.1](https://www.github.com/googleapis/google-auth-library-ruby/compare/v0.15.0...v0.15.1) (2021-02-08)
+
+
+### Bug Fixes
+
+* Fix crash when using a client credential without any paths or env_vars set ([#296](https://www.github.com/googleapis/google-auth-library-ruby/issues/296)) ([c971c1a](https://www.github.com/googleapis/google-auth-library-ruby/commit/c971c1ad2d7730c0f5b389d533a972be32fbaf49))
+
 ## [0.15.0](https://www.github.com/googleapis/google-auth-library-ruby/compare/v0.14.0...v0.15.0) (2021-01-26)
 
 
