@@ -1,6 +1,6 @@
 # Release History
 
-### [0.15.1](https://www.github.com/googleapis/google-auth-library-ruby/compare/v0.15.0...v0.15.1) (2021-02-08)
+## [0.15.1](https://www.github.com/googleapis/google-auth-library-ruby/compare/v0.15.0...v0.15.1) (2021-02-08)
 
 
 ### Bug Fixes
