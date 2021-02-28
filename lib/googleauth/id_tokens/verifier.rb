@@ -105,15 +105,13 @@ module Google
         def decode_token token, keys, aud, azp, iss
           payload = nil
           keys.find do |key|
-            begin
-              options = { algorithms: key.algorithm }
-              decoded_token = JWT.decode token, key.key, true, options
-              payload = decoded_token.first
-            rescue JWT::ExpiredSignature
-              raise ExpiredTokenError, "Token signature is expired"
-            rescue JWT::DecodeError
-              nil # Try the next key
-            end
+            options = { algorithms: key.algorithm }
+            decoded_token = JWT.decode token, key.key, true, options
+            payload = decoded_token.first
+          rescue JWT::ExpiredSignature
+            raise ExpiredTokenError, "Token signature is expired"
+          rescue JWT::DecodeError
+            nil # Try the next key
           end
 
           normalize_and_verify_payload payload, aud, azp, iss

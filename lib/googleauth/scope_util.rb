@@ -51,7 +51,7 @@ module Google
         when Array
           scope
         when String
-          scope.split " "
+          scope.split
         else
           raise "Invalid scope value. Must be string or array"
         end

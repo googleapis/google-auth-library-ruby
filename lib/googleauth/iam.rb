@@ -68,7 +68,7 @@ module Google
       # Returns a reference to the #apply method, suitable for passing as
       # a closure
       def updater_proc
-        lambda(&method(:apply))
+        proc { |a_hash, _opts = {}| apply a_hash }
       end
     end
   end

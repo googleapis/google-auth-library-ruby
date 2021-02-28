@@ -40,6 +40,7 @@ module Google
         # @param [String, File] file
         #  Path to storage file
         def initialize options = {}
+          super()
           path = options[:file]
           @store = YAML::Store.new path
         end

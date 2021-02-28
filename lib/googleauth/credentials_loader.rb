@@ -103,7 +103,7 @@ module Google
             return make_creds options.merge(json_key_io: f)
           end
         elsif service_account_env_vars? || authorized_user_env_vars?
-          return make_creds options
+          make_creds options
         end
       rescue StandardError => e
         raise "#{NOT_FOUND_ERROR}: #{e}"

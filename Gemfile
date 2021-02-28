@@ -8,7 +8,7 @@ group :development do
   gem "coveralls", "~> 0.7"
   gem "fakefs", "~> 0.6"
   gem "fakeredis", "~> 0.5"
-  gem "google-style", "~> 1.24.0"
+  gem "google-style", "~> 1.25.1"
   gem "logging", "~> 2.0"
   gem "minitest", "~> 5.14"
   gem "minitest-focus", "~> 1.1"
@@ -21,10 +21,5 @@ group :development do
   gem "webmock", "~> 3.8"
 end
 
-platforms :jruby do
-  group :development do
-  end
-end
-
-gem "faraday", "~> 0.17"
+gem "faraday", ">= 0.17.3", "< 2.0"
 gem "gems", "~> 1.2"
