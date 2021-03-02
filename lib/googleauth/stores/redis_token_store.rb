@@ -49,6 +49,7 @@ module Google
         #  the options passed through. You may include any other keys accepted
         #  by `Redis.new`
         def initialize options = {}
+          super()
           redis = options.delete :redis
           prefix = options.delete :prefix
           @redis = case redis

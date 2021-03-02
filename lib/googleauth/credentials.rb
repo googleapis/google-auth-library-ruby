@@ -369,9 +369,10 @@ module Google
         verify_keyfile_provided! keyfile
         @project_id = options["project_id"] || options["project"]
         @quota_project_id = options["quota_project_id"]
-        if keyfile.is_a? Signet::OAuth2::Client
+        case keyfile
+        when Signet::OAuth2::Client
           update_from_signet keyfile
-        elsif keyfile.is_a? Hash
+        when Hash
           update_from_hash keyfile, options
         else
           update_from_filepath keyfile, options
@@ -503,8 +504,10 @@ module Google
 
       # returns a new Hash with string keys instead of symbol keys.
       def stringify_hash_keys hash
-        Hash[hash.map { |k, v| [k.to_s, v] }]
+        hash.to_h.transform_keys(&:to_s)
       end
+
+      # rubocop:disable Metrics/AbcSize
 
       def client_options options
         # Keyfile options have higher priority over constructor defaults
@@ -526,6 +529,8 @@ module Google
           issuer:               options["client_email"],
           signing_key:          OpenSSL::PKey::RSA.new(options["private_key"]) }
       end
+
+      # rubocop:enable Metrics/AbcSize
 
       def update_from_signet client
         @project_id ||= client.project_id if client.respond_to? :project_id

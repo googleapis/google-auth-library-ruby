@@ -63,7 +63,7 @@ module Signet
       # Returns a reference to the #apply method, suitable for passing as
       # a closure
       def updater_proc
-        lambda(&method(:apply))
+        proc { |a_hash, opts = {}| apply a_hash, opts }
       end
 
       def on_refresh &block
