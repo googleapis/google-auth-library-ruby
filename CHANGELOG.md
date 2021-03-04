@@ -1,5 +1,12 @@
 # Release History
 
+## [0.16.0](https://www.github.com/googleapis/google-auth-library-ruby/compare/v0.15.1...v0.16.0) (2021-03-04)
+
+
+### Features
+
+* Drop support for Ruby 2.4 and add support for Ruby 3.0 ([6644806](https://www.github.com/googleapis/google-auth-library-ruby/commit/6644806ab47cea6d08e1901c2ed808e53a579bc3))
+
 ## [0.15.1](https://www.github.com/googleapis/google-auth-library-ruby/compare/v0.15.0...v0.15.1) (2021-02-08)
 
 
