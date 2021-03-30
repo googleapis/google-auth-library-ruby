@@ -33,10 +33,7 @@ jobs:
             task: spec
           - os: ubuntu-latest
             ruby: "2.7"
-            task: rubocop
-          - os: ubuntu-latest
-            ruby: "2.7"
-            task: build , yardoc
+            task: rubocop , build , yardoc
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
