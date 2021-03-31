@@ -33,7 +33,7 @@ jobs:
             task: test , spec
           - os: ubuntu-latest
             ruby: "2.7"
-            task: rubocop , build , yardoc , linkinator
+            task: rubocop , integration , build , yardoc , linkinator
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
