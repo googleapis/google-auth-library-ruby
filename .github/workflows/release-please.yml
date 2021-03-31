@@ -3,7 +3,7 @@ on:
     - cron: '29 9 * * *'
   workflow_dispatch:
 
-name: release
+name: release-please
 jobs:
   release-please:
     env:

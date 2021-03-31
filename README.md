@@ -194,7 +194,7 @@ about the Ruby support schedule.
 ## License
 
 This library is licensed under Apache 2.0. Full license text is
-available in [COPYING][copying].
+available in [LICENSE][license].
 
 ## Contributing
 
@@ -210,4 +210,4 @@ about the client or APIs on [StackOverflow](http://stackoverflow.com).
 
 [application default credentials]: https://developers.google.com/accounts/docs/application-default-credentials
 [contributing]: https://github.com/googleapis/google-auth-library-ruby/tree/master/.github/CONTRIBUTING.md
-[copying]: https://github.com/googleapis/google-auth-library-ruby/tree/master/COPYING
+[license]: https://github.com/googleapis/google-auth-library-ruby/tree/master/LICENSE

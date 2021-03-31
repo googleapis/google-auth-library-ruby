@@ -19,6 +19,19 @@ expand :rspec do |t|
   t.use_bundler
 end
 
+expand :minitest do |t|
+  t.libs = ["lib", "test"]
+  t.use_bundler
+  t.files = "test/**/*_test.rb"
+end
+
+expand :minitest do |t|
+  t.name = "integration"
+  t.libs = ["lib", "integration"]
+  t.use_bundler
+  t.files = "integration/**/*_test.rb"
+end
+
 expand :rubocop, bundler: true
 
 expand :yardoc do |t|
