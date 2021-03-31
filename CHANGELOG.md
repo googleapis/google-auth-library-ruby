@@ -1,5 +1,12 @@
 # Release History
 
+### [0.16.1](https://www.github.com/googleapis/google-auth-library-ruby/compare/google-auth-library-ruby/v0.16.0...google-auth-library-ruby/v0.16.1) (2021-03-31)
+
+
+### Bug Fixes
+
+* Accept application/text content-type for plain idtoken response ([4948ebb](https://www.github.com/googleapis/google-auth-library-ruby/commit/4948ebb3ca151e9f0433585a41bad6f415416b2d))
+
 ## [0.16.0](https://www.github.com/googleapis/google-auth-library-ruby/compare/v0.15.1...v0.16.0) (2021-03-04)
 
 
