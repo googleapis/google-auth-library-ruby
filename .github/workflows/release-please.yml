@@ -35,5 +35,5 @@ jobs:
               owner: 'googleapis',
               repo: 'google-auth-library-ruby',
               issue_number: ${{ steps.release-please.outputs.pr }},
-              labels: ["autorelease: pending", "kokoro:force-run"]
+              labels: ["autorelease: pending"]
             });
