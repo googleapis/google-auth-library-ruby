@@ -3,7 +3,7 @@ on:
     - cron: '29 9 * * *'
   workflow_dispatch:
 
-name: release
+name: release-please
 jobs:
   release-please:
     env:
@@ -35,5 +35,5 @@ jobs:
               owner: 'googleapis',
               repo: 'google-auth-library-ruby',
               issue_number: ${{ steps.release-please.outputs.pr }},
-              labels: ["autorelease: pending", "kokoro:force-run"]
+              labels: ["autorelease: pending"]
             });
