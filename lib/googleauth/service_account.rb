@@ -123,8 +123,10 @@ module Google
       def apply_self_signed_jwt! a_hash
         # Use the ServiceAccountJwtHeaderCredentials using the same cred values
         cred_json = {
-          private_key:  @signing_key.to_s,
-          client_email: @issuer
+          private_key: @signing_key.to_s,
+          client_email: @issuer,
+          project_id: @project_id,
+          quota_project_id: @quota_project_id
         }
         key_io = StringIO.new MultiJson.dump(cred_json)
         alt = ServiceAccountJwtHeaderCredentials.make_creds json_key_io: key_io
