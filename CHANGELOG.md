@@ -1,5 +1,12 @@
 # Release History
 
+### [0.16.2](https://www.github.com/googleapis/google-auth-library-ruby/compare/google-auth-library-ruby/v0.16.1...google-auth-library-ruby/v0.16.2) (2021-04-28)
+
+
+### Bug Fixes
+
+* Stop attempting to get the project from gcloud when applying self-signed JWTs ([#317](https://www.github.com/googleapis/google-auth-library-ruby/issues/317)) ([39258ca](https://www.github.com/googleapis/google-auth-library-ruby/commit/39258cacafa5c770fb40d99075a97b8e6427adba))
+
 ### [0.16.1](https://www.github.com/googleapis/google-auth-library-ruby/compare/google-auth-library-ruby/v0.16.0...google-auth-library-ruby/v0.16.1) (2021-04-01)
 
 
