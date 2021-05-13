@@ -1,5 +1,6 @@
 {
     "name": "googleauth",
     "language": "ruby",
-    "distribution-name": "googleauth"
+    "distribution-name": "googleauth",
+    "library_type": "AUTH"
 }
