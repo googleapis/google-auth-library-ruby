@@ -6,7 +6,7 @@ gemspec
 group :development do
   gem "bundler", ">= 1.9"
   gem "coveralls", "~> 0.7"
-  gem "fakefs", "~> 0.6"
+  gem "fakefs", "~> 1.0"
   gem "fakeredis", "~> 0.5"
   gem "google-style", "~> 1.25.1"
   gem "logging", "~> 2.0"
