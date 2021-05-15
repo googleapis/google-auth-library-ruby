@@ -12,7 +12,7 @@ group :development do
   gem "logging", "~> 2.0"
   gem "minitest", "~> 5.14"
   gem "minitest-focus", "~> 1.1"
-  gem "rack-test", "~> 0.6"
+  gem "rack-test", "~> 1.0"
   gem "rake", "~> 13.0"
   gem "redis", "~> 3.2"
   gem "rspec", "~> 3.0"
