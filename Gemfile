@@ -14,7 +14,7 @@ group :development do
   gem "minitest-focus", "~> 1.1"
   gem "rack-test", "~> 0.6"
   gem "rake", "~> 13.0"
-  gem "redis", "~> 3.2"
+  gem "redis", "~> 4.0"
   gem "rspec", "~> 3.0"
   gem "simplecov", "~> 0.9"
   gem "sinatra"
