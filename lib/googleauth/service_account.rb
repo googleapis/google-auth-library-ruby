@@ -129,9 +129,10 @@ module Google
           quota_project_id: @quota_project_id
         }
         key_io = StringIO.new MultiJson.dump(cred_json)
-        alt = ServiceAccountJwtHeaderCredentials.make_creds({
-          json_key_io: key_io
-        }, scope)
+        alt = ServiceAccountJwtHeaderCredentials.make_creds(
+          { json_key_io: key_io },
+          scope
+        )
 
         alt.apply! a_hash
       end
@@ -193,7 +194,7 @@ module Google
       # The jwt token is used as the value of a 'Bearer '.
       def apply! a_hash, opts = {}
         jwt_aud_uri = a_hash.delete JWT_AUD_URI_KEY
-        return a_hash if jwt_aud_uri.nil? and @scope.nil?
+        return a_hash if jwt_aud_uri.nil? && @scope.nil?
         jwt_token = new_jwt_token jwt_aud_uri, opts
         a_hash[AUTH_METADATA_KEY] = "Bearer #{jwt_token}"
         a_hash
@@ -225,11 +226,11 @@ module Google
           "iat" => (now - skew).to_i
         }
 
-        if @scope and jwt_aud_uri
+        if @scope && jwt_aud_uri
           raise ArgumentError, "Cannot specify both scope and aud"
         end
 
-        assertion["scope"] = @scope.join(' ') if @scope
+        assertion["scope"] = @scope.join " " if @scope
         assertion["aud"] = jwt_aud_uri if jwt_aud_uri
 
         JWT.encode assertion, @signing_key, SIGNING_ALGORITHM
