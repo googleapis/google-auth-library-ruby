@@ -129,9 +129,9 @@ module Google
           quota_project_id: @quota_project_id
         }
         key_io = StringIO.new MultiJson.dump(cred_json)
-        alt = ServiceAccountJwtHeaderCredentials.make_creds(
-          { json_key_io: key_io },
-          scope)
+        alt = ServiceAccountJwtHeaderCredentials.make_creds({
+          json_key_io: key_io
+        }, scope)
 
         alt.apply! a_hash
       end
@@ -165,8 +165,7 @@ module Google
       # optional scope. Here's the constructor only has one param, so
       # we modify make_creds to reflect this.
       def self.make_creds *args
-        new(json_key_io: args[0][:json_key_io],
-            scope: args[1])
+        new json_key_io: args[0][:json_key_io], scope: args[1]
       end
 
       # Initializes a ServiceAccountJwtHeaderCredentials.
