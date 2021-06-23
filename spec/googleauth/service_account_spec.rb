@@ -44,9 +44,10 @@ require "os"
 
 include Google::Auth::CredentialsLoader
 
-shared_examples "jwt header auth" do
+shared_examples "jwt header auth" do |aud="https://www.googleapis.com/myservice"|
   context "when jwt_aud_uri is present" do
-    let(:test_uri) { "https://www.googleapis.com/myservice" }
+    let(:test_uri) { aud }
+    let(:test_scope) { "scope/1 scope/2" }
     let(:auth_prefix) { "Bearer " }
     let(:auth_key) { ServiceAccountJwtHeaderCredentials::AUTH_METADATA_KEY }
     let(:jwt_uri_key) { ServiceAccountJwtHeaderCredentials::JWT_AUD_URI_KEY }
@@ -56,14 +57,16 @@ shared_examples "jwt header auth" do
       expect(hdr.start_with?(auth_prefix)).to be true
       authorization = hdr[auth_prefix.length..-1]
       payload, = JWT.decode authorization, @key.public_key, true, algorithm: "RS256"
-      expect(payload["aud"]).to eq(test_uri)
+
+      expect(payload["aud"]).to eq(test_uri) if not test_uri.nil?
+      expect(payload["scope"]).to eq(test_scope) if test_uri.nil?
       expect(payload["iss"]).to eq(client_email)
     end
 
     describe "#apply!" do
       it "should update the target hash with a jwt token" do
         md = { foo: "bar" }
-        md[jwt_uri_key] = test_uri
+        md[jwt_uri_key] = test_uri if test_uri
         @client.apply! md
         auth_header = md[auth_key]
         expect_is_encoded_jwt auth_header
@@ -74,31 +77,31 @@ shared_examples "jwt header auth" do
     describe "updater_proc" do
       it "should provide a proc that updates a hash with a jwt token" do
         md = { foo: "bar" }
-        md[jwt_uri_key] = test_uri
+        md[jwt_uri_key] = test_uri if test_uri
         the_proc = @client.updater_proc
         got = the_proc.call md
         auth_header = got[auth_key]
         expect_is_encoded_jwt auth_header
         expect(got[jwt_uri_key]).to be_nil
-        expect(md[jwt_uri_key]).to_not be_nil
+        expect(md[jwt_uri_key]).to_not be_nil if test_uri
       end
     end
 
     describe "#apply" do
       it "should not update the original hash with a jwt token" do
         md = { foo: "bar" }
-        md[jwt_uri_key] = test_uri
+        md[jwt_uri_key] = test_uri if test_uri
         the_proc = @client.updater_proc
         got = the_proc.call md
         auth_header = md[auth_key]
         expect(auth_header).to be_nil
         expect(got[jwt_uri_key]).to be_nil
-        expect(md[jwt_uri_key]).to_not be_nil
+        expect(md[jwt_uri_key]).to_not be_nil if test_uri
       end
 
       it "should add a jwt token to the returned hash" do
         md = { foo: "bar" }
-        md[jwt_uri_key] = test_uri
+        md[jwt_uri_key] = test_uri if test_uri
         got = @client.apply md
         auth_header = got[auth_key]
         expect_is_encoded_jwt auth_header
@@ -106,6 +109,7 @@ shared_examples "jwt header auth" do
     end
   end
 end
+
 
 describe Google::Auth::ServiceAccountCredentials do
   ServiceAccountCredentials = Google::Auth::ServiceAccountCredentials
@@ -169,12 +173,31 @@ describe Google::Auth::ServiceAccountCredentials do
     it_behaves_like "jwt header auth"
   end
 
-  context "when enable_self_signed_jwt is set" do
+  context "when enable_self_signed_jwt is set with aud" do
     before :example do
+      @client.scope = nil
       @client.instance_variable_set(:@enable_self_signed_jwt, true)
     end
 
     it_behaves_like "jwt header auth"
+  end
+
+  context "when enable_self_signed_jwt is set with scope" do
+    before :example do
+      @client.scope = ['scope/1', 'scope/2']
+      @client.instance_variable_set(:@enable_self_signed_jwt, true)
+    end
+
+    it_behaves_like "jwt header auth", nil
+  end
+
+  describe "#apply!" do
+    it "should raise error when scope and aud are both specified" do
+      @client.scope = ['scope/1', 'scope/2']
+      @client.instance_variable_set(:@enable_self_signed_jwt, true)
+      md = { :jwt_aud_uri => "https://www.googleapis.com/myservice" }
+      expect { @client.apply! md }.to raise_error ArgumentError
+    end
   end
 
   describe "#from_env" do

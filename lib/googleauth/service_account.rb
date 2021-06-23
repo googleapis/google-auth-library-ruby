@@ -129,7 +129,10 @@ module Google
           quota_project_id: @quota_project_id
         }
         key_io = StringIO.new MultiJson.dump(cred_json)
-        alt = ServiceAccountJwtHeaderCredentials.make_creds json_key_io: key_io
+        alt = ServiceAccountJwtHeaderCredentials.make_creds(
+          { json_key_io: key_io },
+          scope)
+
         alt.apply! a_hash
       end
     end
@@ -162,7 +165,8 @@ module Google
       # optional scope. Here's the constructor only has one param, so
       # we modify make_creds to reflect this.
       def self.make_creds *args
-        new json_key_io: args[0][:json_key_io]
+        new(json_key_io: args[0][:json_key_io],
+            scope: args[1])
       end
 
       # Initializes a ServiceAccountJwtHeaderCredentials.
@@ -181,6 +185,7 @@ module Google
         end
         @project_id ||= CredentialsLoader.load_gcloud_project_id
         @signing_key = OpenSSL::PKey::RSA.new @private_key
+        @scope ||= options[:scope]
       end
 
       # Construct a jwt token if the JWT_AUD_URI key is present in the input
@@ -189,7 +194,7 @@ module Google
       # The jwt token is used as the value of a 'Bearer '.
       def apply! a_hash, opts = {}
         jwt_aud_uri = a_hash.delete JWT_AUD_URI_KEY
-        return a_hash if jwt_aud_uri.nil?
+        return a_hash if jwt_aud_uri.nil? and @scope.nil?
         jwt_token = new_jwt_token jwt_aud_uri, opts
         a_hash[AUTH_METADATA_KEY] = "Bearer #{jwt_token}"
         a_hash
@@ -211,16 +216,23 @@ module Google
       protected
 
       # Creates a jwt uri token.
-      def new_jwt_token jwt_aud_uri, options = {}
+      def new_jwt_token jwt_aud_uri = nil, options = {}
         now = Time.new
         skew = options[:skew] || 60
         assertion = {
           "iss" => @issuer,
           "sub" => @issuer,
-          "aud" => jwt_aud_uri,
           "exp" => (now + EXPIRY).to_i,
           "iat" => (now - skew).to_i
         }
+
+        if @scope and jwt_aud_uri
+          raise ArgumentError, "Cannot specify both scope and aud"
+        end
+
+        assertion["scope"] = @scope.join(' ') if @scope
+        assertion["aud"] = jwt_aud_uri if jwt_aud_uri
+
         JWT.encode assertion, @signing_key, SIGNING_ALGORITHM
       end
     end
