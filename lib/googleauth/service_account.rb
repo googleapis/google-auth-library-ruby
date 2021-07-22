@@ -224,7 +224,7 @@ module Google
           raise ArgumentError, "Cannot specify both scope and aud"
         end
 
-        assertion["scope"] = @scope.join " " if @scope
+        assertion["scope"] = Array(@scope).join " " if @scope
         assertion["aud"] = jwt_aud_uri if jwt_aud_uri
 
         JWT.encode assertion, @signing_key, SIGNING_ALGORITHM
