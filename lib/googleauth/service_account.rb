@@ -158,7 +158,7 @@ module Google
       #
       # @param json_key_io [IO] an IO from which the JSON key can be read
       # @param scope [string|array|nil] the scope(s) to access
-      def self.make_creds options
+      def self.make_creds options = {}
         json_key_io, scope = options.values_at :json_key_io, :scope
         new json_key_io: json_key_io, scope: scope
       end
