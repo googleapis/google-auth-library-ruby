@@ -191,15 +191,6 @@ describe Google::Auth::ServiceAccountCredentials do
     it_behaves_like "jwt header auth", nil
   end
 
-  describe "#apply!" do
-    it "should raise error when scope and aud are both specified" do
-      @client.scope = ['scope/1', 'scope/2']
-      @client.instance_variable_set(:@enable_self_signed_jwt, true)
-      md = { :jwt_aud_uri => "https://www.googleapis.com/myservice" }
-      expect { @client.apply! md }.to raise_error ArgumentError
-    end
-  end
-
   describe "#from_env" do
     before :example do
       @var_name = ENV_VAR
