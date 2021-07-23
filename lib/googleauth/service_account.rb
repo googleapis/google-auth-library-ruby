@@ -220,9 +220,7 @@ module Google
           "iat" => (now - skew).to_i
         }
 
-        if @scope && jwt_aud_uri
-          raise ArgumentError, "Cannot specify both scope and aud"
-        end
+        jwt_aud_uri = nil if @scope
 
         assertion["scope"] = Array(@scope).join " " if @scope
         assertion["aud"] = jwt_aud_uri if jwt_aud_uri
