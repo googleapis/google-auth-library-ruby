@@ -1,5 +1,12 @@
 # Release History
 
+## [0.17.0](https://www.github.com/googleapis/google-auth-library-ruby/compare/google-auth-library-ruby/v0.16.2...google-auth-library-ruby/v0.17.0) (2021-07-30)
+
+
+### Features
+
+* Allow scopes to be self-signed into jwts ([e67ce40](https://www.github.com/googleapis/google-auth-library-ruby/commit/e67ce40f919b7eb3723c2ec95f5b8d58315ab1ee))
+
 ### [0.16.2](https://www.github.com/googleapis/google-auth-library-ruby/compare/google-auth-library-ruby/v0.16.1...google-auth-library-ruby/v0.16.2) (2021-04-28)
 
 
