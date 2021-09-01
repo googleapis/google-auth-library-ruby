@@ -1,5 +1,21 @@
 # Release History
 
+## [0.16.0](https://www.github.com/googleapis/google-auth-library-ruby/compare/googleauth/v0.15.0...googleauth/v0.16.0) (2021-09-01)
+
+
+### Features
+
+* Allow scopes to be self-signed into jwts ([e67ce40](https://www.github.com/googleapis/google-auth-library-ruby/commit/e67ce40f919b7eb3723c2ec95f5b8d58315ab1ee))
+* Drop support for Ruby 2.4 and add support for Ruby 3.0 ([6644806](https://www.github.com/googleapis/google-auth-library-ruby/commit/6644806ab47cea6d08e1901c2ed808e53a579bc3))
+
+
+### Bug Fixes
+
+* Accept application/text content-type for plain idtoken response ([4948ebb](https://www.github.com/googleapis/google-auth-library-ruby/commit/4948ebb3ca151e9f0433585a41bad6f415416b2d))
+* Fix crash when using a client credential without any paths or env_vars set ([#296](https://www.github.com/googleapis/google-auth-library-ruby/issues/296)) ([c971c1a](https://www.github.com/googleapis/google-auth-library-ruby/commit/c971c1ad2d7730c0f5b389d533a972be32fbaf49))
+* Stop attempting to get the project from gcloud when applying self-signed JWTs ([#317](https://www.github.com/googleapis/google-auth-library-ruby/issues/317)) ([39258ca](https://www.github.com/googleapis/google-auth-library-ruby/commit/39258cacafa5c770fb40d99075a97b8e6427adba))
+* Updates to gem metadata ([fb5e56d](https://www.github.com/googleapis/google-auth-library-ruby/commit/fb5e56dad1e6ed6afd4f9b5c626e5e1495e48343))
+
 ## [0.17.0](https://www.github.com/googleapis/google-auth-library-ruby/compare/google-auth-library-ruby/v0.16.2...google-auth-library-ruby/v0.17.0) (2021-07-30)
 
 
