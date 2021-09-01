@@ -39,6 +39,7 @@ expand :yardoc do |t|
   # t.fail_on_warning = true
   t.use_bundler
 end
+alias_tool :yard, :yardoc
 
 expand :gem_build
 

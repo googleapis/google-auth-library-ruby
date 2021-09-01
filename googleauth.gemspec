@@ -29,11 +29,6 @@ Gem::Specification.new do |gem|
   gem.add_dependency "os", ">= 0.9", "< 2.0"
   gem.add_dependency "signet", "~> 0.15"
 
-  gem.add_development_dependency "google-style", "~> 1.25.1"
-  gem.add_development_dependency "redcarpet", "~> 3.0"
-  gem.add_development_dependency "rspec", "~> 3.1"
-  gem.add_development_dependency "yard", "~> 0.9"
-
   if gem.respond_to? :metadata
     gem.metadata["changelog_uri"] = "https://github.com/googleapis/google-auth-library-ruby/blob/master/CHANGELOG.md"
     gem.metadata["source_code_uri"] = "https://github.com/googleapis/google-auth-library-ruby"
