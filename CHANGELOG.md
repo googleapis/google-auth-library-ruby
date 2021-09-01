@@ -1,11 +1,5 @@
 # Release History
 
-### [0.17.1](https://www.github.com/googleapis/google-auth-library-ruby/compare/googleauth/v0.15.0...googleauth/v0.17.1) (2021-09-01)
-
-### Bug Fixes
-
-* Updates to gem metadata ([fb5e56d](https://www.github.com/googleapis/google-auth-library-ruby/commit/fb5e56dad1e6ed6afd4f9b5c626e5e1495e48343))
-
 ## [0.17.0](https://www.github.com/googleapis/google-auth-library-ruby/compare/google-auth-library-ruby/v0.16.2...google-auth-library-ruby/v0.17.0) (2021-07-30)
 
 
