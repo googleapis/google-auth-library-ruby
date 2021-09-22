@@ -140,6 +140,27 @@ authorizer = Google::Auth::ServiceAccountCredentials.make_creds(
 authorizer.fetch_access_token!
 ```
 
+You can also use a JSON keyfile by setting the `GOOGLE_APPLICATION_CREDENTIALS` environmental variable.
+
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service_account_json_key.json
+```
+
+```ruby
+require 'googleauth'
+require 'google/apis/drive_v3'
+
+Drive = ::Google::Apis::DriveV3
+drive = Drive::DriveService.new
+
+scope = 'https://www.googleapis.com/auth/drive'
+
+authorizer = Google::Auth::ServiceAccountCredentials.from_env(scope: scope)
+drive.authorization = authorizer
+
+list_files = drive.list_files()
+```
+
 ### Example (Environment Variables)
 
 ```bash
