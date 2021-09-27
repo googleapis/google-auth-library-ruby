@@ -1,56 +1,40 @@
 # Release History
 
-### [0.17.1](https://www.github.com/googleapis/google-auth-library-ruby/compare/googleauth/v0.15.0...googleauth/v0.17.1) (2021-09-01)
+## [1.0.0](https://www.github.com/googleapis/google-auth-library-ruby/compare/googleauth/v0.17.1...googleauth/v1.0.0) (2021-09-27)
 
-### Bug Fixes
+Bumped version to 1.0.0. Releases from this point will follow semver.
+
+* Allow dependency on future 1.x versions of signet ([9e17a24](https://www.github.com/googleapis/google-auth-library-ruby/commit/9e17a24bf97cb52f09756c624b4dc6e18dc79493))
+* Prevented gcloud from authenticating on the console when getting the gcloud project ([9902503](https://www.github.com/googleapis/google-auth-library-ruby/commit/990250345d6af31de1066c08c0b3b42692ae263c))
+
+## [0.17.1](https://www.github.com/googleapis/google-auth-library-ruby/compare/googleauth/v0.15.0...googleauth/v0.17.1) (2021-09-01)
 
 * Updates to gem metadata ([fb5e56d](https://www.github.com/googleapis/google-auth-library-ruby/commit/fb5e56dad1e6ed6afd4f9b5c626e5e1495e48343))
 
 ## [0.17.0](https://www.github.com/googleapis/google-auth-library-ruby/compare/google-auth-library-ruby/v0.16.2...google-auth-library-ruby/v0.17.0) (2021-07-30)
 
-
-### Features
-
 * Allow scopes to be self-signed into jwts ([e67ce40](https://www.github.com/googleapis/google-auth-library-ruby/commit/e67ce40f919b7eb3723c2ec95f5b8d58315ab1ee))
 
-### [0.16.2](https://www.github.com/googleapis/google-auth-library-ruby/compare/google-auth-library-ruby/v0.16.1...google-auth-library-ruby/v0.16.2) (2021-04-28)
-
-
-### Bug Fixes
+## [0.16.2](https://www.github.com/googleapis/google-auth-library-ruby/compare/google-auth-library-ruby/v0.16.1...google-auth-library-ruby/v0.16.2) (2021-04-28)
 
 * Stop attempting to get the project from gcloud when applying self-signed JWTs ([#317](https://www.github.com/googleapis/google-auth-library-ruby/issues/317)) ([39258ca](https://www.github.com/googleapis/google-auth-library-ruby/commit/39258cacafa5c770fb40d99075a97b8e6427adba))
 
-### [0.16.1](https://www.github.com/googleapis/google-auth-library-ruby/compare/google-auth-library-ruby/v0.16.0...google-auth-library-ruby/v0.16.1) (2021-04-01)
-
-
-### Bug Fixes
+## [0.16.1](https://www.github.com/googleapis/google-auth-library-ruby/compare/google-auth-library-ruby/v0.16.0...google-auth-library-ruby/v0.16.1) (2021-04-01)
 
 * Accept application/text content-type for plain idtoken response ([4948ebb](https://www.github.com/googleapis/google-auth-library-ruby/commit/4948ebb3ca151e9f0433585a41bad6f415416b2d))
 
 ## [0.16.0](https://www.github.com/googleapis/google-auth-library-ruby/compare/v0.15.1...v0.16.0) (2021-03-04)
 
-
-### Features
-
 * Drop support for Ruby 2.4 and add support for Ruby 3.0 ([6644806](https://www.github.com/googleapis/google-auth-library-ruby/commit/6644806ab47cea6d08e1901c2ed808e53a579bc3))
 
 ## [0.15.1](https://www.github.com/googleapis/google-auth-library-ruby/compare/v0.15.0...v0.15.1) (2021-02-08)
-
-
-### Bug Fixes
 
 * Fix crash when using a client credential without any paths or env_vars set ([#296](https://www.github.com/googleapis/google-auth-library-ruby/issues/296)) ([c971c1a](https://www.github.com/googleapis/google-auth-library-ruby/commit/c971c1ad2d7730c0f5b389d533a972be32fbaf49))
 
 ## [0.15.0](https://www.github.com/googleapis/google-auth-library-ruby/compare/v0.14.0...v0.15.0) (2021-01-26)
 
-
-### Features
-
 * Credential parameters inherit from superclasses ([4fa4720](https://www.github.com/googleapis/google-auth-library-ruby/commit/4fa47206dbd62f8bbdd1b9d3721f6baee9fd1d62))
 * Service accounts apply a self-signed JWT if scopes are marked as default ([d22acb8](https://www.github.com/googleapis/google-auth-library-ruby/commit/d22acb8a510e6711b5674545c31a4816e5a9168f))
-
-
-### Bug Fixes
 
 * Retry fetch_access_token when GCE metadata server returns unexpected errors ([cd9b012](https://www.github.com/googleapis/google-auth-library-ruby/commit/cd9b0126d3419b9953982f71edc9e6ba3f640e3c))
 * Support correct service account and user refresh behavior for custom credential env variables ([d2dffe5](https://www.github.com/googleapis/google-auth-library-ruby/commit/d2dffe592112b45006291ad9a57f56e00fb208c3))
