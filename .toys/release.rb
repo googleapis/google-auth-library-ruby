@@ -14,5 +14,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-load_git remote: "https://github.com/googleapis/google-cloud-ruby.git",
-         path: ".toys/release"
+load_git remote: "https://github.com/googleapis/ruby-common-tools.git",
+         path: "toys/release"
