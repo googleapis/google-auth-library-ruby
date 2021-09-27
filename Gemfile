@@ -4,7 +4,7 @@ source "https://rubygems.org"
 gemspec
 
 gem "coveralls", "~> 0.7"
-gem "fakefs", "~> 0.6"
+gem "fakefs", "~> 1.0"
 gem "fakeredis", "~> 0.5"
 gem "gems", "~> 1.2"
 gem "google-style", "~> 1.25.1"
