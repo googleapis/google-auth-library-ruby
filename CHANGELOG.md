@@ -1,5 +1,13 @@
 # Release History
 
+## [1.0.0](https://www.github.com/googleapis/google-auth-library-ruby/compare/googleauth/v0.17.1...googleauth/v1.0.0) (2021-09-27)
+
+
+### Bug Fixes
+
+* Allow dependency on 1.x versions of signet ([9e17a24](https://www.github.com/googleapis/google-auth-library-ruby/commit/9e17a24bf97cb52f09756c624b4dc6e18dc79493))
+* Prevented gcloud from authenticating on the console when getting the gcloud project ([9902503](https://www.github.com/googleapis/google-auth-library-ruby/commit/990250345d6af31de1066c08c0b3b42692ae263c))
+
 ### [0.17.1](https://www.github.com/googleapis/google-auth-library-ruby/compare/googleauth/v0.15.0...googleauth/v0.17.1) (2021-09-01)
 
 ### Bug Fixes
