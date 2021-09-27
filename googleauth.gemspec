@@ -27,7 +27,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency "memoist", "~> 0.16"
   gem.add_dependency "multi_json", "~> 1.11"
   gem.add_dependency "os", ">= 0.9", "< 2.0"
-  gem.add_dependency "signet", "~> 0.15"
+  gem.add_dependency "signet", ">= 0.16", "< 2.a"
 
   if gem.respond_to? :metadata
     gem.metadata["changelog_uri"] = "https://github.com/googleapis/google-auth-library-ruby/blob/master/CHANGELOG.md"
