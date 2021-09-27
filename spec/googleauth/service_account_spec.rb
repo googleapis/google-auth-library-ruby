@@ -1,31 +1,16 @@
-# Copyright 2015, Google Inc.
-# All rights reserved.
+# Copyright 2015 Google, Inc.
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are
-# met:
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-#     * Redistributions of source code must retain the above copyright
-# notice, this list of conditions and the following disclaimer.
-#     * Redistributions in binary form must reproduce the above
-# copyright notice, this list of conditions and the following disclaimer
-# in the documentation and/or other materials provided with the
-# distribution.
-#     * Neither the name of Google Inc. nor the names of its
-# contributors may be used to endorse or promote products derived from
-# this software without specific prior written permission.
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-# "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-# LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-# A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-# OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
 spec_dir = File.expand_path File.join(File.dirname(__FILE__))
 $LOAD_PATH.unshift spec_dir
@@ -44,9 +29,10 @@ require "os"
 
 include Google::Auth::CredentialsLoader
 
-shared_examples "jwt header auth" do
+shared_examples "jwt header auth" do |aud="https://www.googleapis.com/myservice"|
   context "when jwt_aud_uri is present" do
-    let(:test_uri) { "https://www.googleapis.com/myservice" }
+    let(:test_uri) { aud }
+    let(:test_scope) { "scope/1 scope/2" }
     let(:auth_prefix) { "Bearer " }
     let(:auth_key) { ServiceAccountJwtHeaderCredentials::AUTH_METADATA_KEY }
     let(:jwt_uri_key) { ServiceAccountJwtHeaderCredentials::JWT_AUD_URI_KEY }
@@ -56,14 +42,16 @@ shared_examples "jwt header auth" do
       expect(hdr.start_with?(auth_prefix)).to be true
       authorization = hdr[auth_prefix.length..-1]
       payload, = JWT.decode authorization, @key.public_key, true, algorithm: "RS256"
-      expect(payload["aud"]).to eq(test_uri)
+
+      expect(payload["aud"]).to eq(test_uri) if not test_uri.nil?
+      expect(payload["scope"]).to eq(test_scope) if test_uri.nil?
       expect(payload["iss"]).to eq(client_email)
     end
 
     describe "#apply!" do
       it "should update the target hash with a jwt token" do
         md = { foo: "bar" }
-        md[jwt_uri_key] = test_uri
+        md[jwt_uri_key] = test_uri if test_uri
         @client.apply! md
         auth_header = md[auth_key]
         expect_is_encoded_jwt auth_header
@@ -74,31 +62,31 @@ shared_examples "jwt header auth" do
     describe "updater_proc" do
       it "should provide a proc that updates a hash with a jwt token" do
         md = { foo: "bar" }
-        md[jwt_uri_key] = test_uri
+        md[jwt_uri_key] = test_uri if test_uri
         the_proc = @client.updater_proc
         got = the_proc.call md
         auth_header = got[auth_key]
         expect_is_encoded_jwt auth_header
         expect(got[jwt_uri_key]).to be_nil
-        expect(md[jwt_uri_key]).to_not be_nil
+        expect(md[jwt_uri_key]).to_not be_nil if test_uri
       end
     end
 
     describe "#apply" do
       it "should not update the original hash with a jwt token" do
         md = { foo: "bar" }
-        md[jwt_uri_key] = test_uri
+        md[jwt_uri_key] = test_uri if test_uri
         the_proc = @client.updater_proc
         got = the_proc.call md
         auth_header = md[auth_key]
         expect(auth_header).to be_nil
         expect(got[jwt_uri_key]).to be_nil
-        expect(md[jwt_uri_key]).to_not be_nil
+        expect(md[jwt_uri_key]).to_not be_nil if test_uri
       end
 
       it "should add a jwt token to the returned hash" do
         md = { foo: "bar" }
-        md[jwt_uri_key] = test_uri
+        md[jwt_uri_key] = test_uri if test_uri
         got = @client.apply md
         auth_header = got[auth_key]
         expect_is_encoded_jwt auth_header
@@ -106,6 +94,7 @@ shared_examples "jwt header auth" do
     end
   end
 end
+
 
 describe Google::Auth::ServiceAccountCredentials do
   ServiceAccountCredentials = Google::Auth::ServiceAccountCredentials
@@ -169,12 +158,22 @@ describe Google::Auth::ServiceAccountCredentials do
     it_behaves_like "jwt header auth"
   end
 
-  context "when enable_self_signed_jwt is set" do
+  context "when enable_self_signed_jwt is set with aud" do
     before :example do
+      @client.scope = nil
       @client.instance_variable_set(:@enable_self_signed_jwt, true)
     end
 
     it_behaves_like "jwt header auth"
+  end
+
+  context "when enable_self_signed_jwt is set with scope" do
+    before :example do
+      @client.scope = ['scope/1', 'scope/2']
+      @client.instance_variable_set(:@enable_self_signed_jwt, true)
+    end
+
+    it_behaves_like "jwt header auth", nil
   end
 
   describe "#from_env" do

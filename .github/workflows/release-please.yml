@@ -1,39 +1,38 @@
+name: Release-Please
 on:
   schedule:
-    - cron: '29 9 * * *'
+    - cron: '57 8 * * *'
   workflow_dispatch:
+    inputs:
+      gem:
+        description: "Name of single gem to release. Leave blank to check all gems."
+        required: false
+      args:
+        description: "Extra command line arguments."
+        required: false
 
-name: release-please
 jobs:
   release-please:
-    env:
-      ENABLE_RELEASE_PLEASE: ${{ secrets.ENABLE_RELEASE_PLEASE }}
+    if: ${{ github.repository == 'googleapis/google-auth-library-ruby' }}
     runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.YOSHI_CODE_BOT_TOKEN }}
+      RELEASE_PLEASE_DISABLE: ${{ secrets.RELEASE_PLEASE_DISABLE }}
     steps:
-      - name: ReleasePlease
-        id: release-please
-        if: ${{ env.ENABLE_RELEASE_PLEASE || github.event_name == 'workflow_dispatch' }}
-        uses: GoogleCloudPlatform/release-please-action@v2
+      - name: Checkout repo
+        uses: actions/checkout@v2
+      - name: Install Ruby 2.7
+        uses: ruby/setup-ruby@v1
         with:
-          command: release-pr
-          token: ${{ secrets.YOSHI_CODE_BOT_TOKEN }}
-          fork: true
-          release-type: ruby
-          package-name: google-auth-library-ruby
-          version-file: lib/googleauth/version.rb
-          monorepo-tags: true
-          bump-minor-pre-major: true
-      - name: ReleaseLabel
-        id: release-label
-        if: ${{ steps.release-please.outputs.pr }}
-        uses: actions/github-script@v4
+          ruby-version: "2.7"
+      - name: Install NodeJS 12.x
+        uses: actions/setup-node@v2
         with:
-          github-token: ${{secrets.YOSHI_APPROVER_TOKEN}}
-          script: |
-            core.info("Labeling release");
-            github.issues.addLabels({
-              owner: 'googleapis',
-              repo: 'google-auth-library-ruby',
-              issue_number: ${{ steps.release-please.outputs.pr }},
-              labels: ["autorelease: pending"]
-            });
+          node-version: "12.x"
+      - name: Install tools
+        run: "gem install --no-document toys && npm install release-please"
+      - name: execute
+        run: |
+          toys release please -v --fork \
+            --github-event-name=${{ github.event_name }} \
+            ${{ github.event.inputs.args }} -- ${{ github.event.inputs.gem }}

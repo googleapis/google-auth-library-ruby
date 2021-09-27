@@ -14,35 +14,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-expand :clean, paths: :gitignore
-
-expand :rspec do |t|
-  t.libs = ["lib", "spec"]
-  t.use_bundler
-end
-
-expand :minitest do |t|
-  t.libs = ["lib", "test"]
-  t.use_bundler
-  t.files = "test/**/*_test.rb"
-end
-
-expand :minitest do |t|
-  t.name = "integration"
-  t.libs = ["lib", "integration"]
-  t.use_bundler
-  t.files = "integration/**/*_test.rb"
-end
-
-expand :rubocop, bundler: true
-
-expand :yardoc do |t|
-  t.generate_output_flag = true
-  # t.fail_on_warning = true
-  t.use_bundler
-end
-alias_tool :yard, :yardoc
-
-expand :gem_build
-
-expand :gem_build, name: "install", install_gem: true
+load_git remote: "https://github.com/googleapis/ruby-common-tools.git",
+         path: "toys/release"
