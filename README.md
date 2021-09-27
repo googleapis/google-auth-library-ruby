@@ -140,7 +140,7 @@ authorizer = Google::Auth::ServiceAccountCredentials.make_creds(
 authorizer.fetch_access_token!
 ```
 
-You can also use a JSON keyfile by setting the `GOOGLE_APPLICATION_CREDENTIALS` environmental variable.
+You can also use a JSON keyfile by setting the `GOOGLE_APPLICATION_CREDENTIALS` environment variable.
 
 ```bash
 export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service_account_json_key.json
