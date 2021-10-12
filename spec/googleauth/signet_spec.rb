@@ -94,6 +94,81 @@ describe Signet::OAuth2::Client do
     end
   end
 
+  describe "token helpers" do
+    let(:token) { "1/abcdef1234567890" }
+    before :example do
+      @access_token_client = Signet::OAuth2::Client.new(
+        access_token: token
+      )
+      @id_token_client = Signet::OAuth2::Client.new(
+        target_audience: "https://pubsub.googleapis.com/",
+        id_token:        token
+      )
+      @unexpired_id_token_client = Signet::OAuth2::Client.new(
+        target_audience: "https://pubsub.googleapis.com/",
+        id_token:        token,
+        expires_in:      3600
+      )
+      @unexpired_access_token_client = Signet::OAuth2::Client.new(
+        access_token: token,
+        expires_in:   3600
+      )
+      @expired_id_token_client = Signet::OAuth2::Client.new(
+        target_audience: "https://pubsub.googleapis.com/",
+        id_token:        token,
+        expires_in:      30
+      )
+      @expired_access_token_client = Signet::OAuth2::Client.new(
+        access_token: token,
+        expires_in:   30
+      )
+    end
+
+    describe "#token_type" do
+      it "returns :access_token if target_audience is missing" do
+        expect(@access_token_client.token_type).to eq(:access_token)
+      end
+
+      it "returns :id_token if target_audience is present" do
+        expect(@id_token_client.token_type).to eq(:id_token)
+      end
+    end
+
+    describe "#needs_access_token?" do
+      it "returns true if target_audience and access_token are missing" do
+        expect(@client.needs_access_token?).to be true
+      end
+
+      it "returns true if target_audience is present and id_token is missing" do
+        expect(@id_client.needs_access_token?).to be true
+      end
+
+      it "returns true if access_token and expires_at are present and expires within 60s" do
+        expect(@expired_access_token_client.needs_access_token?).to be true
+      end
+
+      it "returns true if target_audience, id_token and expires_at are present and expires within 60s" do
+        expect(@expired_id_token_client.needs_access_token?).to be true
+      end
+
+      it "returns false if access_token is present" do
+        expect(@access_token_client.needs_access_token?).to be false
+      end
+
+      it "returns false if target_audience and id_token is present" do
+        expect(@id_token_client.needs_access_token?).to be false
+      end
+
+      it "returns false if access_token and expires_at are present and expires in more than 60s" do
+        expect(@unexpired_access_token_client.needs_access_token?).to be false
+      end
+
+      it "returns false if target_audience, id_token and expires_at are present and expires in more than 60s" do
+        expect(@unexpired_id_token_client.needs_access_token?).to be false
+      end
+    end
+  end
+
   describe "#fetch_access_token!" do
     it "retries when orig_fetch_access_token! raises Signet::RemoteServerError" do
       mocked_responses = [:raise, :raise, "success"]

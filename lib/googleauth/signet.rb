@@ -29,12 +29,21 @@ module Signet
         self
       end
 
+      # The token type as symbol, either :id_token or :access_token
+      def token_type
+        target_audience ? :id_token : :access_token
+      end
+
+      # Whether the id_token or access_token is missing or about to expire.
+      def needs_access_token?
+        send(token_type).nil? || expires_within?(60)
+      end
+
       # Updates a_hash updated with the authentication token
       def apply! a_hash, opts = {}
         # fetch the access token there is currently not one, or if the client
         # has expired
-        token_type = target_audience ? :id_token : :access_token
-        fetch_access_token! opts if send(token_type).nil? || expires_within?(60)
+        fetch_access_token! opts if needs_access_token?
         a_hash[AUTH_METADATA_KEY] = "Bearer #{send token_type}"
       end
 
