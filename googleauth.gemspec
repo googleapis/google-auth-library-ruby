@@ -30,7 +30,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency "signet", ">= 0.16", "< 2.a"
 
   if gem.respond_to? :metadata
-    gem.metadata["changelog_uri"] = "https://github.com/googleapis/google-auth-library-ruby/blob/master/CHANGELOG.md"
+    gem.metadata["changelog_uri"] = "https://github.com/googleapis/google-auth-library-ruby/blob/main/CHANGELOG.md"
     gem.metadata["source_code_uri"] = "https://github.com/googleapis/google-auth-library-ruby"
     gem.metadata["bug_tracker_uri"] = "https://github.com/googleapis/google-auth-library-ruby/issues"
   end
