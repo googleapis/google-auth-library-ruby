@@ -1,5 +1,12 @@
 # Release History
 
+## [1.1.0](https://www.github.com/googleapis/google-auth-library-ruby/compare/googleauth/v1.0.0...googleauth/v1.1.0) (2021-10-24)
+
+
+### Features
+
+* Support short-lived tokens in Credentials ([9d7051c](https://www.github.com/googleapis/google-auth-library-ruby/commit/9d7051cff4d5e191a5d6756a068e8be539934f0d))
+
 ## [1.0.0](https://www.github.com/googleapis/google-auth-library-ruby/compare/googleauth/v0.17.1...googleauth/v1.0.0) (2021-09-27)
 
 Bumped version to 1.0.0. Releases from this point will follow semver.
