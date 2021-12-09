@@ -116,6 +116,7 @@ token_store = Google::Auth::Stores::FileTokenStore.new(
   :file => '/path/to/tokens.yaml')
 authorizer = Google::Auth::UserAuthorizer.new(client_id, scope, token_store)
 
+user_id = ENV['USER']
 credentials = authorizer.get_credentials(user_id)
 if credentials.nil?
   url = authorizer.get_authorization_url(base_url: OOB_URI )
