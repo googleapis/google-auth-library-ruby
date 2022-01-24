@@ -3,7 +3,7 @@ source "https://rubygems.org"
 # Specify your gem's dependencies in googleauth.gemspec
 gemspec
 
-gem "coveralls", "~> 0.7"
+gem "coveralls", "~> 0.8"
 gem "fakefs", "~> 1.0"
 gem "fakeredis", "~> 0.5"
 gem "gems", "~> 1.2"
