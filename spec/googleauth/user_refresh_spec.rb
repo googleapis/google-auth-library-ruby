@@ -37,7 +37,8 @@ describe Google::Auth::UserRefreshCredentials do
       client_secret: "privatekey",
       client_id:     "client123",
       refresh_token: "refreshtoken",
-      type:          "authorized_user"
+      type:          "authorized_user",
+      quota_project_id: "test_project"
     }
   end
 
@@ -141,6 +142,7 @@ describe Google::Auth::UserRefreshCredentials do
       expect(creds.client_id).to eq(cred_json[:client_id])
       expect(creds.client_secret).to eq(cred_json[:client_secret])
       expect(creds.refresh_token).to eq(cred_json[:refresh_token])
+      expect(creds.quota_project_id).to be_nil
     end
 
     it "sets project_id when the PROJECT_ID_VAR env var is set" do
