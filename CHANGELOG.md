@@ -1,5 +1,12 @@
 # Release History
 
+### [1.1.1](https://www.github.com/googleapis/google-auth-library-ruby/compare/googleauth/v1.1.0...googleauth/v1.1.1) (2022-02-14)
+
+
+### Bug Fixes
+
+* add quota_project to user refresh credentials ([#361](https://www.github.com/googleapis/google-auth-library-ruby/issues/361)) ([0eb3c28](https://www.github.com/googleapis/google-auth-library-ruby/commit/0eb3c2850813c99c1100df6371c94ddef6e00b00))
+
 ## [1.1.0](https://www.github.com/googleapis/google-auth-library-ruby/compare/googleauth/v1.0.0...googleauth/v1.1.0) (2021-10-24)
 
 
