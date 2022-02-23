@@ -1,5 +1,12 @@
 # Release History
 
+### [1.1.2](https://www.github.com/googleapis/google-auth-library-ruby/compare/googleauth/v1.1.1...googleauth/v1.1.2) (2022-02-22)
+
+
+### Bug Fixes
+
+* Support Faraday 2 ([#365](https://www.github.com/googleapis/google-auth-library-ruby/issues/365)) ([9bbb88f](https://www.github.com/googleapis/google-auth-library-ruby/commit/9bbb88f825fe185f69d314ff6808524ce036acb6))
+
 ### [1.1.1](https://www.github.com/googleapis/google-auth-library-ruby/compare/googleauth/v1.1.0...googleauth/v1.1.1) (2022-02-14)
 
 
