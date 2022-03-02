@@ -41,7 +41,7 @@ require "multi_json"
 MultiJson.use :json_gem
 
 # Allow Faraday to support test stubs
-Faraday::Adapter.load_middleware :test
+Faraday::Adapter.lookup_middleware :test
 
 # Configure RSpec to capture log messages for each test. The output from the
 # logs will be stored in the @log_output variable. It is a StringIO instance.
