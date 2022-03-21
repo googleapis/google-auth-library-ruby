@@ -14,11 +14,6 @@
 This is Google's officially supported ruby client library for using OAuth 2.0
 authorization and authentication with Google APIs.
 
-## Alpha
-
-This library is in Alpha. We will make an effort to support the library, but
-we reserve the right to make incompatible changes when necessary.
-
 ## Install
 
 Be sure `https://rubygems.org/` is in your gem sources.
