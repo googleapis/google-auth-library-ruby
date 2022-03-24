@@ -36,6 +36,7 @@ module Google
       REVOKE_TOKEN_URI = "https://oauth2.googleapis.com/revoke".freeze
       extend CredentialsLoader
       attr_reader :project_id
+      attr_reader :quota_project_id
 
       # Create a UserRefreshCredentials.
       #
@@ -48,14 +49,15 @@ module Google
           "client_id"     => ENV[CredentialsLoader::CLIENT_ID_VAR],
           "client_secret" => ENV[CredentialsLoader::CLIENT_SECRET_VAR],
           "refresh_token" => ENV[CredentialsLoader::REFRESH_TOKEN_VAR],
-          "project_id"    => ENV[CredentialsLoader::PROJECT_ID_VAR]
+          "project_id"    => ENV[CredentialsLoader::PROJECT_ID_VAR],
+          "quota_project_id" => nil
         }
-
         new(token_credential_uri: TOKEN_CRED_URI,
             client_id:            user_creds["client_id"],
             client_secret:        user_creds["client_secret"],
             refresh_token:        user_creds["refresh_token"],
             project_id:           user_creds["project_id"],
+            quota_project_id:     user_creds["quota_project_id"],
             scope:                scope)
           .configure_connection(options)
       end
@@ -77,6 +79,7 @@ module Google
         options[:authorization_uri] ||= AUTHORIZATION_URI
         @project_id = options[:project_id]
         @project_id ||= CredentialsLoader.load_gcloud_project_id
+        @quota_project_id = options[:quota_project_id]
         super options
       end
 

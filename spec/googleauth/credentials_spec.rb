@@ -19,6 +19,7 @@ require "googleauth"
 # make sure that the passed in scope propogates to the Signet object. This means
 # testing the private API, which is generally frowned on.
 describe Google::Auth::Credentials, :private do
+  let(:token) { "1/abcdef1234567890" }
   let :default_keyfile_hash do
     {
       "private_key_id"   => "testabc1234567890xyz",
@@ -34,6 +35,7 @@ describe Google::Auth::Credentials, :private do
   def mock_signet
     mocked_signet = double "Signet::OAuth2::Client"
     allow(mocked_signet).to receive(:configure_connection).and_return(mocked_signet)
+    allow(mocked_signet).to receive(:needs_access_token?).and_return(true)
     allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
     allow(mocked_signet).to receive(:client_id)
     allow(Signet::OAuth2::Client).to receive(:new) do |options|
@@ -573,6 +575,7 @@ describe Google::Auth::Credentials, :private do
   it "warns when cloud sdk credentials are used" do
     mocked_signet = double "Signet::OAuth2::Client"
     allow(mocked_signet).to receive(:configure_connection).and_return(mocked_signet)
+    allow(mocked_signet).to receive(:needs_access_token?).and_return(true)
     allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
     allow(Signet::OAuth2::Client).to receive(:new) do |_options|
       mocked_signet
@@ -581,5 +584,11 @@ describe Google::Auth::Credentials, :private do
     expect { Google::Auth::Credentials.new default_keyfile_hash }.to output(
       Google::Auth::CredentialsLoader::CLOUD_SDK_CREDENTIALS_WARNING + "\n"
     ).to_stderr
+  end
+
+  it "does not fetch access token when initialized with a Signet::OAuth2::Client object that already has a token" do
+    signet = Signet::OAuth2::Client.new access_token: token # Client#needs_access_token? will return false
+    creds = Google::Auth::Credentials.new signet
+    expect(creds.client).to eq(signet)
   end
 end

@@ -2,10 +2,10 @@ name: CI
 on:
   pull_request:
     branches:
-      - master
+      - main
   push:
     branches:
-      - master
+      - main
   workflow_dispatch:
 jobs:
   CI:
@@ -25,6 +25,9 @@ jobs:
           - os: ubuntu-latest
             ruby: "3.0"
             task: test , spec
+          - os: ubuntu-latest
+            ruby: "3.1"
+            task: test , spec
           - os: macos-latest
             ruby: "2.7"
             task: test , spec
@@ -38,13 +41,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
     - name: Install Ruby ${{ matrix.ruby }}
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: "${{ matrix.ruby }}"
     - name: Install NodeJS 14.x
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v3
       with:
         node-version: "14.x"
     - name: Install dependencies

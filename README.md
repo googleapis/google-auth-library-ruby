@@ -14,11 +14,6 @@
 This is Google's officially supported ruby client library for using OAuth 2.0
 authorization and authentication with Google APIs.
 
-## Alpha
-
-This library is in Alpha. We will make an effort to support the library, but
-we reserve the right to make incompatible changes when necessary.
-
 ## Install
 
 Be sure `https://rubygems.org/` is in your gem sources.
@@ -116,6 +111,7 @@ token_store = Google::Auth::Stores::FileTokenStore.new(
   :file => '/path/to/tokens.yaml')
 authorizer = Google::Auth::UserAuthorizer.new(client_id, scope, token_store)
 
+user_id = ENV['USER']
 credentials = authorizer.get_credentials(user_id)
 if credentials.nil?
   url = authorizer.get_authorization_url(base_url: OOB_URI )
@@ -246,5 +242,5 @@ hesitate to
 about the client or APIs on [StackOverflow](http://stackoverflow.com).
 
 [application default credentials]: https://developers.google.com/accounts/docs/application-default-credentials
-[contributing]: https://github.com/googleapis/google-auth-library-ruby/tree/master/.github/CONTRIBUTING.md
-[license]: https://github.com/googleapis/google-auth-library-ruby/tree/master/LICENSE
+[contributing]: https://github.com/googleapis/google-auth-library-ruby/tree/main/.github/CONTRIBUTING.md
+[license]: https://github.com/googleapis/google-auth-library-ruby/tree/main/LICENSE

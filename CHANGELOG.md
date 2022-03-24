@@ -1,5 +1,26 @@
 # Release History
 
+### [1.1.2](https://www.github.com/googleapis/google-auth-library-ruby/compare/googleauth/v1.1.1...googleauth/v1.1.2) (2022-02-22)
+
+
+### Bug Fixes
+
+* Support Faraday 2 ([#365](https://www.github.com/googleapis/google-auth-library-ruby/issues/365)) ([9bbb88f](https://www.github.com/googleapis/google-auth-library-ruby/commit/9bbb88f825fe185f69d314ff6808524ce036acb6))
+
+### [1.1.1](https://www.github.com/googleapis/google-auth-library-ruby/compare/googleauth/v1.1.0...googleauth/v1.1.1) (2022-02-14)
+
+
+### Bug Fixes
+
+* add quota_project to user refresh credentials ([#361](https://www.github.com/googleapis/google-auth-library-ruby/issues/361)) ([0eb3c28](https://www.github.com/googleapis/google-auth-library-ruby/commit/0eb3c2850813c99c1100df6371c94ddef6e00b00))
+
+## [1.1.0](https://www.github.com/googleapis/google-auth-library-ruby/compare/googleauth/v1.0.0...googleauth/v1.1.0) (2021-10-24)
+
+
+### Features
+
+* Support short-lived tokens in Credentials ([9d7051c](https://www.github.com/googleapis/google-auth-library-ruby/commit/9d7051cff4d5e191a5d6756a068e8be539934f0d))
+
 ## [1.0.0](https://www.github.com/googleapis/google-auth-library-ruby/compare/googleauth/v0.17.1...googleauth/v1.0.0) (2021-09-27)
 
 Bumped version to 1.0.0. Releases from this point will follow semver.
