@@ -157,6 +157,22 @@ drive.authorization = authorizer
 list_files = drive.list_files()
 ```
 
+### 3-Legged OAuth with a Service Account
+
+This is similar to regular service account authorization (see [this answer](https://support.google.com/a/answer/2538798?hl=en) for more details on the differences), but you'll need to indicate which user your service account is impersonating by manually updating the `sub` field.
+
+```ruby
+scope = 'https://www.googleapis.com/auth/androidpublisher'
+
+authorizer = Google::Auth::ServiceAccountCredentials.make_creds(
+  json_key_io: File.open('/path/to/service_account_json_key.json'),
+  scope: scope
+)
+authorizer.update!(sub: "email-to-impersonate@your-domain.com")
+
+authorizer.fetch_access_token!
+```
+
 ### Example (Environment Variables)
 
 ```bash
