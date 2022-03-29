@@ -1,5 +1,8 @@
 {
-    "language": "ruby",
+    "client_documentation": "https://googleapis.dev/ruby/googleauth/latest",
     "distribution-name": "googleauth",
-    "library_type": "AUTH"
+    "language": "ruby",
+    "library_type": "AUTH",
+    "release_level": "stable",
+    "repo": "googleapis/google-auth-library-ruby",
 }
