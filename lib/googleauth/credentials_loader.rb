@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require "memoist"
 require "os"
 require "rbconfig"
 
@@ -23,7 +22,6 @@ module Google
     # CredentialsLoader contains the behaviour used to locate and find default
     # credentials files on the file system.
     module CredentialsLoader
-      extend Memoist
       ENV_VAR                   = "GOOGLE_APPLICATION_CREDENTIALS".freeze
       PRIVATE_KEY_VAR           = "GOOGLE_PRIVATE_KEY".freeze
       CLIENT_EMAIL_VAR          = "GOOGLE_CLIENT_EMAIL".freeze
