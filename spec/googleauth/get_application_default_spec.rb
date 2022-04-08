@@ -67,7 +67,7 @@ describe "#get_application_default" do
         ENV["HOME"] = dir # no config present in this tmp dir
         expect do
           Google::Auth.get_application_default @scope, options
-        end.to raise_error RuntimeError
+        end.to raise_error Google::Auth::DefaultCredentialsNotFoundError
       end
       expect(stub).to have_been_requested
     end
