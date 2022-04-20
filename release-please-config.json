@@ -1,0 +1,19 @@
+{
+  "bump-minor-pre-major": true,
+  "bump-patch-for-minor-pre-major": false,
+  "draft": false,
+  "include-component-in-tag": true,
+  "include-v-in-tag": true,
+  "prerelease": false,
+  "release-type": "ruby-yoshi",
+  "skip-github-release": false,
+  "separate-pull-requests": true,
+  "tag-separator": "/",
+  "sequential-calls": true,
+  "packages": {
+    ".": {
+      "component": "googleauth",
+      "version-file": "lib/googleauth/version.rb"
+    }
+  }
+}
