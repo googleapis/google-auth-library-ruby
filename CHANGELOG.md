@@ -1,5 +1,11 @@
 # Release History
 
+### 1.1.3 (2022-04-20)
+
+#### Documentation
+
+* Add README instructions for 3-Legged OAuth with a service account
+
 ### 1.1.2 (2022-02-22)
 
 #### Bug Fixes
