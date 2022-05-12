@@ -18,6 +18,7 @@ require "stringio"
 require "googleauth/credentials_loader"
 require "googleauth/service_account"
 require "googleauth/user_refresh"
+require "googleauth/external_account"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
@@ -53,6 +54,8 @@ module Google
           ServiceAccountCredentials
         when "authorized_user"
           UserRefreshCredentials
+        when "external_account"
+          ExternalAccountCredentials
         else
           raise "credentials type '#{type}' is not supported"
         end
@@ -69,6 +72,8 @@ module Google
           [json_key, ServiceAccountCredentials]
         when "authorized_user"
           [json_key, UserRefreshCredentials]
+        when "external_account"
+          [json_key, ExternalAccountCredentials]
         else
           raise "credentials type '#{type}' is not supported"
         end
