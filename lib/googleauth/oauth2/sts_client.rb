@@ -74,7 +74,7 @@ module Google
           request_body = {
             grant_type: options[:grant_type],
             audience: options[:audience],
-            scope: options[:scopes]&.join(" ") || [],
+            scope: Array(options[:scopes])&.join(" ") || [],
             requested_token_type: options[:requested_token_type],
             subject_token: options[:subject_token],
             subject_token_type: options[:subject_token_type]

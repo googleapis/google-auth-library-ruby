@@ -13,6 +13,8 @@
 # limitations under the License.
 
 require "time"
+require "googleauth/credentials_loader"
+require "googleauth/base_client"
 require "googleauth/oauth2/sts_client"
 
 module Google
@@ -51,7 +53,7 @@ module Google
       def self.read_json_key json_key_io
         json_key = MultiJson.load json_key_io.read
         wanted = [
-          "audience", "subject_token_type", "token_url", "credential_source", "service_account_impersonation_url"
+          "audience", "subject_token_type", "token_url", "credential_source"
         ]
         wanted.each do |key|
           raise "the json is missing the #{key} field" unless json_key.key? key
@@ -64,7 +66,8 @@ module Google
     # by utilizing the AWS EC2 metadata service and then exchanging the
     # credentials for a short-lived Google Cloud access token.
     class AwsCredentials
-      AUTH_METADATA_KEY = :authorization
+      include BaseClient
+
       STS_GRANT_TYPE = "urn:ietf:params:oauth:grant-type:token-exchange".freeze
       STS_REQUESTED_TOKEN_TYPE = "urn:ietf:params:oauth:token-type:access_token".freeze
       IAM_SCOPE = ["https://www.googleapis.com/auth/iam"].freeze
@@ -85,7 +88,7 @@ module Google
         @region = options[:region] || region(options)
         @request_signer = AwsRequestSigner.new @region
 
-        @expiry = nil
+        @expires_at = nil
         @access_token = nil
 
         @sts_client = Google::Auth::OAuth2::STSClient.new token_exchange_endpoint: @token_url
@@ -98,41 +101,63 @@ module Google
 
         if @service_account_impersonation_url
           impersonated_response = get_impersonated_access_token response["access_token"]
-          @expiry = Time.parse impersonated_response["expireTime"]
-          @access_token = impersonated_response["accessToken"]
+          self.expires_at = impersonated_response["expireTime"]
+          self.access_token = impersonated_response["accessToken"]
         else
           # Extract the expiration time in seconds from the response and calculate the actual expiration time
           # and then save that to the expiry variable.
-          @expiry = Time.now.utc + response["expires_in"].to_i
-          @access_token = response["access_token"]
+          self.expires_at = Time.now.utc + response["expires_in"].to_i
+          self.access_token = response["access_token"]
+        end
+
+        notify_refresh_listeners
+      end
+
+      def notify_refresh_listeners
+        listeners = defined?(@refresh_listeners) ? @refresh_listeners : []
+        listeners.each do |block|
+          block.call self
         end
       end
 
-      # Whether the id_token or access_token is missing or about to expire.
-      def needs_access_token?
-        @access_token.nil? || expires_within?(60)
-      end
-
       def expires_within? seconds
-        @expiry && @expiry - Time.now.utc < seconds
+        @expires_at && @expires_at - Time.now.utc < seconds
       end
 
-      # Updates a_hash updated with the authentication token
-      def apply! a_hash, opts = {}
-        # fetch the access token there is currently not one, or if the client
-        # has expired
-        fetch_access_token! opts if needs_access_token?
-        a_hash[AUTH_METADATA_KEY] = "Bearer #{@access_token}"
+      def expires_at
+        @expires_at
       end
 
-      # Returns a clone of a_hash updated with the authentication token
-      def apply a_hash, opts = {}
-        a_copy = a_hash.clone
-        apply! a_copy, opts
-        a_copy
+      def expires_at= new_expires_at
+        @expires_at = normalize_timestamp new_expires_at
+      end
+
+      def access_token
+        @access_token
+      end
+
+      def access_token= new_access_token
+        @access_token = new_access_token
       end
 
       private
+
+      def token_type
+        :access_token
+      end
+
+      def normalize_timestamp time
+        case time
+        when NilClass
+          nil
+        when Time
+          time
+        when String
+          Time.parse time
+        else
+          raise "Invalid time value #{time}"
+        end
+      end
 
       def exchange_token credentials
         request_options = @request_signer.generate_signed_request(
@@ -170,9 +195,7 @@ module Google
         response = c.post @service_account_impersonation_url do |req|
           req.headers["Authorization"] = "Bearer #{token}"
           req.headers["Content-Type"] = "application/json"
-          req.body = MultiJson.dump({
-                                      scope: @scope
-                                    })
+          req.body = MultiJson.dump({ scope: @scope })
         end
 
         if response.status != 200
