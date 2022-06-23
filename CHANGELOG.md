@@ -2,9 +2,7 @@
 
 ### 1.2.0 (2022-06-23)
 
-#### Features
-
-* Update minimum Ruby version to 2.6
+* Updated minimum Ruby version to 2.6
 
 ### 1.1.3 (2022-04-20)
 
