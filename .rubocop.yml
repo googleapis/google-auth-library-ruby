@@ -3,9 +3,7 @@ inherit_gem:
 
 AllCops:
   Exclude:
-    - "Rakefile"
     - "integration/**/*"
-    - "rakelib/**/*"
     - "spec/**/*"
     - "test/**/*"
 Metrics/ClassLength:

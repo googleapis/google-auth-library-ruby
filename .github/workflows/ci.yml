@@ -14,9 +14,6 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            ruby: "2.5"
-            task: test , spec
-          - os: ubuntu-latest
             ruby: "2.6"
             task: test , spec
           - os: ubuntu-latest
@@ -29,13 +26,13 @@ jobs:
             ruby: "3.1"
             task: test , spec
           - os: macos-latest
-            ruby: "2.7"
+            ruby: "3.0"
             task: test , spec
           - os: windows-latest
-            ruby: "2.7"
+            ruby: "3.0"
             task: test , spec
           - os: ubuntu-latest
-            ruby: "2.7"
+            ruby: "3.0"
             task: rubocop , integration , build , yardoc , linkinator
       fail-fast: false
     runs-on: ${{ matrix.os }}
@@ -46,10 +43,10 @@ jobs:
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: "${{ matrix.ruby }}"
-    - name: Install NodeJS 14.x
+    - name: Install NodeJS 16.x
       uses: actions/setup-node@v3
       with:
-        node-version: "14.x"
+        node-version: "16.x"
     - name: Install dependencies
       shell: bash
       run: "gem install --no-document toys && bundle install"

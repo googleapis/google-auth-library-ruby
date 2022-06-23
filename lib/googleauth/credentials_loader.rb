@@ -32,28 +32,24 @@ module Google
       PROJECT_ID_VAR            = "GOOGLE_PROJECT_ID".freeze
       GCLOUD_POSIX_COMMAND      = "gcloud".freeze
       GCLOUD_WINDOWS_COMMAND    = "gcloud.cmd".freeze
-      GCLOUD_CONFIG_COMMAND     =
-        "config config-helper --format json --verbosity none".freeze
+      GCLOUD_CONFIG_COMMAND     = "config config-helper --format json --verbosity none".freeze
 
       CREDENTIALS_FILE_NAME = "application_default_credentials.json".freeze
-      NOT_FOUND_ERROR =
-        "Unable to read the credential file specified by #{ENV_VAR}".freeze
+      NOT_FOUND_ERROR = "Unable to read the credential file specified by #{ENV_VAR}".freeze
       WELL_KNOWN_PATH = "gcloud/#{CREDENTIALS_FILE_NAME}".freeze
       WELL_KNOWN_ERROR = "Unable to read the default credential file".freeze
 
-      SYSTEM_DEFAULT_ERROR =
-        "Unable to read the system default credential file".freeze
+      SYSTEM_DEFAULT_ERROR = "Unable to read the system default credential file".freeze
 
       CLOUD_SDK_CLIENT_ID = "764086051850-6qr4p6gpi6hn506pt8ejuq83di341hur.app"\
-        "s.googleusercontent.com".freeze
+                            "s.googleusercontent.com".freeze
 
-      CLOUD_SDK_CREDENTIALS_WARNING = "Your application has authenticated using end user "\
-        "credentials from Google Cloud SDK. We recommend that most server applications use "\
-        "service accounts instead. If your application continues to use end user credentials "\
-        'from Cloud SDK, you might receive a "quota exceeded" or "API not enabled" error. For '\
-        "more information about service accounts, see "\
-        "https://cloud.google.com/docs/authentication/. To suppress this message, set the "\
-        "GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS environment variable.".freeze
+      CLOUD_SDK_CREDENTIALS_WARNING =
+        "Your application has authenticated using end user credentials from Google Cloud SDK. We recommend that most" \
+        " server applications use service accounts instead. If your application continues to use end user credentials" \
+        ' from Cloud SDK, you might receive a "quota exceeded" or "API not enabled" error. For more information about' \
+        " service accounts, see https://cloud.google.com/docs/authentication/. To suppress this message, set the"\
+        " GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS environment variable.".freeze
 
       # make_creds proxies the construction of a credentials instance
       #

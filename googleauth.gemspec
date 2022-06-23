@@ -12,7 +12,7 @@ Gem::Specification.new do |gem|
   gem.email = ["temiola@google.com"]
   gem.summary = "Google Auth Library for Ruby"
   gem.description = "Implements simple authorization for accessing Google APIs, and provides support for " \
-                      "Application Default Credentials."
+                    "Application Default Credentials."
   gem.homepage = "https://github.com/googleapis/google-auth-library-ruby"
   gem.license = "Apache-2.0"
 
@@ -20,7 +20,7 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
 
   gem.platform = Gem::Platform::RUBY
-  gem.required_ruby_version = ">= 2.5"
+  gem.required_ruby_version = ">= 2.6"
 
   gem.add_dependency "faraday", ">= 0.17.3", "< 3.a"
   gem.add_dependency "jwt", ">= 1.4", "< 3.0"
