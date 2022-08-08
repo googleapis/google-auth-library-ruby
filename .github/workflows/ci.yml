@@ -49,7 +49,7 @@ jobs:
         node-version: "16.x"
     - name: Install dependencies
       shell: bash
-      run: "gem install --no-document toys && bundle install"
+      run: "gem install --no-document bundler toys && bundle install"
     - name: Test ${{ matrix.task }}
       shell: bash
       run: toys do ${{ matrix.task }} < /dev/null

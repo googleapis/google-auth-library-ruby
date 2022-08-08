@@ -19,7 +19,7 @@ branchProtectionRules:
 permissionRules:
   - team: yoshi-admins
     permission: admin
-  - team: yoshi-ruby-admins
+  - team: ruby-admins
     permission: admin
-  - team: yoshi-ruby
+  - team: ruby-team
     permission: push

@@ -41,15 +41,15 @@ module Google
 
       SYSTEM_DEFAULT_ERROR = "Unable to read the system default credential file".freeze
 
-      CLOUD_SDK_CLIENT_ID = "764086051850-6qr4p6gpi6hn506pt8ejuq83di341hur.app"\
+      CLOUD_SDK_CLIENT_ID = "764086051850-6qr4p6gpi6hn506pt8ejuq83di341hur.app" \
                             "s.googleusercontent.com".freeze
 
       CLOUD_SDK_CREDENTIALS_WARNING =
-        "Your application has authenticated using end user credentials from Google Cloud SDK. We recommend that most" \
-        " server applications use service accounts instead. If your application continues to use end user credentials" \
-        ' from Cloud SDK, you might receive a "quota exceeded" or "API not enabled" error. For more information about' \
-        " service accounts, see https://cloud.google.com/docs/authentication/. To suppress this message, set the"\
-        " GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS environment variable.".freeze
+        "Your application has authenticated using end user credentials from Google Cloud SDK. We recommend that most " \
+        "server applications use service accounts instead. If your application continues to use end user credentials " \
+        'from Cloud SDK, you might receive a "quota exceeded" or "API not enabled" error. For more information about ' \
+        "service accounts, see https://cloud.google.com/docs/authentication/. To suppress this message, set the " \
+        "GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS environment variable.".freeze
 
       # make_creds proxies the construction of a credentials instance
       #
