@@ -6,7 +6,7 @@ gemspec
 gem "fakefs", "~> 1.0"
 gem "fakeredis", "~> 0.5"
 gem "gems", "~> 1.2"
-gem "google-style", "~> 1.26.0"
+gem "google-style", "~> 1.26.1"
 gem "logging", "~> 2.0"
 gem "minitest", "~> 5.14"
 gem "minitest-focus", "~> 1.1"
