@@ -131,7 +131,7 @@ module Google
             n_bn = OpenSSL::BN.new n_data, 2
             e_bn = OpenSSL::BN.new e_data, 2
             sequence = [OpenSSL::ASN1::Integer.new(n_bn), OpenSSL::ASN1::Integer.new(e_bn)]
-            rsa_key =  OpenSSL::PKey::RSA.new(OpenSSL::ASN1::Sequence(sequence).to_der)
+            rsa_key =  OpenSSL::PKey::RSA.new OpenSSL::ASN1::Sequence(sequence).to_der
             # if rsa_key.respond_to? :set_key
             #   rsa_key.set_key n_bn, e_bn, nil
             # else
@@ -164,10 +164,11 @@ module Google
             bn = OpenSSL::BN.new ["04#{x_hex}#{y_hex}"].pack("H*"), 2
             point =  OpenSSL::PKey::EC::Point.new group, bn
             sequence = OpenSSL::ASN1::Sequence([
-              OpenSSL::ASN1::Sequence([OpenSSL::ASN1::ObjectId('id-ecPublicKey'), OpenSSL::ASN1::ObjectId(curve_name)]),
-              OpenSSL::ASN1::BitString(point.to_octet_string(:uncompressed))
-            ])
-            key = OpenSSL::PKey::EC.new sequence.to_der
+                                                 OpenSSL::ASN1::Sequence([OpenSSL::ASN1::ObjectId("id-ecPublicKey"),
+                                                                          OpenSSL::ASN1::ObjectId(curve_name)]),
+                                                 OpenSSL::ASN1::BitString(point.to_octet_string(:uncompressed))
+                                               ])
+            OpenSSL::PKey::EC.new sequence.to_der
           end
         end
       end
