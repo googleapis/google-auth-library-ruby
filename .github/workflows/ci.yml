@@ -53,5 +53,5 @@ jobs:
     - name: Test ${{ matrix.task }}
       shell: bash
       run: |
-          ruby -e 'require "openssl"; p OpenSSL::::OPENSSL_VERSION'
+          ruby -e 'require "openssl"; p OpenSSL::OPENSSL_VERSION'
           toys do ${{ matrix.task }} < /dev/null
