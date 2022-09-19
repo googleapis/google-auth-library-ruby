@@ -52,4 +52,5 @@ jobs:
       run: "gem install --no-document bundler toys && bundle install"
     - name: Test ${{ matrix.task }}
       shell: bash
+      run: ruby -e 'require "openssl"; p OpenSSL::::OPENSSL_VERSION'
       run: toys do ${{ matrix.task }} < /dev/null
