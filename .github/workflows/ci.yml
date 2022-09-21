@@ -13,15 +13,18 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-20.04
             ruby: "2.6"
             task: test , spec
-          - os: ubuntu-latest
+          - os: ubuntu-20.04
             ruby: "2.7"
             task: test , spec
-          - os: ubuntu-latest
+          - os: ubuntu-20.04
             ruby: "3.0"
             task: test , spec
+          - os: ubuntu-22.04
+            ruby: "3.1"
+            task: test , spec  
           - os: ubuntu-22.04
             ruby: "3.1"
             task: test , spec
@@ -31,7 +34,7 @@ jobs:
           - os: windows-latest
             ruby: "3.0"
             task: test , spec
-          - os: ubuntu-latest
+          - os: ubuntu-20.04
             ruby: "3.0"
             task: rubocop , integration , build , yardoc , linkinator
       fail-fast: false

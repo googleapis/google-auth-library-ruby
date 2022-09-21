@@ -132,12 +132,6 @@ module Google
             e_bn = OpenSSL::BN.new e_data, 2
             sequence = [OpenSSL::ASN1::Integer.new(n_bn), OpenSSL::ASN1::Integer.new(e_bn)]
             rsa_key =  OpenSSL::PKey::RSA.new OpenSSL::ASN1::Sequence(sequence).to_der
-            # if rsa_key.respond_to? :set_key
-            #   rsa_key.set_key n_bn, e_bn, nil
-            # else
-            #   rsa_key.n = n_bn
-            #   rsa_key.e = e_bn
-            # end
             rsa_key.public_key
           end
 
