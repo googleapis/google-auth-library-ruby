@@ -41,37 +41,46 @@ describe Google::Auth::OAuth2::STSClient do
       "error_uri": "https://tools.ietf.org/html/rfc6749",
   }.freeze
 
-  let :sts_client do
-    Google::Auth::OAuth2::STSClient.new({token_exchange_endpoint: TOKEN_EXCHANGE_ENDPOINT})
-  end
+  context "with valid parameters" do
+    let :sts_client do
+      Google::Auth::OAuth2::STSClient.new({token_exchange_endpoint: TOKEN_EXCHANGE_ENDPOINT})
+    end
 
+    it 'should successfully exchange a token with only required parameters' do
+      stub_request(:post, TOKEN_EXCHANGE_ENDPOINT).to_return(status: 200, body: SUCCESS_RESPONSE.to_json)
 
-  it 'should successfully exchange a token with only required parameters' do
-    stub_request(:post, TOKEN_EXCHANGE_ENDPOINT).to_return(status: 200, body: SUCCESS_RESPONSE.to_json)
-
-    res = sts_client.exchange_token({
-      grant_type: GRANT_TYPE,
-      subject_token: SUBJECT_TOKEN,
-      subject_token_type: SUBJECT_TOKEN_TYPE,
-      audience: AUDIENCE,
-      requested_token_type: REQUESTED_TOKEN_TYPE
-    })
-
-    expect(res["access_token"]).to eq(SUCCESS_RESPONSE[:access_token])
-  end
-
-  it 'should appropriately handle an error response' do
-    stub_request(:post, TOKEN_EXCHANGE_ENDPOINT).to_return(status: 400, body: ERROR_RESPONSE.to_json)
-
-    # Expect an exception to be raised
-    expect {
-      sts_client.exchange_token({
+      res = sts_client.exchange_token({
         grant_type: GRANT_TYPE,
         subject_token: SUBJECT_TOKEN,
         subject_token_type: SUBJECT_TOKEN_TYPE,
         audience: AUDIENCE,
         requested_token_type: REQUESTED_TOKEN_TYPE
       })
-    }.to raise_error(/Token exchange failed with status 400/)
+
+      expect(res["access_token"]).to eq(SUCCESS_RESPONSE[:access_token])
+    end
+
+    it 'should appropriately handle an error response' do
+      stub_request(:post, TOKEN_EXCHANGE_ENDPOINT).to_return(status: 400, body: ERROR_RESPONSE.to_json)
+
+      # Expect an exception to be raised
+      expect {
+        sts_client.exchange_token({
+          grant_type: GRANT_TYPE,
+          subject_token: SUBJECT_TOKEN,
+          subject_token_type: SUBJECT_TOKEN_TYPE,
+          audience: AUDIENCE,
+          requested_token_type: REQUESTED_TOKEN_TYPE
+        })
+      }.to raise_error(/Token exchange failed with status 400/)
+    end
+  end
+
+  context "with invalid parameters" do
+    it 'should raise an error if the token exchange endpoint is not provided' do
+      expect {
+        Google::Auth::OAuth2::STSClient.new
+      }.to raise_error(/Token exchange endpoint can not be nil/)
+    end
   end
 end

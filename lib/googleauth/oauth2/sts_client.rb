@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require "googleauth/helpers/connection"
+
 module Google
   module Auth
     module OAuth2
@@ -28,6 +30,8 @@ module Google
       # .. _OAuth 2.0 Token Exchange: https://tools.ietf.org/html/rfc8693
       # .. _rfc8693 section 2.2.1: https://tools.ietf.org/html/rfc8693#section-2.2.1
       class STSClient
+        include Helpers::Connection
+
         URLENCODED_HEADERS = { "Content-Type": "application/x-www-form-urlencoded" }.freeze
 
         # Create a new instance of the STSClient.
@@ -35,6 +39,7 @@ module Google
         # @param [String] token_exchange_endpoint
         #  The token exchange endpoint.
         def initialize options = {}
+          raise "Token exchange endpoint can not be nil" if options[:token_exchange_endpoint].nil?
           @token_exchange_endpoint = options[:token_exchange_endpoint]
         end
 
@@ -67,8 +72,7 @@ module Google
             raise ArgumentError, "Missing required options: #{missing_required_opts.join ', '}"
           end
 
-          c = options[:connection] || Faraday.default_connection
-
+          # TODO: Add the ability to add authentication to the headers
           headers = URLENCODED_HEADERS.dup.merge(options[:additional_headers] || {})
 
           request_body = {
@@ -80,7 +84,7 @@ module Google
             subject_token_type: options[:subject_token_type]
           }
 
-          response = c.post @token_exchange_endpoint, URI.encode_www_form(request_body), headers
+          response = connection(options).post @token_exchange_endpoint, URI.encode_www_form(request_body), headers
 
           if response.status != 200
             raise "Token exchange failed with status #{response.status}"
