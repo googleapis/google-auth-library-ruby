@@ -166,6 +166,10 @@ describe Google::Auth::IDTokens do
     let(:jwk_body) { JSON.dump({ keys: [jwk1, jwk2] }) }
     let(:bad_type_body) { JSON.dump({ keys: [bad_type_jwk] }) }
 
+    def b64_to_hex b64
+      Base64.urlsafe_decode64(b64).unpack1("H*").upcase
+    end
+
     after do
       WebMock.reset!
     end
@@ -216,10 +220,15 @@ describe Google::Auth::IDTokens do
       keys = source.refresh_keys
       assert_equal id1, keys[0].id
       assert_equal id2, keys[1].id
-      assert_kind_of OpenSSL::PKey::RSA, keys[0].key
-      assert_kind_of OpenSSL::PKey::EC, keys[1].key
       assert_equal "RS256", keys[0].algorithm
+      assert_kind_of OpenSSL::PKey::RSA, keys[0].key
+      assert_equal b64_to_hex(jwk1[:n]), keys[0].key.n.to_s(16)
+      assert_equal b64_to_hex(jwk1[:e]), keys[0].key.e.to_s(16)
       assert_equal "ES256", keys[1].algorithm
+      assert_kind_of OpenSSL::PKey::EC, keys[1].key
+      assert_equal "prime256v1", keys[1].key.group.curve_name
+      assert_equal "04#{b64_to_hex(jwk2[:x])}#{b64_to_hex(jwk2[:y])}",
+                   keys[1].key.public_key.to_octet_string(:uncompressed).unpack1("H*").upcase
       assert_requested stub
     end
   end
