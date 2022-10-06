@@ -43,3 +43,5 @@ def authenticate_implicit_with_adc project_id:
   puts "Listed all storage buckets."
 end
 # [END auth_cloud_implicit_adc]
+
+authenticate_implicit_with_adc if $PROGRAM_NAME == __FILE__
