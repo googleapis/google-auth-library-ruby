@@ -34,7 +34,7 @@ jobs:
           - os: windows-latest
             ruby: "3.0"
             task: test , spec
-          - os: ubuntu-20.04
+          - os: ubuntu-latest
             ruby: "3.0"
             task: rubocop , integration , build , yardoc , linkinator
       fail-fast: false
