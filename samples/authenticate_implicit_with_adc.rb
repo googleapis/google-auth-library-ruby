@@ -34,14 +34,14 @@ def authenticate_implicit_with_adc project_id:
   # *NOTE*: Replace the client created below with the client required for your application.
   # Note that the credentials are not specified when constructing the client.
   # Hence, the client library will look for credentials using ADC.
-  
-  storage = Google::Cloud::Storage.new
+  storage = Google::Cloud::Storage.new project_id: project_id
   buckets = storage.buckets
   puts "Buckets: "
   buckets.each do |bucket|
     puts bucket.name
+  end
   puts "Listed all storage buckets."
 end
 # [END auth_cloud_implicit_adc]
 
-authenticate_implicit_with_adc if $PROGRAM_NAME == __FILE__
+authenticate_implicit_with_adc project_id: ARGV.shift if $PROGRAM_NAME == __FILE__
