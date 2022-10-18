@@ -1,5 +1,11 @@
 # Release History
 
+### 1.3.0 (2022-10-18)
+
+#### Features
+
+* Use OpenSSL 3.0 compatible interfaces for IDTokens ([#397](https://github.com/googleapis/google-auth-library-ruby/issues/397)) 
+
 ### 1.2.0 (2022-06-23)
 
 * Updated minimum Ruby version to 2.6
