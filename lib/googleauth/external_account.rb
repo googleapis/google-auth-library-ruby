@@ -23,6 +23,10 @@ module Google
     # Authenticates requests using External Account credentials, such
     # as those provided by the AWS provider.
     class ExternalAccountCredentials
+      # The subject token type used for AWS external_account credentials.
+      AWS_SUBJECT_TOKEN_TYPE = "urn:ietf:params:aws:token-type:aws4_request".freeze
+      AWS_SUBJECT_TOKEN_INVALID = "aws is the only currently supported external account type".freeze
+
       attr_reader :project_id
       attr_reader :quota_project_id
 
@@ -36,6 +40,7 @@ module Google
         raise "a json file is required for external account credentials" unless json_key_io
         user_creds = read_json_key json_key_io
 
+        raise AWS_SUBJECT_TOKEN_INVALID unless user_creds["subject_token_type"] == AWS_SUBJECT_TOKEN_TYPE
         Google::Auth::ExternalAccount::AwsCredentials.new(
           audience: user_creds["audience"],
           scope: scope,
