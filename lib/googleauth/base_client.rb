@@ -20,7 +20,9 @@ module Google
   module Auth
     # BaseClient is a class used to contain common methods that are required by any
     # Credentials Client, including AwsCredentials, ServiceAccountCredentials,
-    # and UserRefreshCredentials.
+    # and UserRefreshCredentials. This is a superclass of Signet::OAuth2::Client
+    # and has been created to create a generic interface for all credentials clients
+    # to use, including ones which do not inherit from Signet::OAuth2::Client.
     module BaseClient
       AUTH_METADATA_KEY = :authorization
 
