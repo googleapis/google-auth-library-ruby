@@ -35,7 +35,7 @@ expand :minitest do |t|
 end
 
 expand :minitest do |t|
-  t.name = "samples"
+  t.name = "samples-test"
   t.libs = ["lib", "samples"]
   t.use_bundler on_missing: :install, gemfile_path: "samples/Gemfile"
   t.files = "samples/acceptance/*_test.rb"
