@@ -18,6 +18,7 @@ include :exec
 include :terminal, styled: true
 
 def run
+  require "json"
   require "repo_context"
   RepoContext.load_kokoro_env
 
