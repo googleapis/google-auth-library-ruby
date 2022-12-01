@@ -18,7 +18,7 @@ require_relative "../authenticate_implicit_with_adc"
 require "google/cloud/storage"
 
 describe "Authenticate Implicit with ADC Samples" do
-  let(:storage_client)   { Google::Cloud::Storage.new }
+  let(:storage_client) { Google::Cloud::Storage.new }
 
   describe "buckets" do
     it "list_buckets" do
