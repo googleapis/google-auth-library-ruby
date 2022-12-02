@@ -12,6 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+expand :minitest do |t|
+  t.name = "test"
+  t.libs = ["lib", "samples"]
+  t.use_bundler on_missing: :install, gemfile_path: "samples/Gemfile"
+  t.files = "samples/acceptance/*_test.rb"
+end
+
 desc "Run samples tests"
 
 include :exec
@@ -25,5 +32,5 @@ def run
   Dir.chdir context_directory
   
   puts "Samples tests ...", :bold, :cyan
-  exec_tool ["samples-test"], name: "Samples tests"
+  exec_tool ["samples", "test"], name: "Samples tests"
 end

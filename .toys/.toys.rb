@@ -34,13 +34,6 @@ expand :minitest do |t|
   t.files = "integration/**/*_test.rb"
 end
 
-expand :minitest do |t|
-  t.name = "samples-test"
-  t.libs = ["lib", "samples"]
-  t.use_bundler on_missing: :install, gemfile_path: "samples/Gemfile"
-  t.files = "samples/acceptance/*_test.rb"
-end
-
 expand :rubocop, bundler: true
 
 expand :yardoc do |t|
