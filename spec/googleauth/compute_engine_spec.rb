@@ -116,6 +116,65 @@ describe Google::Auth::GCECredentials do
           .to raise_error Signet::AuthorizationError
       end
     end
+
+    describe "Fetch ID tokens" do
+      it "should pass scopes when requesting an ID token" do
+        scopes = ["https://www.googleapis.com/auth/drive", "https://www.googleapis.com/auth/bigtable.data"]
+        stub = make_auth_stubs id_token: "1/abcdef1234567890", scope: scopes
+        @id_client.fetch_access_token!
+        expect(stub).to have_been_requested
+      end
+
+      it "should fail if the metadata request returns a 404" do
+        stub = stub_request(:get, MD_ID_URI)
+               .to_return(status:  404,
+                          headers: { "Metadata-Flavor" => "Google" })
+        expect { @id_client.fetch_access_token! }
+          .to raise_error Signet::AuthorizationError
+        expect(stub).to have_been_requested
+      end
+
+      it "should fail if the metadata request returns a 403" do
+        stub = stub_request(:get, MD_ID_URI)
+                 .to_return(status:  403,
+                            headers: { "Metadata-Flavor" => "Google" })
+        expect { @id_client.fetch_access_token! }
+          .to raise_error Signet::AuthorizationError
+        expect(stub).to have_been_requested.times(6)
+      end
+
+      it "should fail if the metadata request returns a 500" do
+        stub = stub_request(:get, MD_ID_URI)
+                 .to_return(status:  500,
+                            headers: { "Metadata-Flavor" => "Google" })
+        expect { @id_client.fetch_access_token! }
+          .to raise_error Signet::AuthorizationError
+        expect(stub).to have_been_requested.times(6)
+      end
+
+      it "should fail if the metadata request returns an unexpected code" do
+        stub = stub_request(:get, MD_ID_URI)
+               .to_return(status:  503,
+                          headers: { "Metadata-Flavor" => "Google" })
+        expect { @id_client.fetch_access_token! }
+          .to raise_error Signet::AuthorizationError
+        expect(stub).to have_been_requested
+      end
+
+      it "should fail with Signet::AuthorizationError if request times out" do
+        allow_any_instance_of(Faraday::Connection).to receive(:get)
+          .and_raise(Faraday::TimeoutError)
+        expect { @id_client.fetch_access_token! }
+          .to raise_error Signet::AuthorizationError
+      end
+
+      it "should fail with Signet::AuthorizationError if request fails" do
+        allow_any_instance_of(Faraday::Connection).to receive(:get)
+          .and_raise(Faraday::ConnectionFailed, nil)
+        expect { @id_client.fetch_access_token! }
+          .to raise_error Signet::AuthorizationError
+      end
+    end
   end
 
   describe "#on_gce?" do
