@@ -493,4 +493,19 @@ describe Google::Auth::ServiceAccountJwtHeaderCredentials do
       end
     end
   end
+
+  describe "#new_jwt_token" do
+    let(:test_uri) { "https://www.googleapis.com/myservice" }
+    let(:auth_prefix) { "Bearer " }
+
+    it "should return a token without Bearer prefix" do
+      jwt_token = @client.new_jwt_token test_uri
+      expect(jwt_token).to_not be_nil
+      expect(jwt_token.start_with?(auth_prefix)).to be false
+      payload, = JWT.decode jwt_token, @key.public_key, true, algorithm: "RS256"
+
+      expect(payload["aud"]).to eq(test_uri) if not test_uri.nil?
+      expect(payload["iss"]).to eq(client_email)
+    end
+  end
 end
