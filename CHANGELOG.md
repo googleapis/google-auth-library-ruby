@@ -1,5 +1,11 @@
 # Release History
 
+### 1.4.0 (2022-12-14)
+
+#### Features
+
+* make new_jwt_token public in order to fetch raw token directly ([#405](https://github.com/googleapis/google-auth-library-ruby/issues/405)) 
+
 ### 1.3.0 (2022-10-18)
 
 #### Features
