@@ -55,7 +55,7 @@ module Google
         when "authorized_user"
           UserRefreshCredentials
         when "external_account"
-          ExternalAccountCredentials
+          ExternalAccount::Credentials
         else
           raise "credentials type '#{type}' is not supported"
         end
@@ -73,7 +73,7 @@ module Google
         when "authorized_user"
           [json_key, UserRefreshCredentials]
         when "external_account"
-          [json_key, ExternalAccountCredentials]
+          [json_key, ExternalAccount::Credentials]
         else
           raise "credentials type '#{type}' is not supported"
         end

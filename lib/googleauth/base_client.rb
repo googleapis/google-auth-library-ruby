@@ -65,13 +65,17 @@ module Google
       end
 
       def expires_within?
-        raise "This method must be implemented by a subclass"
+        raise NotImplementedError
       end
 
       private
 
       def token_type
-        raise "This method must be implemented by a subclass"
+        raise NotImplementedError
+      end
+
+      def fetch_access_token!
+        raise NotImplementedError
       end
     end
   end

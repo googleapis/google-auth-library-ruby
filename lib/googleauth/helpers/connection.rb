@@ -24,8 +24,10 @@ module Google
       module Connection
         module_function
 
-        def connection options = {}
-          options[:connection] || Faraday.default_connection
+        attr_accessor :default_connection
+
+        def connection
+          @default_connection || Faraday.default_connection
         end
       end
     end

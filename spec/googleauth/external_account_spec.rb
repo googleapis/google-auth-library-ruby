@@ -12,148 +12,217 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-spec_dir = File.expand_path File.join(File.dirname(__FILE__))
-$LOAD_PATH.unshift spec_dir
-$LOAD_PATH.uniq!
+require 'googleauth'
+require 'googleauth/apply_auth_examples'
+require 'googleauth/external_account'
+require 'spec_helper'
+require 'tempfile'
 
-require "apply_auth_examples"
-require "googleauth/external_account"
+describe Google::Auth::ExternalAccount::Credentials do
+  describe :is_token_url_valid? do
+    VALID_URLS = [
+      "https://sts.googleapis.com",
+      "https://sts.mtls.googleapis.com",
+      "https://us-east-1.sts.googleapis.com",
+      "https://us-east-1.sts.mtls.googleapis.com",
+      "https://US-EAST-1.sts.googleapis.com",
+      "https://sts.us-east-1.googleapis.com",
+      "https://sts.US-WEST-1.googleapis.com",
+      "https://us-east-1-sts.googleapis.com",
+      "https://US-WEST-1-sts.googleapis.com",
+      "https://US-WEST-1-sts.mtls.googleapis.com",
+      "https://us-west-1-sts.googleapis.com/path?query",
+      "https://sts-us-east-1.p.googleapis.com",
+      "https://sts-us-east-1.p.mtls.googleapis.com",
+    ]
 
-include Google::Auth::CredentialsLoader
+    INVALID_URLS = [
+      nil,
+      "https://iamcredentials.googleapis.com",
+      "https://mtls.iamcredentials.googleapis.com",
+      "sts.googleapis.com",
+      "mtls.sts.googleapis.com",
+      "mtls.googleapis.com",
+      "https://",
+      "http://sts.googleapis.com",
+      "https://st.s.googleapis.com",
+      "https://us-eas\t-1.sts.googleapis.com",
+      "https:/us-east-1.sts.googleapis.com",
+      "https:/us-east-1.mtls.sts.googleapis.com",
+      "https://US-WE/ST-1-sts.googleapis.com",
+      "https://sts-us-east-1.googleapis.com",
+      "https://sts-US-WEST-1.googleapis.com",
+      "testhttps://us-east-1.sts.googleapis.com",
+      "https://us-east-1.sts.googleapis.comevil.com",
+      "https://us-east-1.us-east-1.sts.googleapis.com",
+      "https://us-ea.s.t.sts.googleapis.com",
+      "https://sts.googleapis.comevil.com",
+      "hhttps://us-east-1.sts.googleapis.com",
+      "https://us- -1.sts.googleapis.com",
+      "https://-sts.googleapis.com",
+      "https://-mtls.googleapis.com",
+      "https://us-east-1.sts.googleapis.com.evil.com",
+      "https://sts.pgoogleapis.com",
+      "https://p.googleapis.com",
+      "https://sts.p.com",
+      "https://sts.p.mtls.com",
+      "http://sts.p.googleapis.com",
+      "https://xyz-sts.p.googleapis.com",
+      "https://sts-xyz.123.p.googleapis.com",
+      "https://sts-xyz.p1.googleapis.com",
+      "https://sts-xyz.p.foo.com",
+      "https://sts-xyz.p.foo.googleapis.com",
+      "https://sts-xyz.mtls.p.foo.googleapis.com",
+      "https://sts-xyz.p.mtls.foo.googleapis.com",
+    ]
 
-describe Google::Auth::ExternalAccountCredentials do
-  ExternalAccountCredentials = Google::Auth::ExternalAccountCredentials
-
-  let(:aws_metadata_role_name) { "aws-metadata-role" }
-  let(:aws_region) { "us-east-1c" }
-
-  let :cred_json do
-    {
-      type: "external_account",
-      audience: "//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID",
-      subject_token_type: "urn:ietf:params:aws:token-type:aws4_request",
-      service_account_impersonation_url: "https://us-east1-iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/service-1234@service-name.iam.gserviceaccount.com:generateAccessToken",
-      token_url: "https://sts.googleapis.com/v1/token",
-      credential_source: {
-        environment_id: "aws1",
-        region_url: "http://169.254.169.254/latest/meta-data/placement/availability-zone",
-        url: "http://169.254.169.254/latest/meta-data/iam/security-credentials",
-        regional_cred_verification_url: "https://sts.{region}.amazonaws.com?Action=GetCallerIdentity&Version=2011-06-15"
-      }
-    }
-  end
-
-  let :current_datetime do
-    Time.now.utc.strftime("%Y-%m-%dT%H:%M:%SZ")
-  end
-
-  let :expiry_datetime do
-    (Time.now + 3600).utc.strftime("%Y-%m-%dT%H:%M:%SZ")
-  end
-
-  let :aws_security_credentials_response do
-    {
-      Code: "Success",
-      LastUpdated: current_datetime,
-      Type: "AWS-HMAC",
-      AccessKeyId: "test",
-      SecretAccessKey: "test",
-      Token: "test",
-      Expiration: expiry_datetime
-    }
-  end
-
-  let :google_token_response do
-    {
-      "token_type" => "Bearer",
-      "expires_in" => 3600,
-      "issued_token_type" => "urn:ietf:params:aws:token-type:aws4_request"
-    }
-  end
-
-  let :google_token_impersonation_response do
-    {
-      accessToken: "test",
-      expireTime: expiry_datetime
-    }
-  end
-
-  before :example do
-    # Stub the region request response that happens duing initialization. This cannot happen as
-    # part of make_auth_stubs since this request is made during the before block.
-    stub_request(:get, cred_json.dig(:credential_source, :region_url))
-      .to_return(status: 200, body: aws_region, headers: {"Content-Type" => "text/plain"})
-  end
-
-  def cred_json_text
-    MultiJson.dump cred_json
-  end
-
-  def cred_json_without_impersonation_url_text
-    MultiJson.dump cred_json_without_impersonation_url
-  end
-
-  # Stubs the common requests to all external account credential types
-  def make_auth_stubs opts
-    # Stub the metadata role name request
-    stub_request(:get, cred_json.dig(:credential_source, :url))
-      .to_return(body:    aws_metadata_role_name,
-                 status:  200,
-                 headers: { "Content-Type" => "text/plain" }
-      )
-
-    # Stub the AWS security credentials request
-    stub_request(:get, "#{cred_json.dig(:credential_source, :url)}/#{aws_metadata_role_name}")
-      .with(headers: { "Content-Type" => "application/json" })
-      .to_return(
-        body: MultiJson.dump(aws_security_credentials_response)
-      )
-
-    # Stub the Google token request
-    response = google_token_response
-    response["access_token"] = opts[:access_token] if opts[:access_token]
-    stub_request(:post, cred_json.dig(:token_url))
-      .to_return(
-        body: MultiJson.dump(response)
-      )
-  end
-
-  describe "when a service impersonation URL is provided" do
-    before :example do
-      @client = ExternalAccountCredentials.make_creds(
-        json_key_io: StringIO.new(cred_json_text),
-        scope: "https://www.googleapis.com/auth/userinfo.profile"
-      )
+    VALID_URLS.each do |token_url|
+      describe token_url do
+        it 'is valid' do
+          expect(Google::Auth::ExternalAccount::Credentials.is_token_url_valid?(token_url)).to be(true)
+        end
+      end
     end
 
-    alias :orig_make_auth_stubs :make_auth_stubs
-    def make_auth_stubs opts
-      orig_make_auth_stubs opts
-
-      # Stub the Google token impersonation request
-      response = google_token_impersonation_response
-      response["accessToken"] = opts[:access_token] if opts[:access_token]
-      stub_request(:post, cred_json.dig(:service_account_impersonation_url))
-        .to_return(
-          body: MultiJson.dump(response)
-        )
+    INVALID_URLS.each do |token_url|
+      describe token_url do
+        it 'is invalid' do
+          expect(Google::Auth::ExternalAccount::Credentials.is_token_url_valid?(token_url)).to be(false)
+        end
+      end
     end
-
-    it_behaves_like "apply/apply! are OK"
   end
 
-  describe "when a service impersonation URL is not provided" do
-    let :cred_json_without_impersonation_url do
-      cred_json.dup.tap { |c| c.delete :service_account_impersonation_url }
+  describe :is_service_account_impersonation_url_valid? do
+    VALID_URLS = [
+      nil,
+      "https://iamcredentials.googleapis.com",
+      "https://us-east-1.iamcredentials.googleapis.com",
+      "https://US-EAST-1.iamcredentials.googleapis.com",
+      "https://iamcredentials.us-east-1.googleapis.com",
+      "https://iamcredentials.US-WEST-1.googleapis.com",
+      "https://us-east-1-iamcredentials.googleapis.com",
+      "https://US-WEST-1-iamcredentials.googleapis.com",
+      "https://us-west-1-iamcredentials.googleapis.com/path?query",
+      "https://iamcredentials-us-east-1.p.googleapis.com",
+    ]
+    INVALID_URLS = [
+      "https://sts.googleapis.com",
+      "iamcredentials.googleapis.com",
+      "https://",
+      "http://iamcredentials.googleapis.com",
+      "https://iamcre.dentials.googleapis.com",
+      "https://us-eas\t-1.iamcredentials.googleapis.com",
+      "https:/us-east-1.iamcredentials.googleapis.com",
+      "https://US-WE/ST-1-iamcredentials.googleapis.com",
+      "https://iamcredentials-us-east-1.googleapis.com",
+      "https://iamcredentials-US-WEST-1.googleapis.com",
+      "testhttps://us-east-1.iamcredentials.googleapis.com",
+      "https://us-east-1.iamcredentials.googleapis.comevil.com",
+      "https://us-east-1.us-east-1.iamcredentials.googleapis.com",
+      "https://us-ea.s.t.iamcredentials.googleapis.com",
+      "https://iamcredentials.googleapis.comevil.com",
+      "hhttps://us-east-1.iamcredentials.googleapis.com",
+      "https://us- -1.iamcredentials.googleapis.com",
+      "https://-iamcredentials.googleapis.com",
+      "https://us-east-1.iamcredentials.googleapis.com.evil.com",
+      "https://iamcredentials.pgoogleapis.com",
+      "https://p.googleapis.com",
+      "https://iamcredentials.p.com",
+      "http://iamcredentials.p.googleapis.com",
+      "https://xyz-iamcredentials.p.googleapis.com",
+      "https://iamcredentials-xyz.123.p.googleapis.com",
+      "https://iamcredentials-xyz.p1.googleapis.com",
+      "https://iamcredentials-xyz.p.foo.com",
+      "https://iamcredentials-xyz.p.foo.googleapis.com",
+    ]
+
+    VALID_URLS.each do |impersonation_url|
+      describe impersonation_url do
+        it 'is valid' do
+          expect(Google::Auth::ExternalAccount::Credentials.is_service_account_impersonation_url_valid?(impersonation_url)).to be(true)
+        end
+      end
     end
 
-    before :example do
-      @client = ExternalAccountCredentials.make_creds(
-        json_key_io: StringIO.new(cred_json_without_impersonation_url_text),
-        scope: "https://www.googleapis.com/auth/userinfo.profile"
-      )
+    INVALID_URLS.each do |impersonation_url|
+      describe impersonation_url do
+        it 'is invalid' do
+          expect(Google::Auth::ExternalAccount::Credentials.is_service_account_impersonation_url_valid?(impersonation_url)).to be(false)
+        end
+      end
+    end
+  end
+
+  describe :make_creds do
+    it 'should be able to make aws credentials' do
+      f = Tempfile.new('aws')
+      begin
+        f.write(MultiJson.dump({
+          type: 'external_account',
+          audience: '//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID',
+          subject_token_type: 'urn:ietf:params:aws:token-type:aws4_request',
+          token_url: 'https://sts.googleapis.com/v1/token',
+          credential_source: {
+            'environment_id' => 'aws1',
+            'region_url' => 'http://169.254.169.254/latest/meta-data/placement/availability-zone',
+            'url' => 'http://169.254.169.254/latest/meta-data/iam/security-credentials',
+            'regional_cred_verification_url' => 'https://sts.{region}.amazonaws.com?Action=GetCallerIdentity&Version=2011-06-15',
+          }
+        }))
+        f.rewind
+        expect(Google::Auth::ExternalAccount::Credentials.make_creds(json_key_io: f)).to be_a(Google::Auth::ExternalAccount::AwsCredentials)
+      ensure
+        f.close
+        f.unlink
+      end
     end
 
-    it_behaves_like "apply/apply! are OK"
+    [:audience, :subject_token_type, :token_url, :credential_source].each do |field|
+      it "should raise an error when missing the #{field} field" do
+        f = Tempfile.new('missing')
+        begin
+          creds = {
+            type: 'external_account',
+            audience: '//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID',
+            subject_token_type: 'urn:ietf:params:oauth:token-type:id_token',
+            token_url: 'https://sts.googleapis.com/v1/token',
+            credential_source: {},
+          }
+          creds.delete(field)
+          f.write(MultiJson.dump(creds))
+          f.rewind
+          expect { Google::Auth::ExternalAccount::Credentials.make_creds(json_key_io: f) }.to raise_error(/the json is missing the #{field} field/)
+        ensure
+          f.close
+          f.unlink
+        end
+      end
+    end
+
+    it 'should raise an error for invalid credentials' do
+      f = Tempfile.new('invalid')
+      begin
+        f.write(MultiJson.dump({
+          type: 'external_account',
+          audience: '//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID',
+          subject_token_type: 'urn:ietf:params:oauth:token-type:id_token',
+          token_url: 'https://sts.googleapis.com/v1/token',
+          credential_source: {},
+        }))
+        f.rewind
+        expect { Google::Auth::ExternalAccount::Credentials.make_creds(json_key_io: f) }.to raise_error(/aws is the only currently supported external account type/)
+      ensure
+        f.close
+        f.unlink
+      end
+    end
+
+    it 'should raise an error if called incorrectly' do
+      expect { Google::Auth::ExternalAccount::Credentials.make_creds({
+        type: 'external_account',
+        audience: '//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID',
+      }) }.to raise_error(/A json file is required for external account credentials./)
+    end
   end
 end

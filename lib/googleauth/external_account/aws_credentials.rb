@@ -1,4 +1,4 @@
-# Copyright 2015 Google, Inc.
+# Copyright 2022 Google, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,9 +13,7 @@
 # limitations under the License.
 
 require "time"
-require "googleauth/base_client"
-require "googleauth/helpers/connection"
-require "googleauth/oauth2/sts_client"
+require "googleauth/external_account/base_credentials"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
@@ -28,99 +26,71 @@ module Google
       # by utilizing the AWS EC2 metadata service and then exchanging the
       # credentials for a short-lived Google Cloud access token.
       class AwsCredentials
-        include BaseClient
-        include Helpers::Connection
+        include Google::Auth::ExternalAccount::BaseCredentials
         extend CredentialsLoader
 
-        STS_GRANT_TYPE = "urn:ietf:params:oauth:grant-type:token-exchange".freeze
-        STS_REQUESTED_TOKEN_TYPE = "urn:ietf:params:oauth:token-type:access_token".freeze
-        IAM_SCOPE = ["https://www.googleapis.com/auth/iam"].freeze
-
         def initialize options = {}
+          base_setup options
+
           @audience = options[:audience]
-          @scope = options[:scope] || IAM_SCOPE
-          @subject_token_type = options[:subject_token_type]
-          @token_url = options[:token_url]
           @credential_source = options[:credential_source] || {}
-          @service_account_impersonation_url = options[:service_account_impersonation_url]
           @environment_id = @credential_source["environment_id"]
-          @region_url = @credential_source["region_url"]
-          @credential_verification_url = @credential_source["url"]
+          @region_url = validate_metadata_server @credential_source["region_url"], "region_url"
+          @credential_verification_url = validate_metadata_server @credential_source["url"], "url"
           @regional_cred_verification_url = @credential_source["regional_cred_verification_url"]
+          @imdsv2_session_token_url = validate_metadata_server @credential_source["imdsv2_session_token_url"],
+                                                               "imdsv2_session_token_url"
 
-          @region = region options
-          @request_signer = AwsRequestSigner.new @region
-
-          @expires_at = nil
-          @access_token = nil
-
-          @sts_client = Google::Auth::OAuth2::STSClient.new token_exchange_endpoint: @token_url
-        end
-
-        def fetch_access_token! options = {}
-          credentials = fetch_security_credentials options
-
-          response = exchange_token credentials
-
-          if @service_account_impersonation_url
-            impersonated_response = get_impersonated_access_token response["access_token"]
-            self.expires_at = impersonated_response["expireTime"]
-            self.access_token = impersonated_response["accessToken"]
-          else
-            # Extract the expiration time in seconds from the response and calculate the actual expiration time
-            # and then save that to the expiry variable.
-            self.expires_at = Time.now.utc + response["expires_in"].to_i
-            self.access_token = response["access_token"]
-          end
-
-          notify_refresh_listeners
-        end
-
-        def expires_within? seconds
-          @expires_at && @expires_at - Time.now.utc < seconds
-        end
-
-        def expires_at
-          @expires_at
-        end
-
-        def expires_at= new_expires_at
-          @expires_at = normalize_timestamp new_expires_at
-        end
-
-        def access_token
-          @access_token
-        end
-
-        def access_token= new_access_token
-          @access_token = new_access_token
+          # These will be lazily loaded when needed, or will raise an error if not provided
+          @region = nil
+          @request_signer = nil
         end
 
         private
 
-        def token_type
-          :access_token
+        def validate_metadata_server url, name
+          return nil if url.nil?
+          host = URI(url).host
+          raise "Invalid host #{host} for #{name}." unless ["169.254.169.254", "[fd00:ec2::254]"].include? host
+          url
         end
 
-        def normalize_timestamp time
-          case time
-          when NilClass
-            nil
-          when Time
-            time
-          when String
-            Time.parse time
-          else
-            raise "Invalid time value #{time}"
+        def get_aws_resource url, name, data: nil, headers: {}
+          begin
+            unless [nil, url].include? @imdsv2_session_token_url
+              headers["x-aws-ec2-metadata-token"] = get_aws_resource(
+                @imdsv2_session_token_url,
+                "Session Token",
+                headers: { "x-aws-ec2-metadata-token-ttl-seconds": "300" }
+              ).body
+            end
+
+            response = if data
+                         headers["Content-Type"] = "application/json"
+                         connection.post url, data, headers
+                       else
+                         connection.get url, nil, headers
+                       end
+
+            raise Faraday::Error unless response.success?
+            response
+          rescue Faraday::Error
+            raise "Failed to retrieve AWS #{name}."
           end
         end
 
-        def exchange_token credentials
-          request_options = @request_signer.generate_signed_request(
-            credentials,
-            @regional_cred_verification_url.sub("{region}", @region),
-            "POST"
-          )
+        def retrieve_subject_token!
+          if @request_signer.nil?
+            @region = region
+            @request_signer = AwsRequestSigner.new @region
+          end
+
+          request = {
+            method: "POST",
+            url: @regional_cred_verification_url.sub("{region}", @region)
+          }
+
+          request_options = @request_signer.generate_signed_request fetch_security_credentials, request
 
           request_headers = request_options[:headers]
           request_headers["x-goog-cloud-target-resource"] = @audience
@@ -135,28 +105,7 @@ module Google
             { key: key, value: request_headers[key] }
           end
 
-          @sts_client.exchange_token(
-            audience: @audience,
-            grant_type: STS_GRANT_TYPE,
-            subject_token: uri_escape(aws_signed_request.to_json),
-            subject_token_type: @subject_token_type,
-            scopes: @service_account_impersonation_url ? IAM_SCOPE : @scope,
-            requested_token_type: STS_REQUESTED_TOKEN_TYPE
-          )
-        end
-
-        def get_impersonated_access_token token, options = {}
-          response = connection(options).post @service_account_impersonation_url do |req|
-            req.headers["Authorization"] = "Bearer #{token}"
-            req.headers["Content-Type"] = "application/json"
-            req.body = MultiJson.dump({ scope: @scope })
-          end
-
-          if response.status != 200
-            raise "Service account impersonation failed with status #{response.status}"
-          end
-
-          MultiJson.load response.body
+          uri_escape aws_signed_request.to_json
         end
 
         def uri_escape string
@@ -170,7 +119,7 @@ module Google
         # Retrieves the AWS security credentials required for signing AWS
         # requests from either the AWS security credentials environment variables
         # or from the AWS metadata server.
-        def fetch_security_credentials options = {}
+        def fetch_security_credentials
           env_aws_access_key_id = ENV[CredentialsLoader::AWS_ACCESS_KEY_ID_VAR]
           env_aws_secret_access_key = ENV[CredentialsLoader::AWS_SECRET_ACCESS_KEY_VAR]
           # This is normally not available for permanent credentials.
@@ -184,8 +133,8 @@ module Google
             }
           end
 
-          role_name = fetch_metadata_role_name options
-          credentials = fetch_metadata_security_credentials role_name, options
+          role_name = fetch_metadata_role_name
+          credentials = fetch_metadata_security_credentials role_name
 
           {
             access_key_id: credentials["AccessKeyId"],
@@ -198,40 +147,28 @@ module Google
         # workload by querying the AWS metadata server. This is needed for the
         # AWS metadata server security credentials endpoint in order to retrieve
         # the AWS security credentials needed to sign requests to AWS APIs.
-        def fetch_metadata_role_name options = {}
+        def fetch_metadata_role_name
           unless @credential_verification_url
             raise "Unable to determine the AWS metadata server security credentials endpoint"
           end
 
-          response = connection(options).get @credential_verification_url
-
-          unless response.success?
-            raise "Unable to determine the AWS role attached to the current AWS workload"
-          end
-
-          response.body
+          get_aws_resource(@credential_verification_url, "IAM Role").body
         end
 
         # Retrieves the AWS security credentials required for signing AWS
         # requests from the AWS metadata server.
-        def fetch_metadata_security_credentials role_name, options = {}
-          response = connection(options).get "#{@credential_verification_url}/#{role_name}", {},
-                                             { "Content-Type": "application/json" }
-
-          unless response.success?
-            raise "Unable to fetch the AWS security credentials required for signing AWS requests"
-          end
-
+        def fetch_metadata_security_credentials role_name
+          response = get_aws_resource "#{@credential_verification_url}/#{role_name}", "credentials"
           MultiJson.load response.body
         end
 
-        def region options = {}
+        def region
           @region = ENV[CredentialsLoader::AWS_REGION_VAR] || ENV[CredentialsLoader::AWS_DEFAULT_REGION_VAR]
 
           unless @region
             raise "region_url or region must be set for external account credentials" unless @region_url
 
-            @region ||= connection(options).get(@region_url).body[0..-2]
+            @region ||= get_aws_resource(@region_url, "region").body[0..-2]
           end
 
           @region
@@ -260,27 +197,20 @@ module Google
         #     method (str): The HTTP method used to call this API.
         # Returns:
         #     Hash[str, str]: The AWS signed request dictionary object.
-        def generate_signed_request aws_credentials, url, method, request_payload = ""
-          headers = {}
-
-          uri = URI.parse url
-
-          if !uri.hostname || uri.scheme != "https"
-            raise "Invalid AWS service URL"
-          end
-
+        def generate_signed_request aws_credentials, original_request
+          uri = Addressable::URI.parse original_request[:url]
+          raise "Invalid AWS service URL" unless uri.hostname && uri.scheme == "https"
           service_name = uri.host.split(".").first
 
           datetime = Time.now.utc.strftime "%Y%m%dT%H%M%SZ"
           date = datetime[0, 8]
 
-          headers["host"] = uri.host
-          headers["x-amz-date"] = datetime
-          headers["x-amz-security-token"] = aws_credentials[:session_token] if aws_credentials[:session_token]
+          headers = aws_headers aws_credentials, original_request, datetime
 
+          request_payload = original_request[:data] || ""
           content_sha256 = sha256_hexdigest request_payload
 
-          canonical_req = canonical_request method, uri, headers, content_sha256
+          canonical_req = canonical_request original_request[:method], uri, headers, content_sha256
           sts = string_to_sign datetime, canonical_req, service_name
 
           # Authorization header requires everything else to be properly setup in order to be properly
@@ -290,11 +220,20 @@ module Google
           {
             url: uri.to_s,
             headers: headers,
-            method: method
-          }
+            method: original_request[:method],
+            data: (request_payload unless request_payload.empty?)
+          }.compact
         end
 
         private
+
+        def aws_headers aws_credentials, original_request, datetime
+          original_request[:headers] || {}
+          headers.each_key { |k| headers[k.to_s] = headers.delete k }
+          headers["host"] = uri.host
+          headers["x-amz-date"] = datetime
+          headers["x-amz-security-token"] = aws_credentials[:session_token] if aws_credentials[:session_token]
+        end
 
         def build_authorization_header headers, sts, aws_credentials, service_name, date
           [

@@ -40,6 +40,7 @@ module Google
         #  The token exchange endpoint.
         def initialize options = {}
           raise "Token exchange endpoint can not be nil" if options[:token_exchange_endpoint].nil?
+          self.default_connection = options[:connection]
           @token_exchange_endpoint = options[:token_exchange_endpoint]
         end
 
@@ -84,7 +85,7 @@ module Google
             subject_token_type: options[:subject_token_type]
           }
 
-          response = connection(options).post @token_exchange_endpoint, URI.encode_www_form(request_body), headers
+          response = connection.post @token_exchange_endpoint, URI.encode_www_form(request_body), headers
 
           if response.status != 200
             raise "Token exchange failed with status #{response.status}"
