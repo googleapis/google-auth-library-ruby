@@ -27,13 +27,13 @@ def auth_cloud_idtoken_metadata_server url:
   require "googleauth"
 
   id_client = Google::Auth::GCECredentials.new target_audience: url
-  
+
   # Get the ID token.
   # Once you've obtained the ID token, you can use it to make an authenticated call
   # to the target audience.
   id_client.fetch_access_token
   puts "Generated ID token."
-  
+
   id_client.refresh!
 end
 # [END auth_cloud_idtoken_metadata_server]

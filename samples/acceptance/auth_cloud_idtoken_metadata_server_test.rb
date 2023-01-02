@@ -18,7 +18,7 @@ require_relative "../auth_cloud_idtoken_metadata_server"
 require "googleauth"
 
 describe "Get an ID token from the metadata server" do
-let(:url) { "https://pubsub.googleapis.com/" }
+  let(:url) { "https://pubsub.googleapis.com/" }
 
   describe "id_token" do
     it "get_an_id_token" do
