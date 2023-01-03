@@ -19,7 +19,7 @@ require "googleauth"
 # Uses the Google Cloud metadata server environment to create an identity token
 # and add it to the HTTP request as part of an Authorization header.
 #
-# @param url [String] The url or target audience to obtain the ID token for 
+# @param url [String] The url or target audience to obtain the ID token for
 #   (e.g. "http://www.example.com")
 #
 def auth_cloud_idtoken_metadata_server url:
