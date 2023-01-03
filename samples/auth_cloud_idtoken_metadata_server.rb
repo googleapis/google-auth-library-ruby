@@ -13,19 +13,17 @@
 # limitations under the License.
 
 # [START auth_cloud_idtoken_metadata_server]
+require "googleauth"
+
+##
+# Uses the Google Cloud metadata server environment to create an identity token
+# and add it to the HTTP request as part of an Authorization header.
+#
+# @param url [String] The url or target audience to obtain the ID token for 
+#   (e.g. "http://www.example.com")
+#
 def auth_cloud_idtoken_metadata_server url:
-  # The url or target audience to obtain the ID token for.
-  # url = "http://www.example.com"
-
-  ###
-  # Uses the Google Cloud metadata server environment to create an identity token
-  # and add it to the HTTP request as part of an Authorization header.
-  # TODO(Developer):
-  #   1. Uncomment and replace the url variables before running the sample.
-  ###
-
-  require "googleauth"
-
+  # Create the GCECredentials client.
   id_client = Google::Auth::GCECredentials.new target_audience: url
 
   # Get the ID token.
@@ -37,5 +35,3 @@ def auth_cloud_idtoken_metadata_server url:
   id_client.refresh!
 end
 # [END auth_cloud_idtoken_metadata_server]
-
-auth_cloud_idtoken_metadata_server url: ARGV.shift if $PROGRAM_NAME == __FILE__
