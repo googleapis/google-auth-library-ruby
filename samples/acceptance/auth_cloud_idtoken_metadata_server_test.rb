@@ -12,21 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require_relative "helper"
-require_relative "../auth_cloud_idtoken_metadata_server"
+require "minitest/autorun"
+
+class AuthCloudIdtokenMetadataServer
+  sample_file = File.read "#{__dir__}/../auth_cloud_idtoken_metadata_server.rb"
+  eval sample_file
+end
 
 require "googleauth"
 
 describe "Get an ID token from the metadata server" do
   let(:url) { "https://pubsub.googleapis.com/" }
 
-  describe "id_token" do
-    it "get_an_id_token" do
-      out, _err = capture_io do
-        auth_cloud_idtoken_metadata_server url: url
-      end
-
-      assert_includes out, "Generated ID token."
+  it "get_an_id_token" do
+    assert_output "Generated ID token." do
+      AuthCloudIdtokenMetadataServer.new.auth_cloud_idtoken_metadata_server url: url
     end
   end
 end
