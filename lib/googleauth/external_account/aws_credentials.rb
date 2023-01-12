@@ -29,6 +29,9 @@ module Google
         include Google::Auth::ExternalAccount::BaseCredentials
         extend CredentialsLoader
 
+        # Will always be None, but method still gets used.
+        attr_reader :client_id
+
         def initialize options = {}
           base_setup options
 
@@ -228,11 +231,13 @@ module Google
         private
 
         def aws_headers aws_credentials, original_request, datetime
-          original_request[:headers] || {}
+          uri = Addressable::URI.parse original_request[:url]
+          headers = original_request[:headers] || {}
           headers.each_key { |k| headers[k.to_s] = headers.delete k }
           headers["host"] = uri.host
           headers["x-amz-date"] = datetime
           headers["x-amz-security-token"] = aws_credentials[:session_token] if aws_credentials[:session_token]
+          headers
         end
 
         def build_authorization_header headers, sts, aws_credentials, service_name, date
