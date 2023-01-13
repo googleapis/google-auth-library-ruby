@@ -1,4 +1,4 @@
-# Copyright 2015 Google, Inc.
+# Copyright 2022 Google, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ module Google
 
         AWS_SUBJECT_TOKEN_TYPE = "urn:ietf:params:aws:token-type:aws4_request".freeze
         AWS_SUBJECT_TOKEN_INVALID = "aws is the only currently supported external account type".freeze
-
+        staging-sts.sandbox.googleapis.com
         TOKEN_URL_PATTERNS = [
           /^[^.\s\/\\]+\.sts(?:\.mtls)?\.googleapis\.com$/.freeze,
           /^sts(?:\.mtls)?\.googleapis\.com$/.freeze,
