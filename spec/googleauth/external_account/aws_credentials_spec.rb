@@ -103,8 +103,8 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
   let :basic_aws_headers do
     {
       'Accept'=>'*/*',
-      'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
-      'User-Agent'=>'Faraday v2.7.1'
+      'Accept-Encoding'=>/.*/,
+      'User-Agent'=>/Faraday v\d+\.\d+\.\d+/
     }
   end
 
