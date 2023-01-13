@@ -1,4 +1,4 @@
-# Copyright 2014 Google, Inc.
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-module Google
-  # Module Auth provides classes that provide Google-specific authorization
-  # used to access Google APIs.
-  module Auth
-    VERSION = "1.4.0".freeze
-  end
+source "https://rubygems.org"
+
+gem "google-cloud-storage"
+
+group :test do
+  gem "minitest", "~> 5.16"
+  gem "minitest-focus", "~> 1.1"
 end

@@ -1,4 +1,4 @@
-# Copyright 2014 Google, Inc.
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,10 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-module Google
-  # Module Auth provides classes that provide Google-specific authorization
-  # used to access Google APIs.
-  module Auth
-    VERSION = "1.4.0".freeze
+require_relative "helper"
+require_relative "../authenticate_implicit_with_adc"
+
+require "google/cloud/storage"
+
+describe "Authenticate Implicit with ADC Samples" do
+  let(:storage_client) { Google::Cloud::Storage.new }
+
+  describe "buckets" do
+    it "list_buckets" do
+      # list_buckets
+      out, _err = capture_io do
+        authenticate_implicit_with_adc project_id: storage_client.project
+      end
+
+      assert_includes out, "Listed all storage buckets."
+    end
   end
 end

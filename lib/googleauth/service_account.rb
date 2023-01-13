@@ -192,8 +192,6 @@ module Google
         proc { |a_hash, opts = {}| apply a_hash, opts }
       end
 
-      protected
-
       # Creates a jwt uri token.
       def new_jwt_token jwt_aud_uri = nil, options = {}
         now = Time.new

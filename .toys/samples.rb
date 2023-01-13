@@ -1,4 +1,4 @@
-# Copyright 2014 Google, Inc.
+# Copyright 2022 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,10 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-module Google
-  # Module Auth provides classes that provide Google-specific authorization
-  # used to access Google APIs.
-  module Auth
-    VERSION = "1.4.0".freeze
-  end
+expand :minitest do |t|
+  t.name = "test"
+  t.libs = ["lib", "samples"]
+  t.use_bundler on_missing: :install, gemfile_path: "samples/Gemfile"
+  t.files = "samples/acceptance/*_test.rb"
+end
+
+desc "Run samples tests"
+
+include :exec
+include :terminal, styled: true
+
+def run
+  require "json"
+  require "repo_context"
+  RepoContext.load_kokoro_env
+
+  Dir.chdir context_directory
+  
+  puts "Samples tests ...", :bold, :cyan
+  exec_tool ["samples", "test"], name: "Samples tests"
 end
