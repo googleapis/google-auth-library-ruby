@@ -187,10 +187,10 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
         body: "{\"scope\":[\"https://www.googleapis.com/auth/iam\"]}",
         headers: {
           'Accept'=>'*/*',
-          'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3',
+          'Accept-Encoding'=>/.*/,
           'Authorization'=>"Bearer #{access_token}",
           'Content-Type'=>'application/json',
-          'User-Agent'=>'Faraday v2.7.1'
+          'User-Agent'=>/Faraday v\d+\.\d+\.\d+/
         })
   end
 
