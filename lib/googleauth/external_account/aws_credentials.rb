@@ -232,8 +232,9 @@ module Google
 
         def aws_headers aws_credentials, original_request, datetime
           uri = Addressable::URI.parse original_request[:url]
-          headers = original_request[:headers] || {}
-          headers.each_key { |k| headers[k.to_s] = headers.delete k }
+          temp_headers = original_request[:headers] || {}
+          headers = {}
+          temp_headers.each_key { |k| headers[k.to_s] = temp_headers[k] }
           headers["host"] = uri.host
           headers["x-amz-date"] = datetime
           headers["x-amz-security-token"] = aws_credentials[:session_token] if aws_credentials[:session_token]

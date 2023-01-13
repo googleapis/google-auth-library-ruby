@@ -32,7 +32,7 @@ module Google
 
         AWS_SUBJECT_TOKEN_TYPE = "urn:ietf:params:aws:token-type:aws4_request".freeze
         AWS_SUBJECT_TOKEN_INVALID = "aws is the only currently supported external account type".freeze
-        staging-sts.sandbox.googleapis.com
+
         TOKEN_URL_PATTERNS = [
           /^[^.\s\/\\]+\.sts(?:\.mtls)?\.googleapis\.com$/.freeze,
           /^sts(?:\.mtls)?\.googleapis\.com$/.freeze,
