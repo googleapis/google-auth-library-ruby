@@ -12,22 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require_relative "helper"
-require_relative "../authenticate_implicit_with_adc"
-
 require "google/cloud/storage"
+
+require_relative "helper"
 
 describe "Authenticate Implicit with ADC Samples" do
   let(:storage_client) { Google::Cloud::Storage.new }
 
-  describe "buckets" do
-    it "list_buckets" do
-      # list_buckets
-      out, _err = capture_io do
-        authenticate_implicit_with_adc project_id: storage_client.project
-      end
+  it "list_buckets" do
+    # list_buckets
+    sample = SampleLoader.load "authenticate_implicit_with_adc.rb"
 
-      assert_includes out, "Listed all storage buckets."
+    assert_output(/Plaintext: Listed all storage buckets./) do
+      sample.run project_id: storage_client.project
     end
   end
 end

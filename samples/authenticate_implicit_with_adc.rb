@@ -40,7 +40,7 @@ def authenticate_implicit_with_adc project_id:
   buckets.each do |bucket|
     puts bucket.name
   end
-  puts "Listed all storage buckets."
+  puts "Plaintext: Listed all storage buckets."
 end
 # [END auth_cloud_implicit_adc]
 
