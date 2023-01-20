@@ -19,4 +19,5 @@ gem "google-cloud-storage"
 group :test do
   gem "minitest", "~> 5.16"
   gem "minitest-focus", "~> 1.1"
+  gem "toys-core"
 end
