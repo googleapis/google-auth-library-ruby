@@ -1,4 +1,4 @@
-# Copyright 2022 Google LLC
+# Copyright 2023 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,8 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require "minitest/autorun"
-require "minitest/focus"
-require "toys/utils/git_cache"
-require Toys::Utils::GitCache.new.get "https://github.com/googleapis/ruby-common-tools.git",
-                                      path: "lib/sample_loader.rb", update: 300
+require "googleauth"
+require_relative "helper"
+
+describe "Get an ID token from the metadata server" do
+  let(:url) { "https://pubsub.googleapis.com/" }
+
+  it "get_an_id_token" do
+    sample = SampleLoader.load "auth_cloud_idtoken_metadata_server.rb"
+
+    assert_output(/Generated ID token./) do
+      sample.run url: url
+    end
+  end
+end
