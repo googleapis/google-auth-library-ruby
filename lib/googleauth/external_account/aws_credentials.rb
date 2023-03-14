@@ -82,6 +82,38 @@ module Google
           end
         end
 
+        # Retrieves the subject token using the credential_source object.
+        # The subject token is a serialized `AWS GetCallerIdentity signed request`_.
+        #
+        # The logic is summarized as:
+        #
+        # Retrieve the AWS region from the AWS_REGION or AWS_DEFAULT_REGION
+        # environment variable or from the AWS metadata server availability-zone
+        # if not found in the environment variable.
+        #
+        # Check AWS credentials in environment variables. If not found, retrieve
+        # from the AWS metadata server security-credentials endpoint.
+        #
+        # When retrieving AWS credentials from the metadata server
+        # security-credentials endpoint, the AWS role needs to be determined by
+        # calling the security-credentials endpoint without any argument. Then the
+        # credentials can be retrieved via: security-credentials/role_name
+        #
+        # Generate the signed request to AWS STS GetCallerIdentity action.
+        #
+        # Inject x-goog-cloud-target-resource into header and serialize the
+        # signed request. This will be the subject-token to pass to GCP STS.
+        #
+        # .. _AWS GetCallerIdentity signed request:
+        #     https://cloud.google.com/iam/docs/access-resources-aws#exchange-token
+        #
+        # Args:
+        #     request (google.auth.transport.Request): A callable used to make
+        #         HTTP requests.
+        #
+        # Returns:
+        #     str: The retrieved subject token.
+
         def retrieve_subject_token!
           if @request_signer.nil?
             @region = region
@@ -183,8 +215,9 @@ module Google
       class AwsRequestSigner
         # Instantiates an AWS request signer used to compute authenticated signed
         # requests to AWS APIs based on the AWS Signature Version 4 signing process.
-        # Args:
-        #     region_name (str): The AWS region to use.
+        #
+        # @param [string] region_name
+        #     The AWS region to use.
         def initialize region_name
           @region_name = region_name
         end
@@ -192,14 +225,16 @@ module Google
         # Generates the signed request for the provided HTTP request for calling
         # an AWS API. This follows the steps described at:
         # https://docs.aws.amazon.com/general/latest/gr/sigv4_signing.html
-        # Args:
-        #     aws_security_credentials (Hash[str, str]): A dictionary containing
-        #         the AWS security credentials.
-        #     url (str): The AWS service URL containing the canonical URI and
-        #         query string.
-        #     method (str): The HTTP method used to call this API.
-        # Returns:
-        #     Hash[str, str]: The AWS signed request dictionary object.
+        #
+        # @param [Hash[string, string]] aws_security_credentials
+        #     A dictionary containing the AWS security credentials.
+        # @param [string] url
+        #     The AWS service URL containing the canonical URI and query string.
+        # @param [string] method
+        #     The HTTP method used to call this API.
+        #
+        # @return [hash[string, string]]
+        #     The AWS signed request dictionary object.
         def generate_signed_request aws_credentials, original_request
           uri = Addressable::URI.parse original_request[:url]
           raise "Invalid AWS service URL" unless uri.hostname && uri.scheme == "https"
