@@ -21,6 +21,7 @@ require "spec_helper"
 
 shared_examples "apply/apply! are OK" do
   let(:auth_key) { :authorization }
+  let(:extra_checks) {}
 
   # tests that use these examples need to define
   #
@@ -42,6 +43,8 @@ shared_examples "apply/apply! are OK" do
       @client.fetch_access_token!
       expect(@client.access_token).to eq(token)
       expect(access_stub).to have_been_requested
+
+      extra_checks
     end
 
     it "should set id_token to the fetched value" do
@@ -50,6 +53,8 @@ shared_examples "apply/apply! are OK" do
       @id_client.fetch_access_token!
       expect(@id_client.id_token).to eq(token)
       expect(id_stub).to have_been_requested
+
+      extra_checks
     end
 
     it "should notify refresh listeners after updating" do
@@ -61,6 +66,8 @@ shared_examples "apply/apply! are OK" do
                                access_token: "1/abcdef1234567890"
                              ))
       expect(access_stub).to have_been_requested
+
+      extra_checks
     end
   end
 
@@ -74,6 +81,8 @@ shared_examples "apply/apply! are OK" do
       want = { :foo => "bar", auth_key => "Bearer #{token}" }
       expect(md).to eq(want)
       expect(stub).to have_been_requested
+
+      extra_checks
     end
 
     it "should update the target hash with fetched ID token" do
@@ -86,6 +95,8 @@ shared_examples "apply/apply! are OK" do
       want = { :foo => "bar", auth_key => "Bearer #{token}" }
       expect(md).to eq(want)
       expect(stub).to have_been_requested
+
+      extra_checks
     end
   end
 
@@ -99,6 +110,8 @@ shared_examples "apply/apply! are OK" do
       want = { :foo => "bar", auth_key => "Bearer #{token}" }
       expect(got).to eq(want)
       expect(stub).to have_been_requested
+
+      extra_checks
     end
   end
 
@@ -112,6 +125,8 @@ shared_examples "apply/apply! are OK" do
       want = { foo: "bar" }
       expect(md).to eq(want)
       expect(stub).to have_been_requested
+
+      extra_checks
     end
 
     it "should add the token to the returned hash" do
@@ -123,6 +138,8 @@ shared_examples "apply/apply! are OK" do
       want = { :foo => "bar", auth_key => "Bearer #{token}" }
       expect(got).to eq(want)
       expect(stub).to have_been_requested
+
+      extra_checks
     end
 
     it "should not fetch a new token if the current is not expired" do
@@ -137,6 +154,8 @@ shared_examples "apply/apply! are OK" do
         expect(got).to eq(want)
       end
       expect(stub).to have_been_requested
+
+      extra_checks
     end
 
     it "should fetch a new token if the current one is expired" do
@@ -151,6 +170,8 @@ shared_examples "apply/apply! are OK" do
         expect(got).to eq(want)
         @client.expires_at -= 3601 # default is to expire in 1hr
       end
+
+      extra_checks
     end
   end
 end

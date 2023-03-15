@@ -13,16 +13,18 @@
 # limitations under the License.
 
 require "signet/oauth_2/client"
+require "googleauth/base_client"
 
 module Signet
   # OAuth2 supports OAuth2 authentication.
   module OAuth2
-    AUTH_METADATA_KEY = :authorization
     # Signet::OAuth2::Client creates an OAuth2 client
     #
     # This reopens Client to add #apply and #apply! methods which update a
     # hash with the fetched authentication token.
     class Client
+      include Google::Auth::BaseClient
+
       def configure_connection options
         @connection_info =
           options[:connection_builder] || options[:default_connection]
@@ -32,37 +34,6 @@ module Signet
       # The token type as symbol, either :id_token or :access_token
       def token_type
         target_audience ? :id_token : :access_token
-      end
-
-      # Whether the id_token or access_token is missing or about to expire.
-      def needs_access_token?
-        send(token_type).nil? || expires_within?(60)
-      end
-
-      # Updates a_hash updated with the authentication token
-      def apply! a_hash, opts = {}
-        # fetch the access token there is currently not one, or if the client
-        # has expired
-        fetch_access_token! opts if needs_access_token?
-        a_hash[AUTH_METADATA_KEY] = "Bearer #{send token_type}"
-      end
-
-      # Returns a clone of a_hash updated with the authentication token
-      def apply a_hash, opts = {}
-        a_copy = a_hash.clone
-        apply! a_copy, opts
-        a_copy
-      end
-
-      # Returns a reference to the #apply method, suitable for passing as
-      # a closure
-      def updater_proc
-        proc { |a_hash, opts = {}| apply a_hash, opts }
-      end
-
-      def on_refresh &block
-        @refresh_listeners = [] unless defined? @refresh_listeners
-        @refresh_listeners << block
       end
 
       alias orig_fetch_access_token! fetch_access_token!
@@ -76,13 +47,6 @@ module Signet
         end
         notify_refresh_listeners
         info
-      end
-
-      def notify_refresh_listeners
-        listeners = defined?(@refresh_listeners) ? @refresh_listeners : []
-        listeners.each do |block|
-          block.call self
-        end
       end
 
       def build_default_connection

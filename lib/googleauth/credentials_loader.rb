@@ -30,6 +30,11 @@ module Google
       REFRESH_TOKEN_VAR         = "GOOGLE_REFRESH_TOKEN".freeze
       ACCOUNT_TYPE_VAR          = "GOOGLE_ACCOUNT_TYPE".freeze
       PROJECT_ID_VAR            = "GOOGLE_PROJECT_ID".freeze
+      AWS_REGION_VAR            = "AWS_REGION".freeze
+      AWS_DEFAULT_REGION_VAR    = "AWS_DEFAULT_REGION".freeze
+      AWS_ACCESS_KEY_ID_VAR     = "AWS_ACCESS_KEY_ID".freeze
+      AWS_SECRET_ACCESS_KEY_VAR = "AWS_SECRET_ACCESS_KEY".freeze
+      AWS_SESSION_TOKEN_VAR     = "AWS_SESSION_TOKEN".freeze
       GCLOUD_POSIX_COMMAND      = "gcloud".freeze
       GCLOUD_WINDOWS_COMMAND    = "gcloud.cmd".freeze
       GCLOUD_CONFIG_COMMAND     = "config config-helper --format json --verbosity none".freeze
