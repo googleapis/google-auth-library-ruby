@@ -49,6 +49,62 @@ module Google
           @request_signer = nil
         end
 
+        # Retrieves the subject token using the credential_source object.
+        # The subject token is a serialized `AWS GetCallerIdentity signed request`_.
+        #
+        # The logic is summarized as:
+        #
+        # Retrieve the AWS region from the AWS_REGION or AWS_DEFAULT_REGION
+        # environment variable or from the AWS metadata server availability-zone
+        # if not found in the environment variable.
+        #
+        # Check AWS credentials in environment variables. If not found, retrieve
+        # from the AWS metadata server security-credentials endpoint.
+        #
+        # When retrieving AWS credentials from the metadata server
+        # security-credentials endpoint, the AWS role needs to be determined by
+        # calling the security-credentials endpoint without any argument. Then the
+        # credentials can be retrieved via: security-credentials/role_name
+        #
+        # Generate the signed request to AWS STS GetCallerIdentity action.
+        #
+        # Inject x-goog-cloud-target-resource into header and serialize the
+        # signed request. This will be the subject-token to pass to GCP STS.
+        #
+        # .. _AWS GetCallerIdentity signed request:
+        #     https://cloud.google.com/iam/docs/access-resources-aws#exchange-token
+        #
+        # @return [string] The retrieved subject token.
+        #
+        def retrieve_subject_token!
+          if @request_signer.nil?
+            @region = region
+            @request_signer = AwsRequestSigner.new @region
+          end
+
+          request = {
+            method: "POST",
+            url: @regional_cred_verification_url.sub("{region}", @region)
+          }
+
+          request_options = @request_signer.generate_signed_request fetch_security_credentials, request
+
+          request_headers = request_options[:headers]
+          request_headers["x-goog-cloud-target-resource"] = @audience
+
+          aws_signed_request = {
+            headers: [],
+            method: request_options[:method],
+            url: request_options[:url]
+          }
+
+          aws_signed_request[:headers] = request_headers.keys.sort.map do |key|
+            { key: key, value: request_headers[key] }
+          end
+
+          uri_escape aws_signed_request.to_json
+        end
+
         private
 
         def validate_metadata_server url, name
@@ -80,67 +136,6 @@ module Google
           rescue Faraday::Error
             raise "Failed to retrieve AWS #{name}."
           end
-        end
-
-        # Retrieves the subject token using the credential_source object.
-        # The subject token is a serialized `AWS GetCallerIdentity signed request`_.
-        #
-        # The logic is summarized as:
-        #
-        # Retrieve the AWS region from the AWS_REGION or AWS_DEFAULT_REGION
-        # environment variable or from the AWS metadata server availability-zone
-        # if not found in the environment variable.
-        #
-        # Check AWS credentials in environment variables. If not found, retrieve
-        # from the AWS metadata server security-credentials endpoint.
-        #
-        # When retrieving AWS credentials from the metadata server
-        # security-credentials endpoint, the AWS role needs to be determined by
-        # calling the security-credentials endpoint without any argument. Then the
-        # credentials can be retrieved via: security-credentials/role_name
-        #
-        # Generate the signed request to AWS STS GetCallerIdentity action.
-        #
-        # Inject x-goog-cloud-target-resource into header and serialize the
-        # signed request. This will be the subject-token to pass to GCP STS.
-        #
-        # .. _AWS GetCallerIdentity signed request:
-        #     https://cloud.google.com/iam/docs/access-resources-aws#exchange-token
-        #
-        # Args:
-        #     request (google.auth.transport.Request): A callable used to make
-        #         HTTP requests.
-        #
-        # Returns:
-        #     str: The retrieved subject token.
-
-        def retrieve_subject_token!
-          if @request_signer.nil?
-            @region = region
-            @request_signer = AwsRequestSigner.new @region
-          end
-
-          request = {
-            method: "POST",
-            url: @regional_cred_verification_url.sub("{region}", @region)
-          }
-
-          request_options = @request_signer.generate_signed_request fetch_security_credentials, request
-
-          request_headers = request_options[:headers]
-          request_headers["x-goog-cloud-target-resource"] = @audience
-
-          aws_signed_request = {
-            headers: [],
-            method: request_options[:method],
-            url: request_options[:url]
-          }
-
-          aws_signed_request[:headers] = request_headers.keys.sort.map do |key|
-            { key: key, value: request_headers[key] }
-          end
-
-          uri_escape aws_signed_request.to_json
         end
 
         def uri_escape string

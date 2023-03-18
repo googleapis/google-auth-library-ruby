@@ -91,7 +91,7 @@ module Google
         #
         def project_id
           return @project_id unless @project_id.nil?
-          project_number = self.project_number || self._workforce_pool_user_project
+          project_number = self.project_number || @workforce_pool_user_project
 
           # if we missing either project number or scope, we won't retrieve project_id
           return nil if project_number.nil? || @scope.nil?
@@ -104,7 +104,7 @@ module Google
           end
 
           if response.status == 200
-            response_data = MultiJson.load(response.body, :symbolize_keys => true)
+            response_data = MultiJson.load response.body
             @project_id = response_data[:projectId]
           end
 
@@ -119,8 +119,8 @@ module Google
         # @return [string|nil]
         #
         def project_number
-          segments = @audience.split('/')
-          idx = segments.index('projects')
+          segments = @audience.split "/"
+          idx = segments.index 'projects'
           return nil if idx.nil? || idx + 1 == segments.size
           segments[idx + 1]
         end
@@ -140,9 +140,12 @@ module Google
           @subject_token_type = options[:subject_token_type]
           @token_url = options[:token_url]
           @service_account_impersonation_url = options[:service_account_impersonation_url]
-
+          @service_account_impersonation_options = options[:service_account_impersonation_options] || {}
+          @client_id = options[:client_id]
+          @client_secret = options[:client_secret]
           @quota_project_id = options[:quota_project_id]
           @project_id = nil
+          @workforce_pool_user_project = [:workforce_pool_user_project]
 
           @expires_at = nil
           @access_token = nil
