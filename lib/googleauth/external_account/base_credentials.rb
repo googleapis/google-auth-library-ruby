@@ -29,6 +29,20 @@ module Google
         # Contains all methods needed for all external account credentials.
         # Other credentials should call `base_setup` during initialization
         # And should define the :retrieve_subject_token method
+
+        # External account JSON type identifier.
+        EXTERNAL_ACCOUNT_JSON_TYPE = "external_account".freeze
+        # The token exchange grant_type used for exchanging credentials.
+        STS_GRANT_TYPE = "urn:ietf:params:oauth:grant-type:token-exchange".freeze
+        # The token exchange requested_token_type. This is always an access_token.
+        STS_REQUESTED_TOKEN_TYPE = "urn:ietf:params:oauth:token-type:access_token".freeze
+        # Cloud resource manager URL used to retrieve project information.
+        CLOUD_RESOURCE_MANAGER = "https://cloudresourcemanager.googleapis.com/v1/projects/".freeze
+        # Default IAM_SCOPE
+        IAM_SCOPE = [
+          "https://www.googleapis.com/auth/iam".freeze
+        ].freeze
+
         include BaseClient
         include Helpers::Connection
 
@@ -62,13 +76,56 @@ module Google
           notify_refresh_listeners
         end
 
-        private
+        ##
+        # Retrieves the project ID corresponding to the workload identity or workforce pool.
+        # For workforce pool credentials, it returns the project ID corresponding to
+        # the workforce_pool_user_project.
+        # When not determinable, None is returned.
+        #
+        # The resource may not have permission (resourcemanager.projects.get) to
+        # call this API or the required scopes may not be selected:
+        # https://cloud.google.com/resource-manager/reference/rest/v1/projects/get#authorization-scopes
+        #
+        # @return [string|nil]
+        #     The project ID corresponding to the workload identity pool or workforce pool if determinable.
+        #
+        def project_id
+          return @project_id unless @project_id.nil?
+          project_number = self.project_number || self._workforce_pool_user_project
 
-        STS_GRANT_TYPE = "urn:ietf:params:oauth:grant-type:token-exchange".freeze
-        STS_REQUESTED_TOKEN_TYPE = "urn:ietf:params:oauth:token-type:access_token".freeze
-        IAM_SCOPE = [
-          "https://www.googleapis.com/auth/iam".freeze
-        ].freeze
+          # if we missing either project number or scope, we won't retrieve project_id
+          return nil if project_number.nil? || @scope.nil?
+
+          url = CLOUD_RESOURCE_MANAGER + project_number
+
+          response = connection.get url do |req|
+            req.headers["Authorization"] = "Bearer #{@access_token}"
+            req.headers["Content-Type"] = "application/json"
+          end
+
+          if response.status == 200
+            response_data = MultiJson.load(response.body, :symbolize_keys => true)
+            @project_id = response_data[:projectId]
+          end
+
+          @project_id
+        end
+
+        ##
+        # Retrieve the project number corresponding to workload identity pool
+        # STS audience pattern:
+        #     //iam.googleapis.com/projects/$PROJECT_NUMBER/locations/...
+        #
+        # @return [string|nil]
+        #
+        def project_number
+          segments = @audience.split('/')
+          idx = segments.index('projects')
+          return nil if idx.nil? || idx + 1 == segments.size
+          segments[idx + 1]
+        end
+
+        private
 
         def token_type
           # This method is needed for BaseClient
@@ -83,6 +140,9 @@ module Google
           @subject_token_type = options[:subject_token_type]
           @token_url = options[:token_url]
           @service_account_impersonation_url = options[:service_account_impersonation_url]
+
+          @quota_project_id = options[:quota_project_id]
+          @project_id = nil
 
           @expires_at = nil
           @access_token = nil
