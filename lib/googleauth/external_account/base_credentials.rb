@@ -78,8 +78,7 @@ module Google
 
         ##
         # Retrieves the project ID corresponding to the workload identity or workforce pool.
-        # For workforce pool credentials, it returns the project ID corresponding to
-        # the workforce_pool_user_project.
+        # For workforce pool credentials, it returns the project ID corresponding to the workforce_pool_user_project.
         # When not determinable, None is returned.
         #
         # The resource may not have permission (resourcemanager.projects.get) to
@@ -120,7 +119,7 @@ module Google
         #
         def project_number
           segments = @audience.split "/"
-          idx = segments.index 'projects'
+          idx = segments.index "projects"
           return nil if idx.nil? || idx + 1 == segments.size
           segments[idx + 1]
         end
