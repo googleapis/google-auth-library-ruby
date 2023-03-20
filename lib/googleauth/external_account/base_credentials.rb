@@ -39,9 +39,7 @@ module Google
         # Cloud resource manager URL used to retrieve project information.
         CLOUD_RESOURCE_MANAGER = "https://cloudresourcemanager.googleapis.com/v1/projects/".freeze
         # Default IAM_SCOPE
-        IAM_SCOPE = [
-          "https://www.googleapis.com/auth/iam".freeze
-        ].freeze
+        IAM_SCOPE = ["https://www.googleapis.com/auth/iam".freeze].freeze
 
         include BaseClient
         include Helpers::Connection
