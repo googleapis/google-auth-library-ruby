@@ -41,7 +41,7 @@ module Google
         # Default IAM_SCOPE
         IAM_SCOPE = ["https://www.googleapis.com/auth/iam".freeze].freeze
 
-        include BaseClient
+        include Google::Auth::BaseClient
         include Helpers::Connection
 
         attr_reader :expires_at
