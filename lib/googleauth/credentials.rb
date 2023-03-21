@@ -355,7 +355,7 @@ module Google
         @project_id = options["project_id"] || options["project"]
         @quota_project_id = options["quota_project_id"]
         case keyfile
-        when Signet::OAuth2::Client, Google::Auth::BaseClient
+        when Google::Auth::BaseClient
           update_from_signet keyfile
         when Hash
           update_from_hash keyfile, options

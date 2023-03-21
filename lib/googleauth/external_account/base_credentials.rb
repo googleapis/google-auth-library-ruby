@@ -83,7 +83,7 @@ module Google
         # call this API or the required scopes may not be selected:
         # https://cloud.google.com/resource-manager/reference/rest/v1/projects/get#authorization-scopes
         #
-        # @return [string|nil]
+        # @return [string,nil]
         #     The project ID corresponding to the workload identity pool or workforce pool if determinable.
         #
         def project_id
@@ -93,7 +93,7 @@ module Google
           # if we missing either project number or scope, we won't retrieve project_id
           return nil if project_number.nil? || @scope.nil?
 
-          url = CLOUD_RESOURCE_MANAGER + project_number
+          url = "#{CLOUD_RESOURCE_MANAGER}#{project_number}"
 
           response = connection.get url do |req|
             req.headers["Authorization"] = "Bearer #{@access_token}"
@@ -111,7 +111,7 @@ module Google
         ##
         # Retrieve the project number corresponding to workload identity pool
         # STS audience pattern:
-        #     //iam.googleapis.com/projects/$PROJECT_NUMBER/locations/...
+        #     `//iam.googleapis.com/projects/$PROJECT_NUMBER/locations/...`
         #
         # @return [string|nil]
         #

@@ -29,7 +29,7 @@ module Google
         include Google::Auth::ExternalAccount::BaseCredentials
         extend CredentialsLoader
 
-        # Will always be None, but method still gets used.
+        # Will always be nil, but method still gets used.
         attr_reader :client_id
 
         def initialize options = {}
@@ -50,7 +50,8 @@ module Google
         end
 
         # Retrieves the subject token using the credential_source object.
-        # The subject token is a serialized `AWS GetCallerIdentity signed request`_.
+        # The subject token is a serialized [AWS GetCallerIdentity signed request](
+        #   https://cloud.google.com/iam/docs/access-resources-aws#exchange-token).
         #
         # The logic is summarized as:
         #
@@ -70,9 +71,6 @@ module Google
         #
         # Inject x-goog-cloud-target-resource into header and serialize the
         # signed request. This will be the subject-token to pass to GCP STS.
-        #
-        # .. _AWS GetCallerIdentity signed request:
-        #     https://cloud.google.com/iam/docs/access-resources-aws#exchange-token
         #
         # @return [string] The retrieved subject token.
         #
@@ -228,8 +226,9 @@ module Google
         # @param [string] method
         #     The HTTP method used to call this API.
         #
-        # @return [hash[string, string]]
+        # @return [hash{string => string}]
         #     The AWS signed request dictionary object.
+        #
         def generate_signed_request aws_credentials, original_request
           uri = Addressable::URI.parse original_request[:url]
           raise "Invalid AWS service URL" unless uri.hostname && uri.scheme == "https"
@@ -352,11 +351,9 @@ module Google
         # https://github.com/aws/aws-sdk-ruby/blob/0ac3d0a393ed216290bfb5f0383380376f6fb1f1/gems/aws-sigv4/lib/aws-sigv4/signer.rb#L532
         def build_canonical_querystring query
           params = query.split "&"
-          params = params.map { |p| p.match(/=/) ? p : "#{p}=" }
+          params = params.map { |p| p.include?("=") ? p : "#{p}=" }
 
           params.each.with_index.sort do |a, b|
-            a, a_offset = a
-            b, b_offset = b
             a_name, a_value = a.split "="
             b_name, b_value = b.split "="
             if a_name == b_name

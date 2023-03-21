@@ -130,7 +130,7 @@ module Google
     # cf [Application Default Credentials](https://cloud.google.com/docs/authentication/production)
     class ServiceAccountJwtHeaderCredentials
       JWT_AUD_URI_KEY = :jwt_aud_uri
-      AUTH_METADATA_KEY = Signet::OAuth2::Client::AUTH_METADATA_KEY
+      AUTH_METADATA_KEY = Google::Auth::BaseClient::AUTH_METADATA_KEY
       TOKEN_CRED_URI = "https://www.googleapis.com/oauth2/v4/token".freeze
       SIGNING_ALGORITHM = "RS256".freeze
       EXPIRY = 60

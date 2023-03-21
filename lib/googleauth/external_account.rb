@@ -1,4 +1,4 @@
-# Copyright 2023 Google, Inc.
+# Copyright 2022 Google, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,18 +27,15 @@ module Google
       # Provides an entrypoint for all Exernal Account credential classes.
       class Credentials
         # The subject token type used for AWS external_account credentials.
-        attr_reader :project_id
-        attr_reader :quota_project_id
-
         AWS_SUBJECT_TOKEN_TYPE = "urn:ietf:params:aws:token-type:aws4_request".freeze
         AWS_SUBJECT_TOKEN_INVALID = "aws is the only currently supported external account type".freeze
 
         TOKEN_URL_PATTERNS = [
-          /^[^.\s\/\\]+\.sts(?:\.mtls)?\.googleapis\.com$/.freeze,
-          /^sts(?:\.mtls)?\.googleapis\.com$/.freeze,
-          /^sts\.[^.\s\/\\]+(?:\.mtls)?\.googleapis\.com$/.freeze,
-          /^[^.\s\/\\]+-sts(?:\.mtls)?\.googleapis\.com$/.freeze,
-          /^sts-[^.\s\/\\]+\.p(?:\.mtls)?\.googleapis\.com$/.freeze
+          /^[^.\s\/\\]+\.sts(?:\.mtls)?\.googleapis\.com$/,
+          /^sts(?:\.mtls)?\.googleapis\.com$/,
+          /^sts\.[^.\s\/\\]+(?:\.mtls)?\.googleapis\.com$/,
+          /^[^.\s\/\\]+-sts(?:\.mtls)?\.googleapis\.com$/,
+          /^sts-[^.\s\/\\]+\.p(?:\.mtls)?\.googleapis\.com$/
         ].freeze
 
         SERVICE_ACCOUNT_IMPERSONATION_URL_PATTERNS = [
@@ -52,7 +49,7 @@ module Google
         # Create a ExternalAccount::Credentials
         #
         # @param json_key_io [IO] an IO from which the JSON key can be read
-        # @param scope [string|array|nil] the scope(s) to access
+        # @param scope [String,Array,nil] the scope(s) to access
         def self.make_creds options = {}
           json_key_io, scope = options.values_at :json_key_io, :scope
 
