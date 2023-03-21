@@ -1,5 +1,11 @@
 # Release History
 
+### 1.5.0 (2023-03-21)
+
+#### Features
+
+* Add support for AWS Workload Identity Federation ([#418](https://github.com/googleapis/google-auth-library-ruby/issues/418)) 
+
 ### 1.4.0 (2022-12-14)
 
 #### Features
