@@ -353,7 +353,7 @@ module Google
           params = query.split "&"
           params = params.map { |p| p.include?("=") ? p : "#{p}=" }
 
-          params.each.with_index.sort do |a, b|
+          params.each.with_index.sort do |(a, a_offset), (b, b_offset)|
             a_name, a_value = a.split "="
             b_name, b_value = b.split "="
             if a_name == b_name
