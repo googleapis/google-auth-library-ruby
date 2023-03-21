@@ -113,7 +113,7 @@ module Google
         # STS audience pattern:
         #     `//iam.googleapis.com/projects/$PROJECT_NUMBER/locations/...`
         #
-        # @return [string|nil]
+        # @return [string, nil]
         #
         def project_number
           segments = @audience.split "/"
