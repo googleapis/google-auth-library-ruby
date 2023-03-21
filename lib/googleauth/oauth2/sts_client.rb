@@ -23,7 +23,7 @@ module Google
       # used to exchange external credentials for GCP access tokens in workload identity pools to
       # access Google APIs.
       # The implementation will support various types of client authentication as allowed in the spec.
-      # 
+      #
       # A deviation on the spec will be for additional Google specific options that cannot be easily
       # mapped to parameters defined in the RFC.
       # The returned dictionary response will be based on the [rfc8693 section 2.2.1]
