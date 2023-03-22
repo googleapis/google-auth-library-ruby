@@ -165,7 +165,7 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
 
   let :imdsv2_endpoint do
     return unless imdsv2_url
-    stub_request(:get, imdsv2_url)
+    stub_request(:put, imdsv2_url)
       .with(headers: basic_aws_headers.clone.merge(
         'X-Aws-Ec2-Metadata-Token-Ttl-Seconds'=>'300'))
   end

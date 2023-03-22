@@ -112,20 +112,26 @@ module Google
           url
         end
 
-        def get_aws_resource url, name, data: nil, headers: {}
+        def get_aws_resource url, name, data: nil, headers: {}, method: nil
           begin
             unless [nil, url].include? @imdsv2_session_token_url
               headers["x-aws-ec2-metadata-token"] = get_aws_resource(
                 @imdsv2_session_token_url,
                 "Session Token",
-                headers: { "x-aws-ec2-metadata-token-ttl-seconds": "300" }
+                headers: { "x-aws-ec2-metadata-token-ttl-seconds": "300" },
+                method: :put
               ).body
             end
 
-            response = if data
+            method ||= data ? :post : :get
+
+            response = case method
+                       when :post
                          headers["Content-Type"] = "application/json"
                          connection.post url, data, headers
-                       else
+                       when :put
+                         connection.put url, data, headers
+                       when :get
                          connection.get url, nil, headers
                        end
 
