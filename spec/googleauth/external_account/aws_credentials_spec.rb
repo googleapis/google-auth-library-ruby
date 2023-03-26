@@ -51,6 +51,8 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
   let(:service_account_impersonation_url) { nil }
   let(:imdsv2_url) { nil }
   let(:imdsv2_token) { 'imdsv2_token' }
+  let(:container_credentials_url) { "http://169.254.170.2#{ENV[AWS_CONTAINER_CREDENTIALS_RELATIVE_URI]}" }
+  let(:non_ecs_container_credentials_url) { 'http://localhost:8000/2016-11-01/credentialprovider' }
 
   let :cred_json do
     {
@@ -83,6 +85,16 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
       Token: aws_token,
       Expiration: expiry_datetime
     }.compact
+  end
+
+  let :aws_container_credentials_response do
+    {
+      AccessKeyId: aws_access_key_id,
+      Expiration: expiry_datetime,
+      RoleArn: 'ecs_task_role_arn',
+      SecretAccessKey: aws_secret_access_key,
+      Token: aws_token
+    }
   end
 
   let :google_token_response do
@@ -161,6 +173,40 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
   let :region_endpoint_failure do
     return unless region_url
     region_endpoint.to_return status: 400
+  end
+
+  let :container_credentials_endpoint do
+    return unless container_credentials_url
+    stub_request(:get, container_credentials_url)
+  end
+
+  let :container_credentials_endpoint_success do
+    return unless container_credentials_url
+    container_credentials_endpoint.to_return(
+      body: MultiJson.dump(aws_container_credentials_response)
+    )
+  end
+
+  let :container_credentials_endpoint_failure do
+    return unless container_credentials_url
+    container_credentials_endpoint.to_return status: 400
+  end
+
+  let :non_ecs_container_credentials_endpoint do
+    return unless non_ecs_container_credentials_url
+    stub_request(:get, non_ecs_container_credentials_url)
+  end
+
+  let :non_ecs_container_credentials_endpoint_success do
+    return unless non_ecs_container_credentials_url
+    non_ecs_container_credentials_endpoint.to_return(
+      body: MultiJson.dump(aws_container_credentials_response)
+    )
+  end
+
+  let :non_ecs_container_credentials_endpoint_failure do
+    return unless non_ecs_container_credentials_url
+    non_ecs_container_credentials_endpoint.to_return status: 400
   end
 
   let :imdsv2_endpoint do
@@ -335,6 +381,38 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
     end
   end
 
+  describe 'on ECS' do
+    before :example do
+      @client = credentials
+
+      ENV[AWS_CONTAINER_CREDENTIALS_RELATIVE_URI] = '/v2/credentials?id=task_credential_id_xxxxx'
+      region_endpoint_success
+      container_credentials_endpoint_success
+    end
+
+    it_behaves_like "apply/apply! are OK" do
+      let :extra_checks do
+        expect(container_crednetials_endpoint).to have_been_requested.at_least_once
+      end
+    end
+  end
+
+  describe 'on non-ECS container services' do
+    before :example do
+      @client = credentials
+
+      ENV[AWS_CONTAINER_CREDENTIALS_FULL_URI] = non_ecs_container_credentials_url
+      region_endpoint_success
+      non_ecs_container_credentials_endpoint_success
+    end
+
+    it_behaves_like "apply/apply! are OK" do
+      let :extra_checks do
+        expect(non_ecs_container_crednetials_endpoint).to have_been_requested.at_least_once
+      end
+    end
+  end
+
   describe 'with imdsv2' do
     let(:imdsv2_url) { 'http://169.254.169.254/latest/api/token' }
 
@@ -389,6 +467,30 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
 
     it 'raises an error' do
       expect { credentials.fetch_access_token! }.to raise_error(/Failed to retrieve AWS IAM Role/)
+    end
+  end
+
+  describe 'container credentials endpoint failure' do
+    before :example do
+      ENV[AWS_CONTAINER_CREDENTIALS_RELATIVE_URI] = '/v2/credentials?id=task_credential_id_xxxxx'
+      region_endpoint_success
+      container_credentials_endpoint_failure
+    end
+
+    it 'raises an error' do
+      expect { credentials.fetch_access_token! }.to raise_error(/Failed to retrieve AWS container credentials/)
+    end
+  end
+
+  describe 'non-ECS container credentials endpoint failure' do
+    before :example do
+      ENV[AWS_CONTAINER_CREDENTIALS_FULL_URI] = non_ecs_container_credentials_url
+      region_endpoint_success
+      non_ecs_container_credentials_endpoint_failure
+    end
+
+    it 'raises an error' do
+      expect { credentials.fetch_access_token! }.to raise_error(/Failed to retrieve AWS container credentials/)
     end
   end
 

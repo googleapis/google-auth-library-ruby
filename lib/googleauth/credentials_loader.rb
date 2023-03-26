@@ -39,6 +39,9 @@ module Google
       GCLOUD_WINDOWS_COMMAND    = "gcloud.cmd".freeze
       GCLOUD_CONFIG_COMMAND     = "config config-helper --format json --verbosity none".freeze
 
+      AWS_CONTAINER_CREDENTIALS_RELATIVE_URI = "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI".freeze
+      AWS_CONTAINER_CREDENTIALS_FULL_URI     = "AWS_CONTAINER_CREDENTIALS_FULL_URI".freeze
+
       CREDENTIALS_FILE_NAME = "application_default_credentials.json".freeze
       NOT_FOUND_ERROR = "Unable to read the credential file specified by #{ENV_VAR}".freeze
       WELL_KNOWN_PATH = "gcloud/#{CREDENTIALS_FILE_NAME}".freeze

@@ -147,20 +147,61 @@ module Google
         # Retrieves the AWS security credentials required for signing AWS
         # requests from either the AWS security credentials environment variables
         # or from the AWS metadata server.
+        # The priority of loading credentials from multiple providers honors the
+        # load order implemented as the credential provider chain in the AWS SDKs:
+        # https://docs.aws.amazon.com/sdkref/latest/guide/standardized-credentials.html#credentialProviderChain
         def fetch_security_credentials
+          fetch_static_credentials \
+            || fetch_container_credentials \
+            || fetch_instance_metadata_service_credentials
+        end
+
+        # Retrieve the basic, long-term AWS credentials from environment variables.
+        def fetch_static_credentials
           env_aws_access_key_id = ENV[CredentialsLoader::AWS_ACCESS_KEY_ID_VAR]
           env_aws_secret_access_key = ENV[CredentialsLoader::AWS_SECRET_ACCESS_KEY_VAR]
           # This is normally not available for permanent credentials.
           env_aws_session_token = ENV[CredentialsLoader::AWS_SESSION_TOKEN_VAR]
 
           if env_aws_access_key_id && env_aws_secret_access_key
-            return {
+            {
               access_key_id: env_aws_access_key_id,
               secret_access_key: env_aws_secret_access_key,
               session_token: env_aws_session_token
             }
           end
+        end
 
+        # Retrieve the AWS credentials for the ECS task IAM role from the per-container
+        # ephemeral metadata endpoint using injected environment variables.
+        # Container processes running on AWS ECS obtain temporary credentials from
+        # http://169.254.170.2/{credential_provider_version}/credentials?id={task_credential_id}.
+        # The path part of this URL changes on every container launch and is provided
+        # as the environment variable AWS_CONTAINER_CREDENTIALS_RELATIVE_URI.
+        # On some non-ECS services such as AWS Cloud Shell and AWS IoT Greengrass Lambda, the
+        # endpoint full URL is available as AWS_CONTAINER_CREDENTIALS_FULL_URI instead.
+        def fetch_container_credentials
+          url = if ENV[CredentialsLoader::AWS_CONTAINER_CREDENTIALS_RELATIVE_URI]
+                  "http://169.254.170.2#{ENV[CredentialsLoader::AWS_CONTAINER_CREDENTIALS_RELATIVE_URI]}"
+                elsif ENV[CredentialsLoader::AWS_CONTAINER_CREDENTIALS_FULL_URI]
+                  ENV[CredentialsLoader::AWS_CONTAINER_CREDENTIALS_FULL_URI]
+                end
+          if url
+            uri = Addressable::URI.parse url
+            response = get_aws_resource uri.to_s, "container credentials"
+            credentials = MultiJson.load response.body
+
+            {
+              access_key_id: credentials["AccessKeyId"],
+              secret_access_key: credentials["SecretAccessKey"],
+              session_token: credentials["Token"]
+            }
+          end
+        end
+
+        # Retrieve the AWS credentials for the IAM role attached to the EC2 instance
+        # from the EC2 Instance Metadata Service (IMDS) endpoint.
+        def fetch_instance_metadata_service_credentials
           role_name = fetch_metadata_role_name
           credentials = fetch_metadata_security_credentials role_name
 
