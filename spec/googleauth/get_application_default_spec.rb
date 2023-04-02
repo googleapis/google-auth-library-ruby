@@ -125,17 +125,36 @@ describe "#get_application_default" do
       end
     end
 
-    it "succeeds without default file or env if on compute engine" do
-      stub = stub_request(:get, "http://169.254.169.254")
-             .to_return(status:  200,
-                        headers: { "Metadata-Flavor" => "Google" })
-      Dir.mktmpdir do |dir|
-        ENV.delete @var_name unless ENV[@var_name].nil? # no env var
-        ENV["HOME"] = dir # no config present in this tmp dir
-        creds = Google::Auth.get_application_default @scope, options
-        expect(creds).to_not be_nil
+    describe "when on compute engine" do
+      before do
+        @compute_metadata_server = stub_request(:get, "http://169.254.169.254")
+                                     .to_return(status: 200, headers: { "Metadata-Flavor" => "Google" })
       end
-      expect(stub).to have_been_requested
+
+      it "succeeds without default file or env if on compute engine" do
+        Dir.mktmpdir do |dir|
+          ENV.delete @var_name unless ENV[@var_name].nil? # no env var
+          ENV["HOME"] = dir # no config present in this tmp dir
+          creds = Google::Auth.get_application_default @scope, options
+          expect(creds).to_not be_nil
+        end
+        expect(@compute_metadata_server).to have_been_requested
+      end
+
+      it "honors passing options to OAuth 2 client" do
+        gce_credentials = instance_double(GCECredentials)
+        allow(GCECredentials)
+          .to receive(:new).with(options.merge(scope: @scope)).and_return(gce_credentials)
+
+        Dir.mktmpdir do |dir|
+          ENV.delete @var_name unless ENV[@var_name].nil? # no env var
+          ENV["HOME"] = dir # no config present in this tmp dir
+          creds = Google::Auth.get_application_default @scope, options
+          expect(creds).to be gce_credentials
+          expect(GCECredentials).to have_received(:new).with(options.merge(scope: @scope))
+        end
+        expect(@compute_metadata_server).to have_been_requested
+      end
     end
 
     it "succeeds with system default file" do

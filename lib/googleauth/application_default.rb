@@ -60,7 +60,7 @@ module Google
         GCECredentials.unmemoize_all
         raise NOT_FOUND_ERROR
       end
-      GCECredentials.new scope: scope
+      GCECredentials.new options.merge(scope: scope)
     end
   end
 end
