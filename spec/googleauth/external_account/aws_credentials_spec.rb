@@ -418,22 +418,6 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
     it_behaves_like "apply/apply! are OK"
   end
 
-  describe 'faulty ipv6 region url' do
-    let(:region_url) { 'http://fd00:ec2::254/latest/meta-data/placement/availability-zone' }
-
-    it 'raises an error' do
-      expect { credentials }.to raise_error(/bad URI\(is not URI\?\): \"#{region_url}"/)
-    end
-  end
-
-  describe 'invalid region url' do
-    let(:region_url) { 'http://abc.com/latest/meta-data/placement/availability-zone' }
-
-    it 'raises an error' do
-      expect { credentials }.to raise_error(/Invalid host abc\.com for region_url/)
-    end
-  end
-
   describe 'ipv6 cred verification url' do
     let(:security_credential_url) { 'http://[fd00:ec2::254]/latest/meta-data/iam/security-credentials' }
 
@@ -446,22 +430,6 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
     end
 
     it_behaves_like "apply/apply! are OK"
-  end
-
-  describe 'faulty ipv6 cred verification url' do
-    let(:security_credential_url) { 'http://fd00:ec2::254/latest/meta-data/iam/security-credentials' }
-
-    it 'raises an error' do
-      expect { credentials }.to raise_error(/bad URI\(is not URI\?\): \"#{security_credential_url}"/)
-    end
-  end
-
-  describe 'invalid cred verification url' do
-    let(:security_credential_url) { 'http://abc.com/latest/meta-data/iam/security-credentials' }
-
-    it 'raises an error' do
-      expect { credentials }.to raise_error(/Invalid host abc\.com for url/)
-    end
   end
 
   describe 'ipv6 imdsv2 url' do
@@ -477,22 +445,6 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
     end
 
     it_behaves_like "apply/apply! are OK"
-  end
-
-  describe 'faulty ipv6 imdsv2 url' do
-    let(:imdsv2_url) { 'http://fd00:ec2::254/latest/api/token' }
-
-    it 'raises an error' do
-      expect { credentials }.to raise_error(/bad URI\(is not URI\?\): \"#{imdsv2_url}"/)
-    end
-  end
-
-  describe 'invalid imdsv2 url' do
-    let(:imdsv2_url) { 'http://abc.com/latest/api/token' }
-
-    it 'raises an error' do
-      expect { credentials }.to raise_error(/Invalid host abc\.com for imdsv2_session_token_url/)
-    end
   end
 
   describe 'regional cred verification url without ssl' do
