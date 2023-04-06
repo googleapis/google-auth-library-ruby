@@ -102,7 +102,7 @@ module Google
 
           if response.status == 200
             response_data = MultiJson.load response.body
-            @project_id = response_data[:projectId]
+            @project_id = response_data["projectId"]
           end
 
           @project_id

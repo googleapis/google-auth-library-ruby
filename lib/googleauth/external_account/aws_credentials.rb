@@ -47,6 +47,8 @@ module Google
           # These will be lazily loaded when needed, or will raise an error if not provided
           @region = nil
           @request_signer = nil
+          @imdsv2_session_token = nil
+          @imdsv2_session_token_expiry = nil
         end
 
         # Retrieves the subject token using the credential_source object.
@@ -105,6 +107,27 @@ module Google
 
         private
 
+        def imdsv2_session_token
+          return @imdsv2_session_token unless imdsv2_session_token_invalid?
+          raise "IMDSV2 token url must be provide" if @imdsv2_session_token_url.nil?
+          begin
+            response = connection.put @imdsv2_session_token_url do |req|
+              req.headers["x-aws-ec2-metadata-token-ttl-seconds"] = "300"
+            end
+          rescue Faraday::Error => e
+            raise "Fetching AWS IMDSV2 token error: #{e}"
+          end
+          raise Faraday::Error unless response.success?
+          @imdsv2_session_token = response.body
+          @imdsv2_session_token_expiry = Time.now + 300
+          @imdsv2_session_token
+        end
+
+        def imdsv2_session_token_invalid?
+          return true if @imdsv2_session_token.nil?
+          @imdsv2_session_token_expiry.nil? || @imdsv2_session_token_expiry < Time.now
+        end
+
         def validate_metadata_server url, name
           return nil if url.nil?
           host = URI(url).host
@@ -114,14 +137,7 @@ module Google
 
         def get_aws_resource url, name, data: nil, headers: {}
           begin
-            unless [nil, url].include? @imdsv2_session_token_url
-              headers["x-aws-ec2-metadata-token"] = get_aws_resource(
-                @imdsv2_session_token_url,
-                "Session Token",
-                headers: { "x-aws-ec2-metadata-token-ttl-seconds": "300" }
-              ).body
-            end
-
+            headers["x-aws-ec2-metadata-token"] = imdsv2_session_token
             response = if data
                          headers["Content-Type"] = "application/json"
                          connection.post url, data, headers
