@@ -38,11 +38,10 @@ module Google
           @audience = options[:audience]
           @credential_source = options[:credential_source] || {}
           @environment_id = @credential_source["environment_id"]
-          @region_url = validate_metadata_server @credential_source["region_url"], "region_url"
-          @credential_verification_url = validate_metadata_server @credential_source["url"], "url"
+          @region_url = @credential_source["region_url"]
+          @credential_verification_url = @credential_source["url"]
           @regional_cred_verification_url = @credential_source["regional_cred_verification_url"]
-          @imdsv2_session_token_url = validate_metadata_server @credential_source["imdsv2_session_token_url"],
-                                                               "imdsv2_session_token_url"
+          @imdsv2_session_token_url = @credential_source["imdsv2_session_token_url"]
 
           # These will be lazily loaded when needed, or will raise an error if not provided
           @region = nil
@@ -104,13 +103,6 @@ module Google
         end
 
         private
-
-        def validate_metadata_server url, name
-          return nil if url.nil?
-          host = URI(url).host
-          raise "Invalid host #{host} for #{name}." unless ["169.254.169.254", "[fd00:ec2::254]"].include? host
-          url
-        end
 
         def get_aws_resource url, name, data: nil, headers: {}
           begin

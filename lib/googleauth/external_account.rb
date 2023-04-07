@@ -30,22 +30,6 @@ module Google
         AWS_SUBJECT_TOKEN_TYPE = "urn:ietf:params:aws:token-type:aws4_request".freeze
         AWS_SUBJECT_TOKEN_INVALID = "aws is the only currently supported external account type".freeze
 
-        TOKEN_URL_PATTERNS = [
-          /^[^.\s\/\\]+\.sts(?:\.mtls)?\.googleapis\.com$/,
-          /^sts(?:\.mtls)?\.googleapis\.com$/,
-          /^sts\.[^.\s\/\\]+(?:\.mtls)?\.googleapis\.com$/,
-          /^[^.\s\/\\]+-sts(?:\.mtls)?\.googleapis\.com$/,
-          /^sts-[^.\s\/\\]+\.p(?:\.mtls)?\.googleapis\.com$/
-        ].freeze
-
-        SERVICE_ACCOUNT_IMPERSONATION_URL_PATTERNS = [
-          /^[^.\s\/\\]+\.iamcredentials\.googleapis\.com$/.freeze,
-          /^iamcredentials\.googleapis\.com$/.freeze,
-          /^iamcredentials\.[^.\s\/\\]+\.googleapis\.com$/.freeze,
-          /^[^.\s\/\\]+-iamcredentials\.googleapis\.com$/.freeze,
-          /^iamcredentials-[^.\s\/\\]+\.p\.googleapis\.com$/.freeze
-        ].freeze
-
         # Create a ExternalAccount::Credentials
         #
         # @param json_key_io [IO] an IO from which the JSON key can be read
@@ -55,11 +39,6 @@ module Google
 
           raise "A json file is required for external account credentials." unless json_key_io
           user_creds = read_json_key json_key_io
-
-          raise "The provided token URL is invalid." unless is_token_url_valid? user_creds["token_url"]
-          unless is_service_account_impersonation_url_valid? user_creds["service_account_impersonation_url"]
-            raise "The provided service account impersonation url is invalid."
-          end
 
           # TODO: check for other External Account Credential types. Currently only AWS is supported.
           raise AWS_SUBJECT_TOKEN_INVALID unless user_creds["subject_token_type"] == AWS_SUBJECT_TOKEN_TYPE
@@ -84,26 +63,6 @@ module Google
             raise "the json is missing the #{key} field" unless json_key.key? key
           end
           json_key
-        end
-
-        def self.is_valid_url? url, valid_hostnames
-          begin
-            uri = URI(url)
-          rescue URI::InvalidURIError, ArgumentError
-            return false
-          end
-
-          return false unless uri.scheme == "https"
-
-          valid_hostnames.any? { |hostname| hostname =~ uri.host }
-        end
-
-        def self.is_token_url_valid? url
-          is_valid_url? url, TOKEN_URL_PATTERNS
-        end
-
-        def self.is_service_account_impersonation_url_valid? url
-          !url or is_valid_url? url, SERVICE_ACCOUNT_IMPERSONATION_URL_PATTERNS
         end
       end
     end
