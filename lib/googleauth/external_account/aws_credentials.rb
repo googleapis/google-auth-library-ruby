@@ -103,7 +103,7 @@ module Google
 
         def imdsv2_session_token
           return @imdsv2_session_token unless imdsv2_session_token_invalid?
-          raise "IMDSV2 token url must be provide" if @imdsv2_session_token_url.nil?
+          raise "IMDSV2 token url must be provided" if @imdsv2_session_token_url.nil?
           begin
             response = connection.put @imdsv2_session_token_url do |req|
               req.headers["x-aws-ec2-metadata-token-ttl-seconds"] = "300"
