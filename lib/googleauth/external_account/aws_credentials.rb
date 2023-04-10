@@ -23,6 +23,9 @@ module Google
       # This module handles the retrieval of credentials from Google Cloud by utilizing the AWS EC2 metadata service and
       # then exchanging the credentials for a short-lived Google Cloud access token.
       class AwsCredentials
+        # Constant for imdsv2 session token expiration in seconds
+        IMDSV2_TOKEN_EXPIRATION_IN_SECONDS = 300
+
         include Google::Auth::ExternalAccount::BaseCredentials
         extend CredentialsLoader
 
@@ -106,14 +109,14 @@ module Google
           raise "IMDSV2 token url must be provided" if @imdsv2_session_token_url.nil?
           begin
             response = connection.put @imdsv2_session_token_url do |req|
-              req.headers["x-aws-ec2-metadata-token-ttl-seconds"] = "300"
+              req.headers["x-aws-ec2-metadata-token-ttl-seconds"] = IMDSV2_TOKEN_EXPIRATION_IN_SECONDS.to_s
             end
           rescue Faraday::Error => e
             raise "Fetching AWS IMDSV2 token error: #{e}"
           end
           raise Faraday::Error unless response.success?
           @imdsv2_session_token = response.body
-          @imdsv2_session_token_expiry = Time.now + 300
+          @imdsv2_session_token_expiry = Time.now + IMDSV2_TOKEN_EXPIRATION_IN_SECONDS
           @imdsv2_session_token
         end
 
