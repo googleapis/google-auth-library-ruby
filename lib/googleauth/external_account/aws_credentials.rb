@@ -16,15 +16,12 @@ require "time"
 require "googleauth/external_account/base_credentials"
 
 module Google
-  # Module Auth provides classes that provide Google-specific authorization
-  # used to access Google APIs.
+  # Module Auth provides classes that provide Google-specific authorization used to access Google APIs.
   module Auth
-    # Authenticates requests using External Account credentials, such
-    # as those provided by the AWS provider.
+    # Authenticates requests using External Account credentials, such as those provided by the AWS provider.
     module ExternalAccount
-      # This module handles the retrieval of credentials from Google Cloud
-      # by utilizing the AWS EC2 metadata service and then exchanging the
-      # credentials for a short-lived Google Cloud access token.
+      # This module handles the retrieval of credentials from Google Cloud by utilizing the AWS EC2 metadata service and
+      # then exchanging the credentials for a short-lived Google Cloud access token.
       class AwsCredentials
         include Google::Auth::ExternalAccount::BaseCredentials
         extend CredentialsLoader
@@ -56,22 +53,20 @@ module Google
         #
         # The logic is summarized as:
         #
-        # Retrieve the AWS region from the AWS_REGION or AWS_DEFAULT_REGION
-        # environment variable or from the AWS metadata server availability-zone
-        # if not found in the environment variable.
+        # Retrieve the AWS region from the AWS_REGION or AWS_DEFAULT_REGION environment variable or from the AWS
+        # metadata server availability-zone if not found in the environment variable.
         #
-        # Check AWS credentials in environment variables. If not found, retrieve
-        # from the AWS metadata server security-credentials endpoint.
+        # Check AWS credentials in environment variables. If not found, retrieve from the AWS metadata server
+        # security-credentials endpoint.
         #
-        # When retrieving AWS credentials from the metadata server
-        # security-credentials endpoint, the AWS role needs to be determined by
-        # calling the security-credentials endpoint without any argument. Then the
-        # credentials can be retrieved via: security-credentials/role_name
+        # When retrieving AWS credentials from the metadata server security-credentials endpoint, the AWS role needs to
+        # be determined by # calling the security-credentials endpoint without any argument.
+        # Then the credentials can be retrieved via: security-credentials/role_name
         #
         # Generate the signed request to AWS STS GetCallerIdentity action.
         #
-        # Inject x-goog-cloud-target-resource into header and serialize the
-        # signed request. This will be the subject-token to pass to GCP STS.
+        # Inject x-goog-cloud-target-resource into header and serialize the signed request.
+        # This will be the subject-token to pass to GCP STS.
         #
         # @return [string] The retrieved subject token.
         #
@@ -159,9 +154,8 @@ module Google
           end
         end
 
-        # Retrieves the AWS security credentials required for signing AWS
-        # requests from either the AWS security credentials environment variables
-        # or from the AWS metadata server.
+        # Retrieves the AWS security credentials required for signing AWS requests from either the AWS security
+        # credentials environment variables or from the AWS metadata server.
         def fetch_security_credentials
           env_aws_access_key_id = ENV[CredentialsLoader::AWS_ACCESS_KEY_ID_VAR]
           env_aws_secret_access_key = ENV[CredentialsLoader::AWS_SECRET_ACCESS_KEY_VAR]
@@ -186,10 +180,9 @@ module Google
           }
         end
 
-        # Retrieves the AWS role currently attached to the current AWS
-        # workload by querying the AWS metadata server. This is needed for the
-        # AWS metadata server security credentials endpoint in order to retrieve
-        # the AWS security credentials needed to sign requests to AWS APIs.
+        # Retrieves the AWS role currently attached to the current AWS workload by querying the AWS metadata server.
+        # This is needed for the AWS metadata server security credentials endpoint in order to retrieve the AWS security
+        # credentials needed to sign requests to AWS APIs.
         def fetch_metadata_role_name
           unless @credential_verification_url
             raise "Unable to determine the AWS metadata server security credentials endpoint"
@@ -198,8 +191,7 @@ module Google
           get_aws_resource(@credential_verification_url, "IAM Role").body
         end
 
-        # Retrieves the AWS security credentials required for signing AWS
-        # requests from the AWS metadata server.
+        # Retrieves the AWS security credentials required for signing AWS requests from the AWS metadata server.
         def fetch_metadata_security_credentials role_name
           response = get_aws_resource "#{@credential_verification_url}/#{role_name}", "credentials"
           MultiJson.load response.body
@@ -221,8 +213,8 @@ module Google
       # Implements an AWS request signer based on the AWS Signature Version 4 signing process.
       # https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html
       class AwsRequestSigner
-        # Instantiates an AWS request signer used to compute authenticated signed
-        # requests to AWS APIs based on the AWS Signature Version 4 signing process.
+        # Instantiates an AWS request signer used to compute authenticated signed requests to AWS APIs based on the AWS
+        # Signature Version 4 signing process.
         #
         # @param [string] region_name
         #     The AWS region to use.
