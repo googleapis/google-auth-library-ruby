@@ -122,13 +122,6 @@ module Google
           @imdsv2_session_token_expiry.nil? || @imdsv2_session_token_expiry < Time.now
         end
 
-        def validate_metadata_server url, name
-          return nil if url.nil?
-          host = URI(url).host
-          raise "Invalid host #{host} for #{name}." unless ["169.254.169.254", "[fd00:ec2::254]"].include? host
-          url
-        end
-
         def get_aws_resource url, name, data: nil, headers: {}
           begin
             headers["x-aws-ec2-metadata-token"] = imdsv2_session_token
