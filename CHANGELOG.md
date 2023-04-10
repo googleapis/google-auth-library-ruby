@@ -1,5 +1,11 @@
 # Release History
 
+### 1.5.1 (2023-04-10)
+
+#### Bug Fixes
+
+* Remove external account config validation ([#427](https://github.com/googleapis/google-auth-library-ruby/issues/427)) 
+
 ### 1.5.0 (2023-03-21)
 
 #### Features
