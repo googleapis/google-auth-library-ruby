@@ -1,5 +1,12 @@
 # Release History
 
+### 1.5.2 (2023-04-13)
+
+#### Bug Fixes
+
+* AWS IMDSV2 session token fetching shall call PUT method instead of GET ([#429](https://github.com/googleapis/google-auth-library-ruby/issues/429)) 
+* GCECredentials - Allow retrieval of ID token ([#425](https://github.com/googleapis/google-auth-library-ruby/issues/425)) 
+
 ### 1.5.1 (2023-04-10)
 
 #### Bug Fixes
