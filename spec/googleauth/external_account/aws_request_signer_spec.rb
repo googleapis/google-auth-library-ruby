@@ -465,7 +465,7 @@ describe Google::Auth::ExternalAccount::AwsRequestSigner do
     it "fulfils Amazon's test \##{index}" do
       allow(Time).to receive(:now).and_return(Time.strptime(fixture[:time], '%Y-%m-%dT%H:%M:%SZ'))
       request_signer = AwsRequestSigner.new(fixture[:region])
-      actual_signed_request = request_signer.generate_signed_request(fixture[:credentials], fixture[:original_request])
+      request_signer.generate_signed_request(fixture[:credentials], fixture[:original_request])
     end
   end
 end

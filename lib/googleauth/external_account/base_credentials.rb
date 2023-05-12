@@ -28,7 +28,7 @@ module Google
       module BaseCredentials
         # Contains all methods needed for all external account credentials.
         # Other credentials should call `base_setup` during initialization
-        # And should define the :retrieve_subject_token method
+        # And should define the :retrieve_subject_token! method
 
         # External account JSON type identifier.
         EXTERNAL_ACCOUNT_JSON_TYPE = "external_account".freeze
@@ -136,6 +136,7 @@ module Google
           @scope = options[:scope] || IAM_SCOPE
           @subject_token_type = options[:subject_token_type]
           @token_url = options[:token_url]
+          @token_info_url = options[:token_info_url]
           @service_account_impersonation_url = options[:service_account_impersonation_url]
           @service_account_impersonation_options = options[:service_account_impersonation_options] || {}
           @client_id = options[:client_id]
