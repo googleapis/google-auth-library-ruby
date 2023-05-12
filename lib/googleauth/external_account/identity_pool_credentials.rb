@@ -94,15 +94,14 @@ module Google
 
         def url_data
           begin
-            response = connection.get @imdsv2_session_token_url do |req|
+            response = connection.get @credential_source_url do |req|
               req.headers.merge @credential_source_headers
             end
           rescue Faraday::Error => e
             raise "Error retrieving from credential url: #{e}"
           end
-          decode_body = response.decode_content response.body
-          raise "Unable to retrieve Identity Pool subject token #{decode_body}" unless response.success?
-          [decode_body, @credential_source_url]
+          raise "Unable to retrieve Identity Pool subject token #{response.body}" unless response.success?
+          [response.body, @credential_source_url]
         end
       end
     end

@@ -58,9 +58,9 @@ describe Google::Auth::ExternalAccount::IdentityPoolCredentials do
     'format': {'type': 'json', 'subject_token_field_name': 'access_token'},
   }
   CREDENTIAL_URL = 'http://dummyurl.com'
-  CREDENTIAL_SOURCE_TEXT_URL = {'url': CREDENTIAL_URL}
+  CREDENTIAL_SOURCE_TEXT_URL = {'url': 'http://dummytexturl.com'}
   CREDENTIAL_SOURCE_JSON_URL = {
-      'url': CREDENTIAL_URL,
+      'url': 'http://dummyjsonurl.com',
       'format': {'type': 'json', 'subject_token_field_name': 'access_token'},
   }
   SUCCESS_RESPONSE = {
@@ -270,44 +270,111 @@ describe Google::Auth::ExternalAccount::IdentityPoolCredentials do
     end
   end
 
-  #describe "test retrieve url subject token" do
-  #  examples = [
-  #    {
-  #      :name => "retrieve text token from url",
-  #      :options => {
-  #        :audience => AUDIENCE,
-  #        :subject_token_type => SUBJECT_TOKEN_TYPE,
-  #        :token_url => TOKEN_URL,
-  #        :credential_source => CREDENTIAL_SOURCE_TEXT_URL,
-  #      },
-  #      :url_response => {"status": 200, "body": "SUBJECT_TOKEN"},
-  #      :expect_result => "SUBJECT_TOKEN",
-  #    },
-  #    {
-  #      :name => "retireve json token from url",
-  #      :options => {
-  #        :audience => AUDIENCE,
-  #        :subject_token_type => SUBJECT_TOKEN_TYPE,
-  #        :token_url => TOKEN_URL,
-  #        :credential_source => CREDENTIAL_SOURCE_JSON_URL,
-  #      },
-  #      :url_response => {"status": 200, "body": MultiJson.dump(SUCCESS_RESPONSE)},
-  #      :expect_result => "ACCESS_TOKEN",
-  #    }
-  #  ]
-  #  examples.each do |example|
-  #    before :example do
-  #      url = example[:options][:credential_source][:url]
-  #      stub_request(:get, url).to_return example[:url_response]
-  #    end
-  #    it example[:name] do
-  #      credentials = ExternalAccountCredential.new example[:options]
-  #      if example[:expect_error].nil?
-  #        expect(credentials.retrieve_subject_token!).to eq(example[:expect_result])
-  #      else
-  #        expect{credentials.retrieve_subject_token!}.to raise_error(example[:expect_error])
-  #      end
-  #    end
-  #  end
-  #end
+  describe "test retrieve url subject token" do
+    examples = [
+      {
+        :name => "retrieve text token from url",
+        :options => {
+          :audience => AUDIENCE,
+          :subject_token_type => SUBJECT_TOKEN_TYPE,
+          :token_url => TOKEN_URL,
+          :credential_source => CREDENTIAL_SOURCE_TEXT_URL,
+        },
+        :url_response => {"status": 200, "body": "SUBJECT_TOKEN"},
+        :expect_result => "SUBJECT_TOKEN",
+      },
+      {
+        :name => "retireve json token from url",
+        :options => {
+          :audience => AUDIENCE,
+          :subject_token_type => SUBJECT_TOKEN_TYPE,
+          :token_url => TOKEN_URL,
+          :credential_source => CREDENTIAL_SOURCE_JSON_URL,
+        },
+        :url_response => {"status": 200, "body": MultiJson.dump(SUCCESS_RESPONSE)},
+        :expect_result => "ACCESS_TOKEN",
+      },
+      {
+        :name => "http request error",
+        :options => {
+          :audience => AUDIENCE,
+          :subject_token_type => SUBJECT_TOKEN_TYPE,
+          :token_url => TOKEN_URL,
+          :credential_source => {
+            'url': 'http://dummy.json.url.com',
+            'format': {'type': 'json', 'subject_token_field_name': 'access_token'},
+          },
+        },
+        :http_error => Faraday::Error,
+        :expect_error => /Error retrieving from credential url/,
+      },
+      {
+        :name => "resource not found error",
+        :options => {
+          :audience => AUDIENCE,
+          :subject_token_type => SUBJECT_TOKEN_TYPE,
+          :token_url => TOKEN_URL,
+          :credential_source => {
+            'url': 'http://dummy.notfound.jsonurl.com',
+            'format': {'type': 'json', 'subject_token_field_name': 'access_token'},
+          },
+        },
+        :url_response => {"status": 404, "body": "resource not found"},
+        :expect_error => /Unable to retrieve Identity Pool subject token/,
+      },
+      {
+        :name => "parsing error",
+        :options => {
+          :audience => AUDIENCE,
+          :subject_token_type => SUBJECT_TOKEN_TYPE,
+          :token_url => TOKEN_URL,
+          :credential_source => {
+            'url': 'http://dummy.malform.jsonurl.com',
+            'format': {'type': 'json', 'subject_token_field_name': 'access_token'},
+          },
+        },
+        :url_response => {"status": 200, "body": "malformed response"},
+        :expect_error => /Unable to parse subject_token from JSON resource/,
+      },
+      {
+        :name => "parsing error",
+        :options => {
+          :audience => AUDIENCE,
+          :subject_token_type => SUBJECT_TOKEN_TYPE,
+          :token_url => TOKEN_URL,
+          :credential_source => {
+            'url': 'http://dummy.missing.token.jsonurl.com',
+            'format': {'type': 'json', 'subject_token_field_name': 'access_token'},
+          },
+        },
+        :url_response => {"status": 200, "body": MultiJson.dump({
+          'issued_token_type': 'urn:ietf:params:oauth:token-type:access_token',
+          'token_type': 'Bearer',
+          'expires_in': 3600,
+          'scope': SCOPES.join(' '),
+        })},
+        :expect_error => /Missing subject_token in the credential_source/,
+      }
+    ]
+    examples.each do |example|
+      before :example do
+        url = example[:options][:credential_source][:url]
+        if example[:http_error].nil?
+          resp_status = example[:url_response][:status]
+          resp_body = example[:url_response][:body]
+          stub_request(:get, url).to_return status: resp_status, body: resp_body
+        else
+          stub_request(:get, url).to_raise example[:http_error]
+        end
+      end
+      it example[:name] do
+        credentials = ExternalAccountCredential.new example[:options]
+        if example[:expect_error].nil?
+          expect(credentials.retrieve_subject_token!).to eq(example[:expect_result])
+        else
+          expect{credentials.retrieve_subject_token!}.to raise_error(example[:expect_error])
+        end
+      end
+    end
+  end
 end
