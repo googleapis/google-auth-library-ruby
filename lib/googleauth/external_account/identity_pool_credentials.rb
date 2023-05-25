@@ -95,7 +95,7 @@ module Google
         def url_data
           begin
             response = connection.get @credential_source_url do |req|
-              req.headers.merge @credential_source_headers
+              req.headers.merge! @credential_source_headers
             end
           rescue Faraday::Error => e
             raise "Error retrieving from credential url: #{e}"
