@@ -62,22 +62,26 @@ module Google
           json_key
         end
 
-        private_class_method def self.make_aws_credentials user_creds, scope
-          Google::Auth::ExternalAccount::AwsCredentials.new(
-            audience: user_creds[:audience],
-            scope: scope,
-            subject_token_type: user_creds[:subject_token_type],
-            token_url: user_creds[:token_url],
-            credential_source: user_creds[:credential_source],
-            service_account_impersonation_url: user_creds[:service_account_impersonation_url]
-          )
-        end
+        class << self
+          private
 
-        private_class_method def self.make_external_account_credentials user_creds
-          unless user_creds[:credential_source][:file].nil? && user_creds[:credential_source][:url].nil?
-            return Google::Auth::ExternalAccount::IdentityPoolCredentials.new user_creds
+          def make_aws_credentials user_creds, scope
+            Google::Auth::ExternalAccount::AwsCredentials.new(
+              audience: user_creds[:audience],
+              scope: scope,
+              subject_token_type: user_creds[:subject_token_type],
+              token_url: user_creds[:token_url],
+              credential_source: user_creds[:credential_source],
+              service_account_impersonation_url: user_creds[:service_account_impersonation_url]
+            )
           end
-          raise INVALID_EXTERNAL_ACCOUNT_TYPE
+
+          def make_external_account_credentials user_creds
+            unless user_creds[:credential_source][:file].nil? && user_creds[:credential_source][:url].nil?
+              return Google::Auth::ExternalAccount::IdentityPoolCredentials.new user_creds
+            end
+            raise INVALID_EXTERNAL_ACCOUNT_TYPE
+          end
         end
       end
     end
