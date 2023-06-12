@@ -18,10 +18,9 @@ require "googleauth/external_account/base_credentials"
 module Google
   # Module Auth provides classes that provide Google-specific authorization used to access Google APIs.
   module Auth
-    # Authenticates requests using External Account credentials, such as those provided by the AWS provider.
     module ExternalAccount
-      # This module handles the retrieval of credentials from Google Cloud by utilizing the AWS EC2 metadata service and
-      # then exchanging the credentials for a short-lived Google Cloud access token.
+      # This module handles the retrieval of credentials from Google Cloud by utilizing the any 3PI
+      # provider then exchanging the credentials for a short-lived Google Cloud access token.
       class IdentityPoolCredentials
         include Google::Auth::ExternalAccount::BaseCredentials
         extend CredentialsLoader
