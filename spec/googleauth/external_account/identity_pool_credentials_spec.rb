@@ -146,7 +146,7 @@ describe Google::Auth::ExternalAccount::IdentityPoolCredentials do
         :expect_error => /Invalid credential_source format/,
       },
       {
-        :name => "invalid options missing filed name",
+        :name => "invalid options missing field name",
         :options => {
           :audience => AUDIENCE,
           :subject_token_type => SUBJECT_TOKEN_TYPE,
