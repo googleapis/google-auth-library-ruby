@@ -20,11 +20,9 @@ module Google
   # Module Auth provides classes that provide Google-specific authorization
   # used to access Google APIs.
   module Auth
-    # Authenticates requests using External Account credentials, such
-    # as those provided by the AWS provider.
     module ExternalAccount
       # Authenticates requests using External Account credentials, such
-      # as those provided by the AWS provider.
+      # as those provided by the AWS provider or OIDC provider like Azure, etc.
       module BaseCredentials
         # Contains all methods needed for all external account credentials.
         # Other credentials should call `base_setup` during initialization
