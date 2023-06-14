@@ -141,7 +141,7 @@ module Google
           @client_secret = options[:client_secret]
           @quota_project_id = options[:quota_project_id]
           @project_id = nil
-          @workforce_pool_user_project = [:workforce_pool_user_project]
+          @workforce_pool_user_project = options[:workforce_pool_user_project]
 
           @expires_at = nil
           @access_token = nil
