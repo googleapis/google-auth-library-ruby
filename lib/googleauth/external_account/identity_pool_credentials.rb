@@ -48,8 +48,7 @@ module Google
           validate_credential_source
         end
 
-        private
-
+        # Implementation of BaseCredentials retrieve_subject_token!
         def retrieve_subject_token!
           content, resource_name = token_data
           if @credential_source_format_type == "text"
@@ -59,13 +58,15 @@ module Google
               response_data = MultiJson.load content, symbolize_keys: true
               token = response_data[@credential_source_field_name.to_sym]
             rescue StandardError
-              raise "Unable to parse subject_token from JSON resource #{resource_name}" \
+              raise "Unable to parse subject_token from JSON resource #{resource_name} " \
                     "using key #{@credential_source_field_name}"
             end
           end
           raise "Missing subject_token in the credential_source file/response." unless token
           token
         end
+
+        private
 
         def validate_credential_source
           # `environment_id` is only supported in AWS or dedicated future external account credentials.

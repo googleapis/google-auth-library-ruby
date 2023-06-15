@@ -120,6 +120,14 @@ module Google
           segments[idx + 1]
         end
 
+        # Retrieves the subject token using the credential_source object.
+        # @return [string]
+        #     The retrieved subject token.
+        #
+        def retrieve_subject_token!
+          raise NotImplementedError
+        end
+
         private
 
         def token_type
@@ -188,10 +196,6 @@ module Google
           end
 
           MultiJson.load response.body
-        end
-
-        def retrieve_subject_token!
-          raise NotImplementedError
         end
       end
     end
