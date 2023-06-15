@@ -97,7 +97,9 @@ get('/oauth2callback') do
 end
 ```
 
-### Example (Command Line)
+### Example (Command Line) [Deprecated]
+
+The Google Auth OOB flow has been discontiued on January 31, 2023. The OOB flow is a legacy flow that is no longer considered secure. To continue using Google Auth, please migrate your applications to a more secure flow. For more information on how to do this, please refer to this [OOB Migration](https://developers.google.com/identity/protocols/oauth2/resources/oob-migration) guide.
 
 ```ruby
 require 'googleauth'
