@@ -84,6 +84,9 @@ module Google
             subject_token: options[:subject_token],
             subject_token_type: options[:subject_token_type]
           }
+          unless options[:additional_options].nil?
+            request_body[:options] = CGI::escape MultiJson.dump(options[:additional_options], symbolize_name: true)
+          end
 
           response = connection.post @token_exchange_endpoint, URI.encode_www_form(request_body), headers
 

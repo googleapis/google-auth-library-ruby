@@ -14,6 +14,7 @@
 
 require "time"
 require "googleauth/external_account/base_credentials"
+require "googleauth/external_account/external_account_utils"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization used to access Google APIs.
@@ -23,6 +24,7 @@ module Google
       # provider then exchanging the credentials for a short-lived Google Cloud access token.
       class IdentityPoolCredentials
         include Google::Auth::ExternalAccount::BaseCredentials
+        include Google::Auth::ExternalAccount::ExternalAccountUtiles
         extend CredentialsLoader
 
         # Will always be nil, but method still gets used.
