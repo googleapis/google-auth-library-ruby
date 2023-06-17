@@ -34,8 +34,6 @@ module Google
         STS_GRANT_TYPE = "urn:ietf:params:oauth:grant-type:token-exchange".freeze
         # The token exchange requested_token_type. This is always an access_token.
         STS_REQUESTED_TOKEN_TYPE = "urn:ietf:params:oauth:token-type:access_token".freeze
-        # Cloud resource manager URL used to retrieve project information.
-        CLOUD_RESOURCE_MANAGER = "https://cloudresourcemanager.googleapis.com/v1/projects/".freeze
         # Default IAM_SCOPE
         IAM_SCOPE = ["https://www.googleapis.com/auth/iam".freeze].freeze
 

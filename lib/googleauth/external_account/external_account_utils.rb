@@ -24,6 +24,9 @@ module Google
       # Authenticates requests using External Account credentials, such
       # as those provided by the AWS provider or OIDC provider like Azure, etc.
       module ExternalAccountUtiles
+        # Cloud resource manager URL used to retrieve project information.
+        CLOUD_RESOURCE_MANAGER = "https://cloudresourcemanager.googleapis.com/v1/projects/".freeze
+
         ##
         # Retrieves the project ID corresponding to the workload identity or workforce pool.
         # For workforce pool credentials, it returns the project ID corresponding to the workforce_pool_user_project.
