@@ -80,6 +80,17 @@ module Google
           raise NotImplementedError
         end
 
+        # Returns whether the credentials represent a workforce pool (True) or
+        # workload (False) based on the credentials' audience.
+        #
+        # @return [bool]
+        #     true if the credentials represent a workforce pool.
+        #     false if they represent a workload.
+        def is_workforce_pool?
+          pattern = "//iam\.googleapis\.com/locations/[^/]+/workforcePools/"
+          /#{pattern}/.match?(@audience || "")
+        end
+
         private
 
         def token_type
@@ -110,12 +121,14 @@ module Google
             token_exchange_endpoint: @token_url,
             connection: default_connection
           )
+          return unless @workforce_pool_user_project && !is_workforce_pool?
+          raise "workforce_pool_user_project should not be set for non-workforce pool credentials."
         end
 
         def exchange_token
           additional_options = nil
           if @client_id.nil? && @workforce_pool_user_project
-            additional_options = {:userProject => @workforce_pool_user_project}
+            additional_options = { userProject: @workforce_pool_user_project }
           end
           @sts_client.exchange_token(
             audience: @audience,
