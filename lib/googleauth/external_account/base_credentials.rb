@@ -137,7 +137,7 @@ module Google
             subject_token_type: @subject_token_type,
             scopes: @service_account_impersonation_url ? IAM_SCOPE : @scope,
             requested_token_type: STS_REQUESTED_TOKEN_TYPE,
-            additional_options: additional_options,
+            additional_options: additional_options
           )
         end
 

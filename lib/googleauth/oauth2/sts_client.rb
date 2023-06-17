@@ -76,6 +76,20 @@ module Google
           # TODO: Add the ability to add authentication to the headers
           headers = URLENCODED_HEADERS.dup.merge(options[:additional_headers] || {})
 
+          request_body = make_request options
+
+          response = connection.post @token_exchange_endpoint, URI.encode_www_form(request_body), headers
+
+          if response.status != 200
+            raise "Token exchange failed with status #{response.status}"
+          end
+
+          MultiJson.load response.body
+        end
+
+        private
+
+        def make_request options = {}
           request_body = {
             grant_type: options[:grant_type],
             audience: options[:audience],
@@ -85,16 +99,9 @@ module Google
             subject_token_type: options[:subject_token_type]
           }
           unless options[:additional_options].nil?
-            request_body[:options] = CGI::escape MultiJson.dump(options[:additional_options], symbolize_name: true)
+            request_body[:options] = CGI.escape MultiJson.dump(options[:additional_options], symbolize_name: true)
           end
-
-          response = connection.post @token_exchange_endpoint, URI.encode_www_form(request_body), headers
-
-          if response.status != 200
-            raise "Token exchange failed with status #{response.status}"
-          end
-
-          MultiJson.load response.body
+          request_body
         end
       end
     end
