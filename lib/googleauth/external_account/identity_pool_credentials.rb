@@ -24,7 +24,7 @@ module Google
       # provider then exchanging the credentials for a short-lived Google Cloud access token.
       class IdentityPoolCredentials
         include Google::Auth::ExternalAccount::BaseCredentials
-        include Google::Auth::ExternalAccount::ExternalAccountUtiles
+        include Google::Auth::ExternalAccount::ExternalAccountUtils
         extend CredentialsLoader
 
         # Will always be nil, but method still gets used.
