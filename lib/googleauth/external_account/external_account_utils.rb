@@ -23,7 +23,7 @@ module Google
     module ExternalAccount
       # Authenticates requests using External Account credentials, such
       # as those provided by the AWS provider or OIDC provider like Azure, etc.
-      module ExternalAccountUtiles
+      module ExternalAccountUtils
         # Cloud resource manager URL used to retrieve project information.
         CLOUD_RESOURCE_MANAGER = "https://cloudresourcemanager.googleapis.com/v1/projects/".freeze
 
