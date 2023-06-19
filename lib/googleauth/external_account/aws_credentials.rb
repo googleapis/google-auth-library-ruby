@@ -28,7 +28,7 @@ module Google
         IMDSV2_TOKEN_EXPIRATION_IN_SECONDS = 300
 
         include Google::Auth::ExternalAccount::BaseCredentials
-        include Google::Auth::ExternalAccount::ExternalAccountUtiles
+        include Google::Auth::ExternalAccount::ExternalAccountUtils
         extend CredentialsLoader
 
         # Will always be nil, but method still gets used.
