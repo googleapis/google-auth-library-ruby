@@ -76,14 +76,7 @@ module Google
           # TODO: Add the ability to add authentication to the headers
           headers = URLENCODED_HEADERS.dup.merge(options[:additional_headers] || {})
 
-          request_body = {
-            grant_type: options[:grant_type],
-            audience: options[:audience],
-            scope: Array(options[:scopes])&.join(" ") || [],
-            requested_token_type: options[:requested_token_type],
-            subject_token: options[:subject_token],
-            subject_token_type: options[:subject_token_type]
-          }
+          request_body = make_request options
 
           response = connection.post @token_exchange_endpoint, URI.encode_www_form(request_body), headers
 
@@ -92,6 +85,23 @@ module Google
           end
 
           MultiJson.load response.body
+        end
+
+        private
+
+        def make_request options = {}
+          request_body = {
+            grant_type: options[:grant_type],
+            audience: options[:audience],
+            scope: Array(options[:scopes])&.join(" ") || [],
+            requested_token_type: options[:requested_token_type],
+            subject_token: options[:subject_token],
+            subject_token_type: options[:subject_token_type]
+          }
+          unless options[:additional_options].nil?
+            request_body[:options] = CGI.escape MultiJson.dump(options[:additional_options], symbolize_name: true)
+          end
+          request_body
         end
       end
     end

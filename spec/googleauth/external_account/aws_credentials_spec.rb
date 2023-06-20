@@ -65,11 +65,11 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
 
   let :aws_credential_source do
     {
-      'environment_id' => 'aws1',
-      'region_url' => region_url,
-      'url' => security_credential_url,
-      'regional_cred_verification_url' => regional_cred_verification_url,
-      'imdsv2_session_token_url' => imdsv2_url
+      environment_id: 'aws1',
+      region_url: region_url,
+      url: security_credential_url,
+      regional_cred_verification_url: regional_cred_verification_url,
+      imdsv2_session_token_url: imdsv2_url
     }.compact
   end
 

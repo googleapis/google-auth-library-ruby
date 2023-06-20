@@ -44,6 +44,26 @@ describe Google::Auth::ExternalAccount::Credentials do
       end
     end
 
+    it 'should be able to make identity pool credentials' do
+      f = Tempfile.new('file')
+      begin
+        f.write(MultiJson.dump({
+          type: 'external_account',
+          audience: '//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID',
+          subject_token_type: 'urn:ietf:params:oauth:token-type:jwt',
+          token_url: 'https://sts.googleapis.com/v1/token',
+          credential_source: {
+            'file' => 'external_suject_token.txt'
+          }
+        }))
+        f.rewind
+        expect(Google::Auth::ExternalAccount::Credentials.make_creds(json_key_io: f)).to be_a(Google::Auth::ExternalAccount::IdentityPoolCredentials)
+      ensure
+        f.close
+        f.unlink
+      end
+    end
+
     [:audience, :subject_token_type, :token_url, :credential_source].each do |field|
       it "should raise an error when missing the #{field} field" do
         f = Tempfile.new('missing')
@@ -77,7 +97,7 @@ describe Google::Auth::ExternalAccount::Credentials do
           credential_source: {},
         }))
         f.rewind
-        expect { Google::Auth::ExternalAccount::Credentials.make_creds(json_key_io: f) }.to raise_error(/aws is the only currently supported external account type/)
+        expect { Google::Auth::ExternalAccount::Credentials.make_creds(json_key_io: f) }.to raise_error(Google::Auth::ExternalAccount::Credentials::INVALID_EXTERNAL_ACCOUNT_TYPE)
       ensure
         f.close
         f.unlink

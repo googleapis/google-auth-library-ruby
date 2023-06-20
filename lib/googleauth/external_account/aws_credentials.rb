@@ -14,6 +14,7 @@
 
 require "time"
 require "googleauth/external_account/base_credentials"
+require "googleauth/external_account/external_account_utils"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization used to access Google APIs.
@@ -27,6 +28,7 @@ module Google
         IMDSV2_TOKEN_EXPIRATION_IN_SECONDS = 300
 
         include Google::Auth::ExternalAccount::BaseCredentials
+        include Google::Auth::ExternalAccount::ExternalAccountUtils
         extend CredentialsLoader
 
         # Will always be nil, but method still gets used.
@@ -37,11 +39,11 @@ module Google
 
           @audience = options[:audience]
           @credential_source = options[:credential_source] || {}
-          @environment_id = @credential_source["environment_id"]
-          @region_url = @credential_source["region_url"]
-          @credential_verification_url = @credential_source["url"]
-          @regional_cred_verification_url = @credential_source["regional_cred_verification_url"]
-          @imdsv2_session_token_url = @credential_source["imdsv2_session_token_url"]
+          @environment_id = @credential_source[:environment_id]
+          @region_url = @credential_source[:region_url]
+          @credential_verification_url = @credential_source[:url]
+          @regional_cred_verification_url = @credential_source[:regional_cred_verification_url]
+          @imdsv2_session_token_url = @credential_source[:imdsv2_session_token_url]
 
           # These will be lazily loaded when needed, or will raise an error if not provided
           @region = nil

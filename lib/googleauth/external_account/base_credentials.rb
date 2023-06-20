@@ -20,15 +20,13 @@ module Google
   # Module Auth provides classes that provide Google-specific authorization
   # used to access Google APIs.
   module Auth
-    # Authenticates requests using External Account credentials, such
-    # as those provided by the AWS provider.
     module ExternalAccount
       # Authenticates requests using External Account credentials, such
-      # as those provided by the AWS provider.
+      # as those provided by the AWS provider or OIDC provider like Azure, etc.
       module BaseCredentials
         # Contains all methods needed for all external account credentials.
         # Other credentials should call `base_setup` during initialization
-        # And should define the :retrieve_subject_token method
+        # And should define the :retrieve_subject_token! method
 
         # External account JSON type identifier.
         EXTERNAL_ACCOUNT_JSON_TYPE = "external_account".freeze
@@ -36,8 +34,6 @@ module Google
         STS_GRANT_TYPE = "urn:ietf:params:oauth:grant-type:token-exchange".freeze
         # The token exchange requested_token_type. This is always an access_token.
         STS_REQUESTED_TOKEN_TYPE = "urn:ietf:params:oauth:token-type:access_token".freeze
-        # Cloud resource manager URL used to retrieve project information.
-        CLOUD_RESOURCE_MANAGER = "https://cloudresourcemanager.googleapis.com/v1/projects/".freeze
         # Default IAM_SCOPE
         IAM_SCOPE = ["https://www.googleapis.com/auth/iam".freeze].freeze
 
@@ -74,52 +70,23 @@ module Google
           notify_refresh_listeners
         end
 
-        ##
-        # Retrieves the project ID corresponding to the workload identity or workforce pool.
-        # For workforce pool credentials, it returns the project ID corresponding to the workforce_pool_user_project.
-        # When not determinable, None is returned.
+        # Retrieves the subject token using the credential_source object.
+        # @return [string]
+        #     The retrieved subject token.
         #
-        # The resource may not have permission (resourcemanager.projects.get) to
-        # call this API or the required scopes may not be selected:
-        # https://cloud.google.com/resource-manager/reference/rest/v1/projects/get#authorization-scopes
-        #
-        # @return [string,nil]
-        #     The project ID corresponding to the workload identity pool or workforce pool if determinable.
-        #
-        def project_id
-          return @project_id unless @project_id.nil?
-          project_number = self.project_number || @workforce_pool_user_project
-
-          # if we missing either project number or scope, we won't retrieve project_id
-          return nil if project_number.nil? || @scope.nil?
-
-          url = "#{CLOUD_RESOURCE_MANAGER}#{project_number}"
-
-          response = connection.get url do |req|
-            req.headers["Authorization"] = "Bearer #{@access_token}"
-            req.headers["Content-Type"] = "application/json"
-          end
-
-          if response.status == 200
-            response_data = MultiJson.load response.body, symbolize_names: true
-            @project_id = response_data[:projectId]
-          end
-
-          @project_id
+        def retrieve_subject_token!
+          raise NotImplementedError
         end
 
-        ##
-        # Retrieve the project number corresponding to workload identity pool
-        # STS audience pattern:
-        #     `//iam.googleapis.com/projects/$PROJECT_NUMBER/locations/...`
+        # Returns whether the credentials represent a workforce pool (True) or
+        # workload (False) based on the credentials' audience.
         #
-        # @return [string, nil]
-        #
-        def project_number
-          segments = @audience.split "/"
-          idx = segments.index "projects"
-          return nil if idx.nil? || idx + 1 == segments.size
-          segments[idx + 1]
+        # @return [bool]
+        #     true if the credentials represent a workforce pool.
+        #     false if they represent a workload.
+        def is_workforce_pool?
+          pattern = "//iam\.googleapis\.com/locations/[^/]+/workforcePools/"
+          /#{pattern}/.match?(@audience || "")
         end
 
         private
@@ -136,13 +103,14 @@ module Google
           @scope = options[:scope] || IAM_SCOPE
           @subject_token_type = options[:subject_token_type]
           @token_url = options[:token_url]
+          @token_info_url = options[:token_info_url]
           @service_account_impersonation_url = options[:service_account_impersonation_url]
           @service_account_impersonation_options = options[:service_account_impersonation_options] || {}
           @client_id = options[:client_id]
           @client_secret = options[:client_secret]
           @quota_project_id = options[:quota_project_id]
           @project_id = nil
-          @workforce_pool_user_project = [:workforce_pool_user_project]
+          @workforce_pool_user_project = options[:workforce_pool_user_project]
 
           @expires_at = nil
           @access_token = nil
@@ -151,29 +119,23 @@ module Google
             token_exchange_endpoint: @token_url,
             connection: default_connection
           )
-        end
-
-        def normalize_timestamp time
-          case time
-          when NilClass
-            nil
-          when Time
-            time
-          when String
-            Time.parse time
-          else
-            raise "Invalid time value #{time}"
-          end
+          return unless @workforce_pool_user_project && !is_workforce_pool?
+          raise "workforce_pool_user_project should not be set for non-workforce pool credentials."
         end
 
         def exchange_token
+          additional_options = nil
+          if @client_id.nil? && @workforce_pool_user_project
+            additional_options = { userProject: @workforce_pool_user_project }
+          end
           @sts_client.exchange_token(
             audience: @audience,
             grant_type: STS_GRANT_TYPE,
             subject_token: retrieve_subject_token!,
             subject_token_type: @subject_token_type,
             scopes: @service_account_impersonation_url ? IAM_SCOPE : @scope,
-            requested_token_type: STS_REQUESTED_TOKEN_TYPE
+            requested_token_type: STS_REQUESTED_TOKEN_TYPE,
+            additional_options: additional_options
           )
         end
 
@@ -189,10 +151,6 @@ module Google
           end
 
           MultiJson.load response.body
-        end
-
-        def retrieve_subject_token!
-          raise NotImplementedError
         end
       end
     end
