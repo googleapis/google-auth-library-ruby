@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require "open3"
 require "time"
 require "googleauth/external_account/base_credentials"
 require "googleauth/external_account/external_account_utils"
@@ -77,7 +78,7 @@ module Google
           env = inject_environment_variables
           output = subprocess_with_timeout env, @credential_source_executable_command,
                                            @credential_source_executable_timeout_millis
-          response = MultiJson.load output, encoding: "utf-8"
+          response = MultiJson.load output, symbolize_keys: true
           parse_subject_token response
         end
 
