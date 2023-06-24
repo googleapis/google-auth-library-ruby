@@ -25,7 +25,7 @@ module Google
       # provider then exchanging the credentials for a short-lived Google Cloud access token.
       class PluggableAuthCredentials
         # constant for pluggable auth enablement in environment variable.
-        INTERACTIVE_MODE_ENV = "GOOGLE_EXTERNAL_ACCOUNT_ALLOW_EXECUTABLES".freeze
+        ENABLE_PLUGGABLE_ENV = "GOOGLE_EXTERNAL_ACCOUNT_ALLOW_EXECUTABLES".freeze
         EXECUTABLE_SUPPORTED_MAX_VERSION = 1
         EXECUTABLE_TIMEOUT_MILLIS_DEFAUT = 30 * 1000
         EXECUTABLE_TIMEOUT_MILLIS_LOWER_BOUND = 5 * 1000
@@ -67,7 +67,7 @@ module Google
         end
 
         def retrieve_subject_token!
-          unless ENV[INTERACTIVE_MODE_ENV] == "1"
+          unless ENV[ENABLE_PLUGGABLE_ENV] == "1"
             raise "Executables need to be explicitly allowed (set GOOGLE_EXTERNAL_ACCOUNT_ALLOW_EXECUTABLES to '1') " \
                   "to run."
           end
@@ -89,7 +89,7 @@ module Google
           return nil unless File.exist? @credential_source_executable_output_file
           begin
             content = File.read @credential_source_executable_output_file, encoding: "utf-8"
-            response = MultiJson.laod content, symbolize_keys: true
+            response = MultiJson.load content, symbolize_keys: true
           rescue StandardError
             return nil
           end
@@ -97,8 +97,8 @@ module Google
             subject_token = parse_subject_token response
           rescue StandardError => e
             return nil if e.message.match(/The token returned by the executable is expired/)
-            subject_token
           end
+          subject_token
         end
 
         def parse_subject_token response
@@ -114,7 +114,7 @@ module Google
           end
           raise "The executable response is missing the token_type field." if response[:token_type].nil?
           return response[:id_token] if ID_TOKEN_TYPE.include? response[:token_type]
-          return response[:saml_token] if response[:token_type] == "urn:ietf:params:oauth:token-type:saml2"
+          return response[:saml_response] if response[:token_type] == "urn:ietf:params:oauth:token-type:saml2"
           raise "Executable returned unsupported token type."
         end
 

@@ -47,7 +47,6 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
   CREDENTIAL_SOURCE_EXECUTABLE = {
     "command": CREDENTIAL_SOURCE_EXECUTABLE_COMMAND,
     "timeout_millis": 30000,
-    "interactive_timeout_millis": 300000,
     "output_file": CREDENTIAL_SOURCE_EXECUTABLE_OUTPUT_FILE,
   }
   CREDENTIAL_SOURCE = {"executable": CREDENTIAL_SOURCE_EXECUTABLE}
@@ -194,6 +193,84 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
         else
           expect{PluggableAuthCredentials.new example[:options]}.to raise_error(example[:expect_error])
         end
+      end
+    end
+  end
+
+  describe "test retrieve subject token failed on not enabled" do
+    options = {
+      :audience => AUDIENCE,
+      :subject_token_type => SUBJECT_TOKEN_TYPE,
+      :token_url => TOKEN_URL,
+      :credential_source => CREDENTIAL_SOURCE,
+    }
+    credentials = PluggableAuthCredentials.new options
+    it 'not enabled' do
+      expect{credentials.retrieve_subject_token!}.to raise_error(/Executables need to be explicitly allowed/)
+    end
+  end
+
+  describe "test retrieve subject token from cache file" do
+    examples = [
+      {
+        :name => "id token",
+        :options => {
+          :audience => AUDIENCE,
+          :subject_token_type => SUBJECT_TOKEN_TYPE,
+          :token_url => TOKEN_URL,
+          :credential_source => {
+            :executable => {
+              :command => "command",
+              :output_file => "id_token_cache"
+            }
+          }
+        },
+        :file_content => MultiJson.dump(EXECUTABLE_SUCCESSFUL_OIDC_RESPONSE_ID_TOKEN),
+        :expect_token => EXECUTABLE_OIDC_TOKEN
+      },
+      {
+        :name => "jwt token",
+        :options => {
+          :audience => AUDIENCE,
+          :subject_token_type => SUBJECT_TOKEN_TYPE,
+          :token_url => TOKEN_URL,
+          :credential_source => {
+            :executable => {
+              :command => "command",
+              :output_file => "jwt_token_cache"
+            }
+          }
+        },
+        :file_content => MultiJson.dump(EXECUTABLE_SUCCESSFUL_OIDC_RESPONSE_JWT),
+        :expect_token => EXECUTABLE_OIDC_TOKEN
+      },
+      {
+        :name => "smal token",
+        :options => {
+          :audience => AUDIENCE,
+          :subject_token_type => SUBJECT_TOKEN_TYPE,
+          :token_url => TOKEN_URL,
+          :credential_source => {
+            :executable => {
+              :command => "command",
+              :output_file => "saml_token_cache"
+            }
+          }
+        },
+        :file_content => MultiJson.dump(EXECUTABLE_SUCCESSFUL_SAML_RESPONSE),
+        :expect_token => EXECUTABLE_SAML_TOKEN
+      }
+    ]
+    examples.each do |example|
+      before :example do
+        file_path = example[:options][:credential_source][:executable][:output_file]
+        allow(File).to receive(:exist?).with(file_path).and_return(true)
+        allow(File).to receive(:read).with(file_path, encoding: "utf-8").and_return(example[:file_content])
+        ENV[Google::Auth::ExternalAccount::PluggableAuthCredentials::ENABLE_PLUGGABLE_ENV] = "1"
+      end
+      it example[:name] do
+        credentials = PluggableAuthCredentials.new example[:options]
+        expect(credentials.retrieve_subject_token!).to eql(example[:expect_token])
       end
     end
   end
