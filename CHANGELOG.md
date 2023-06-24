@@ -1,5 +1,14 @@
 # Release History
 
+### 1.6.0 (2023-06-20)
+
+#### Features
+
+* adding identity pool credentials ([#433](https://github.com/googleapis/google-auth-library-ruby/issues/433)) 
+#### Documentation
+
+* deprecation message for discontinuing command line auth flow ([#435](https://github.com/googleapis/google-auth-library-ruby/issues/435)) 
+
 ### 1.5.2 (2023-04-13)
 
 #### Bug Fixes
