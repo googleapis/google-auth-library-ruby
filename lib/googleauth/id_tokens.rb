@@ -153,7 +153,7 @@ module Google
         #     one of the provided values, or the verification will fail with
         #     {Google::Auth::IDToken::AuthorizedPartyMismatchError}. If `nil`
         #     (the default), no azp checking is performed.
-        # @param aud [String,Array<String>,nil] The expected audience. At least
+        # @param iss [String,Array<String>,nil] The expected issuer. At least
         #     one `iss` field in the token must match at least one of the
         #     provided issuers, or the verification will fail with
         #     {Google::Auth::IDToken::IssuerMismatchError}. If `nil`, no issuer
@@ -191,7 +191,7 @@ module Google
         #     one of the provided values, or the verification will fail with
         #     {Google::Auth::IDToken::AuthorizedPartyMismatchError}. If `nil`
         #     (the default), no azp checking is performed.
-        # @param aud [String,Array<String>,nil] The expected audience. At least
+        # @param iss [String,Array<String>,nil] The expected issuer. At least
         #     one `iss` field in the token must match at least one of the
         #     provided issuers, or the verification will fail with
         #     {Google::Auth::IDToken::IssuerMismatchError}. If `nil`, no issuer
