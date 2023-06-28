@@ -274,4 +274,258 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
       end
     end
   end
+
+  describe "test retrieve subject token executable error" do
+    options = {
+      :audience => AUDIENCE,
+      :subject_token_type => SUBJECT_TOKEN_TYPE,
+      :token_url => TOKEN_URL,
+      :credential_source => CREDENTIAL_SOURCE,
+    }
+    before :example do
+      ENV[Google::Auth::ExternalAccount::PluggableAuthCredentials::ENABLE_PLUGGABLE_ENV] = "1"
+      allow(Open3).to receive(:capture3).and_raise(StandardError, "mock subprocess error")
+    end
+    it "executable subprocess error" do
+      credentials = PluggableAuthCredentials.new options
+      expect{credentials.retrieve_subject_token!}.to raise_error(/mock subprocess error/)
+    end
+  end
+
+  describe "test retrieve subject token executable works but response error" do
+    examples = [
+      {
+        :name => "non-zero return",
+        :options => {
+          :audience => AUDIENCE,
+          :subject_token_type => SUBJECT_TOKEN_TYPE,
+          :token_url => TOKEN_URL,
+          :credential_source => {
+            :executable => {
+              :command => "failed command"
+            }
+          }
+        },
+        :executable_return => {
+          :stdout => "",
+          :stderr => "",
+          :exit_status => 1,
+        },
+        :expect_error => /Executable exited with non-zero return code/
+      },
+      {
+        :name => "malformed response no version",
+        :options => {
+          :audience => AUDIENCE,
+          :subject_token_type => SUBJECT_TOKEN_TYPE,
+          :token_url => TOKEN_URL,
+          :credential_source => {
+            :executable => {
+              :command => "command return no version"
+            }
+          }
+        },
+        :executable_return => {
+          :stdout => MultiJson.dump({}),
+          :stderr => "",
+          :exit_status => 0,
+        },
+        :expect_error => /The executable response is missing the version field./
+      },
+      {
+        :name => "malformed response no success status",
+        :options => {
+          :audience => AUDIENCE,
+          :subject_token_type => SUBJECT_TOKEN_TYPE,
+          :token_url => TOKEN_URL,
+          :credential_source => {
+            :executable => {
+              :command => "command return missing success"
+            }
+          }
+        },
+        :executable_return => {
+          :stdout => MultiJson.dump({:version => 1}),
+          :stderr => "",
+          :exit_status => 0
+        },
+        :expect_error => /The executable response is missing the success field./
+      },
+      {
+        :name => "malformed response no error code",
+        :options => {
+          :audience => AUDIENCE,
+          :subject_token_type => SUBJECT_TOKEN_TYPE,
+          :token_url => TOKEN_URL,
+          :credential_source => {
+            :executable => {
+              :command => "command return missing error code"
+            }
+          }
+        },
+        :executable_return => {
+          :stdout => MultiJson.dump({:version => 1, :success => false}),
+          :stderr => "",
+          :exit_status => 0
+        },
+        :expect_error => /Error code and message fields are required in the response./
+      },
+      {
+        :name => "error response",
+        :options => {
+          :audience => AUDIENCE,
+          :subject_token_type => SUBJECT_TOKEN_TYPE,
+          :token_url => TOKEN_URL,
+          :credential_source => {
+            :executable => {
+              :command => "command return error response"
+            }
+          }
+        },
+        :executable_return => {
+          :stdout => MultiJson.dump(EXECUTABLE_FAILED_RESPONSE),
+          :stderr => "",
+          :exit_status => 0
+        },
+        :expect_error => /Executable returned unsuccessful response:/
+      },
+      {
+        :name => "expired token",
+        :options => {
+          :audience => AUDIENCE,
+          :subject_token_type => SUBJECT_TOKEN_TYPE,
+          :token_url => TOKEN_URL,
+          :credential_source => {
+            :executable => {
+              :command => "comamnd return expired token"
+            }
+          },
+        },
+        :executable_return => {
+          :stdout => MultiJson.dump({
+            :version => 1,
+            :success => true,
+            :token_type => "urn:ietf:params:oauth:token-type:id_token",
+            :id_token => EXECUTABLE_OIDC_TOKEN,
+            :expiration_time => 0,
+          }),
+          :stderr => "",
+          :exit_status => 0
+        },
+        :expect_error => /The token returned by the executable is expired./
+      },
+      {
+        :name => "missing token type",
+        :options => {
+          :audience => AUDIENCE,
+          :subject_token_type => SUBJECT_TOKEN_TYPE,
+          :token_url => TOKEN_URL,
+          :credential_source => {
+            :executable => {
+              :command => "comamnd return missing token type"
+            }
+          },
+        },
+        :executable_return => {
+          :stdout => MultiJson.dump({
+            :version => 1,
+            :success => true,
+            :id_token => EXECUTABLE_OIDC_TOKEN,
+            :expiration_time => 999999999999,
+          }),
+          :stderr => "",
+          :exit_status => 0
+        },
+        :expect_error => /The executable response is missing the token_type field./
+      }
+    ]
+    examples.each do |example|
+      before :example do
+        ENV[Google::Auth::ExternalAccount::PluggableAuthCredentials::ENABLE_PLUGGABLE_ENV] = "1"
+        cmd = example[:options][:credential_source][:executable][:command]
+        e = example[:executable_return]
+        exe_return = [e[:stdout], e[:stdout], double("Process::Status", exitstatus: e[:exit_status], success?: (e[:exit_status] == 0))]
+        allow(Open3).to receive(:capture3).with(anything, cmd).and_return(exe_return)
+      end
+      it example[:name] do
+        credentials = PluggableAuthCredentials.new example[:options]
+        expect{credentials.retrieve_subject_token!}.to raise_error(example[:expect_error])
+      end
+    end
+  end
+
+  describe "test retrieve subject token success" do
+    examples = [
+      {
+        :name => "id_token",
+        :options => {
+          :audience => AUDIENCE,
+          :subject_token_type => SUBJECT_TOKEN_TYPE,
+          :token_url => TOKEN_URL,
+          :credential_source => {
+            :executable => {
+              :command => "command return id token"
+            }
+          }
+        },
+        :executable_return => {
+          :stdout => MultiJson.dump(EXECUTABLE_SUCCESSFUL_OIDC_RESPONSE_ID_TOKEN),
+          :stderr => "",
+          :exit_status => 0
+        },
+        :expect_token => EXECUTABLE_OIDC_TOKEN
+      },
+      {
+        :name => "jwt_token",
+        :options => {
+          :audience => AUDIENCE,
+          :subject_token_type => SUBJECT_TOKEN_TYPE,
+          :token_url => TOKEN_URL,
+          :credential_source => {
+            :executable => {
+              :command => "command return jwt token"
+            }
+          }
+        },
+        :executable_return => {
+          :stdout => MultiJson.dump(EXECUTABLE_SUCCESSFUL_OIDC_RESPONSE_JWT),
+          :stderr => "",
+          :exit_status => 0
+        },
+        :expect_token => EXECUTABLE_OIDC_TOKEN
+      },
+      {
+        :name => "saml_token",
+        :options => {
+          :audience => AUDIENCE,
+          :subject_token_type => SUBJECT_TOKEN_TYPE,
+          :token_url => TOKEN_URL,
+          :credential_source => {
+            :executable => {
+              :command => "command return saml response"
+            }
+          }
+        },
+        :executable_return => {
+          :stdout => MultiJson.dump(EXECUTABLE_SUCCESSFUL_SAML_RESPONSE),
+          :stderr => "",
+          :exit_status => 0
+        },
+        :expect_token => EXECUTABLE_SAML_TOKEN
+      },
+    ]
+    examples.each do |example|
+      before :example do
+        ENV[Google::Auth::ExternalAccount::PluggableAuthCredentials::ENABLE_PLUGGABLE_ENV] = "1"
+        cmd = example[:options][:credential_source][:executable][:command]
+        e = example[:executable_return]
+        exe_return = [e[:stdout], e[:stdout], double("Process::Status", exitstatus: e[:exit_status], success?: (e[:exit_status] == 0))]
+        allow(Open3).to receive(:capture3).with(anything, cmd).and_return(exe_return)
+      end
+      it example[:name] do
+        credentials = PluggableAuthCredentials.new example[:options]
+        expect(credentials.retrieve_subject_token!).to eql(example[:expect_token])
+      end
+    end
+  end
 end

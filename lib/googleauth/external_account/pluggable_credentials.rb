@@ -97,6 +97,7 @@ module Google
             subject_token = parse_subject_token response
           rescue StandardError => e
             return nil if e.message.match(/The token returned by the executable is expired/)
+            raise e
           end
           subject_token
         end
