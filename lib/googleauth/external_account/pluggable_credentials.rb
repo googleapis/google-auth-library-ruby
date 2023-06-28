@@ -143,9 +143,9 @@ module Google
 
         def subprocess_with_timeout environment_vars, command, timeout_seconds
           Timeout.timeout timeout_seconds do
-            output, _, status = Open3.capture3 environment_vars, command
+            output, error, status = Open3.capture3 environment_vars, command
             unless status.success?
-              raise "Executable exited with non-zero return code #{status.exitstatus}. Error: #{output}"
+              raise "Executable exited with non-zero return code #{status.exitstatus}. Error: #{output}, #{error}"
             end
             output
           end
