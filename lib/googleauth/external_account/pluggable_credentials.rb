@@ -27,7 +27,7 @@ module Google
         # constant for pluggable auth enablement in environment variable.
         ENABLE_PLUGGABLE_ENV = "GOOGLE_EXTERNAL_ACCOUNT_ALLOW_EXECUTABLES".freeze
         EXECUTABLE_SUPPORTED_MAX_VERSION = 1
-        EXECUTABLE_TIMEOUT_MILLIS_DEFAUT = 30 * 1000
+        EXECUTABLE_TIMEOUT_MILLIS_DEFAULT = 30 * 1000
         EXECUTABLE_TIMEOUT_MILLIS_LOWER_BOUND = 5 * 1000
         EXECUTABLE_TIMEOUT_MILLIS_UPPER_BOUND = 120 * 1000
         ID_TOKEN_TYPE = ["urn:ietf:params:oauth:token-type:jwt", "urn:ietf:params:oauth:token-type:id_token"].freeze
