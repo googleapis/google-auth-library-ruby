@@ -58,7 +58,7 @@ module Google
             raise "Missing command field. Executable command must be provided."
           end
           @credential_source_executable_timeout_millis = @credential_source_executable[:timeout_millis] ||
-                                                         EXECUTABLE_TIMEOUT_MILLIS_DEFAUT
+                                                         EXECUTABLE_TIMEOUT_MILLIS_DEFAULT
           if @credential_source_executable_timeout_millis < EXECUTABLE_TIMEOUT_MILLIS_LOWER_BOUND ||
              @credential_source_executable_timeout_millis > EXECUTABLE_TIMEOUT_MILLIS_UPPER_BOUND
             raise "Timeout must be between 5 and 120 seconds."
