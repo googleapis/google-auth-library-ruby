@@ -17,6 +17,7 @@ require "uri"
 require "googleauth/credentials_loader"
 require "googleauth/external_account/aws_credentials"
 require "googleauth/external_account/identity_pool_credentials"
+require "googleauth/external_account/pluggable_credentials"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
@@ -79,6 +80,9 @@ module Google
           def make_external_account_credentials user_creds
             unless user_creds[:credential_source][:file].nil? && user_creds[:credential_source][:url].nil?
               return Google::Auth::ExternalAccount::IdentityPoolCredentials.new user_creds
+            end
+            unless user_creds[:credential_source][:executable].nil?
+              return Google::Auth::ExternalAccount::PluggableAuthCredentials.new user_creds
             end
             raise INVALID_EXTERNAL_ACCOUNT_TYPE
           end

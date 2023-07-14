@@ -64,6 +64,28 @@ describe Google::Auth::ExternalAccount::Credentials do
       end
     end
 
+    it 'should be able to make pluggable auth credentials' do
+      f = Tempfile.new('file')
+      begin
+        f.write(MultiJson.dump({
+          type: 'external_account',
+          audience: '//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID',
+          subject_token_type: 'urn:ietf:params:oauth:token-type:jwt',
+          token_url: 'https://sts.googleapis.com/v1/token',
+          credential_source: {
+            executable: {
+              command: 'dummy_command',
+            },
+          },
+        }))
+        f.rewind
+        expect(Google::Auth::ExternalAccount::Credentials.make_creds(json_key_io: f)).to be_a(Google::Auth::ExternalAccount::PluggableAuthCredentials)
+      ensure
+        f.close
+        f.unlink
+      end
+    end
+
     [:audience, :subject_token_type, :token_url, :credential_source].each do |field|
       it "should raise an error when missing the #{field} field" do
         f = Tempfile.new('missing')
