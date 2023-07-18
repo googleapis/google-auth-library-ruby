@@ -1,5 +1,14 @@
 # Release History
 
+### 1.7.0 (2023-07-14)
+
+#### Features
+
+* Adding support for pluggable auth credentials ([#437](https://github.com/googleapis/google-auth-library-ruby/issues/437)) 
+#### Documentation
+
+* fixed iss argument and description in comments of IDTokens ([#438](https://github.com/googleapis/google-auth-library-ruby/issues/438)) 
+
 ### 1.6.0 (2023-06-20)
 
 #### Features
