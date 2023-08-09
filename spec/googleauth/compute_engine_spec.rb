@@ -218,5 +218,16 @@ describe Google::Auth::GCECredentials do
         ENV.delete "GCE_METADATA_HOST"
       end
     end
+
+    it "should honor reload flag" do
+      begin
+        stub = stub_request(:get, "http://169.254.169.254")
+                .with(headers: { "Metadata-Flavor" => "Google" })
+                .to_return(status: 200,
+                           headers: { "Metadata-Flavor" => "Google" })
+        expect(GCECredentials.on_gce?({}, false)).to eq(true)
+        expect(stub).to_not have_been_requested
+      end
+    end
   end
 end
