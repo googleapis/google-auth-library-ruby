@@ -1,4 +1,4 @@
-# Copyright 2015 Google, Inc.
+# Copyright 2023 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,51 +12,61 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-spec_dir = File.expand_path File.join(File.dirname(__FILE__))
-$LOAD_PATH.unshift spec_dir
-$LOAD_PATH.uniq!
-
-require "googleauth/scope_util"
+require "helper"
 
 describe Google::Auth::ScopeUtil do
-  shared_examples "normalizes scopes" do
+  scope_util_normalization_specs = Module.new do
+    extend Minitest::Spec::DSL
+  
     let(:normalized) { Google::Auth::ScopeUtil.normalize source }
-
+  
     it "normalizes the email scope" do
-      expect(normalized).to include(
+      _(normalized).must_include(
         "https://www.googleapis.com/auth/userinfo.email"
       )
-      expect(normalized).to_not include "email"
+      _(normalized).wont_include "email"
     end
-
+  
     it "normalizes the profile scope" do
-      expect(normalized).to include(
+      _(normalized).must_include(
         "https://www.googleapis.com/auth/userinfo.profile"
       )
-      expect(normalized).to_not include "profile"
+      _(normalized).wont_include "profile"
     end
-
+  
     it "normalizes the openid scope" do
-      expect(normalized).to include "https://www.googleapis.com/auth/plus.me"
-      expect(normalized).to_not include "openid"
+      _(normalized).must_include "https://www.googleapis.com/auth/plus.me"
+      _(normalized).wont_include "openid"
     end
-
+  
     it "leaves other other scopes as-is" do
-      expect(normalized).to include "https://www.googleapis.com/auth/drive"
+      _(normalized).must_include "https://www.googleapis.com/auth/drive"
     end
   end
 
-  context "with scope as string" do
+  describe "with scope as string" do
     let :source do
       "email profile openid https://www.googleapis.com/auth/drive"
     end
-    it_behaves_like "normalizes scopes"
+    include scope_util_normalization_specs
   end
 
-  context "with scope as Array" do
+  describe "with scope as Array" do
     let :source do
-      %w[email profile openid https://www.googleapis.com/auth/drive]
+      ["email", "profile", "openid", "https://www.googleapis.com/auth/drive"]
     end
-    it_behaves_like "normalizes scopes"
+    include scope_util_normalization_specs
+  end
+
+  it "detects incorrect type" do
+    assert_raises ArgumentError do
+      Google::Auth::ScopeUtil.normalize :"https://www.googleapis.com/auth/userinfo.email"
+    end
+  end
+
+  it "detects incorrect array element type" do
+    assert_raises ArgumentError do
+      Google::Auth::ScopeUtil.normalize [:"https://www.googleapis.com/auth/userinfo.email"]
+    end
   end
 end
