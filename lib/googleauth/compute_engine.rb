@@ -90,6 +90,7 @@ module Google
         def reset_cache
           @on_gce_cache.clear
         end
+        alias unmemoize_all reset_cache
       end
 
       # Overrides the super class method to change how access tokens are
