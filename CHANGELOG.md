@@ -1,5 +1,36 @@
 # Release History
 
+### 1.7.0 (2023-07-14)
+
+#### Features
+
+* Adding support for pluggable auth credentials ([#437](https://github.com/googleapis/google-auth-library-ruby/issues/437)) 
+#### Documentation
+
+* fixed iss argument and description in comments of IDTokens ([#438](https://github.com/googleapis/google-auth-library-ruby/issues/438)) 
+
+### 1.6.0 (2023-06-20)
+
+#### Features
+
+* adding identity pool credentials ([#433](https://github.com/googleapis/google-auth-library-ruby/issues/433)) 
+#### Documentation
+
+* deprecation message for discontinuing command line auth flow ([#435](https://github.com/googleapis/google-auth-library-ruby/issues/435)) 
+
+### 1.5.2 (2023-04-13)
+
+#### Bug Fixes
+
+* AWS IMDSV2 session token fetching shall call PUT method instead of GET ([#429](https://github.com/googleapis/google-auth-library-ruby/issues/429)) 
+* GCECredentials - Allow retrieval of ID token ([#425](https://github.com/googleapis/google-auth-library-ruby/issues/425)) 
+
+### 1.5.1 (2023-04-10)
+
+#### Bug Fixes
+
+* Remove external account config validation ([#427](https://github.com/googleapis/google-auth-library-ruby/issues/427)) 
+
 ### 1.5.0 (2023-03-21)
 
 #### Features

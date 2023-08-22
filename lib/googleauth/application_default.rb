@@ -57,10 +57,10 @@ module Google
       return creds unless creds.nil?
       unless GCECredentials.on_gce? options
         # Clear cache of the result of GCECredentials.on_gce?
-        GCECredentials.unmemoize_all
+        GCECredentials.reset_cache
         raise NOT_FOUND_ERROR
       end
-      GCECredentials.new scope: scope
+      GCECredentials.new options.merge(scope: scope)
     end
   end
 end

@@ -67,11 +67,11 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
 
   let :aws_credential_source do
     {
-      'environment_id' => 'aws1',
-      'region_url' => region_url,
-      'url' => security_credential_url,
-      'regional_cred_verification_url' => regional_cred_verification_url,
-      'imdsv2_session_token_url' => imdsv2_url
+      environment_id: 'aws1',
+      region_url: region_url,
+      url: security_credential_url,
+      regional_cred_verification_url: regional_cred_verification_url,
+      imdsv2_session_token_url: imdsv2_url
     }.compact
   end
 
@@ -211,7 +211,7 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
 
   let :imdsv2_endpoint do
     return unless imdsv2_url
-    stub_request(:get, imdsv2_url)
+    stub_request(:put, imdsv2_url)
       .with(headers: basic_aws_headers.clone.merge(
         'X-Aws-Ec2-Metadata-Token-Ttl-Seconds'=>'300'))
   end
@@ -282,9 +282,11 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
   #####################
 
   describe 'when AWS variables are provided via URLs' do
+    let(:imdsv2_url) { 'http://169.254.169.254/latest/api/token' }
     before :example do
       @client = credentials
 
+      imdsv2_endpoint_success
       region_endpoint_success
       metadata_role_endpoint_success
       security_credential_endpoint_success
@@ -334,8 +336,10 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
   end
 
   describe 'when a security credentials are not provided' do
+    let(:imdsv2_url) { 'http://169.254.169.254/latest/api/token' }
     let(:security_credential_url) { nil }
     before :example do
+      imdsv2_endpoint_success
       region_endpoint_success
     end
 
@@ -346,11 +350,13 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
   end
 
   describe 'with service account impersonation' do
+    let(:imdsv2_url) { 'http://169.254.169.254/latest/api/token' }
     let(:service_account_impersonation_url) { 'https://us-east1-iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/service-1234@service-name.iam.gserviceaccount.com:generateAccessToken'}
 
     before :example do
       @client = credentials
 
+      imdsv2_endpoint_success
       region_endpoint_success
       metadata_role_endpoint_success
       security_credential_endpoint_success
@@ -364,11 +370,13 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
   end
 
   describe 'with faulty service account impersonation' do
+    let(:imdsv2_url) { 'http://169.254.169.254/latest/api/token' }
     let(:service_account_impersonation_url) { 'https://us-east1-iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/service-1234@service-name.iam.gserviceaccount.com:generateAccessToken'}
 
     before :example do
       @client = credentials
 
+      imdsv2_endpoint_success
       region_endpoint_success
       metadata_role_endpoint_success
       security_credential_endpoint_success
@@ -419,6 +427,7 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
     before :example do
       @client = credentials
 
+      imdsv2_endpoint_success
       region_endpoint_success
       metadata_role_endpoint_success
       security_credential_endpoint_success
@@ -448,7 +457,10 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
   end
 
   describe 'region failure' do
+    let(:imdsv2_url) { 'http://169.254.169.254/latest/api/token' }
+
     before :example do
+      imdsv2_endpoint_success
       region_endpoint_failure
       metadata_role_endpoint_success
       security_credential_endpoint_success
@@ -460,7 +472,10 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
   end
 
   describe 'IAM role failure' do
+    let(:imdsv2_url) { 'http://169.254.169.254/latest/api/token' }
+
     before :example do
+      imdsv2_endpoint_success
       region_endpoint_success
       metadata_role_endpoint_failure
     end
@@ -495,7 +510,10 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
   end
 
   describe 'AWS credential failure' do
+    let(:imdsv2_url) { 'http://169.254.169.254/latest/api/token' }
+
     before :example do
+      imdsv2_endpoint_success
       region_endpoint_success
       metadata_role_endpoint_success
       security_credential_endpoint_failure
@@ -507,11 +525,13 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
   end
 
   describe 'ipv6 region url' do
+    let(:imdsv2_url) { 'http://[fd00:ec2::254]/latest/api/token' }
     let(:region_url) { 'http://[fd00:ec2::254]/latest/meta-data/placement/availability-zone' }
 
     before :example do
       @client = credentials
 
+      imdsv2_endpoint_success
       region_endpoint_success
       metadata_role_endpoint_success
       security_credential_endpoint_success
@@ -520,50 +540,20 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
     it_behaves_like "apply/apply! are OK"
   end
 
-  describe 'faulty ipv6 region url' do
-    let(:region_url) { 'http://fd00:ec2::254/latest/meta-data/placement/availability-zone' }
-
-    it 'raises an error' do
-      expect { credentials }.to raise_error(/bad URI\(is not URI\?\): \"#{region_url}"/)
-    end
-  end
-
-  describe 'invalid region url' do
-    let(:region_url) { 'http://abc.com/latest/meta-data/placement/availability-zone' }
-
-    it 'raises an error' do
-      expect { credentials }.to raise_error(/Invalid host abc\.com for region_url/)
-    end
-  end
-
   describe 'ipv6 cred verification url' do
+    let(:imdsv2_url) { 'http://[fd00:ec2::254]/latest/api/token' }
     let(:security_credential_url) { 'http://[fd00:ec2::254]/latest/meta-data/iam/security-credentials' }
 
     before :example do
       @client = credentials
 
+      imdsv2_endpoint_success
       region_endpoint_success
       metadata_role_endpoint_success
       security_credential_endpoint_success
     end
 
     it_behaves_like "apply/apply! are OK"
-  end
-
-  describe 'faulty ipv6 cred verification url' do
-    let(:security_credential_url) { 'http://fd00:ec2::254/latest/meta-data/iam/security-credentials' }
-
-    it 'raises an error' do
-      expect { credentials }.to raise_error(/bad URI\(is not URI\?\): \"#{security_credential_url}"/)
-    end
-  end
-
-  describe 'invalid cred verification url' do
-    let(:security_credential_url) { 'http://abc.com/latest/meta-data/iam/security-credentials' }
-
-    it 'raises an error' do
-      expect { credentials }.to raise_error(/Invalid host abc\.com for url/)
-    end
   end
 
   describe 'ipv6 imdsv2 url' do
@@ -581,26 +571,12 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
     it_behaves_like "apply/apply! are OK"
   end
 
-  describe 'faulty ipv6 imdsv2 url' do
-    let(:imdsv2_url) { 'http://fd00:ec2::254/latest/api/token' }
-
-    it 'raises an error' do
-      expect { credentials }.to raise_error(/bad URI\(is not URI\?\): \"#{imdsv2_url}"/)
-    end
-  end
-
-  describe 'invalid imdsv2 url' do
-    let(:imdsv2_url) { 'http://abc.com/latest/api/token' }
-
-    it 'raises an error' do
-      expect { credentials }.to raise_error(/Invalid host abc\.com for imdsv2_session_token_url/)
-    end
-  end
-
   describe 'regional cred verification url without ssl' do
+    let(:imdsv2_url) { 'http://[fd00:ec2::254]/latest/api/token' }
     let(:regional_cred_verification_url) { 'http://sts.{region}.amazonaws.com?Action=GetCallerIdentity&Version=2011-06-15' }
 
     before :example do
+      imdsv2_endpoint_success
       region_endpoint_success
       metadata_role_endpoint_success
       security_credential_endpoint_success

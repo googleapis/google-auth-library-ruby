@@ -14,19 +14,21 @@
 
 require "time"
 require "googleauth/external_account/base_credentials"
+require "googleauth/external_account/external_account_utils"
 
 module Google
-  # Module Auth provides classes that provide Google-specific authorization
-  # used to access Google APIs.
+  # Module Auth provides classes that provide Google-specific authorization used to access Google APIs.
   module Auth
-    # Authenticates requests using External Account credentials, such
-    # as those provided by the AWS provider.
+    # Authenticates requests using External Account credentials, such as those provided by the AWS provider.
     module ExternalAccount
-      # This module handles the retrieval of credentials from Google Cloud
-      # by utilizing the AWS EC2 metadata service and then exchanging the
-      # credentials for a short-lived Google Cloud access token.
+      # This module handles the retrieval of credentials from Google Cloud by utilizing the AWS EC2 metadata service and
+      # then exchanging the credentials for a short-lived Google Cloud access token.
       class AwsCredentials
+        # Constant for imdsv2 session token expiration in seconds
+        IMDSV2_TOKEN_EXPIRATION_IN_SECONDS = 300
+
         include Google::Auth::ExternalAccount::BaseCredentials
+        include Google::Auth::ExternalAccount::ExternalAccountUtils
         extend CredentialsLoader
 
         # Will always be nil, but method still gets used.
@@ -37,16 +39,17 @@ module Google
 
           @audience = options[:audience]
           @credential_source = options[:credential_source] || {}
-          @environment_id = @credential_source["environment_id"]
-          @region_url = validate_metadata_server @credential_source["region_url"], "region_url"
-          @credential_verification_url = validate_metadata_server @credential_source["url"], "url"
-          @regional_cred_verification_url = @credential_source["regional_cred_verification_url"]
-          @imdsv2_session_token_url = validate_metadata_server @credential_source["imdsv2_session_token_url"],
-                                                               "imdsv2_session_token_url"
+          @environment_id = @credential_source[:environment_id]
+          @region_url = @credential_source[:region_url]
+          @credential_verification_url = @credential_source[:url]
+          @regional_cred_verification_url = @credential_source[:regional_cred_verification_url]
+          @imdsv2_session_token_url = @credential_source[:imdsv2_session_token_url]
 
           # These will be lazily loaded when needed, or will raise an error if not provided
           @region = nil
           @request_signer = nil
+          @imdsv2_session_token = nil
+          @imdsv2_session_token_expiry = nil
         end
 
         # Retrieves the subject token using the credential_source object.
@@ -55,22 +58,20 @@ module Google
         #
         # The logic is summarized as:
         #
-        # Retrieve the AWS region from the AWS_REGION or AWS_DEFAULT_REGION
-        # environment variable or from the AWS metadata server availability-zone
-        # if not found in the environment variable.
+        # Retrieve the AWS region from the AWS_REGION or AWS_DEFAULT_REGION environment variable or from the AWS
+        # metadata server availability-zone if not found in the environment variable.
         #
-        # Check AWS credentials in environment variables. If not found, retrieve
-        # from the AWS metadata server security-credentials endpoint.
+        # Check AWS credentials in environment variables. If not found, retrieve from the AWS metadata server
+        # security-credentials endpoint.
         #
-        # When retrieving AWS credentials from the metadata server
-        # security-credentials endpoint, the AWS role needs to be determined by
-        # calling the security-credentials endpoint without any argument. Then the
-        # credentials can be retrieved via: security-credentials/role_name
+        # When retrieving AWS credentials from the metadata server security-credentials endpoint, the AWS role needs to
+        # be determined by # calling the security-credentials endpoint without any argument.
+        # Then the credentials can be retrieved via: security-credentials/role_name
         #
         # Generate the signed request to AWS STS GetCallerIdentity action.
         #
-        # Inject x-goog-cloud-target-resource into header and serialize the
-        # signed request. This will be the subject-token to pass to GCP STS.
+        # Inject x-goog-cloud-target-resource into header and serialize the signed request.
+        # This will be the subject-token to pass to GCP STS.
         #
         # @return [string] The retrieved subject token.
         #
@@ -105,23 +106,30 @@ module Google
 
         private
 
-        def validate_metadata_server url, name
-          return nil if url.nil?
-          host = URI(url).host
-          raise "Invalid host #{host} for #{name}." unless ["169.254.169.254", "[fd00:ec2::254]"].include? host
-          url
+        def imdsv2_session_token
+          return @imdsv2_session_token unless imdsv2_session_token_invalid?
+          raise "IMDSV2 token url must be provided" if @imdsv2_session_token_url.nil?
+          begin
+            response = connection.put @imdsv2_session_token_url do |req|
+              req.headers["x-aws-ec2-metadata-token-ttl-seconds"] = IMDSV2_TOKEN_EXPIRATION_IN_SECONDS.to_s
+            end
+          rescue Faraday::Error => e
+            raise "Fetching AWS IMDSV2 token error: #{e}"
+          end
+          raise Faraday::Error unless response.success?
+          @imdsv2_session_token = response.body
+          @imdsv2_session_token_expiry = Time.now + IMDSV2_TOKEN_EXPIRATION_IN_SECONDS
+          @imdsv2_session_token
+        end
+
+        def imdsv2_session_token_invalid?
+          return true if @imdsv2_session_token.nil?
+          @imdsv2_session_token_expiry.nil? || @imdsv2_session_token_expiry < Time.now
         end
 
         def get_aws_resource url, name, data: nil, headers: {}
           begin
-            unless [nil, url].include? @imdsv2_session_token_url
-              headers["x-aws-ec2-metadata-token"] = get_aws_resource(
-                @imdsv2_session_token_url,
-                "Session Token",
-                headers: { "x-aws-ec2-metadata-token-ttl-seconds": "300" }
-              ).body
-            end
-
+            headers["x-aws-ec2-metadata-token"] = imdsv2_session_token
             response = if data
                          headers["Content-Type"] = "application/json"
                          connection.post url, data, headers
@@ -144,9 +152,8 @@ module Google
           end
         end
 
-        # Retrieves the AWS security credentials required for signing AWS
-        # requests from either the AWS security credentials environment variables
-        # or from the AWS metadata server.
+        # Retrieves the AWS security credentials required for signing AWS requests from either the AWS security
+        # credentials environment variables or from the AWS metadata server.
         # The priority of loading credentials from multiple providers honors the
         # load order implemented as the credential provider chain in the AWS SDKs:
         # https://docs.aws.amazon.com/sdkref/latest/guide/standardized-credentials.html#credentialProviderChain
@@ -212,10 +219,9 @@ module Google
           }
         end
 
-        # Retrieves the AWS role currently attached to the current AWS
-        # workload by querying the AWS metadata server. This is needed for the
-        # AWS metadata server security credentials endpoint in order to retrieve
-        # the AWS security credentials needed to sign requests to AWS APIs.
+        # Retrieves the AWS role currently attached to the current AWS workload by querying the AWS metadata server.
+        # This is needed for the AWS metadata server security credentials endpoint in order to retrieve the AWS security
+        # credentials needed to sign requests to AWS APIs.
         def fetch_metadata_role_name
           unless @credential_verification_url
             raise "Unable to determine the AWS metadata server security credentials endpoint"
@@ -224,8 +230,7 @@ module Google
           get_aws_resource(@credential_verification_url, "IAM Role").body
         end
 
-        # Retrieves the AWS security credentials required for signing AWS
-        # requests from the AWS metadata server.
+        # Retrieves the AWS security credentials required for signing AWS requests from the AWS metadata server.
         def fetch_metadata_security_credentials role_name
           response = get_aws_resource "#{@credential_verification_url}/#{role_name}", "credentials"
           MultiJson.load response.body
@@ -247,8 +252,8 @@ module Google
       # Implements an AWS request signer based on the AWS Signature Version 4 signing process.
       # https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html
       class AwsRequestSigner
-        # Instantiates an AWS request signer used to compute authenticated signed
-        # requests to AWS APIs based on the AWS Signature Version 4 signing process.
+        # Instantiates an AWS request signer used to compute authenticated signed requests to AWS APIs based on the AWS
+        # Signature Version 4 signing process.
         #
         # @param [string] region_name
         #     The AWS region to use.

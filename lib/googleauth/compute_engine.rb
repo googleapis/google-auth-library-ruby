@@ -14,7 +14,6 @@
 
 require "faraday"
 require "googleauth/signet"
-require "memoist"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
@@ -47,9 +46,9 @@ module Google
       # @private Unused and deprecated
       COMPUTE_CHECK_URI = "http://169.254.169.254".freeze
 
-      class << self
-        extend Memoist
+      @on_gce_cache = {}
 
+      class << self
         def metadata_host
           ENV.fetch "GCE_METADATA_HOST", DEFAULT_METADATA_HOST
         end
@@ -68,21 +67,30 @@ module Google
 
         # Detect if this appear to be a GCE instance, by checking if metadata
         # is available.
-        def on_gce? options = {}
-          # TODO: This should use google-cloud-env instead.
-          c = options[:connection] || Faraday.default_connection
-          headers = { "Metadata-Flavor" => "Google" }
-          resp = c.get compute_check_uri, nil, headers do |req|
-            req.options.timeout = 1.0
-            req.options.open_timeout = 0.1
+        def on_gce? options = {}, reload = false # rubocop:disable Style/OptionalBooleanParameter
+          # We can follow OptionalBooleanParameter here because it's a public interface, we can't change it.
+          @on_gce_cache.delete options if reload
+          @on_gce_cache.fetch options do
+            @on_gce_cache[options] = begin
+              # TODO: This should use google-cloud-env instead.
+              c = options[:connection] || Faraday.default_connection
+              headers = { "Metadata-Flavor" => "Google" }
+              resp = c.get compute_check_uri, nil, headers do |req|
+                req.options.timeout = 1.0
+                req.options.open_timeout = 0.1
+              end
+              return false unless resp.status == 200
+              resp.headers["Metadata-Flavor"] == "Google"
+            rescue Faraday::TimeoutError, Faraday::ConnectionFailed
+              false
+            end
           end
-          return false unless resp.status == 200
-          resp.headers["Metadata-Flavor"] == "Google"
-        rescue Faraday::TimeoutError, Faraday::ConnectionFailed
-          false
         end
 
-        memoize :on_gce?
+        def reset_cache
+          @on_gce_cache.clear
+        end
+        alias unmemoize_all reset_cache
       end
 
       # Overrides the super class method to change how access tokens are

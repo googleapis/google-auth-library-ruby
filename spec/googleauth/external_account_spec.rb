@@ -19,140 +19,6 @@ require 'spec_helper'
 require 'tempfile'
 
 describe Google::Auth::ExternalAccount::Credentials do
-  describe :is_token_url_valid? do
-    VALID_URLS = [
-      "https://sts.googleapis.com",
-      "https://sts.mtls.googleapis.com",
-      "https://us-east-1.sts.googleapis.com",
-      "https://us-east-1.sts.mtls.googleapis.com",
-      "https://US-EAST-1.sts.googleapis.com",
-      "https://sts.us-east-1.googleapis.com",
-      "https://sts.US-WEST-1.googleapis.com",
-      "https://us-east-1-sts.googleapis.com",
-      "https://US-WEST-1-sts.googleapis.com",
-      "https://US-WEST-1-sts.mtls.googleapis.com",
-      "https://us-west-1-sts.googleapis.com/path?query",
-      "https://sts-us-east-1.p.googleapis.com",
-      "https://sts-us-east-1.p.mtls.googleapis.com",
-    ]
-
-    INVALID_URLS = [
-      nil,
-      "https://iamcredentials.googleapis.com",
-      "https://mtls.iamcredentials.googleapis.com",
-      "sts.googleapis.com",
-      "mtls.sts.googleapis.com",
-      "mtls.googleapis.com",
-      "https://",
-      "http://sts.googleapis.com",
-      "https://st.s.googleapis.com",
-      "https://us-eas\t-1.sts.googleapis.com",
-      "https:/us-east-1.sts.googleapis.com",
-      "https:/us-east-1.mtls.sts.googleapis.com",
-      "https://US-WE/ST-1-sts.googleapis.com",
-      "https://sts-us-east-1.googleapis.com",
-      "https://sts-US-WEST-1.googleapis.com",
-      "testhttps://us-east-1.sts.googleapis.com",
-      "https://us-east-1.sts.googleapis.comevil.com",
-      "https://us-east-1.us-east-1.sts.googleapis.com",
-      "https://us-ea.s.t.sts.googleapis.com",
-      "https://sts.googleapis.comevil.com",
-      "hhttps://us-east-1.sts.googleapis.com",
-      "https://us- -1.sts.googleapis.com",
-      "https://-sts.googleapis.com",
-      "https://-mtls.googleapis.com",
-      "https://us-east-1.sts.googleapis.com.evil.com",
-      "https://sts.pgoogleapis.com",
-      "https://p.googleapis.com",
-      "https://sts.p.com",
-      "https://sts.p.mtls.com",
-      "http://sts.p.googleapis.com",
-      "https://xyz-sts.p.googleapis.com",
-      "https://sts-xyz.123.p.googleapis.com",
-      "https://sts-xyz.p1.googleapis.com",
-      "https://sts-xyz.p.foo.com",
-      "https://sts-xyz.p.foo.googleapis.com",
-      "https://sts-xyz.mtls.p.foo.googleapis.com",
-      "https://sts-xyz.p.mtls.foo.googleapis.com",
-    ]
-
-    VALID_URLS.each do |token_url|
-      describe token_url do
-        it 'is valid' do
-          expect(Google::Auth::ExternalAccount::Credentials.is_token_url_valid?(token_url)).to be(true)
-        end
-      end
-    end
-
-    INVALID_URLS.each do |token_url|
-      describe token_url do
-        it 'is invalid' do
-          expect(Google::Auth::ExternalAccount::Credentials.is_token_url_valid?(token_url)).to be(false)
-        end
-      end
-    end
-  end
-
-  describe :is_service_account_impersonation_url_valid? do
-    VALID_URLS = [
-      nil,
-      "https://iamcredentials.googleapis.com",
-      "https://us-east-1.iamcredentials.googleapis.com",
-      "https://US-EAST-1.iamcredentials.googleapis.com",
-      "https://iamcredentials.us-east-1.googleapis.com",
-      "https://iamcredentials.US-WEST-1.googleapis.com",
-      "https://us-east-1-iamcredentials.googleapis.com",
-      "https://US-WEST-1-iamcredentials.googleapis.com",
-      "https://us-west-1-iamcredentials.googleapis.com/path?query",
-      "https://iamcredentials-us-east-1.p.googleapis.com",
-    ]
-    INVALID_URLS = [
-      "https://sts.googleapis.com",
-      "iamcredentials.googleapis.com",
-      "https://",
-      "http://iamcredentials.googleapis.com",
-      "https://iamcre.dentials.googleapis.com",
-      "https://us-eas\t-1.iamcredentials.googleapis.com",
-      "https:/us-east-1.iamcredentials.googleapis.com",
-      "https://US-WE/ST-1-iamcredentials.googleapis.com",
-      "https://iamcredentials-us-east-1.googleapis.com",
-      "https://iamcredentials-US-WEST-1.googleapis.com",
-      "testhttps://us-east-1.iamcredentials.googleapis.com",
-      "https://us-east-1.iamcredentials.googleapis.comevil.com",
-      "https://us-east-1.us-east-1.iamcredentials.googleapis.com",
-      "https://us-ea.s.t.iamcredentials.googleapis.com",
-      "https://iamcredentials.googleapis.comevil.com",
-      "hhttps://us-east-1.iamcredentials.googleapis.com",
-      "https://us- -1.iamcredentials.googleapis.com",
-      "https://-iamcredentials.googleapis.com",
-      "https://us-east-1.iamcredentials.googleapis.com.evil.com",
-      "https://iamcredentials.pgoogleapis.com",
-      "https://p.googleapis.com",
-      "https://iamcredentials.p.com",
-      "http://iamcredentials.p.googleapis.com",
-      "https://xyz-iamcredentials.p.googleapis.com",
-      "https://iamcredentials-xyz.123.p.googleapis.com",
-      "https://iamcredentials-xyz.p1.googleapis.com",
-      "https://iamcredentials-xyz.p.foo.com",
-      "https://iamcredentials-xyz.p.foo.googleapis.com",
-    ]
-
-    VALID_URLS.each do |impersonation_url|
-      describe impersonation_url do
-        it 'is valid' do
-          expect(Google::Auth::ExternalAccount::Credentials.is_service_account_impersonation_url_valid?(impersonation_url)).to be(true)
-        end
-      end
-    end
-
-    INVALID_URLS.each do |impersonation_url|
-      describe impersonation_url do
-        it 'is invalid' do
-          expect(Google::Auth::ExternalAccount::Credentials.is_service_account_impersonation_url_valid?(impersonation_url)).to be(false)
-        end
-      end
-    end
-  end
 
   describe :make_creds do
     it 'should be able to make aws credentials' do
@@ -172,6 +38,48 @@ describe Google::Auth::ExternalAccount::Credentials do
         }))
         f.rewind
         expect(Google::Auth::ExternalAccount::Credentials.make_creds(json_key_io: f)).to be_a(Google::Auth::ExternalAccount::AwsCredentials)
+      ensure
+        f.close
+        f.unlink
+      end
+    end
+
+    it 'should be able to make identity pool credentials' do
+      f = Tempfile.new('file')
+      begin
+        f.write(MultiJson.dump({
+          type: 'external_account',
+          audience: '//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID',
+          subject_token_type: 'urn:ietf:params:oauth:token-type:jwt',
+          token_url: 'https://sts.googleapis.com/v1/token',
+          credential_source: {
+            'file' => 'external_suject_token.txt'
+          }
+        }))
+        f.rewind
+        expect(Google::Auth::ExternalAccount::Credentials.make_creds(json_key_io: f)).to be_a(Google::Auth::ExternalAccount::IdentityPoolCredentials)
+      ensure
+        f.close
+        f.unlink
+      end
+    end
+
+    it 'should be able to make pluggable auth credentials' do
+      f = Tempfile.new('file')
+      begin
+        f.write(MultiJson.dump({
+          type: 'external_account',
+          audience: '//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID',
+          subject_token_type: 'urn:ietf:params:oauth:token-type:jwt',
+          token_url: 'https://sts.googleapis.com/v1/token',
+          credential_source: {
+            executable: {
+              command: 'dummy_command',
+            },
+          },
+        }))
+        f.rewind
+        expect(Google::Auth::ExternalAccount::Credentials.make_creds(json_key_io: f)).to be_a(Google::Auth::ExternalAccount::PluggableAuthCredentials)
       ensure
         f.close
         f.unlink
@@ -211,7 +119,7 @@ describe Google::Auth::ExternalAccount::Credentials do
           credential_source: {},
         }))
         f.rewind
-        expect { Google::Auth::ExternalAccount::Credentials.make_creds(json_key_io: f) }.to raise_error(/aws is the only currently supported external account type/)
+        expect { Google::Auth::ExternalAccount::Credentials.make_creds(json_key_io: f) }.to raise_error(Google::Auth::ExternalAccount::Credentials::INVALID_EXTERNAL_ACCOUNT_TYPE)
       ensure
         f.close
         f.unlink
