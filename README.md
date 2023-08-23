@@ -217,14 +217,14 @@ Custom storage implementations can also be used. See
 
 ## Supported Ruby Versions
 
-This library is supported on Ruby 2.6+.
+This library requires Ruby 2.7 or later.
 
 Google provides official support for Ruby versions that are actively supported
 by Ruby Core—that is, Ruby versions that are either in normal maintenance or
 in security maintenance, and not end of life. Older versions of Ruby _may_
-still work, but are unsupported and not recommended. See
-https://www.ruby-lang.org/en/downloads/branches/ for details about the Ruby
-support schedule.
+still work, but are not recommended.
+See https://cloud.google.com/ruby/getting-started/supported-ruby-versions for
+more information.
 
 ## License
 
