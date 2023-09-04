@@ -80,6 +80,8 @@ module Google
       # @param [String, Array<String>] scope
       #  Authorization scope to request. Overrides the instance scopes if not
       #  nil.
+      # @param [Hash] additional_parameters
+      #  Additional query parameters to be added to the authorization URL.
       # @return [String]
       #  Authorization url
       def get_authorization_url options = {}
@@ -87,7 +89,8 @@ module Google
         credentials = UserRefreshCredentials.new(
           client_id:     @client_id.id,
           client_secret: @client_id.secret,
-          scope:         scope
+          scope:         scope,
+          additional_parameters: options[:additional_parameters]
         )
         redirect_uri = redirect_uri_for options[:base_url]
         url = credentials.authorization_uri(access_type:            "offline",
@@ -144,6 +147,9 @@ module Google
       #  Absolute URL to resolve the configured callback uri against.
       #  Required if the configured
       #  callback uri is a relative.
+      # @param [Hash] additional_parameters
+      #  Additional parameters to be added to the post body of token
+      #  endpoint request.
       # @return [Google::Auth::UserRefreshCredentials]
       #  Credentials if exchange is successful
       def get_credentials_from_code options = {}
@@ -152,10 +158,11 @@ module Google
         scope = options[:scope] || @scope
         base_url = options[:base_url]
         credentials = UserRefreshCredentials.new(
-          client_id:     @client_id.id,
-          client_secret: @client_id.secret,
-          redirect_uri:  redirect_uri_for(base_url),
-          scope:         scope
+          client_id:             @client_id.id,
+          client_secret:         @client_id.secret,
+          redirect_uri:          redirect_uri_for(base_url),
+          scope:                 scope,
+          additional_parameters: options[:additional_parameters]
         )
         credentials.code = code
         credentials.fetch_access_token!({})
