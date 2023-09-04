@@ -41,7 +41,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - name: Checkout repo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: Install Ruby ${{ matrix.ruby }}
       uses: ruby/setup-ruby@v1
       with:
