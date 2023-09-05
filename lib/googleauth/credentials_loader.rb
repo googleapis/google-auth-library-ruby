@@ -53,9 +53,7 @@ module Google
         "You are authenticating using user credentials." \
         "For production, we recommend using service account credentials." \
         "To learn more about service account credentials, see" \
-        "http://cloud.google.com/docs/authentication/external/set-up-adc-on-cloud " \
-        "To suppress this message, set the " \
-        "GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS environment variable.".freeze
+        "http://cloud.google.com/docs/authentication/external/set-up-adc-on-cloud".freeze
 
       # make_creds proxies the construction of a credentials instance
       #
