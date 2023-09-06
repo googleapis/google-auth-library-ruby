@@ -149,7 +149,9 @@ describe Google::Auth::UserAuthorizer do
 
     it "includes the additional parameters" do
       expect(URI(uri).query).to match(/param1/)
+      expect(URI(uri).query).to match(/value1/)
       expect(URI(uri).query).to match(/param2/)
+      expect(URI(uri).query).to match(/value2/)
     end
   end
 
