@@ -21,7 +21,7 @@ module Google
   module Auth
     NOT_FOUND_ERROR = <<~ERROR_MESSAGE.freeze
       Could not load the default credentials. Browse to
-      https://developers.google.com/accounts/docs/application-default-credentials
+      https://cloud.google.com/docs/authentication/provide-credentials-adc
       for more information
     ERROR_MESSAGE
 
