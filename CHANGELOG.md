@@ -1,5 +1,14 @@
 # Release History
 
+### 1.8.0 (2023-09-07)
+
+#### Features
+
+* Pass additional parameters to auhtorization url ([#447](https://github.com/googleapis/google-auth-library-ruby/issues/447)) 
+#### Documentation
+
+* improve ADC related error and warning messages ([#449](https://github.com/googleapis/google-auth-library-ruby/issues/449)) 
+
 ### 1.7.0 (2023-07-14)
 
 #### Features
