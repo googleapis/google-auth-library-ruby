@@ -88,6 +88,12 @@ describe Google::Auth::WebUserAuthorizer do
       )
       expect(url).to match(/login_hint=user@example.com/)
     end
+
+    it "should include code_challenge and code_challenge_method" do
+      url = authorizer.get_authorization_url(request: request)
+      expect(url).to match(/code_challenge=/)
+      expect(url).to match(/code_challenge_method=S256/)
+    end
   end
 
   shared_examples "handles callback" do
