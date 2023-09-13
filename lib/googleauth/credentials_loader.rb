@@ -49,14 +49,6 @@ module Google
       CLOUD_SDK_CLIENT_ID = "764086051850-6qr4p6gpi6hn506pt8ejuq83di341hur.app" \
                             "s.googleusercontent.com".freeze
 
-      CLOUD_SDK_CREDENTIALS_WARNING =
-        "You are authenticating using user credentials." \
-        "For production, we recommend using service account credentials." \
-        "To learn more about service account credentials, see" \
-        "http://cloud.google.com/docs/authentication/external/set-up-adc-on-cloud " \
-        "To suppress this message, set the " \
-        "GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS environment variable.".freeze
-
       # make_creds proxies the construction of a credentials instance
       #
       # By default, it calls #new on the current class, but this behaviour can
@@ -149,12 +141,6 @@ module Google
       end
 
       module_function
-
-      # Issues warning if cloud sdk client id is used
-      def warn_if_cloud_sdk_credentials client_id
-        return if ENV["GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS"]
-        warn CLOUD_SDK_CREDENTIALS_WARNING if client_id == CLOUD_SDK_CLIENT_ID
-      end
 
       # Finds project_id from gcloud CLI configuration
       def load_gcloud_project_id

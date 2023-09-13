@@ -133,21 +133,4 @@ describe Google::Auth::ClientId do
       assert_match(/Client secret can not be nil/, error.message)
     end
   end
-
-  describe "with cloud sdk credentials" do
-    let :config do
-      {
-        "web" => {
-          "client_id"     => Google::Auth::CredentialsLoader::CLOUD_SDK_CLIENT_ID,
-          "client_secret" => "notasecret"
-        }
-      }
-    end
-
-    it "should raise warning" do
-      assert_output nil, "#{Google::Auth::CredentialsLoader::CLOUD_SDK_CREDENTIALS_WARNING}\n" do
-        Google::Auth::ClientId.from_hash config
-      end
-    end
-  end
 end

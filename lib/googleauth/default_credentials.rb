@@ -35,11 +35,9 @@ module Google
         json_key_io = options[:json_key_io]
         if json_key_io
           json_key, clz = determine_creds_class json_key_io
-          warn_if_cloud_sdk_credentials json_key["client_id"]
           io = StringIO.new MultiJson.dump(json_key)
           clz.make_creds options.merge(json_key_io: io)
         else
-          warn_if_cloud_sdk_credentials ENV[CredentialsLoader::CLIENT_ID_VAR]
           clz = read_creds
           clz.make_creds options
         end
