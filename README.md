@@ -243,6 +243,6 @@ hesitate to
 [ask questions](http://stackoverflow.com/questions/tagged/google-auth-library-ruby)
 about the client or APIs on [StackOverflow](http://stackoverflow.com).
 
-[application default credentials]: https://developers.google.com/accounts/docs/application-default-credentials
+[application default credentials]: https://cloud.google.com/docs/authentication/provide-credentials-adc
 [contributing]: https://github.com/googleapis/google-auth-library-ruby/tree/main/.github/CONTRIBUTING.md
 [license]: https://github.com/googleapis/google-auth-library-ruby/tree/main/LICENSE

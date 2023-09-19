@@ -29,6 +29,9 @@ describe Google::Auth::UserAuthorizer do
   let(:scope) { %w[email profile] }
   let(:token_store) { DummyTokenStore.new }
   let(:callback_uri) { "https://www.example.com/oauth/callback" }
+  let(:additional_parameters) do
+    { "param1": "value1", "param2": "value2" }
+  end
   let :authorizer do
     Google::Auth::UserAuthorizer.new(client_id,
                                      scope,
@@ -136,6 +139,19 @@ describe Google::Auth::UserAuthorizer do
 
     it "does not include the state parameter" do
       expect(URI(uri).query).to_not match(/state/)
+    end
+  end
+
+  context "when generating authorization URLs with additional parameters" do
+    let(:uri) { authorizer.get_authorization_url additional_parameters: additional_parameters }
+
+    it_behaves_like "valid authorization url"
+
+    it "includes the additional parameters" do
+      expect(URI(uri).query).to match(/param1/)
+      expect(URI(uri).query).to match(/value1/)
+      expect(URI(uri).query).to match(/param2/)
+      expect(URI(uri).query).to match(/value2/)
     end
   end
 

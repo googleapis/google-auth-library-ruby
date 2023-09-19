@@ -20,9 +20,9 @@ module Google
   # used to access Google APIs.
   module Auth
     NOT_FOUND_ERROR = <<~ERROR_MESSAGE.freeze
-      Could not load the default credentials. Browse to
-      https://developers.google.com/accounts/docs/application-default-credentials
-      for more information
+      Your credentials were not found. To set up Application Default
+      Credentials for your environment, see
+      https://cloud.google.com/docs/authentication/external/set-up-adc
     ERROR_MESSAGE
 
     module_function

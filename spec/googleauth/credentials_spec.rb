@@ -125,7 +125,6 @@ describe Google::Auth::Credentials, :private do
 
       json_content = JSON.generate default_keyfile_hash
 
-      allow(::ENV).to receive(:[]).with("GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS") { "true" }
       allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
       allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
       allow(::ENV).to receive(:[]).with("PATH_ENV_TEST") { "/unknown/path/to/file.txt" }
@@ -164,7 +163,6 @@ describe Google::Auth::Credentials, :private do
         DEFAULT_PATHS = ["~/default/path/to/file.txt"].freeze
       end
 
-      allow(::ENV).to receive(:[]).with("GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS") { "true" }
       allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
       allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
       allow(::File).to receive(:file?).with(test_json_env_val) { false }
@@ -203,7 +201,6 @@ describe Google::Auth::Credentials, :private do
 
       json_content = JSON.generate default_keyfile_hash
 
-      allow(::ENV).to receive(:[]).with("GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS") { "true" }
       allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
       allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
       allow(::ENV).to receive(:[]).with("JSON_ENV_DUMMY") { nil }
@@ -240,7 +237,6 @@ describe Google::Auth::Credentials, :private do
         DEFAULT_PATHS = ["~/default/path/to/file.txt"].freeze
       end
 
-      allow(::ENV).to receive(:[]).with("GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS") { "true" }
       allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
       allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
       allow(::ENV).to receive(:[]).with("JSON_ENV_DUMMY") { nil }
@@ -341,7 +337,6 @@ describe Google::Auth::Credentials, :private do
 
       json_content = JSON.generate default_keyfile_hash
 
-      allow(::ENV).to receive(:[]).with("GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS") { "true" }
       allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
       allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
       allow(::ENV).to receive(:[]).with("PATH_ENV_TEST") { "/unknown/path/to/file.txt" }
@@ -379,7 +374,6 @@ describe Google::Auth::Credentials, :private do
         self.paths = ["~/default/path/to/file.txt"]
       end
 
-      allow(::ENV).to receive(:[]).with("GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS") { "true" }
       allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
       allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
       allow(::File).to receive(:file?).with(test_json_env_val) { false }
@@ -417,7 +411,6 @@ describe Google::Auth::Credentials, :private do
 
       json_content = JSON.generate default_keyfile_hash
 
-      allow(::ENV).to receive(:[]).with("GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS") { "true" }
       allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
       allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
       allow(::ENV).to receive(:[]).with("JSON_ENV_DUMMY") { nil }
@@ -453,7 +446,6 @@ describe Google::Auth::Credentials, :private do
         self.paths = ["~/default/path/to/file.txt"]
       end
 
-      allow(::ENV).to receive(:[]).with("GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS") { "true" }
       allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
       allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
       allow(::ENV).to receive(:[]).with("JSON_ENV_DUMMY") { nil }
@@ -486,7 +478,6 @@ describe Google::Auth::Credentials, :private do
         self.paths = ["~/default/path/to/file.txt"]
       end
 
-      allow(::ENV).to receive(:[]).with("GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS") { "true" }
       allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
       allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
       allow(::ENV).to receive(:[]).with("JSON_ENV_DUMMY") { nil }
@@ -523,7 +514,6 @@ describe Google::Auth::Credentials, :private do
         self.audience = "https://example.com/token3"
       end
 
-      allow(::ENV).to receive(:[]).with("GOOGLE_AUTH_SUPPRESS_CREDENTIALS_WARNINGS") { "true" }
       allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
       allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
       allow(::ENV).to receive(:[]).with("JSON_ENV_DUMMY") { nil }
@@ -570,20 +560,6 @@ describe Google::Auth::Credentials, :private do
       TestCredentials19.token_credential_uri = nil
       expect(TestCredentials19.token_credential_uri).to eq("https://oauth2.googleapis.com/token")
     end
-  end
-
-  it "warns when cloud sdk credentials are used" do
-    mocked_signet = double "Signet::OAuth2::Client"
-    allow(mocked_signet).to receive(:configure_connection).and_return(mocked_signet)
-    allow(mocked_signet).to receive(:needs_access_token?).and_return(true)
-    allow(mocked_signet).to receive(:fetch_access_token!).and_return(true)
-    allow(Signet::OAuth2::Client).to receive(:new) do |_options|
-      mocked_signet
-    end
-    allow(mocked_signet).to receive(:client_id).and_return(Google::Auth::CredentialsLoader::CLOUD_SDK_CLIENT_ID)
-    expect { Google::Auth::Credentials.new default_keyfile_hash }.to output(
-      Google::Auth::CredentialsLoader::CLOUD_SDK_CREDENTIALS_WARNING + "\n"
-    ).to_stderr
   end
 
   it "does not fetch access token when initialized with a Signet::OAuth2::Client object that already has a token" do
