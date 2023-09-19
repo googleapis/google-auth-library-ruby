@@ -192,13 +192,13 @@ module Google
       end
 
       def self.extract_callback_state request
-        state = MultiJson.load(request[STATE_PARAM] || "{}")
+        state = MultiJson.load(request.params[STATE_PARAM] || "{}")
         redirect_uri = state[CURRENT_URI_KEY]
         callback_state = {
-          AUTH_CODE_KEY  => request[AUTH_CODE_KEY],
-          ERROR_CODE_KEY => request[ERROR_CODE_KEY],
+          AUTH_CODE_KEY  => request.params[AUTH_CODE_KEY],
+          ERROR_CODE_KEY => request.params[ERROR_CODE_KEY],
           SESSION_ID_KEY => state[SESSION_ID_KEY],
-          SCOPE_KEY      => request[SCOPE_KEY]
+          SCOPE_KEY      => request.params[SCOPE_KEY]
         }
         [callback_state, redirect_uri]
       end
