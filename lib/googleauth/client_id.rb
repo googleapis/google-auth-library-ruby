@@ -64,7 +64,6 @@ module Google
       #       `client_secrets.json` files.
       #
       def initialize id, secret
-        CredentialsLoader.warn_if_cloud_sdk_credentials id
         raise "Client id can not be nil" if id.nil?
         raise "Client secret can not be nil" if secret.nil?
         @id = id

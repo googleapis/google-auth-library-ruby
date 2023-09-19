@@ -362,7 +362,6 @@ module Google
         else
           update_from_filepath keyfile, options
         end
-        CredentialsLoader.warn_if_cloud_sdk_credentials @client.client_id
         @project_id ||= CredentialsLoader.load_gcloud_project_id
         @client.fetch_access_token! if @client.needs_access_token?
         @env_vars = nil
