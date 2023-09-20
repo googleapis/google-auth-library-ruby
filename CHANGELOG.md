@@ -1,5 +1,11 @@
 # Release History
 
+### 1.8.1 (2023-09-19)
+
+#### Documentation
+
+* improve ADC related error and warning messages ([#452](https://github.com/googleapis/google-auth-library-ruby/issues/452)) 
+
 ### 1.8.0 (2023-09-07)
 
 #### Features
