@@ -52,6 +52,15 @@ module Google
           @expires_at = normalize_timestamp new_expires_at
         end
 
+        ##
+        # The domain of the universe that issued the credentials 
+        #
+        # @return [String]
+        #
+        def fetch_universe_domain
+          "googleapis.com" # To be updated to JSON read later.
+        end
+
         def fetch_access_token! _options = {}
           # This method is needed for BaseClient
           response = exchange_token

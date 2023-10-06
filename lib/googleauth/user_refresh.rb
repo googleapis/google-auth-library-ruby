@@ -112,6 +112,17 @@ module Google
                         Google::Auth::ScopeUtil.normalize(scope)
         missing_scope.empty?
       end
+
+      ##
+      # The domain of the universe that issued the credentials.
+      # For user credentials it is always `"googleapis.com"`, even if JSON has a different value.
+      #
+      # @return [String]
+      #
+      def fetch_universe_domain
+        # User credentials are only supported in the `"googleapis.com"` universe
+        "googleapis.com"
+      end
     end
   end
 end

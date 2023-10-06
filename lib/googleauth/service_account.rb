@@ -53,12 +53,13 @@ module Google
         raise ArgumentError, "Cannot specify both scope and target_audience" if scope && target_audience
 
         if json_key_io
-          private_key, client_email, project_id, quota_project_id = read_json_key json_key_io
+          private_key, client_email, project_id, quota_project_id, @universe_domain = read_json_key json_key_io
         else
           private_key = unescape ENV[CredentialsLoader::PRIVATE_KEY_VAR]
           client_email = ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
           project_id = ENV[CredentialsLoader::PROJECT_ID_VAR]
           quota_project_id = nil
+          @universe_domain = "googleapis.com" 
         end
         project_id ||= CredentialsLoader.load_gcloud_project_id
 
@@ -101,6 +102,10 @@ module Google
         else
           super
         end
+      end
+
+      def fetch_universe_domain
+        @universe_domain
       end
 
       private
@@ -154,13 +159,14 @@ module Google
       def initialize options = {}
         json_key_io = options[:json_key_io]
         if json_key_io
-          @private_key, @issuer, @project_id, @quota_project_id =
+          @private_key, @issuer, @project_id, @quota_project_id, @universe_domain =
             self.class.read_json_key json_key_io
         else
           @private_key = ENV[CredentialsLoader::PRIVATE_KEY_VAR]
           @issuer = ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
           @project_id = ENV[CredentialsLoader::PROJECT_ID_VAR]
           @quota_project_id = nil
+          @universe_domain = "googleapis.com"
         end
         @project_id ||= CredentialsLoader.load_gcloud_project_id
         @signing_key = OpenSSL::PKey::RSA.new @private_key
@@ -209,6 +215,15 @@ module Google
         assertion["aud"] = jwt_aud_uri if jwt_aud_uri
 
         JWT.encode assertion, @signing_key, SIGNING_ALGORITHM
+      end
+
+      ##
+      # The domain of the universe that issued the credentials 
+      #
+      # @return [String]
+      #
+      def fetch_universe_domain
+        @universe_domain
       end
     end
   end

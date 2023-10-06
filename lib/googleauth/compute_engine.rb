@@ -93,6 +93,16 @@ module Google
         alias unmemoize_all reset_cache
       end
 
+      ##
+      # The domain of the universe as returned from the metadata server.
+      # The first time this method is called it will make a call to the metadata server.
+      #
+      # @return [String]
+      #
+      def fetch_universe_domain
+        "googleapis.com" # To be updated to metadata server read later.
+      end
+
       # Overrides the super class method to change how access tokens are
       # fetched.
       def fetch_access_token options = {}
