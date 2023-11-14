@@ -53,12 +53,13 @@ module Google
         raise ArgumentError, "Cannot specify both scope and target_audience" if scope && target_audience
 
         if json_key_io
-          private_key, client_email, project_id, quota_project_id = read_json_key json_key_io
+          private_key, client_email, project_id, quota_project_id, universe_domain = read_json_key json_key_io
         else
           private_key = unescape ENV[CredentialsLoader::PRIVATE_KEY_VAR]
           client_email = ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
           project_id = ENV[CredentialsLoader::PROJECT_ID_VAR]
           quota_project_id = nil
+          universe_domain = nil
         end
         project_id ||= CredentialsLoader.load_gcloud_project_id
 
@@ -70,7 +71,8 @@ module Google
             issuer:                 client_email,
             signing_key:            OpenSSL::PKey::RSA.new(private_key),
             project_id:             project_id,
-            quota_project_id:       quota_project_id)
+            quota_project_id:       quota_project_id,
+            universe_domain:        universe_domain || "googleapis.com")
           .configure_connection(options)
       end
 
@@ -95,8 +97,9 @@ module Google
       def apply! a_hash, opts = {}
         # Use a self-singed JWT if there's no information that can be used to
         # obtain an OAuth token, OR if there are scopes but also an assertion
-        # that they are default scopes that shouldn't be used to fetch a token.
-        if target_audience.nil? && (scope.nil? || enable_self_signed_jwt?)
+        # that they are default scopes that shouldn't be used to fetch a token,
+        # OR we are not in the default universe and thus OAuth isn't supported.
+        if target_audience.nil? && (scope.nil? || enable_self_signed_jwt? || universe_domain != "googleapis.com")
           apply_self_signed_jwt! a_hash
         else
           super
@@ -138,6 +141,7 @@ module Google
       extend JsonKeyReader
       attr_reader :project_id
       attr_reader :quota_project_id
+      attr_accessor :universe_domain
 
       # Create a ServiceAccountJwtHeaderCredentials.
       #
@@ -154,14 +158,16 @@ module Google
       def initialize options = {}
         json_key_io = options[:json_key_io]
         if json_key_io
-          @private_key, @issuer, @project_id, @quota_project_id =
+          @private_key, @issuer, @project_id, @quota_project_id, @universe_domain =
             self.class.read_json_key json_key_io
         else
           @private_key = ENV[CredentialsLoader::PRIVATE_KEY_VAR]
           @issuer = ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
           @project_id = ENV[CredentialsLoader::PROJECT_ID_VAR]
           @quota_project_id = nil
+          @universe_domain = nil
         end
+        @universe_domain ||= "googleapis.com"
         @project_id ||= CredentialsLoader.load_gcloud_project_id
         @signing_key = OpenSSL::PKey::RSA.new @private_key
         @scope = options[:scope]

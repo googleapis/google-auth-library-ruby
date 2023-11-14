@@ -83,7 +83,7 @@ module Google
       # Overrides the super class method to change how access tokens are
       # fetched.
       def fetch_access_token _options = {}
-        if target_audience
+        if token_type == :id_token
           query = { "audience" => target_audience, "format" => "full" }
           entry = "service-accounts/default/identity"
         else
@@ -113,12 +113,16 @@ module Google
       private
 
       def build_token_hash body, content_type
-        if ["text/html", "application/text"].include? content_type
-          key = target_audience ? "id_token" : "access_token"
-          { key => body }
-        else
-          Signet::OAuth2.parse_credentials body, content_type
-        end
+        hash =
+          if ["text/html", "application/text"].include? content_type
+            { token_type.to_s => body }
+          else
+            Signet::OAuth2.parse_credentials body, content_type
+          end
+        universe_domain = Google::Cloud.env.lookup_metadata "universe", "universe_domain"
+        universe_domain = "googleapis.com" if !universe_domain || universe_domain.empty?
+        hash["universe_domain"] = universe_domain.strip
+        hash
       end
     end
   end

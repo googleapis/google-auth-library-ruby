@@ -41,11 +41,19 @@ describe Google::Auth::UserRefreshCredentials do
       quota_project_id: "test_project"
     }
   end
+  let :cred_json_with_universe_domain do
+    universe_data = { universe_domain: "myuniverse.com" }
+    cred_json.merge universe_data
+  end
 
   before :example do
     @key = OpenSSL::PKey::RSA.new 2048
     @client = UserRefreshCredentials.make_creds(
       json_key_io: StringIO.new(cred_json_text),
+      scope:       "https://www.googleapis.com/auth/userinfo.profile"
+    )
+    @non_gdu_client = UserRefreshCredentials.make_creds(
+      json_key_io: StringIO.new(cred_json_text_with_universe_domain),
       scope:       "https://www.googleapis.com/auth/userinfo.profile"
     )
   end
@@ -65,6 +73,11 @@ describe Google::Auth::UserRefreshCredentials do
   def cred_json_text missing = nil
     cred_json.delete missing.to_sym unless missing.nil?
     MultiJson.dump cred_json
+  end
+
+  def cred_json_text_with_universe_domain missing = nil
+    cred_json_with_universe_domain.delete missing.to_sym unless missing.nil?
+    MultiJson.dump cred_json_with_universe_domain
   end
 
   it_behaves_like "apply/apply! are OK"
@@ -261,6 +274,16 @@ describe Google::Auth::UserRefreshCredentials do
         expect(@clz.from_system_default_path(@scope)).to_not be_nil
         File.delete @path
       end
+    end
+  end
+
+  describe "#universe_domain" do
+    it "loads the default domain" do
+      expect(@client.universe_domain).to eq("googleapis.com")
+    end
+
+    it "loads a custom domain" do
+      expect(@non_gdu_client.universe_domain).to eq("myuniverse.com")
     end
   end
 
