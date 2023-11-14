@@ -85,8 +85,7 @@ module Google
         #     true if the credentials represent a workforce pool.
         #     false if they represent a workload.
         def is_workforce_pool?
-          pattern = "//iam\.googleapis\.com/locations/[^/]+/workforcePools/"
-          /#{pattern}/.match?(@audience || "")
+          %r{/iam\.googleapis\.com/locations/[^/]+/workforcePools/}.match?(@audience || "")
         end
 
         private

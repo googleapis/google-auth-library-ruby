@@ -14,9 +14,6 @@ jobs:
       matrix:
         include:
           - os: ubuntu-20.04
-            ruby: "2.6"
-            task: test , spec
-          - os: ubuntu-20.04
             ruby: "2.7"
             task: test , spec
           - os: ubuntu-20.04
@@ -26,16 +23,16 @@ jobs:
             ruby: "3.1"
             task: test , spec  
           - os: ubuntu-22.04
-            ruby: "3.1"
+            ruby: "3.2"
             task: test , spec
           - os: macos-latest
-            ruby: "3.0"
+            ruby: "3.2"
             task: test , spec
           - os: windows-latest
-            ruby: "3.0"
+            ruby: "3.2"
             task: test , spec
           - os: ubuntu-latest
-            ruby: "3.0"
+            ruby: "3.2"
             task: rubocop , integration , build , yardoc , linkinator
       fail-fast: false
     runs-on: ${{ matrix.os }}

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require "faraday"
+require "google-cloud-env"
 require "googleauth/signet"
 
 module Google
@@ -33,83 +33,69 @@ module Google
     # Extends Signet::OAuth2::Client so that the auth token is obtained from
     # the GCE metadata server.
     class GCECredentials < Signet::OAuth2::Client
-      # The IP Address is used in the URIs to speed up failures on non-GCE
-      # systems.
+      # @private Unused and deprecated but retained to prevent breaking changes
       DEFAULT_METADATA_HOST = "169.254.169.254".freeze
 
-      # @private Unused and deprecated
+      # @private Unused and deprecated but retained to prevent breaking changes
       COMPUTE_AUTH_TOKEN_URI =
         "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token".freeze
-      # @private Unused and deprecated
+      # @private Unused and deprecated but retained to prevent breaking changes
       COMPUTE_ID_TOKEN_URI =
         "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/identity".freeze
-      # @private Unused and deprecated
+      # @private Unused and deprecated but retained to prevent breaking changes
       COMPUTE_CHECK_URI = "http://169.254.169.254".freeze
 
-      @on_gce_cache = {}
-
       class << self
+        # @private Unused and deprecated
         def metadata_host
           ENV.fetch "GCE_METADATA_HOST", DEFAULT_METADATA_HOST
         end
 
+        # @private Unused and deprecated
         def compute_check_uri
           "http://#{metadata_host}".freeze
         end
 
+        # @private Unused and deprecated
         def compute_auth_token_uri
           "#{compute_check_uri}/computeMetadata/v1/instance/service-accounts/default/token".freeze
         end
 
+        # @private Unused and deprecated
         def compute_id_token_uri
           "#{compute_check_uri}/computeMetadata/v1/instance/service-accounts/default/identity".freeze
         end
 
         # Detect if this appear to be a GCE instance, by checking if metadata
         # is available.
-        def on_gce? options = {}, reload = false # rubocop:disable Style/OptionalBooleanParameter
-          # We can follow OptionalBooleanParameter here because it's a public interface, we can't change it.
-          @on_gce_cache.delete options if reload
-          @on_gce_cache.fetch options do
-            @on_gce_cache[options] = begin
-              # TODO: This should use google-cloud-env instead.
-              c = options[:connection] || Faraday.default_connection
-              headers = { "Metadata-Flavor" => "Google" }
-              resp = c.get compute_check_uri, nil, headers do |req|
-                req.options.timeout = 1.0
-                req.options.open_timeout = 0.1
-              end
-              return false unless resp.status == 200
-              resp.headers["Metadata-Flavor"] == "Google"
-            rescue Faraday::TimeoutError, Faraday::ConnectionFailed
-              false
-            end
-          end
+        # The parameters are deprecated and unused.
+        def on_gce? _options = {}, _reload = false # rubocop:disable Style/OptionalBooleanParameter
+          Google::Cloud.env.metadata?
         end
 
         def reset_cache
-          @on_gce_cache.clear
+          Google::Cloud.env.compute_metadata.reset_existence!
+          Google::Cloud.env.compute_metadata.cache.expire_all!
         end
         alias unmemoize_all reset_cache
       end
 
       # Overrides the super class method to change how access tokens are
       # fetched.
-      def fetch_access_token options = {}
-        c = options[:connection] || Faraday.default_connection
-        retry_with_error do
-          uri = target_audience ? GCECredentials.compute_id_token_uri : GCECredentials.compute_auth_token_uri
-          query = target_audience ? { "audience" => target_audience, "format" => "full" } : {}
-          query[:scopes] = Array(scope).join "," if scope
-          resp = c.get uri, query, "Metadata-Flavor" => "Google"
+      def fetch_access_token _options = {}
+        if target_audience
+          query = { "audience" => target_audience, "format" => "full" }
+          entry = "service-accounts/default/identity"
+        else
+          query = {}
+          entry = "service-accounts/default/token"
+        end
+        query[:scopes] = Array(scope).join "," if scope
+        begin
+          resp = Google::Cloud.env.lookup_metadata_response "instance", entry, query: query
           case resp.status
           when 200
-            content_type = resp.headers["content-type"]
-            if ["text/html", "application/text"].include? content_type
-              { (target_audience ? "id_token" : "access_token") => resp.body }
-            else
-              Signet::OAuth2.parse_credentials resp.body, content_type
-            end
+            build_token_hash resp.body, resp.headers["content-type"]
           when 403, 500
             msg = "Unexpected error code #{resp.status} #{UNEXPECTED_ERROR_SUFFIX}"
             raise Signet::UnexpectedStatusError, msg
@@ -119,6 +105,19 @@ module Google
             msg = "Unexpected error code #{resp.status} #{UNEXPECTED_ERROR_SUFFIX}"
             raise Signet::AuthorizationError, msg
           end
+        rescue Google::Cloud::Env::MetadataServerNotResponding => e
+          raise Signet::AuthorizationError, e.message
+        end
+      end
+
+      private
+
+      def build_token_hash body, content_type
+        if ["text/html", "application/text"].include? content_type
+          key = target_audience ? "id_token" : "access_token"
+          { key => body }
+        else
+          Signet::OAuth2.parse_credentials body, content_type
         end
       end
     end
