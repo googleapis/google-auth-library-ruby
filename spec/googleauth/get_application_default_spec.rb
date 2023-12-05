@@ -27,6 +27,8 @@ describe "#get_application_default" do
   let(:options) { |example| { dememoize: example } }
 
   before :example do
+    Google::Cloud.env.compute_smbios.override_product_name = "Google Compute Engine"
+    GCECredentials.reset_cache
     @key = OpenSSL::PKey::RSA.new 2048
     @var_name = ENV_VAR
     @credential_vars = [
@@ -42,6 +44,7 @@ describe "#get_application_default" do
   end
 
   after :example do
+    Google::Cloud.env.compute_smbios.override_product_name = nil
     @credential_vars.each { |var| ENV[var] = @original_env_vals[var] }
     ENV["HOME"] = @home unless @home == ENV["HOME"]
     ENV["APPDATA"] = @app_data unless @app_data == ENV["APPDATA"]
@@ -59,17 +62,15 @@ describe "#get_application_default" do
     end
 
     it "fails without default file or env if not on compute engine" do
-      stub = stub_request(:get, "http://169.254.169.254")
-             .to_return(status:  404,
-                        headers: { "Metadata-Flavor" => "NotGoogle" })
-      Dir.mktmpdir do |dir|
-        ENV.delete @var_name unless ENV[@var_name].nil? # no env var
-        ENV["HOME"] = dir # no config present in this tmp dir
-        expect do
-          Google::Auth.get_application_default @scope, options
-        end.to raise_error RuntimeError
+      Google::Cloud.env.compute_smbios.with_override_product_name "Someone else" do
+        Dir.mktmpdir do |dir|
+          ENV.delete @var_name unless ENV[@var_name].nil? # no env var
+          ENV["HOME"] = dir # no config present in this tmp dir
+          expect do
+            Google::Auth.get_application_default @scope, options
+          end.to raise_error RuntimeError
+        end
       end
-      expect(stub).to have_been_requested
     end
   end
 

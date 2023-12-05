@@ -27,8 +27,14 @@ describe Google::Auth::GCECredentials do
   GCECredentials = Google::Auth::GCECredentials
 
   before :example do
+    Google::Cloud.env.compute_smbios.override_product_name = "Google Compute Engine"
+    GCECredentials.reset_cache
     @client = GCECredentials.new
     @id_client = GCECredentials.new target_audience: "https://pubsub.googleapis.com/"
+  end
+
+  after :example do
+    Google::Cloud.env.compute_smbios.override_product_name = nil
   end
 
   def make_auth_stubs opts
@@ -200,13 +206,14 @@ describe Google::Auth::GCECredentials do
       stub = stub_request(:get, "http://169.254.169.254")
              .with(headers: { "Metadata-Flavor" => "Google" })
              .to_return(status:  404,
-                        headers: { "Metadata-Flavor" => "NotGoogle" })
+                        headers: { "Metadata-Flavor" => "Google" })
       expect(GCECredentials.on_gce?({}, true)).to eq(false)
       expect(stub).to have_been_requested
     end
 
     it "should honor GCE_METADATA_HOST environment variable" do
       ENV["GCE_METADATA_HOST"] = "mymetadata.example.com"
+      Google::Cloud.env.compute_metadata.reset!
       begin
         stub = stub_request(:get, "http://mymetadata.example.com")
                .with(headers: { "Metadata-Flavor" => "Google" })
@@ -216,17 +223,7 @@ describe Google::Auth::GCECredentials do
         expect(stub).to have_been_requested
       ensure
         ENV.delete "GCE_METADATA_HOST"
-      end
-    end
-
-    it "should honor reload flag" do
-      begin
-        stub = stub_request(:get, "http://169.254.169.254")
-                .with(headers: { "Metadata-Flavor" => "Google" })
-                .to_return(status: 200,
-                           headers: { "Metadata-Flavor" => "Google" })
-        expect(GCECredentials.on_gce?({}, false)).to eq(true)
-        expect(stub).to_not have_been_requested
+        Google::Cloud.env.compute_metadata.reset!
       end
     end
   end

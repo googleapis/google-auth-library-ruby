@@ -55,11 +55,7 @@ module Google
               DefaultCredentials.from_well_known_path(scope, options) ||
               DefaultCredentials.from_system_default_path(scope, options)
       return creds unless creds.nil?
-      unless GCECredentials.on_gce? options
-        # Clear cache of the result of GCECredentials.on_gce?
-        GCECredentials.reset_cache
-        raise NOT_FOUND_ERROR
-      end
+      raise NOT_FOUND_ERROR unless GCECredentials.on_gce? options
       GCECredentials.new options.merge(scope: scope)
     end
   end

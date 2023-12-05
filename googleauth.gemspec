@@ -20,9 +20,10 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
 
   gem.platform = Gem::Platform::RUBY
-  gem.required_ruby_version = ">= 2.6"
+  gem.required_ruby_version = ">= 2.7"
 
-  gem.add_dependency "faraday", ">= 0.17.3", "< 3.a"
+  gem.add_dependency "faraday", ">= 1.0", "< 3.a"
+  gem.add_dependency "google-cloud-env", "~> 2.0", ">= 2.0.1"
   gem.add_dependency "jwt", ">= 1.4", "< 3.0"
   gem.add_dependency "multi_json", "~> 1.11"
   gem.add_dependency "os", ">= 0.9", "< 2.0"
