@@ -1,5 +1,12 @@
 # Release History
 
+### 1.9.0 (2023-12-07)
+
+#### Features
+
+* Include universe_domain in credentials ([#460](https://github.com/googleapis/google-auth-library-ruby/issues/460)) 
+* Use google-cloud-env for more robust Metadata Service access ([#459](https://github.com/googleapis/google-auth-library-ruby/issues/459)) 
+
 ### 1.8.1 (2023-09-19)
 
 #### Documentation
