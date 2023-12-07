@@ -42,6 +42,7 @@ module Google
 
         attr_reader :expires_at
         attr_accessor :access_token
+        attr_accessor :universe_domain
 
         def expires_within? seconds
           # This method is needed for BaseClient
@@ -110,6 +111,7 @@ module Google
           @quota_project_id = options[:quota_project_id]
           @project_id = nil
           @workforce_pool_user_project = options[:workforce_pool_user_project]
+          @universe_domain = options[:universe_domain] || "googleapis.com"
 
           @expires_at = nil
           @access_token = nil

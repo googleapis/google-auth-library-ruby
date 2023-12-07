@@ -38,6 +38,15 @@ describe Google::Auth::GCECredentials do
   end
 
   def make_auth_stubs opts
+    universe_stub = stub_request(:get, "http://169.254.169.254/computeMetadata/v1/universe/universe_domain")
+      .with(headers: { "Metadata-Flavor" => "Google" })
+    if !defined?(@universe_domain) || !@universe_domain
+      universe_stub.to_return body: "", status:  404, headers: {"Metadata-Flavor" => "Google" }
+    elsif @universe_domain.is_a? Class
+      universe_stub.to_raise @universe_domain
+    else
+      universe_stub.to_return body: @universe_domain, status: 200, headers: {"Metadata-Flavor" => "Google" }
+    end
     if opts[:access_token]
       body = MultiJson.dump("access_token" => opts[:access_token],
                             "token_type"   => "Bearer",
@@ -50,17 +59,58 @@ describe Google::Auth::GCECredentials do
         .with(headers: { "Metadata-Flavor" => "Google" })
         .to_return(body:    body,
                    status:  200,
-                   headers: { "Content-Type" => "application/json" })
+                   headers: { "Content-Type" => "application/json", "Metadata-Flavor" => "Google" })
     elsif opts[:id_token]
       stub_request(:get, MD_ID_URI)
         .with(headers: { "Metadata-Flavor" => "Google" })
         .to_return(body:    opts[:id_token],
                    status:  200,
-                   headers: { "Content-Type" => "text/html" })
+                   headers: { "Content-Type" => "text/html", "Metadata-Flavor" => "Google" })
     end
   end
 
-  it_behaves_like "apply/apply! are OK"
+  context "default universe" do
+    it_behaves_like "apply/apply! are OK"
+
+    it "sets the universe" do
+      make_auth_stubs access_token: "1/abcde"
+      @client.fetch_access_token!
+      expect(@client.universe_domain).to eq("googleapis.com")
+    end
+  end
+
+  context "custom universe" do
+    before :example do
+      @universe_domain = "myuniverse.com"
+    end
+
+    it_behaves_like "apply/apply! are OK"
+
+    it "sets the universe" do
+      make_auth_stubs access_token: "1/abcde"
+      @client.fetch_access_token!
+      expect(@client.universe_domain).to eq("myuniverse.com")
+    end
+
+    it "supports updating the universe_domain" do
+      make_auth_stubs access_token: "1/abcde"
+      @client.fetch_access_token!
+      @client.universe_domain = "anotheruniverse.com"
+      expect(@client.universe_domain).to eq("anotheruniverse.com")
+    end
+  end
+
+  context "error in universe_domain" do
+    before :example do
+      @universe_domain = Errno::EHOSTDOWN
+    end
+
+    it "results in an error" do
+      make_auth_stubs access_token: "1/abcde"
+      expect { @client.fetch_access_token! }
+        .to raise_error Signet::AuthorizationError
+    end
+  end
 
   context "metadata is unavailable" do
     describe "#fetch_access_token" do

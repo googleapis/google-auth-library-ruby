@@ -50,7 +50,8 @@ module Google
           "client_secret" => ENV[CredentialsLoader::CLIENT_SECRET_VAR],
           "refresh_token" => ENV[CredentialsLoader::REFRESH_TOKEN_VAR],
           "project_id"    => ENV[CredentialsLoader::PROJECT_ID_VAR],
-          "quota_project_id" => nil
+          "quota_project_id" => nil,
+          "universe_domain" => nil
         }
         new(token_credential_uri: TOKEN_CRED_URI,
             client_id:            user_creds["client_id"],
@@ -58,7 +59,8 @@ module Google
             refresh_token:        user_creds["refresh_token"],
             project_id:           user_creds["project_id"],
             quota_project_id:     user_creds["quota_project_id"],
-            scope:                scope)
+            scope:                scope,
+            universe_domain:      user_creds["universe_domain"] || "googleapis.com")
           .configure_connection(options)
       end
 

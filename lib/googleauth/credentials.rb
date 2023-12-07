@@ -259,7 +259,7 @@ module Google
       # @return [Object] The value
       #
       def self.lookup_auth_param name, method_name = name
-        val = instance_variable_get "@#{name}".to_sym
+        val = instance_variable_get :"@#{name}"
         val = yield if val.nil? && block_given?
         return val unless val.nil?
         return superclass.send method_name if superclass.respond_to? method_name
@@ -328,9 +328,13 @@ module Google
       #   @return [Proc] Returns a reference to the {Signet::OAuth2::Client#apply} method,
       #     suitable for passing as a closure.
       #
+      # @!attribute [rw] universe_domain
+      #   @return [String] The universe domain issuing these credentials.
+      #
       def_delegators :@client,
                      :token_credential_uri, :audience,
-                     :scope, :issuer, :signing_key, :updater_proc, :target_audience
+                     :scope, :issuer, :signing_key, :updater_proc, :target_audience,
+                     :universe_domain, :universe_domain=
 
       ##
       # Creates a new Credentials instance with the provided auth credentials, and with the default
@@ -506,12 +510,15 @@ module Google
 
         needs_scope = options["target_audience"].nil?
         # client options for initializing signet client
-        { token_credential_uri: options["token_credential_uri"],
+        {
+          token_credential_uri: options["token_credential_uri"],
           audience:             options["audience"],
           scope:                (needs_scope ? Array(options["scope"]) : nil),
           target_audience:      options["target_audience"],
           issuer:               options["client_email"],
-          signing_key:          OpenSSL::PKey::RSA.new(options["private_key"]) }
+          signing_key:          OpenSSL::PKey::RSA.new(options["private_key"]),
+          universe_domain:      options["universe_domain"] || "googleapis.com"
+        }
       end
 
       # rubocop:enable Metrics/AbcSize
@@ -526,7 +533,7 @@ module Google
         hash = stringify_hash_keys hash
         hash["scope"] ||= options[:scope]
         hash["target_audience"] ||= options[:target_audience]
-        @project_id ||= (hash["project_id"] || hash["project"])
+        @project_id ||= hash["project_id"] || hash["project"]
         @quota_project_id ||= hash["quota_project_id"]
         @client = init_client hash, options
       end
@@ -536,7 +543,7 @@ module Google
         json = JSON.parse ::File.read(path)
         json["scope"] ||= options[:scope]
         json["target_audience"] ||= options[:target_audience]
-        @project_id ||= (json["project_id"] || json["project"])
+        @project_id ||= json["project_id"] || json["project"]
         @quota_project_id ||= json["quota_project_id"]
         @client = init_client json, options
       end

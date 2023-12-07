@@ -20,6 +20,114 @@ require 'tempfile'
 
 describe Google::Auth::ExternalAccount::Credentials do
 
+  describe "universe_domain checks", :focus do
+    before :example do
+      @tempfile = Tempfile.new("aws")
+    end
+
+    after :example do
+      @tempfile.close
+      @tempfile.unlink
+    end
+
+    def load_file options
+      @tempfile.write(MultiJson.dump(options))
+      @tempfile.rewind
+      Google::Auth::ExternalAccount::Credentials.make_creds(json_key_io: @tempfile)
+    end
+
+    it "loads aws without custom domain" do
+      creds = load_file({
+        type: 'external_account',
+        audience: '//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID',
+        subject_token_type: 'urn:ietf:params:aws:token-type:aws4_request',
+        token_url: 'https://sts.googleapis.com/v1/token',
+        credential_source: {
+          'environment_id' => 'aws1',
+          'region_url' => 'http://169.254.169.254/latest/meta-data/placement/availability-zone',
+          'url' => 'http://169.254.169.254/latest/meta-data/iam/security-credentials',
+          'regional_cred_verification_url' => 'https://sts.{region}.amazonaws.com?Action=GetCallerIdentity&Version=2011-06-15',
+        }
+      })
+      expect(creds.universe_domain).to eq("googleapis.com")
+    end
+
+    it "loads aws with custom domain" do
+      creds = load_file({
+        type: 'external_account',
+        audience: '//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID',
+        subject_token_type: 'urn:ietf:params:aws:token-type:aws4_request',
+        token_url: 'https://sts.googleapis.com/v1/token',
+        credential_source: {
+          'environment_id' => 'aws1',
+          'region_url' => 'http://169.254.169.254/latest/meta-data/placement/availability-zone',
+          'url' => 'http://169.254.169.254/latest/meta-data/iam/security-credentials',
+          'regional_cred_verification_url' => 'https://sts.{region}.amazonaws.com?Action=GetCallerIdentity&Version=2011-06-15',
+        },
+        universe_domain: "myuniverse.com"
+      })
+      expect(creds.universe_domain).to eq("myuniverse.com")
+    end
+
+    it "loads identity pool without custom domain" do
+      creds = load_file({
+        type: 'external_account',
+        audience: '//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID',
+        subject_token_type: 'urn:ietf:params:oauth:token-type:jwt',
+        token_url: 'https://sts.googleapis.com/v1/token',
+        credential_source: {
+          'file' => 'external_suject_token.txt'
+        }
+      })
+      expect(creds.universe_domain).to eq("googleapis.com")
+    end
+
+    it "loads identity pool with custom domain" do
+      creds = load_file({
+        type: 'external_account',
+        audience: '//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID',
+        subject_token_type: 'urn:ietf:params:oauth:token-type:jwt',
+        token_url: 'https://sts.googleapis.com/v1/token',
+        credential_source: {
+          'file' => 'external_suject_token.txt'
+        },
+        universe_domain: "myuniverse.com"
+      })
+      expect(creds.universe_domain).to eq("myuniverse.com")
+    end
+
+    it "loads pluggable without custom domain" do
+      creds = load_file({
+        type: 'external_account',
+        audience: '//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID',
+        subject_token_type: 'urn:ietf:params:oauth:token-type:jwt',
+        token_url: 'https://sts.googleapis.com/v1/token',
+        credential_source: {
+          executable: {
+            command: 'dummy_command',
+          },
+        }
+      })
+      expect(creds.universe_domain).to eq("googleapis.com")
+    end
+
+    it "loads pluggable with custom domain" do
+      creds = load_file({
+        type: 'external_account',
+        audience: '//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID',
+        subject_token_type: 'urn:ietf:params:oauth:token-type:jwt',
+        token_url: 'https://sts.googleapis.com/v1/token',
+        credential_source: {
+          executable: {
+            command: 'dummy_command',
+          },
+        },
+        universe_domain: "myuniverse.com"
+      })
+      expect(creds.universe_domain).to eq("myuniverse.com")
+    end
+  end
+
   describe :make_creds do
     it 'should be able to make aws credentials' do
       f = Tempfile.new('aws')

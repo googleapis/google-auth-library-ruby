@@ -25,6 +25,15 @@ module Signet
     class Client
       include Google::Auth::BaseClient
 
+      alias update_token_signet_base update_token!
+
+      def update_token! options = {}
+        options = deep_hash_normalize options
+        update_token_signet_base options
+        self.universe_domain = options[:universe_domain] if options.key? :universe_domain
+        self
+      end
+
       def configure_connection options
         @connection_info =
           options[:connection_builder] || options[:default_connection]
@@ -35,6 +44,9 @@ module Signet
       def token_type
         target_audience ? :id_token : :access_token
       end
+
+      # Set the universe domain
+      attr_accessor :universe_domain
 
       alias orig_fetch_access_token! fetch_access_token!
       def fetch_access_token! options = {}

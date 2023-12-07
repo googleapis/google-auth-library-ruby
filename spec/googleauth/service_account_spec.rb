@@ -95,7 +95,6 @@ shared_examples "jwt header auth" do |aud="https://www.googleapis.com/myservice"
   end
 end
 
-
 describe Google::Auth::ServiceAccountCredentials do
   ServiceAccountCredentials = Google::Auth::ServiceAccountCredentials
   let(:client_email) { "app@developer.gserviceaccount.com" }
@@ -110,11 +109,19 @@ describe Google::Auth::ServiceAccountCredentials do
       quota_project_id: "b_project_id"
     }
   end
+  let :cred_json_with_universe_domain do
+    universe_data = { universe_domain: "myuniverse.com" }
+    cred_json.merge universe_data
+  end
 
   before :example do
     @key = OpenSSL::PKey::RSA.new 2048
     @client = ServiceAccountCredentials.make_creds(
       json_key_io: StringIO.new(cred_json_text),
+      scope:       "https://www.googleapis.com/auth/userinfo.profile"
+    )
+    @non_gdu_client = ServiceAccountCredentials.make_creds(
+      json_key_io: StringIO.new(cred_json_text_with_universe_domain),
       scope:       "https://www.googleapis.com/auth/userinfo.profile"
     )
     @id_client = ServiceAccountCredentials.make_creds(
@@ -148,7 +155,26 @@ describe Google::Auth::ServiceAccountCredentials do
     MultiJson.dump cred_json
   end
 
+  def cred_json_text_with_universe_domain
+    MultiJson.dump cred_json_with_universe_domain
+  end
+
   it_behaves_like "apply/apply! are OK"
+
+  describe "universe_domain" do
+    it "defaults to googleapis" do
+      expect(@client.universe_domain).to eq("googleapis.com")
+    end
+
+    it "reads a custom domain" do
+      expect(@non_gdu_client.universe_domain).to eq("myuniverse.com")
+    end
+
+    it "supports setting the universe_domain" do
+      @client.universe_domain = "myuniverse.com"
+      expect(@client.universe_domain).to eq("myuniverse.com")
+    end
+  end
 
   context "when scope is nil" do
     before :example do
@@ -171,6 +197,15 @@ describe Google::Auth::ServiceAccountCredentials do
     before :example do
       @client.scope = ['scope/1', 'scope/2']
       @client.instance_variable_set(:@enable_self_signed_jwt, true)
+    end
+
+    it_behaves_like "jwt header auth", nil
+  end
+
+  context "when the universe domain is not google default" do
+    before :example do
+      @client.universe_domain = "myuniverse.com"
+      @client.scope = ['scope/1', 'scope/2']
     end
 
     it_behaves_like "jwt header auth", nil

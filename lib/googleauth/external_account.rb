@@ -73,7 +73,8 @@ module Google
               subject_token_type: user_creds[:subject_token_type],
               token_url: user_creds[:token_url],
               credential_source: user_creds[:credential_source],
-              service_account_impersonation_url: user_creds[:service_account_impersonation_url]
+              service_account_impersonation_url: user_creds[:service_account_impersonation_url],
+              universe_domain: user_creds[:universe_domain]
             )
           end
 

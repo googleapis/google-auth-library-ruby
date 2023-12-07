@@ -27,7 +27,8 @@ module Google
           json_key["private_key"],
           json_key["client_email"],
           json_key["project_id"],
-          json_key["quota_project_id"]
+          json_key["quota_project_id"],
+          json_key["universe_domain"]
         ]
       end
     end
