@@ -77,6 +77,15 @@ describe Google::Auth::GCECredentials do
       @client.fetch_access_token!
       expect(@client.universe_domain).to eq("googleapis.com")
     end
+
+    it "returns a consistent expiry using cached data" do
+      make_auth_stubs access_token: "1/abcde"
+      @client.fetch_access_token!
+      expiry = @client.expires_at
+      sleep 1
+      @client.fetch_access_token!
+      expect(@client.expires_at.to_f).to be_within(0.1).of(expiry.to_f)
+    end
   end
 
   context "custom universe" do

@@ -20,7 +20,7 @@ require 'tempfile'
 
 describe Google::Auth::ExternalAccount::Credentials do
 
-  describe "universe_domain checks", :focus do
+  describe "universe_domain checks" do
     before :example do
       @tempfile = Tempfile.new("aws")
     end

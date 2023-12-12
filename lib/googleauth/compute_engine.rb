@@ -95,7 +95,7 @@ module Google
           resp = Google::Cloud.env.lookup_metadata_response "instance", entry, query: query
           case resp.status
           when 200
-            build_token_hash resp.body, resp.headers["content-type"]
+            build_token_hash resp.body, resp.headers["content-type"], resp.retrieval_monotonic_time
           when 403, 500
             msg = "Unexpected error code #{resp.status} #{UNEXPECTED_ERROR_SUFFIX}"
             raise Signet::UnexpectedStatusError, msg
@@ -112,7 +112,7 @@ module Google
 
       private
 
-      def build_token_hash body, content_type
+      def build_token_hash body, content_type, retrieval_time
         hash =
           if ["text/html", "application/text"].include? content_type
             { token_type.to_s => body }
@@ -122,6 +122,15 @@ module Google
         universe_domain = Google::Cloud.env.lookup_metadata "universe", "universe_domain"
         universe_domain = "googleapis.com" if !universe_domain || universe_domain.empty?
         hash["universe_domain"] = universe_domain.strip
+        # The response might have been cached, which means expires_in might be
+        # stale. Update it based on the time since the data was retrieved.
+        # We also ensure expires_in is conservative; subtracting at least 1
+        # second to offset any skew from metadata server latency.
+        if hash["expires_in"].is_a? Numeric
+          offset = 1 + (Process.clock_gettime(Process::CLOCK_MONOTONIC) - retrieval_time).round
+          hash["expires_in"] -= offset if offset.positive?
+          hash["expires_in"] = 0 if hash["expires_in"].negative?
+        end
         hash
       end
     end
