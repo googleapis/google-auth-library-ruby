@@ -1,5 +1,11 @@
 # Release History
 
+### 1.9.1 (2023-12-12)
+
+#### Bug Fixes
+
+* update expires_in for cached metadata-retrieved tokens ([#464](https://github.com/googleapis/google-auth-library-ruby/issues/464)) 
+
 ### 1.9.0 (2023-12-07)
 
 #### Features
