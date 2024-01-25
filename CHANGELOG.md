@@ -1,5 +1,11 @@
 # Release History
 
+### 1.9.2 (2024-01-25)
+
+#### Bug Fixes
+
+* Prevent access tokens from being fetched at service account construction in the self-signed-jwt case ([#467](https://github.com/googleapis/google-auth-library-ruby/issues/467)) 
+
 ### 1.9.1 (2023-12-12)
 
 #### Bug Fixes
