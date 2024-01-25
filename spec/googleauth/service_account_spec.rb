@@ -92,6 +92,12 @@ shared_examples "jwt header auth" do |aud="https://www.googleapis.com/myservice"
         expect_is_encoded_jwt auth_header
       end
     end
+
+    describe "#needs_access_token?" do
+      it "should always return false" do
+        expect(@client.needs_access_token?).to eq(false)
+      end
+    end
   end
 end
 

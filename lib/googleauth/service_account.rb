@@ -39,7 +39,11 @@ module Google
       attr_reader :quota_project_id
 
       def enable_self_signed_jwt?
-        @enable_self_signed_jwt
+        # Use a self-singed JWT if there's no information that can be used to
+        # obtain an OAuth token, OR if there are scopes but also an assertion
+        # that they are default scopes that shouldn't be used to fetch a token,
+        # OR we are not in the default universe and thus OAuth isn't supported.
+        target_audience.nil? && (scope.nil? || @enable_self_signed_jwt || universe_domain != "googleapis.com")
       end
 
       # Creates a ServiceAccountCredentials.
@@ -95,15 +99,16 @@ module Google
       # Extends the base class to use a transient
       # ServiceAccountJwtHeaderCredentials for certain cases.
       def apply! a_hash, opts = {}
-        # Use a self-singed JWT if there's no information that can be used to
-        # obtain an OAuth token, OR if there are scopes but also an assertion
-        # that they are default scopes that shouldn't be used to fetch a token,
-        # OR we are not in the default universe and thus OAuth isn't supported.
-        if target_audience.nil? && (scope.nil? || enable_self_signed_jwt? || universe_domain != "googleapis.com")
+        if enable_self_signed_jwt?
           apply_self_signed_jwt! a_hash
         else
           super
         end
+      end
+
+      # Modifies this logic so it also requires self-signed-jwt to be disabled
+      def needs_access_token?
+        super && !enable_self_signed_jwt?
       end
 
       private
@@ -215,6 +220,11 @@ module Google
         assertion["aud"] = jwt_aud_uri if jwt_aud_uri
 
         JWT.encode assertion, @signing_key, SIGNING_ALGORITHM
+      end
+
+      # Duck-types the corresponding method from BaseClient
+      def needs_access_token?
+        false
       end
     end
   end
