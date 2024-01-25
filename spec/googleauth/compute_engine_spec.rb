@@ -69,7 +69,30 @@ describe Google::Auth::GCECredentials do
     end
   end
 
-  context "default universe" do
+  context "default universe due to 404 from MDS" do
+    it_behaves_like "apply/apply! are OK"
+
+    it "sets the universe" do
+      make_auth_stubs access_token: "1/abcde"
+      @client.fetch_access_token!
+      expect(@client.universe_domain).to eq("googleapis.com")
+    end
+
+    it "returns a consistent expiry using cached data" do
+      make_auth_stubs access_token: "1/abcde"
+      @client.fetch_access_token!
+      expiry = @client.expires_at
+      sleep 1
+      @client.fetch_access_token!
+      expect(@client.expires_at.to_f).to be_within(0.1).of(expiry.to_f)
+    end
+  end
+
+  context "default universe due to empty data from MDS" do
+    before :example do
+      @universe_domain = ""
+    end
+
     it_behaves_like "apply/apply! are OK"
 
     it "sets the universe" do
