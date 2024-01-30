@@ -248,12 +248,11 @@ module Google
         credentials
       end
 
-      # A cryptographically random string that is used to correlate the
-      # authorization request to the token request.
       # The code verifier for PKCE for OAuth 2.0. When set, the
       # authorization URI will contain the Code Challenge and Code
       # Challenge Method querystring parameters, and the token URI will
       # contain the Code Verifier parameter.
+      #
       # @param [String|nil] new_code_erifier
       def code_verifier= new_code_verifier
         @code_verifier = new_code_verifier

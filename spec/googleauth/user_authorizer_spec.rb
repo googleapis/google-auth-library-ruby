@@ -77,11 +77,6 @@ describe Google::Auth::UserAuthorizer do
     it "should include the scope" do
       expect(URI(uri).query).to match(/scope=email%20profile/)
     end
-
-    it "should include code_challenge and code_challenge_method" do
-      expect(URI(uri).query).to match(/code_challenge=/)
-      expect(URI(uri).query).to match(/code_challenge_method=S256/)
-    end
   end
 
   context "when generating authorization URLs and callback_uri is 'postmessage'" do
@@ -117,6 +112,11 @@ describe Google::Auth::UserAuthorizer do
     end
 
     it_behaves_like "valid authorization url"
+
+    it "should include code_challenge and code_challenge_method" do
+      expect(URI(uri).query).to match(/code_challenge=/)
+      expect(URI(uri).query).to match(/code_challenge_method=S256/)
+    end
   end
 
   context "when generating authorization URLs with user ID & state" do

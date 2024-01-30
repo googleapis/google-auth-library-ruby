@@ -90,6 +90,7 @@ describe Google::Auth::WebUserAuthorizer do
     end
 
     it "should include code_challenge and code_challenge_method" do
+      authorizer.code_verifier = authorizer.generate_code_verifier
       url = authorizer.get_authorization_url(request: request)
       expect(url).to match(/code_challenge=/)
       expect(url).to match(/code_challenge_method=S256/)
