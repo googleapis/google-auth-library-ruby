@@ -80,6 +80,14 @@ module Google
         alias unmemoize_all reset_cache
       end
 
+      # Construct a GCECredentials
+      def initialize options = {}
+        # Override the constructor to remember whether the universe domain was
+        # overridden by a constructor argument.
+        @universe_domain_overridden = options["universe_domain"] || options[:universe_domain] ? true : false
+        super options
+      end
+
       # Overrides the super class method to change how access tokens are
       # fetched.
       def fetch_access_token _options = {}
@@ -119,9 +127,11 @@ module Google
           else
             Signet::OAuth2.parse_credentials body, content_type
           end
-        universe_domain = Google::Cloud.env.lookup_metadata "universe", "universe_domain"
-        universe_domain = "googleapis.com" if !universe_domain || universe_domain.empty?
-        hash["universe_domain"] = universe_domain.strip
+        unless @universe_domain_overridden
+          universe_domain = Google::Cloud.env.lookup_metadata "universe", "universe_domain"
+          universe_domain = "googleapis.com" if !universe_domain || universe_domain.empty?
+          hash["universe_domain"] = universe_domain.strip
+        end
         # The response might have been cached, which means expires_in might be
         # stale. Update it based on the time since the data was retrieved.
         # We also ensure expires_in is conservative; subtracting at least 1

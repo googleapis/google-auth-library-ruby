@@ -130,6 +130,14 @@ describe Google::Auth::GCECredentials do
       @client.universe_domain = "anotheruniverse.com"
       expect(@client.universe_domain).to eq("anotheruniverse.com")
     end
+
+    it "prioritizes argument-specified universe domain" do
+      make_auth_stubs access_token: "1/abcde"
+      custom_client = GCECredentials.new universe_domain: "override-universe.com"
+      custom_client.fetch_access_token!
+      expect(custom_client.access_token).to eq("1/abcde")
+      expect(custom_client.universe_domain).to eq("override-universe.com")
+    end
   end
 
   context "error in universe_domain" do
