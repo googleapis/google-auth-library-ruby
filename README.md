@@ -97,6 +97,43 @@ get('/oauth2callback') do
 end
 ```
 
+### Example (Web with PKCE)
+
+```ruby
+require 'googleauth'
+require 'googleauth/web_user_authorizer'
+require 'googleauth/stores/redis_token_store'
+require 'redis'
+
+client_id = Google::Auth::ClientId.from_file('/path/to/client_secrets.json')
+scope = ['https://www.googleapis.com/auth/drive']
+token_store = Google::Auth::Stores::RedisTokenStore.new(redis: Redis.new)
+authorizer = Google::Auth::WebUserAuthorizer.new(
+  client_id, scope, token_store, '/oauth2callback')
+
+
+get('/authorize') do
+  # NOTE: Assumes the user is already authenticated to the app
+  user_id = request.session['user_id']
+  # User needs to take care of generating the code_verifier and storing it in
+  # the session.
+  request.session['code_verifier'] ||= authorizer.generate_code_verifier
+  authorizer.code_verifier = request.session['code_verifier']
+  credentials = authorizer.get_credentials(user_id, request)
+  if credentials.nil?
+    redirect authorizer.get_authorization_url(login_hint: user_id, request: request)
+  end
+  # Credentials are valid, can call APIs
+  # ...
+end
+
+get('/oauth2callback') do
+  target_url = Google::Auth::WebUserAuthorizer.handle_auth_callback_deferred(
+    request)
+  redirect target_url
+end
+```
+
 ### Example (Command Line) [Deprecated]
 
 The Google Auth OOB flow has been discontiued on January 31, 2023. The OOB flow is a legacy flow that is no longer considered secure. To continue using Google Auth, please migrate your applications to a more secure flow. For more information on how to do this, please refer to this [OOB Migration](https://developers.google.com/identity/protocols/oauth2/resources/oob-migration) guide.
