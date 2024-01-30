@@ -62,7 +62,7 @@ module Google
       #  Random string of 43-128 chars used to verify the key exchange using
       #  PKCE. Auto-generated if not provided
       def initialize client_id, scope, token_store,
-                    callback_uri = nil, code_verifier = nil
+                     callback_uri = nil, code_verifier = nil
         raise NIL_CLIENT_ID_ERROR if client_id.nil?
         raise NIL_SCOPE_ERROR if scope.nil?
 
@@ -94,12 +94,12 @@ module Google
         scope = options[:scope] || @scope
 
         options[:additional_parameters] ||= {}
-        
+
         if @code_verifier
           options[:additional_parameters].merge!(
-            { 
+            {
               code_challenge: generate_code_challenge(@code_verifier),
-              code_challenge_method: get_code_challenge_method
+              code_challenge_method: code_challenge_method
             }
           )
         end
@@ -176,7 +176,7 @@ module Google
         scope = options[:scope] || @scope
         base_url = options[:base_url]
         options[:additional_parameters] ||= {}
-        options[:additional_parameters].merge!({"code_verifier": @code_verifier})
+        options[:additional_parameters].merge!({ code_verifier: @code_verifier })
         credentials = UserRefreshCredentials.new(
           client_id:             @client_id.id,
           client_secret:         @client_id.secret,
@@ -262,8 +262,7 @@ module Google
       # authorization URL.
       def generate_code_verifier
         random_number = rand 32..96
-        res = SecureRandom.alphanumeric(random_number).to_str
-        res
+        SecureRandom.alphanumeric(random_number).to_str
       end
 
       private
@@ -316,7 +315,7 @@ module Google
         Base64.urlsafe_encode64 digest, padding: false
       end
 
-      def get_code_challenge_method
+      def code_challenge_method
         "S256"
       end
     end

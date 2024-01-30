@@ -100,7 +100,7 @@ module Google
       #  Random string of 43-128 chars used to verify the key exchange using
       #  PKCE. Auto-generated if not provided.
       def initialize client_id, scope, token_store,
-                    callback_uri = nil, code_verifier = nil
+                     callback_uri = nil, code_verifier = nil
         super client_id, scope, token_store, callback_uri, code_verifier
       end
 
