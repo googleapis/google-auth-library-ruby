@@ -98,10 +98,10 @@ module Google
       #  to '/oauth2callback'
       # @param [String] code_verifier
       #  Random string of 43-128 chars used to verify the key exchange using
-      #  PKCE. Auto-generated if not provided.
+      #  PKCE.
       def initialize client_id, scope, token_store,
-                     callback_uri = nil, code_verifier = nil
-        super client_id, scope, token_store, callback_uri, code_verifier
+                     callback_uri = nil, code_verifier: nil
+        super client_id, scope, token_store, callback_uri, code_verifier: code_verifier
       end
 
       # Handle the result of the oauth callback. Exchanges the authorization

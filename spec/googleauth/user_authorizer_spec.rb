@@ -105,7 +105,7 @@ describe Google::Auth::UserAuthorizer do
                                        scope,
                                        token_store,
                                        callback_uri,
-                                       code_verifier)
+                                       code_verifier: code_verifier)
     end
     let :uri do
       authorizer.get_authorization_url

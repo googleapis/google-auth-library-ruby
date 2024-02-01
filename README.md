@@ -99,6 +99,8 @@ end
 
 ### Example (Web with PKCE)
 
+Proof Key for Code Exchange (PKCE) is an [RFC](https://www.rfc-editor.org/rfc/rfc7636) that aims to prevent malicious operating system processes from hijacking an OAUTH 2.0 exchange. PKCE mitigates the above vulnerability by including `code_challenge` and `code_challenge_method` parameters in the Authorization Request and a `code_verifier` parameter in the Access Token Request.
+
 ```ruby
 require 'googleauth'
 require 'googleauth/web_user_authorizer'
@@ -118,7 +120,6 @@ get('/authorize') do
   # User needs to take care of generating the code_verifier and storing it in
   # the session.
   request.session['code_verifier'] ||= authorizer.generate_code_verifier
-  authorizer.code_verifier = request.session['code_verifier']
   credentials = authorizer.get_credentials(user_id, request)
   if credentials.nil?
     redirect authorizer.get_authorization_url(login_hint: user_id, request: request)
