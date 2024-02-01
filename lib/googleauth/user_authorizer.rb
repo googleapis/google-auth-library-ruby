@@ -260,11 +260,9 @@ module Google
 
       # Generate the code verifier needed to be sent while fetching
       # authorization URL.
-      def code_verifier
-        @code_verifier ||= begin
-          random_number = rand 32..96
-          SecureRandom.alphanumeric random_number
-        end
+      def self.generate_code_verifier
+        random_number = rand 32..96
+        SecureRandom.alphanumeric random_number
       end
 
       private

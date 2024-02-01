@@ -119,7 +119,8 @@ get('/authorize') do
   user_id = request.session['user_id']
   # User needs to take care of generating the code_verifier and storing it in
   # the session.
-  request.session['code_verifier'] ||= authorizer.generate_code_verifier
+  request.session['code_verifier'] ||= Google::Auth::WebUserAuthorizer.generate_code_verifier
+  authorizer.code_verifier = request.session['code_verifier']
   credentials = authorizer.get_credentials(user_id, request)
   if credentials.nil?
     redirect authorizer.get_authorization_url(login_hint: user_id, request: request)
