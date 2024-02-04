@@ -356,8 +356,9 @@ module Google
       #
       def initialize keyfile, options = {}
         verify_keyfile_provided! keyfile
-        @project_id = options["project_id"] || options["project"]
-        @quota_project_id = options["quota_project_id"]
+        options = symbolize_hash_keys options
+        @project_id = options[:project_id] || options[:project]
+        @quota_project_id = options[:quota_project_id]
         case keyfile
         when Google::Auth::BaseClient
           update_from_signet keyfile
@@ -484,10 +485,11 @@ module Google
       end
 
       # Initializes the Signet client.
-      def init_client keyfile, connection_options = {}
-        client_opts = client_options keyfile
-        Signet::OAuth2::Client.new(client_opts)
-                              .configure_connection(connection_options)
+      def init_client hash, options = {}
+        options = update_client_options options
+        io = StringIO.new JSON.generate hash
+        options.merge! json_key_io: io
+        Google::Auth::DefaultCredentials.make_creds options
       end
 
       # returns a new Hash with string keys instead of symbol keys.
@@ -495,33 +497,27 @@ module Google
         hash.to_h.transform_keys(&:to_s)
       end
 
-      # rubocop:disable Metrics/AbcSize
-
-      def client_options options
-        # Keyfile options have higher priority over constructor defaults
-        options["token_credential_uri"] ||= self.class.token_credential_uri
-        options["audience"] ||= self.class.audience
-        options["scope"] ||= self.class.scope
-        options["target_audience"] ||= self.class.target_audience
-
-        if !Array(options["scope"]).empty? && options["target_audience"]
-          raise ArgumentError, "Cannot specify both scope and target_audience"
-        end
-
-        needs_scope = options["target_audience"].nil?
-        # client options for initializing signet client
-        {
-          token_credential_uri: options["token_credential_uri"],
-          audience:             options["audience"],
-          scope:                (needs_scope ? Array(options["scope"]) : nil),
-          target_audience:      options["target_audience"],
-          issuer:               options["client_email"],
-          signing_key:          OpenSSL::PKey::RSA.new(options["private_key"]),
-          universe_domain:      options["universe_domain"] || "googleapis.com"
-        }
+      # returns a new Hash with symbol keys instead of string keys.
+      def symbolize_hash_keys hash
+        hash.to_h.transform_keys(&:to_sym)
       end
 
-      # rubocop:enable Metrics/AbcSize
+      def update_client_options options
+        options = options.dup
+
+        # options have higher priority over constructor defaults
+        options[:token_credential_uri] ||= self.class.token_credential_uri
+        options[:audience] ||= self.class.audience
+        options[:scope] ||= self.class.scope
+        options[:target_audience] ||= self.class.target_audience
+
+        if !Array(options[:scope]).empty? && options[:target_audience]
+          raise ArgumentError, "Cannot specify both scope and target_audience"
+        end
+        options.delete :scope unless options[:target_audience].nil?
+
+        options
+      end
 
       def update_from_signet client
         @project_id ||= client.project_id if client.respond_to? :project_id
