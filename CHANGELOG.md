@@ -1,5 +1,15 @@
 # Release History
 
+### 1.10.0 (2024-02-08)
+
+#### Features
+
+* add PKCE to 3 Legged OAuth exchange ([#471](https://github.com/googleapis/google-auth-library-ruby/issues/471)) 
+#### Bug Fixes
+
+* Client library credentials provide correct self-signed JWT and external account behavior when loading from a file path or JSON data ([#474](https://github.com/googleapis/google-auth-library-ruby/issues/474)) 
+* Prioritize universe domain specified in GCECredentials arguments over metadata-fetched value ([#472](https://github.com/googleapis/google-auth-library-ruby/issues/472)) 
+
 ### 1.9.2 (2024-01-25)
 
 #### Bug Fixes
