@@ -98,6 +98,27 @@ describe Google::Auth::UserAuthorizer do
     end
   end
 
+  context "when generating authorization URLs and code_verifier is manually passed" do
+    let(:code_verifier) { "IeJRY4uem0581Lcw6CiZ3fNwngg" }
+    let :authorizer do
+      Google::Auth::UserAuthorizer.new(client_id,
+                                       scope,
+                                       token_store,
+                                       callback_uri,
+                                       code_verifier: code_verifier)
+    end
+    let :uri do
+      authorizer.get_authorization_url
+    end
+
+    it_behaves_like "valid authorization url"
+
+    it "should include code_challenge and code_challenge_method" do
+      expect(URI(uri).query).to match(/code_challenge=/)
+      expect(URI(uri).query).to match(/code_challenge_method=S256/)
+    end
+  end
+
   context "when generating authorization URLs with user ID & state" do
     let :uri do
       authorizer.get_authorization_url login_hint: "user1", state: "mystate"

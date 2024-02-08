@@ -16,6 +16,7 @@ require "uri"
 require "multi_json"
 require "googleauth/signet"
 require "googleauth/user_refresh"
+require "securerandom"
 
 module Google
   module Auth
@@ -57,7 +58,11 @@ module Google
       # @param [String] callback_uri
       #  URL (either absolute or relative) of the auth callback.
       #  Defaults to '/oauth2callback'
-      def initialize client_id, scope, token_store, callback_uri = nil
+      # @param [String] code_verifier
+      #  Random string of 43-128 chars used to verify the key exchange using
+      #  PKCE.
+      def initialize client_id, scope, token_store,
+                     callback_uri = nil, code_verifier: nil
         raise NIL_CLIENT_ID_ERROR if client_id.nil?
         raise NIL_SCOPE_ERROR if scope.nil?
 
@@ -65,6 +70,7 @@ module Google
         @scope = Array(scope)
         @token_store = token_store
         @callback_uri = callback_uri || "/oauth2callback"
+        @code_verifier = code_verifier
       end
 
       # Build the URL for requesting authorization.
@@ -86,6 +92,18 @@ module Google
       #  Authorization url
       def get_authorization_url options = {}
         scope = options[:scope] || @scope
+
+        options[:additional_parameters] ||= {}
+
+        if @code_verifier
+          options[:additional_parameters].merge!(
+            {
+              code_challenge: generate_code_challenge(@code_verifier),
+              code_challenge_method: code_challenge_method
+            }
+          )
+        end
+
         credentials = UserRefreshCredentials.new(
           client_id:     @client_id.id,
           client_secret: @client_id.secret,
@@ -157,6 +175,8 @@ module Google
         code = options[:code]
         scope = options[:scope] || @scope
         base_url = options[:base_url]
+        options[:additional_parameters] ||= {}
+        options[:additional_parameters].merge!({ code_verifier: @code_verifier })
         credentials = UserRefreshCredentials.new(
           client_id:             @client_id.id,
           client_secret:         @client_id.secret,
@@ -228,6 +248,23 @@ module Google
         credentials
       end
 
+      # The code verifier for PKCE for OAuth 2.0. When set, the
+      # authorization URI will contain the Code Challenge and Code
+      # Challenge Method querystring parameters, and the token URI will
+      # contain the Code Verifier parameter.
+      #
+      # @param [String|nil] new_code_erifier
+      def code_verifier= new_code_verifier
+        @code_verifier = new_code_verifier
+      end
+
+      # Generate the code verifier needed to be sent while fetching
+      # authorization URL.
+      def self.generate_code_verifier
+        random_number = rand 32..96
+        SecureRandom.alphanumeric random_number
+      end
+
       private
 
       # @private Fetch stored token with given user_id
@@ -271,6 +308,15 @@ module Google
       # Check if URI is Google's postmessage flow (not a valid redirect_uri by spec, but allowed)
       def uri_is_postmessage? uri
         uri.to_s.casecmp("postmessage").zero?
+      end
+
+      def generate_code_challenge code_verifier
+        digest = Digest::SHA256.digest code_verifier
+        Base64.urlsafe_encode64 digest, padding: false
+      end
+
+      def code_challenge_method
+        "S256"
       end
     end
   end
