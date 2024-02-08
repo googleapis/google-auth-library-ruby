@@ -75,7 +75,6 @@ module Google
         @token_store = token_store
         @callback_uri = legacy_callback_uri || callback_uri || "/oauth2callback"
         @code_verifier = code_verifier
-
       end
 
       # Build the URL for requesting authorization.
