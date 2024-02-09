@@ -55,21 +55,25 @@ module Google
       #  Authorization scope to request
       # @param [Google::Auth::Stores::TokenStore] token_store
       #  Backing storage for persisting user credentials
-      # @param [String] callback_uri
+      # @param [String] legacy_callback_uri
       #  URL (either absolute or relative) of the auth callback.
-      #  Defaults to '/oauth2callback'
+      #  Defaults to '/oauth2callback'.
+      #  @deprecated This field is deprecated. Instead, use the keyword
+      #   argument callback_uri.
       # @param [String] code_verifier
       #  Random string of 43-128 chars used to verify the key exchange using
       #  PKCE.
       def initialize client_id, scope, token_store,
-                     callback_uri = nil, code_verifier: nil
+                     legacy_callback_uri = nil,
+                     callback_uri: nil,
+                     code_verifier: nil
         raise NIL_CLIENT_ID_ERROR if client_id.nil?
         raise NIL_SCOPE_ERROR if scope.nil?
 
         @client_id = client_id
         @scope = Array(scope)
         @token_store = token_store
-        @callback_uri = callback_uri || "/oauth2callback"
+        @callback_uri = legacy_callback_uri || callback_uri || "/oauth2callback"
         @code_verifier = code_verifier
       end
 
