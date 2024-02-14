@@ -1,5 +1,11 @@
 # Release History
 
+### 1.11.0 (2024-02-09)
+
+#### Features
+
+* Deprecate the positional argument for callback_uri, and introduce keyword argument instead ([#475](https://github.com/googleapis/google-auth-library-ruby/issues/475)) 
+
 ### 1.10.0 (2024-02-08)
 
 #### Features
