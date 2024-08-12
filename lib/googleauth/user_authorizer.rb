@@ -16,6 +16,7 @@ require "uri"
 require "multi_json"
 require "googleauth/signet"
 require "googleauth/user_refresh"
+require "googleauth/errors"
 require "securerandom"
 
 module Google
@@ -67,8 +68,8 @@ module Google
                      legacy_callback_uri = nil,
                      callback_uri: nil,
                      code_verifier: nil
-        raise NIL_CLIENT_ID_ERROR if client_id.nil?
-        raise NIL_SCOPE_ERROR if scope.nil?
+        raise AuthorizerError, NIL_CLIENT_ID_ERROR if client_id.nil?
+        raise AuthorizerError, NIL_SCOPE_ERROR if scope.nil?
 
         @client_id = client_id
         @scope = Array(scope)
@@ -139,8 +140,8 @@ module Google
         data = MultiJson.load saved_token
 
         if data.fetch("client_id", @client_id.id) != @client_id.id
-          raise format(MISMATCHED_CLIENT_ID_ERROR,
-                       data["client_id"], @client_id.id)
+          raise AuthorizerError,
+                format(MISMATCHED_CLIENT_ID_ERROR, data["client_id"], @client_id.id)
         end
 
         credentials = UserRefreshCredentials.new(
@@ -277,8 +278,8 @@ module Google
       #  Unique ID of the user for loading/storing credentials.
       # @return [String] The saved token from @token_store
       def stored_token user_id
-        raise NIL_USER_ID_ERROR if user_id.nil?
-        raise NIL_TOKEN_STORE_ERROR if @token_store.nil?
+        raise AuthorizerError, NIL_USER_ID_ERROR if user_id.nil?
+        raise AuthorizerError, NIL_TOKEN_STORE_ERROR if @token_store.nil?
 
         @token_store.load user_id
       end
@@ -305,7 +306,9 @@ module Google
       #  Redirect URI
       def redirect_uri_for base_url
         return @callback_uri if uri_is_postmessage?(@callback_uri) || !URI(@callback_uri).scheme.nil?
-        raise format(MISSING_ABSOLUTE_URL_ERROR, @callback_uri) if base_url.nil? || URI(base_url).scheme.nil?
+        if base_url.nil? || URI(base_url).scheme.nil?
+          raise AuthorizerError, format(MISSING_ABSOLUTE_URL_ERROR, @callback_uri)
+        end
         URI.join(base_url, @callback_uri).to_s
       end
 

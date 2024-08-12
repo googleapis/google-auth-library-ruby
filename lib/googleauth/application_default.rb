@@ -14,6 +14,7 @@
 
 require "googleauth/compute_engine"
 require "googleauth/default_credentials"
+require "googleauth/errors"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
@@ -55,7 +56,7 @@ module Google
               DefaultCredentials.from_well_known_path(scope, options) ||
               DefaultCredentials.from_system_default_path(scope, options)
       return creds unless creds.nil?
-      raise NOT_FOUND_ERROR unless GCECredentials.on_gce? options
+      raise CredentialsError, NOT_FOUND_ERROR unless GCECredentials.on_gce? options
       GCECredentials.new options.merge(scope: scope)
     end
   end

@@ -251,7 +251,7 @@ describe Google::Auth::ServiceAccountCredentials do
       Dir.mktmpdir do |dir|
         key_path = File.join dir, "does-not-exist"
         ENV[@var_name] = key_path
-        expect { @clz.from_env @scope }.to raise_error RuntimeError
+        expect { @clz.from_env @scope }.to raise_error Google::Auth::CredentialsError
       end
     end
 
@@ -460,7 +460,7 @@ describe Google::Auth::ServiceAccountJwtHeaderCredentials do
       Dir.mktmpdir do |dir|
         key_path = File.join dir, "does-not-exist"
         ENV[@var_name] = key_path
-        expect { clz.from_env }.to raise_error RuntimeError
+        expect { clz.from_env }.to raise_error Google::Auth::CredentialsError
       end
     end
 

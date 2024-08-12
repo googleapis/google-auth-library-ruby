@@ -83,7 +83,7 @@ module Google
           when String
             Time.parse time
           else
-            raise "Invalid time value #{time}"
+            raise ArgumentError, "Invalid time value #{time}"
           end
         end
 

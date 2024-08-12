@@ -17,6 +17,7 @@ require "json"
 require "signet/oauth_2/client"
 
 require "googleauth/credentials_loader"
+require "googleauth/errors"
 
 module Google
   module Auth
@@ -475,13 +476,13 @@ module Google
       # Verify that the keyfile argument is provided.
       def verify_keyfile_provided! keyfile
         return unless keyfile.nil?
-        raise "The keyfile passed to Google::Auth::Credentials.new was nil."
+        raise CredentialsError, "The keyfile passed to Google::Auth::Credentials.new was nil."
       end
 
       # Verify that the keyfile argument is a file.
       def verify_keyfile_exists! keyfile
         exists = ::File.file? keyfile
-        raise "The keyfile '#{keyfile}' is not a valid file." unless exists
+        raise CredentialsError, "The keyfile '#{keyfile}' is not a valid file." unless exists
       end
 
       # Initializes the Signet client.
