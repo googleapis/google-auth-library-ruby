@@ -16,6 +16,7 @@ require "multi_json"
 require "googleauth/signet"
 require "googleauth/user_authorizer"
 require "googleauth/user_refresh"
+require "googleauth/errors"
 require "securerandom"
 
 module Google
@@ -154,8 +155,8 @@ module Google
       def get_authorization_url options = {}
         options = options.dup
         request = options[:request]
-        raise NIL_REQUEST_ERROR if request.nil?
-        raise NIL_SESSION_ERROR if request.session.nil?
+        raise AuthorizerError, NIL_REQUEST_ERROR if request.nil?
+        raise AuthorizerError, NIL_SESSION_ERROR if request.session.nil?
 
         state = options[:state] || {}
 

@@ -14,6 +14,7 @@
 
 require "os"
 require "rbconfig"
+require "googleauth/errors"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
@@ -75,7 +76,7 @@ module Google
         options = interpret_options scope, options
         if ENV.key?(ENV_VAR) && !ENV[ENV_VAR].empty?
           path = ENV[ENV_VAR]
-          raise "file #{path} does not exist" unless File.exist? path
+          raise CredentialsError, "file #{path} does not exist" unless File.exist? path
           File.open path do |f|
             return make_creds options.merge(json_key_io: f)
           end
@@ -83,7 +84,7 @@ module Google
           make_creds options
         end
       rescue StandardError => e
-        raise "#{NOT_FOUND_ERROR}: #{e}"
+        raise CredentialsError, "#{NOT_FOUND_ERROR}: #{e}"
       end
 
       # Creates an instance from a well known path.
@@ -109,7 +110,7 @@ module Google
           return make_creds options.merge(json_key_io: f)
         end
       rescue StandardError => e
-        raise "#{WELL_KNOWN_ERROR}: #{e}"
+        raise CredentialsError, "#{WELL_KNOWN_ERROR}: #{e}"
       end
 
       # Creates an instance from the system default path
@@ -137,7 +138,7 @@ module Google
           return make_creds options.merge(json_key_io: f)
         end
       rescue StandardError => e
-        raise "#{SYSTEM_DEFAULT_ERROR}: #{e}"
+        raise CredentialsError, "#{SYSTEM_DEFAULT_ERROR}: #{e}"
       end
 
       module_function

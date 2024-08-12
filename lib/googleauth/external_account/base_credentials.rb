@@ -15,6 +15,7 @@
 require "googleauth/base_client"
 require "googleauth/helpers/connection"
 require "googleauth/oauth2/sts_client"
+require "googleauth/errors"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
@@ -129,7 +130,7 @@ module Google
             connection: default_connection
           )
           return unless @workforce_pool_user_project && !is_workforce_pool?
-          raise "workforce_pool_user_project should not be set for non-workforce pool credentials."
+          raise CredentialsError, "workforce_pool_user_project should not be set for non-workforce pool credentials."
         end
 
         def exchange_token
@@ -177,7 +178,7 @@ module Google
           end
 
           if response.status != 200
-            raise "Service account impersonation failed with status #{response.status}"
+            raise CredentialsError, "Service account impersonation failed with status #{response.status}"
           end
 
           MultiJson.load response.body

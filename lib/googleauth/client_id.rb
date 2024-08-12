@@ -14,6 +14,7 @@
 
 require "multi_json"
 require "googleauth/credentials_loader"
+require "googleauth/errors"
 
 module Google
   module Auth
@@ -64,8 +65,8 @@ module Google
       #       `client_secrets.json` files.
       #
       def initialize id, secret
-        raise "Client id can not be nil" if id.nil?
-        raise "Client secret can not be nil" if secret.nil?
+        raise ClientIdError, "Client id can not be nil" if id.nil?
+        raise ClientIdError, "Client secret can not be nil" if secret.nil?
         @id = id
         @secret = secret
       end
@@ -79,7 +80,7 @@ module Google
       # @return [Google::Auth::ClientID]
       #
       def self.from_file file
-        raise "File can not be nil." if file.nil?
+        raise ClientIdError, "File can not be nil." if file.nil?
         File.open file.to_s do |f|
           json = f.read
           config = MultiJson.load json
@@ -96,9 +97,9 @@ module Google
       # @return [Google::Auth::ClientID]
       #
       def self.from_hash config
-        raise "Hash can not be nil." if config.nil?
+        raise ClientIdError, "Hash can not be nil." if config.nil?
         raw_detail = config[INSTALLED_APP] || config[WEB_APP]
-        raise MISSING_TOP_LEVEL_ELEMENT_ERROR if raw_detail.nil?
+        raise ClientIdError, MISSING_TOP_LEVEL_ELEMENT_ERROR if raw_detail.nil?
         ClientId.new raw_detail[CLIENT_ID], raw_detail[CLIENT_SECRET]
       end
     end

@@ -15,6 +15,7 @@
 require "time"
 require "googleauth/external_account/base_credentials"
 require "googleauth/external_account/external_account_utils"
+require "googleauth/errors"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization used to access Google APIs.
@@ -60,11 +61,11 @@ module Google
               response_data = MultiJson.load content, symbolize_keys: true
               token = response_data[@credential_source_field_name.to_sym]
             rescue StandardError
-              raise "Unable to parse subject_token from JSON resource #{resource_name} " \
-                    "using key #{@credential_source_field_name}"
+              raise CredentialsError, "Unable to parse subject_token from JSON resource #{resource_name} " \
+                                      "using key #{@credential_source_field_name}"
             end
           end
-          raise "Missing subject_token in the credential_source file/response." unless token
+          raise CredentialsError, "Missing subject_token in the credential_source file/response." unless token
           token
         end
 
@@ -73,22 +74,22 @@ module Google
         def validate_credential_source
           # `environment_id` is only supported in AWS or dedicated future external account credentials.
           unless @credential_source[:environment_id].nil?
-            raise "Invalid Identity Pool credential_source field 'environment_id'"
+            raise CredentialsError, "Invalid Identity Pool credential_source field 'environment_id'"
           end
           unless ["json", "text"].include? @credential_source_format_type
-            raise "Invalid credential_source format #{@credential_source_format_type}"
+            raise CredentialsError, "Invalid credential_source format #{@credential_source_format_type}"
           end
           # for JSON types, get the required subject_token field name.
           @credential_source_field_name = @credential_source_format[:subject_token_field_name]
           if @credential_source_format_type == "json" && @credential_source_field_name.nil?
-            raise "Missing subject_token_field_name for JSON credential_source format"
+            raise CredentialsError, "Missing subject_token_field_name for JSON credential_source format"
           end
           # check file or url must be fulfilled and mutually exclusiveness.
           if @credential_source_file && @credential_source_url
-            raise "Ambiguous credential_source. 'file' is mutually exclusive with 'url'."
+            raise CredentialsError, "Ambiguous credential_source. 'file' is mutually exclusive with 'url'."
           end
           return unless (@credential_source_file || @credential_source_url).nil?
-          raise "Missing credential_source. A 'file' or 'url' must be provided."
+          raise CredentialsError, "Missing credential_source. A 'file' or 'url' must be provided."
         end
 
         def token_data
@@ -96,7 +97,10 @@ module Google
         end
 
         def file_data
-          raise "File #{@credential_source_file} was not found." unless File.exist? @credential_source_file
+          unless File.exist? @credential_source_file
+            raise CredentialsError,
+                  "File #{@credential_source_file} was not found."
+          end
           content = File.read @credential_source_file, encoding: "utf-8"
           [content, @credential_source_file]
         end
@@ -107,9 +111,12 @@ module Google
               req.headers.merge! @credential_source_headers
             end
           rescue Faraday::Error => e
-            raise "Error retrieving from credential url: #{e}"
+            raise CredentialsError, "Error retrieving from credential url: #{e}"
           end
-          raise "Unable to retrieve Identity Pool subject token #{response.body}" unless response.success?
+          unless response.success?
+            raise CredentialsError,
+                  "Unable to retrieve Identity Pool subject token #{response.body}"
+          end
           [response.body, @credential_source_url]
         end
       end

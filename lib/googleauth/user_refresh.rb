@@ -15,6 +15,7 @@
 require "googleauth/signet"
 require "googleauth/credentials_loader"
 require "googleauth/scope_util"
+require "googleauth/errors"
 require "multi_json"
 
 module Google
@@ -73,7 +74,7 @@ module Google
         json_key = MultiJson.load json_key_io.read
         wanted = ["client_id", "client_secret", "refresh_token"]
         wanted.each do |key|
-          raise "the json is missing the #{key} field" unless json_key.key? key
+          raise CredentialsError, "the json is missing the #{key} field" unless json_key.key? key
         end
         json_key
       end
