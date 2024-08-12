@@ -63,17 +63,17 @@ module Google
       end
 
       def expires_within?
-        raise NotImplementedError
+        raise NoMethodError, "expires_within? not implemented"
       end
 
       private
 
       def token_type
-        raise NotImplementedError
+        raise NoMethodError, "token_type not implemented"
       end
 
       def fetch_access_token!
-        raise NotImplementedError
+        raise NoMethodError, "fetch_access_token! not implemented"
       end
     end
   end
