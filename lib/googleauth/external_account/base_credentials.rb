@@ -76,7 +76,7 @@ module Google
         #     The retrieved subject token.
         #
         def retrieve_subject_token!
-          raise NotImplementedError
+          raise NoMethodError, "retrieve_subject_token! not implemented"
         end
 
         # Returns whether the credentials represent a workforce pool (True) or

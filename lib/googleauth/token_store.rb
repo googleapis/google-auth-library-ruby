@@ -29,7 +29,7 @@ module Google
       # @return [String]
       #  The loaded token data.
       def load _id
-        raise "Not implemented"
+        raise NoMethodError, "load not implemented"
       end
 
       # Put the token data into storage for the given ID.
@@ -39,7 +39,7 @@ module Google
       # @param [String] token
       #  The token data to store.
       def store _id, _token
-        raise "Not implemented"
+        raise NoMethodError, "store not implemented"
       end
 
       # Remove the token data from storage for the given ID.
@@ -47,7 +47,7 @@ module Google
       # @param [String] id
       #  ID of the token data to delete
       def delete _id
-        raise "Not implemented"
+        raise NoMethodError, "delete not implemented"
       end
     end
   end
