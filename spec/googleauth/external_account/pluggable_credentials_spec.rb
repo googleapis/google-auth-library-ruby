@@ -205,6 +205,9 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
       :credential_source => CREDENTIAL_SOURCE,
     }
     credentials = PluggableAuthCredentials.new options
+    before :example do
+      ENV[Google::Auth::ExternalAccount::PluggableAuthCredentials::ENABLE_PLUGGABLE_ENV] = "0"
+    end
     it 'not enabled' do
       expect{credentials.retrieve_subject_token!}.to raise_error(/Executables need to be explicitly allowed/)
     end
