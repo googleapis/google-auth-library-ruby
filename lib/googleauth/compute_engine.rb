@@ -96,34 +96,70 @@ module Google
       # Overrides the super class method to change how access tokens are
       # fetched.
       def fetch_access_token _options = {}
-        if token_type == :id_token
-          query = { "audience" => target_audience, "format" => "full" }
-          entry = "service-accounts/default/identity"
-        else
-          query = {}
-          entry = "service-accounts/default/token"
-        end
+        query, entry =
+          if token_type == :id_token
+            [{ "audience" => target_audience, "format" => "full" }, "service-accounts/default/identity"]
+          else
+            [{}, "service-accounts/default/token"]
+          end
         query[:scopes] = Array(scope).join "," if scope
         begin
+          log_fetch_query
           resp = Google::Cloud.env.lookup_metadata_response "instance", entry, query: query
+          log_fetch_resp resp
           case resp.status
           when 200
             build_token_hash resp.body, resp.headers["content-type"], resp.retrieval_monotonic_time
           when 403, 500
-            msg = "Unexpected error code #{resp.status} #{UNEXPECTED_ERROR_SUFFIX}"
-            raise Signet::UnexpectedStatusError, msg
+            raise Signet::UnexpectedStatusError, "Unexpected error code #{resp.status} #{UNEXPECTED_ERROR_SUFFIX}"
           when 404
             raise Signet::AuthorizationError, NO_METADATA_SERVER_ERROR
           else
-            msg = "Unexpected error code #{resp.status} #{UNEXPECTED_ERROR_SUFFIX}"
-            raise Signet::AuthorizationError, msg
+            raise Signet::AuthorizationError, "Unexpected error code #{resp.status} #{UNEXPECTED_ERROR_SUFFIX}"
           end
         rescue Google::Cloud::Env::MetadataServerNotResponding => e
+          log_fetch_err e
           raise Signet::AuthorizationError, e.message
         end
       end
 
       private
+
+      def log_fetch_query
+        if token_type == :id_token
+          logger&.info do
+            Google::Logging::Message.from(
+              message: "Requesting id token from MDS with aud=#{target_audience}",
+              "credentialsId" => object_id
+            )
+          end
+        else
+          logger&.info do
+            Google::Logging::Message.from(
+              message: "Requesting access token from MDS",
+              "credentialsId" => object_id
+            )
+          end
+        end
+      end
+
+      def log_fetch_resp resp
+        logger&.info do
+          Google::Logging::Message.from(
+            message: "Received #{resp.status} from MDS",
+            "credentialsId" => object_id
+          )
+        end
+      end
+
+      def log_fetch_err _err
+        logger&.info do
+          Google::Logging::Message.from(
+            message: "MDS did not respond to token request",
+            "credentialsId" => object_id
+          )
+        end
+      end
 
       def build_token_hash body, content_type, retrieval_time
         hash =

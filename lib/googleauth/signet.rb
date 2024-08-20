@@ -65,6 +65,24 @@ module Signet
         info
       end
 
+      alias googleauth_orig_generate_access_token_request generate_access_token_request
+      def generate_access_token_request options = {}
+        parameters = googleauth_orig_generate_access_token_request options
+        logger&.info do
+          Google::Logging::Message.from(
+            message: "Requesting access token from #{parameters['grant_type']}",
+            "credentialsId" => object_id
+          )
+        end
+        logger&.debug do
+          Google::Logging::Message.from(
+            message: "Token fetch params: #{parameters}",
+            "credentialsId" => object_id
+          )
+        end
+        parameters
+      end
+
       def build_default_connection
         if !defined?(@connection_info)
           nil
@@ -79,15 +97,20 @@ module Signet
         retry_count = 0
 
         begin
-          yield
+          yield.tap { |resp| log_response resp }
         rescue StandardError => e
-          raise e if e.is_a?(Signet::AuthorizationError) || e.is_a?(Signet::ParseError)
+          if e.is_a?(Signet::AuthorizationError) || e.is_a?(Signet::ParseError)
+            log_auth_error e
+            raise e
+          end
 
           if retry_count < max_retry_count
+            log_transient_error e
             retry_count += 1
             sleep retry_count * 0.3
             retry
           else
+            log_retries_exhausted e
             msg = "Unexpected error: #{e.inspect}"
             raise Signet::AuthorizationError, msg
           end
@@ -105,6 +128,49 @@ module Signet
       rescue StandardError
         # Shouldn't happen unless we get a garbled ID token
         nil
+      end
+
+      def log_response token_response
+        response_hash = JSON.parse token_response rescue {}
+        if response_hash["access_token"]
+          digest = Digest::SHA256.hexdigest response_hash["access_token"]
+          response_hash["access_token"] = "(sha256:#{digest})"
+        end
+        if response_hash["id_token"]
+          digest = Digest::SHA256.hexdigest response_hash["id_token"]
+          response_hash["id_token"] = "(sha256:#{digest})"
+        end
+        Google::Logging::Message.from(
+          message: "Received auth token response: #{response_hash}",
+          "credentialsId" => object_id
+        )
+      end
+
+      def log_auth_error err
+        logger&.info do
+          Google::Logging::Message.from(
+            message: "Auth error when fetching auth token: #{err}",
+            "credentialsId" => object_id
+          )
+        end
+      end
+
+      def log_transient_error err
+        logger&.info do
+          Google::Logging::Message.from(
+            message: "Transient error when fetching auth token: #{err}",
+            "credentialsId" => object_id
+          )
+        end
+      end
+
+      def log_retries_exhausted err
+        logger&.info do
+          Google::Logging::Message.from(
+            message: "Exhausted retries when fetching auth token: #{err}",
+            "credentialsId" => object_id
+          )
+        end
       end
     end
   end
