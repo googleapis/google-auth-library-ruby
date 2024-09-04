@@ -6,13 +6,13 @@ branchProtectionRules:
   isAdminEnforced: false
   requiredStatusCheckContexts:
     - 'cla/google'
-    - 'CI (macos-latest, 3.2, test , spec)'
-    - 'CI (ubuntu-20.04, 2.7, test , spec)'
+    - 'CI (macos-latest, 3.3, test , spec)'
     - 'CI (ubuntu-20.04, 3.0, test , spec)'
     - 'CI (ubuntu-20.04, 3.1, test , spec)'
     - 'CI (ubuntu-22.04, 3.2, test , spec)'
-    - 'CI (ubuntu-latest, 3.2, rubocop , integration , build , yardoc , linkinator)'
-    - 'CI (windows-latest, 3.2, test , spec)'
+    - 'CI (ubuntu-latest, 3.3, rubocop , integration , build , yardoc , linkinator)'
+    - 'CI (ubuntu-latest, 3.3, test , spec)'
+    - 'CI (windows-latest, 3.3, test , spec)'
   requiredApprovingReviewCount: 1
   requiresCodeOwnerReviews: true
   requiresStrictStatusChecks: true
