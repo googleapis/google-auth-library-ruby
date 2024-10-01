@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require "base64"
+require "json"
 require "google-cloud-env"
 require "googleauth/signet"
 
@@ -123,7 +125,7 @@ module Google
       def build_token_hash body, content_type, retrieval_time
         hash =
           if ["text/html", "application/text"].include? content_type
-            { token_type.to_s => body }
+            parse_encoded_token body
           else
             Signet::OAuth2.parse_credentials body, content_type
           end
@@ -140,6 +142,18 @@ module Google
           offset = 1 + (Process.clock_gettime(Process::CLOCK_MONOTONIC) - retrieval_time).round
           hash["expires_in"] -= offset if offset.positive?
           hash["expires_in"] = 0 if hash["expires_in"].negative?
+        end
+        hash
+      end
+
+      def parse_encoded_token body
+        hash = { token_type.to_s => body }
+        if token_type == :id_token && body =~ /^[\w=-]+\.([\w=-]+)\.[\w=-]+$/
+          base64 = Base64.urlsafe_decode64 Regexp.last_match[1]
+          json = JSON.parse base64 rescue nil
+          if json.respond_to?(:key?) && json.key?("exp")
+            hash["expires_at"] = Time.at json["exp"].to_i
+          end
         end
         hash
       end
