@@ -1,5 +1,12 @@
 # Release History
 
+### 1.11.1 (2024-10-04)
+
+#### Bug Fixes
+
+* Fixed parsing of expiration timestamp from ID tokens ([#492](https://github.com/googleapis/google-auth-library-ruby/issues/492)) 
+* Use NoMethodError instead of NotImplementedError for unimplemented base class methods ([#487](https://github.com/googleapis/google-auth-library-ruby/issues/487)) 
+
 ### 1.11.0 (2024-02-09)
 
 #### Features
