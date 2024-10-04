@@ -99,10 +99,12 @@ module Signet
       def expires_at_from_id_token id_token
         match = /^[\w=-]+\.([\w=-]+)\.[\w=-]+$/.match id_token.to_s
         return unless match
-        base64 = Base64.urlsafe_decode64 match[1]
-        json = JSON.parse base64 rescue nil
-        return unless json.respond_to?(:key?) && json.key?("exp")
+        json = JSON.parse Base64.urlsafe_decode64 match[1]
+        return unless json.key? "exp"
         Time.at json["exp"].to_i
+      rescue StandardError
+        # Shouldn't happen unless we get a garbled ID token
+        nil
       end
     end
   end
