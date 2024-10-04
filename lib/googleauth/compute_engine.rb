@@ -123,7 +123,7 @@ module Google
       def build_token_hash body, content_type, retrieval_time
         hash =
           if ["text/html", "application/text"].include? content_type
-            { token_type.to_s => body }
+            parse_encoded_token body
           else
             Signet::OAuth2.parse_credentials body, content_type
           end
@@ -140,6 +140,15 @@ module Google
           offset = 1 + (Process.clock_gettime(Process::CLOCK_MONOTONIC) - retrieval_time).round
           hash["expires_in"] -= offset if offset.positive?
           hash["expires_in"] = 0 if hash["expires_in"].negative?
+        end
+        hash
+      end
+
+      def parse_encoded_token body
+        hash = { token_type.to_s => body }
+        if token_type == :id_token
+          expires_at = expires_at_from_id_token body
+          hash["expires_at"] = expires_at if expires_at
         end
         hash
       end

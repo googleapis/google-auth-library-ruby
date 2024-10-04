@@ -137,9 +137,14 @@ describe Google::Auth::ServiceAccountCredentials do
   end
 
   def make_auth_stubs opts
-    body_fields = { "token_type" => "Bearer", "expires_in" => 3600 }
-    body_fields["access_token"] = opts[:access_token] if opts[:access_token]
-    body_fields["id_token"] = opts[:id_token] if opts[:id_token]
+    body_fields =
+      if opts[:access_token]
+        { "access_token" => opts[:access_token], "token_type" => "Bearer", "expires_in" => 3600 }
+      elsif opts[:id_token]
+        { "id_token" => opts[:id_token] }
+      else
+        raise "Expected access_token or id_token"
+      end
     body = MultiJson.dump body_fields
     blk = proc do |request|
       params = Addressable::URI.form_unencode request.body
@@ -215,6 +220,33 @@ describe Google::Auth::ServiceAccountCredentials do
     end
 
     it_behaves_like "jwt header auth", nil
+  end
+
+  context "when target_audience is set" do
+    it "retrieves an ID token with expiration" do
+      expiry_time = 1608886800
+      header = {
+        alg: "RS256",
+        kid: "1234567890123456789012345678901234567890",
+        typ: "JWT"
+      }
+      payload = {
+        aud: "http://www.example.com",
+        azp: "67890",
+        email: "googleapis-test@developer.gserviceaccount.com",
+        email_verified: true,
+        exp: expiry_time,
+        iat: expiry_time - 3600,
+        iss: "https://accounts.google.com",
+        sub: "12345"
+      }
+      id_token = "#{Base64.urlsafe_encode64 JSON.dump header}.#{Base64.urlsafe_encode64 JSON.dump payload}.xxxxx"
+      stub = make_auth_stubs id_token: id_token
+      @id_client.fetch_access_token!
+      expect(stub).to have_been_requested
+      expect(@id_client.id_token).to eq(id_token)
+      expect(@id_client.expires_at.to_i).to eq(expiry_time)
+    end
   end
 
   describe "#from_env" do

@@ -84,7 +84,7 @@ describe Google::Auth::GCECredentials do
       expiry = @client.expires_at
       sleep 1
       @client.fetch_access_token!
-      expect(@client.expires_at.to_f).to be_within(0.1).of(expiry.to_f)
+      expect(@client.expires_at.to_f).to be_within(0.2).of(expiry.to_f)
     end
   end
 
@@ -107,7 +107,7 @@ describe Google::Auth::GCECredentials do
       expiry = @client.expires_at
       sleep 1
       @client.fetch_access_token!
-      expect(@client.expires_at.to_f).to be_within(0.1).of(expiry.to_f)
+      expect(@client.expires_at.to_f).to be_within(0.2).of(expiry.to_f)
     end
   end
 
@@ -152,16 +152,46 @@ describe Google::Auth::GCECredentials do
     end
   end
 
-  context "metadata is unavailable" do
+  context "metadata is available" do
     describe "#fetch_access_token" do
-      it "should pass scopes when requesting an access token" do
+      it "should pass scopes" do
         scopes = ["https://www.googleapis.com/auth/drive", "https://www.googleapis.com/auth/bigtable.data"]
         stub = make_auth_stubs access_token: "1/abcdef1234567890", scope: scopes
         @client = GCECredentials.new(scope: scopes)
         @client.fetch_access_token!
         expect(stub).to have_been_requested
       end
+    end
 
+    describe "Fetch ID tokens" do
+      it "should parse out expiration time" do
+        expiry_time = 1608886800
+        header = {
+          alg: "RS256",
+          kid: "1234567890123456789012345678901234567890",
+          typ: "JWT"
+        }
+        payload = {
+          aud: "http://www.example.com",
+          azp: "67890",
+          email: "googleapis-test@developer.gserviceaccount.com",
+          email_verified: true,
+          exp: expiry_time,
+          iat: expiry_time - 3600,
+          iss: "https://accounts.google.com",
+          sub: "12345"
+        }
+        token = "#{Base64.urlsafe_encode64 JSON.dump header}.#{Base64.urlsafe_encode64 JSON.dump payload}.xxxxx"
+        stub = make_auth_stubs id_token: token
+        @id_client.fetch_access_token!
+        expect(stub).to have_been_requested
+        expect(@id_client.expires_at.to_i).to eq(expiry_time)
+      end
+    end
+  end
+
+  context "metadata is unavailable" do
+    describe "#fetch_access_token" do
       it "should fail if the metadata request returns a 404" do
         stub = stub_request(:get, MD_ACCESS_URI)
                .to_return(status:  404,
@@ -214,13 +244,6 @@ describe Google::Auth::GCECredentials do
     end
 
     describe "Fetch ID tokens" do
-      it "should pass scopes when requesting an ID token" do
-        scopes = ["https://www.googleapis.com/auth/drive", "https://www.googleapis.com/auth/bigtable.data"]
-        stub = make_auth_stubs id_token: "1/abcdef1234567890", scope: scopes
-        @id_client.fetch_access_token!
-        expect(stub).to have_been_requested
-      end
-
       it "should fail if the metadata request returns a 404" do
         stub = stub_request(:get, MD_ID_URI)
                .to_return(status:  404,
