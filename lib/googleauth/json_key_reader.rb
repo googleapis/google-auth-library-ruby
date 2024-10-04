@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require "googleauth/errors"
+
 module Google
   # Module Auth provides classes that provide Google-specific authorization
   # used to access Google APIs.
@@ -21,8 +23,8 @@ module Google
     module JsonKeyReader
       def read_json_key json_key_io
         json_key = MultiJson.load json_key_io.read
-        raise "missing client_email" unless json_key.key? "client_email"
-        raise "missing private_key" unless json_key.key? "private_key"
+        raise CredentialsError, "missing client_email" unless json_key.key? "client_email"
+        raise CredentialsError, "missing private_key" unless json_key.key? "private_key"
         [
           json_key["private_key"],
           json_key["client_email"],
