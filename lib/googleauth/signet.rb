@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require "base64"
+require "json"
 require "signet/oauth_2/client"
 require "googleauth/base_client"
 
@@ -29,6 +31,8 @@ module Signet
 
       def update_token! options = {}
         options = deep_hash_normalize options
+        id_token_expires_at = expires_at_from_id_token options[:id_token]
+        options[:expires_at] = id_token_expires_at if id_token_expires_at
         update_token_signet_base options
         self.universe_domain = options[:universe_domain] if options.key? :universe_domain
         self
@@ -88,6 +92,19 @@ module Signet
             raise Signet::AuthorizationError, msg
           end
         end
+      end
+
+      private
+
+      def expires_at_from_id_token id_token
+        match = /^[\w=-]+\.([\w=-]+)\.[\w=-]+$/.match id_token.to_s
+        return unless match
+        json = JSON.parse Base64.urlsafe_decode64 match[1]
+        return unless json.key? "exp"
+        Time.at json["exp"].to_i
+      rescue StandardError
+        # Shouldn't happen unless we get a garbled ID token
+        nil
       end
     end
   end
