@@ -37,7 +37,7 @@ module Google
       AWS_SESSION_TOKEN_VAR     = "AWS_SESSION_TOKEN".freeze
       GCLOUD_POSIX_COMMAND      = "gcloud".freeze
       GCLOUD_WINDOWS_COMMAND    = "gcloud.cmd".freeze
-      GCLOUD_CONFIG_COMMAND     = "config config-helper --format json --verbosity none".freeze
+      GCLOUD_CONFIG_COMMAND     = "config config-helper --format json --verbosity none --quiet".freeze
 
       CREDENTIALS_FILE_NAME = "application_default_credentials.json".freeze
       NOT_FOUND_ERROR = "Unable to read the credential file specified by #{ENV_VAR}".freeze
@@ -146,7 +146,7 @@ module Google
       def load_gcloud_project_id
         gcloud = GCLOUD_WINDOWS_COMMAND if OS.windows?
         gcloud = GCLOUD_POSIX_COMMAND unless OS.windows?
-        gcloud_json = IO.popen("#{gcloud} #{GCLOUD_CONFIG_COMMAND}", in: :close, err: :close, &:read)
+        gcloud_json = IO.popen("#{gcloud} #{GCLOUD_CONFIG_COMMAND}", err: :close, &:read)
         config = MultiJson.load gcloud_json
         config["configuration"]["properties"]["core"]["project"]
       rescue StandardError
