@@ -18,6 +18,7 @@ require "stringio"
 require "googleauth/credentials_loader"
 require "googleauth/service_account"
 require "googleauth/user_refresh"
+require "googleauth/impersonated_service_account"
 require "googleauth/external_account"
 
 module Google
@@ -52,6 +53,8 @@ module Google
           ServiceAccountCredentials
         when "authorized_user"
           UserRefreshCredentials
+        when "impersonated_service_account"
+          ImpersonatedServiceAccount
         when "external_account"
           ExternalAccount::Credentials
         else
@@ -70,6 +73,8 @@ module Google
           [json_key, ServiceAccountCredentials]
         when "authorized_user"
           [json_key, UserRefreshCredentials]
+        when "impersonated_service_account"
+          [json_key, ImpersonatedServiceAccount]
         when "external_account"
           [json_key, ExternalAccount::Credentials]
         else
