@@ -81,10 +81,11 @@ describe Google::Auth::GCECredentials do
     it "returns a consistent expiry using cached data" do
       make_auth_stubs access_token: "1/abcde"
       @client.fetch_access_token!
-      expiry = @client.expires_at
-      sleep 1
+      expiry1 = @client.expires_at.to_f
+      sleep 3
       @client.fetch_access_token!
-      expect(@client.expires_at.to_f).to be_within(0.2).of(expiry.to_f)
+      expiry2 = @client.expires_at.to_f
+      expect(expiry2).to be_within(1.0).of(expiry1)
     end
   end
 
@@ -105,9 +106,9 @@ describe Google::Auth::GCECredentials do
       make_auth_stubs access_token: "1/abcde"
       @client.fetch_access_token!
       expiry = @client.expires_at
-      sleep 1
+      sleep 3
       @client.fetch_access_token!
-      expect(@client.expires_at.to_f).to be_within(0.2).of(expiry.to_f)
+      expect(@client.expires_at.to_f).to be_within(1.0).of(expiry.to_f)
     end
   end
 

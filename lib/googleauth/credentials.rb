@@ -331,10 +331,13 @@ module Google
       # @!attribute [rw] universe_domain
       #   @return [String] The universe domain issuing these credentials.
       #
+      # @!attribute [rw] logger
+      #   @return [Logger] The logger used to log credential operations such as token refresh.
+      #
       def_delegators :@client,
                      :token_credential_uri, :audience,
                      :scope, :issuer, :signing_key, :updater_proc, :target_audience,
-                     :universe_domain, :universe_domain=
+                     :universe_domain, :universe_domain=, :logger, :logger=
 
       ##
       # Creates a new Credentials instance with the provided auth credentials, and with the default
@@ -343,16 +346,17 @@ module Google
       # @param [String, Hash, Signet::OAuth2::Client] keyfile
       #   The keyfile can be provided as one of the following:
       #
-      #   * The path to a JSON keyfile (as a +String+)
-      #   * The contents of a JSON keyfile (as a +Hash+)
-      #   * A +Signet::OAuth2::Client+ object
+      #   * The path to a JSON keyfile (as a `String`)
+      #   * The contents of a JSON keyfile (as a `Hash`)
+      #   * A `Signet::OAuth2::Client` object
       # @param [Hash] options
       #   The options for configuring the credentials instance. The following is supported:
       #
-      #   * +:scope+ - the scope for the client
-      #   * +"project_id"+ (and optionally +"project"+) - the project identifier for the client
-      #   * +:connection_builder+ - the connection builder to use for the client
-      #   * +:default_connection+ - the default connection to use for the client
+      #   * `:scope` - the scope for the client
+      #   * `project_id` (and optionally `project`) - the project identifier for the client
+      #   * `:connection_builder` - the connection builder to use for the client
+      #   * `:default_connection` - the default connection to use for the client
+      #   * `:logger` - the logger used to log credential operations such as token refresh.
       #
       def initialize keyfile, options = {}
         verify_keyfile_provided! keyfile
@@ -367,8 +371,8 @@ module Google
         else
           update_from_filepath keyfile, options
         end
+        setup_logging logger: options.fetch(:logger, :default)
         @project_id ||= CredentialsLoader.load_gcloud_project_id
-        @client.fetch_access_token! if @client.needs_access_token?
         @env_vars = nil
         @paths = nil
         @scope = nil
@@ -462,7 +466,8 @@ module Google
           audience:               options[:audience] || audience
         }
         client = Google::Auth::DefaultCredentials.make_creds creds_input
-        new client
+        options = options.select { |k, _v| k == :logger }
+        new client, options
       end
 
       private_class_method :from_env_vars,
@@ -542,6 +547,22 @@ module Google
         @project_id ||= json["project_id"] || json["project"]
         @quota_project_id ||= json["quota_project_id"]
         @client = init_client json, options
+      end
+
+      def setup_logging logger: :default
+        logging_env = ENV["GOOGLE_SDK_DEBUG_LOGGING"].to_s.downcase
+        return if !logger || logging_env == "false" || !@client.respond_to?(:logger=) || @client.logger
+        if logger == :default
+          return unless logging_env == "true"
+          gems = ENV["GOOGLE_SDK_DEBUG_LOGGING_RUBYGEMS"]
+          return if gems && !gems.split(",").include?("googleauth")
+          level = ENV["GOOGLE_SDK_DEBUG_LOGGING_RUBY_LEVEL"] || "DEBUG"
+          level = "DEBUG" unless Logger.const_defined? level
+          level = Logger.const_get level
+          formatter = Google::Logging::StructuredFormatter.new if Google::Cloud::Env.get.logging_agent_expected?
+          logger = Logger.new $stderr, progname: "googleauth", level: level, formatter: formatter
+        end
+        @client.logger = logger
       end
     end
   end
