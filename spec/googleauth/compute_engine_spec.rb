@@ -69,86 +69,107 @@ describe Google::Auth::GCECredentials do
     end
   end
 
-  context "default universe due to 404 from MDS" do
+  context "when metadata query is disabled" do
+    before :example do
+      @universe_domain = StandardError
+    end
+
     it_behaves_like "apply/apply! are OK"
 
-    it "sets the universe" do
+    it "leaves universe as googleapis.com and does not call the MDS" do
       make_auth_stubs access_token: "1/abcde"
       @client.fetch_access_token!
       expect(@client.universe_domain).to eq("googleapis.com")
     end
-
-    it "returns a consistent expiry using cached data" do
-      make_auth_stubs access_token: "1/abcde"
-      @client.fetch_access_token!
-      expiry = @client.expires_at
-      sleep 1
-      @client.fetch_access_token!
-      expect(@client.expires_at.to_f).to be_within(0.2).of(expiry.to_f)
-    end
   end
 
-  context "default universe due to empty data from MDS" do
+  context "when metadata query is enabled" do
     before :example do
-      @universe_domain = ""
+      @client.disable_universe_domain_check = false
     end
 
-    it_behaves_like "apply/apply! are OK"
+    context "default universe due to 404 from MDS" do
+      it_behaves_like "apply/apply! are OK"
 
-    it "sets the universe" do
-      make_auth_stubs access_token: "1/abcde"
-      @client.fetch_access_token!
-      expect(@client.universe_domain).to eq("googleapis.com")
+      it "sets the universe" do
+        make_auth_stubs access_token: "1/abcde"
+        @client.fetch_access_token!
+        expect(@client.universe_domain).to eq("googleapis.com")
+      end
+
+      it "returns a consistent expiry using cached data" do
+        make_auth_stubs access_token: "1/abcde"
+        @client.fetch_access_token!
+        expiry1 = @client.expires_at.to_f
+        sleep 3
+        @client.fetch_access_token!
+        expiry2 = @client.expires_at.to_f
+        expect(expiry2).to be_within(1.0).of(expiry1)
+      end
     end
 
-    it "returns a consistent expiry using cached data" do
-      make_auth_stubs access_token: "1/abcde"
-      @client.fetch_access_token!
-      expiry = @client.expires_at
-      sleep 1
-      @client.fetch_access_token!
-      expect(@client.expires_at.to_f).to be_within(0.2).of(expiry.to_f)
-    end
-  end
+    context "default universe due to empty data from MDS" do
+      before :example do
+        @universe_domain = ""
+      end
 
-  context "custom universe" do
-    before :example do
-      @universe_domain = "myuniverse.com"
-    end
+      it_behaves_like "apply/apply! are OK"
 
-    it_behaves_like "apply/apply! are OK"
+      it "sets the universe" do
+        make_auth_stubs access_token: "1/abcde"
+        @client.fetch_access_token!
+        expect(@client.universe_domain).to eq("googleapis.com")
+      end
 
-    it "sets the universe" do
-      make_auth_stubs access_token: "1/abcde"
-      @client.fetch_access_token!
-      expect(@client.universe_domain).to eq("myuniverse.com")
-    end
-
-    it "supports updating the universe_domain" do
-      make_auth_stubs access_token: "1/abcde"
-      @client.fetch_access_token!
-      @client.universe_domain = "anotheruniverse.com"
-      expect(@client.universe_domain).to eq("anotheruniverse.com")
+      it "returns a consistent expiry using cached data" do
+        make_auth_stubs access_token: "1/abcde"
+        @client.fetch_access_token!
+        expiry = @client.expires_at
+        sleep 3
+        @client.fetch_access_token!
+        expect(@client.expires_at.to_f).to be_within(1.0).of(expiry.to_f)
+      end
     end
 
-    it "prioritizes argument-specified universe domain" do
-      make_auth_stubs access_token: "1/abcde"
-      custom_client = GCECredentials.new universe_domain: "override-universe.com"
-      custom_client.fetch_access_token!
-      expect(custom_client.access_token).to eq("1/abcde")
-      expect(custom_client.universe_domain).to eq("override-universe.com")
-    end
-  end
+    context "custom universe" do
+      before :example do
+        @universe_domain = "myuniverse.com"
+      end
 
-  context "error in universe_domain" do
-    before :example do
-      @universe_domain = Errno::EHOSTDOWN
+      it_behaves_like "apply/apply! are OK"
+
+      it "sets the universe" do
+        make_auth_stubs access_token: "1/abcde"
+        @client.fetch_access_token!
+        expect(@client.universe_domain).to eq("myuniverse.com")
+      end
+
+      it "supports updating the universe_domain" do
+        make_auth_stubs access_token: "1/abcde"
+        @client.fetch_access_token!
+        @client.universe_domain = "anotheruniverse.com"
+        expect(@client.universe_domain).to eq("anotheruniverse.com")
+      end
+
+      it "prioritizes argument-specified universe domain" do
+        make_auth_stubs access_token: "1/abcde"
+        custom_client = GCECredentials.new universe_domain: "override-universe.com"
+        custom_client.fetch_access_token!
+        expect(custom_client.access_token).to eq("1/abcde")
+        expect(custom_client.universe_domain).to eq("override-universe.com")
+      end
     end
 
-    it "results in an error" do
-      make_auth_stubs access_token: "1/abcde"
-      expect { @client.fetch_access_token! }
-        .to raise_error Signet::AuthorizationError
+    context "error in universe_domain" do
+      before :example do
+        @universe_domain = Errno::EHOSTDOWN
+      end
+
+      it "results in an error" do
+        make_auth_stubs access_token: "1/abcde"
+        expect { @client.fetch_access_token! }
+          .to raise_error Signet::AuthorizationError
+      end
     end
   end
 

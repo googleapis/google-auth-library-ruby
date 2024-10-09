@@ -299,6 +299,12 @@ module Google
       #
       attr_reader :quota_project_id
 
+      # @private Temporary; remove when universe domain metadata endpoint is stable (see b/349488459).
+      def disable_universe_domain_check
+        return false unless @client.respond_to? :disable_universe_domain_check
+        @client.disable_universe_domain_check
+      end
+
       # @private Delegate client methods to the client object.
       extend Forwardable
 

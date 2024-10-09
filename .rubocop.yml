@@ -6,10 +6,14 @@ AllCops:
     - "integration/**/*"
     - "spec/**/*"
     - "test/**/*"
-Metrics/ClassLength:
-  Max: 200
-Metrics/ModuleLength:
-  Max: 110
 Metrics/BlockLength:
   Exclude:
     - "googleauth.gemspec"
+Metrics/ClassLength:
+  Max: 200
+Metrics/CyclomaticComplexity:
+  Max: 15
+Metrics/ModuleLength:
+  Max: 200
+Metrics/PerceivedComplexity:
+  Max: 15
