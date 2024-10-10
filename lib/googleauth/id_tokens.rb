@@ -76,7 +76,7 @@ module Google
     #       ]
     #     }
     #     source = Google::Auth::IDTokens::StaticKeySource.from_jwk_set jwk_data
-    #     verifier = Google::Auth::IDTokens::Verifier key_source: source
+    #     verifier = Google::Auth::IDTokens::Verifier.new key_source: source
     #     payload = verifier.verify the_token, aud: "my-app-client-id"
     #
     module IDTokens
