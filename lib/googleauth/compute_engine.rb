@@ -80,11 +80,16 @@ module Google
         alias unmemoize_all reset_cache
       end
 
+      # @private Temporary; remove when universe domain metadata endpoint is stable (see b/349488459).
+      attr_accessor :disable_universe_domain_check
+
       # Construct a GCECredentials
       def initialize options = {}
         # Override the constructor to remember whether the universe domain was
         # overridden by a constructor argument.
         @universe_domain_overridden = options["universe_domain"] || options[:universe_domain] ? true : false
+        # TODO: Remove when universe domain metadata endpoint is stable (see b/349488459).
+        @disable_universe_domain_check = true
         super options
       end
 
@@ -127,20 +132,8 @@ module Google
           else
             Signet::OAuth2.parse_credentials body, content_type
           end
-        unless @universe_domain_overridden
-          universe_domain = Google::Cloud.env.lookup_metadata "universe", "universe_domain"
-          universe_domain = "googleapis.com" if !universe_domain || universe_domain.empty?
-          hash["universe_domain"] = universe_domain.strip
-        end
-        # The response might have been cached, which means expires_in might be
-        # stale. Update it based on the time since the data was retrieved.
-        # We also ensure expires_in is conservative; subtracting at least 1
-        # second to offset any skew from metadata server latency.
-        if hash["expires_in"].is_a? Numeric
-          offset = 1 + (Process.clock_gettime(Process::CLOCK_MONOTONIC) - retrieval_time).round
-          hash["expires_in"] -= offset if offset.positive?
-          hash["expires_in"] = 0 if hash["expires_in"].negative?
-        end
+        add_universe_domain_to hash
+        adjust_for_stale_expires_in hash, retrieval_time
         hash
       end
 
@@ -151,6 +144,30 @@ module Google
           hash["expires_at"] = expires_at if expires_at
         end
         hash
+      end
+
+      def add_universe_domain_to hash
+        return if @universe_domain_overridden
+        universe_domain =
+          if disable_universe_domain_check
+            # TODO: Remove when universe domain metadata endpoint is stable (see b/349488459).
+            "googleapis.com"
+          else
+            Google::Cloud.env.lookup_metadata "universe", "universe_domain"
+          end
+        universe_domain = "googleapis.com" if !universe_domain || universe_domain.empty?
+        hash["universe_domain"] = universe_domain.strip
+      end
+
+      # The response might have been cached, which means expires_in might be
+      # stale. Update it based on the time since the data was retrieved.
+      # We also ensure expires_in is conservative; subtracting at least 1
+      # second to offset any skew from metadata server latency.
+      def adjust_for_stale_expires_in hash, retrieval_time
+        return unless hash["expires_in"].is_a? Numeric
+        offset = 1 + (Process.clock_gettime(Process::CLOCK_MONOTONIC) - retrieval_time).round
+        hash["expires_in"] -= offset if offset.positive?
+        hash["expires_in"] = 0 if hash["expires_in"].negative?
       end
     end
   end
