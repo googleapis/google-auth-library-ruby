@@ -17,6 +17,7 @@ $LOAD_PATH.unshift spec_dir
 $LOAD_PATH.uniq!
 
 require "faraday"
+require "google-cloud-env"
 require "spec_helper"
 
 shared_examples "apply/apply! are OK" do
