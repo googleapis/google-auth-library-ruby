@@ -153,7 +153,7 @@ module Google
             # TODO: Remove when universe domain metadata endpoint is stable (see b/349488459).
             "googleapis.com"
           else
-            Google::Cloud.env.lookup_metadata "universe", "universe_domain"
+            Google::Cloud.env.lookup_metadata "universe", "universe-domain"
           end
         universe_domain = "googleapis.com" if !universe_domain || universe_domain.empty?
         hash["universe_domain"] = universe_domain.strip
