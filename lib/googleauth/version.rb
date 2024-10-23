@@ -16,6 +16,6 @@ module Google
   # Module Auth provides classes that provide Google-specific authorization
   # used to access Google APIs.
   module Auth
-    VERSION = "1.11.1".freeze
+    VERSION = "1.11.2".freeze
   end
 end

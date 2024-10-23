@@ -1,5 +1,12 @@
 # Release History
 
+### 1.11.2 (2024-10-23)
+
+#### Bug Fixes
+
+* Temporarily disable universe domain query from GCE metadata server ([#493](https://github.com/googleapis/google-auth-library-ruby/issues/493)) 
+* Use updated metadata path for universe-domain ([#496](https://github.com/googleapis/google-auth-library-ruby/issues/496)) 
+
 ### 1.11.1 (2024-10-04)
 
 #### Bug Fixes
