@@ -38,7 +38,7 @@ describe Google::Auth::GCECredentials do
   end
 
   def make_auth_stubs opts
-    universe_stub = stub_request(:get, "http://169.254.169.254/computeMetadata/v1/universe/universe_domain")
+    universe_stub = stub_request(:get, "http://169.254.169.254/computeMetadata/v1/universe/universe-domain")
       .with(headers: { "Metadata-Flavor" => "Google" })
     if !defined?(@universe_domain) || !@universe_domain
       universe_stub.to_return body: "", status:  404, headers: {"Metadata-Flavor" => "Google" }
