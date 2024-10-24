@@ -16,6 +16,7 @@ require "open3"
 require "time"
 require "googleauth/external_account/base_credentials"
 require "googleauth/external_account/external_account_utils"
+require "googleauth/errors"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization used to access Google APIs.
@@ -52,24 +53,27 @@ module Google
           @audience = options[:audience]
           @credential_source = options[:credential_source] || {}
           @credential_source_executable = @credential_source[:executable]
-          raise "Missing excutable source. An 'executable' must be provided" if @credential_source_executable.nil?
+          if @credential_source_executable.nil?
+            raise CredentialsError,
+                  "Missing excutable source. An 'executable' must be provided"
+          end
           @credential_source_executable_command = @credential_source_executable[:command]
           if @credential_source_executable_command.nil?
-            raise "Missing command field. Executable command must be provided."
+            raise CredentialsError, "Missing command field. Executable command must be provided."
           end
           @credential_source_executable_timeout_millis = @credential_source_executable[:timeout_millis] ||
                                                          EXECUTABLE_TIMEOUT_MILLIS_DEFAULT
           if @credential_source_executable_timeout_millis < EXECUTABLE_TIMEOUT_MILLIS_LOWER_BOUND ||
              @credential_source_executable_timeout_millis > EXECUTABLE_TIMEOUT_MILLIS_UPPER_BOUND
-            raise "Timeout must be between 5 and 120 seconds."
+            raise CredentialsError, "Timeout must be between 5 and 120 seconds."
           end
           @credential_source_executable_output_file = @credential_source_executable[:output_file]
         end
 
         def retrieve_subject_token!
           unless ENV[ENABLE_PLUGGABLE_ENV] == "1"
-            raise "Executables need to be explicitly allowed (set GOOGLE_EXTERNAL_ACCOUNT_ALLOW_EXECUTABLES to '1') " \
-                  "to run."
+            raise CredentialsError, "Executables need to be explicitly allowed " \
+                                    "(set GOOGLE_EXTERNAL_ACCOUNT_ALLOW_EXECUTABLES to '1') to run."
           end
           # check output file first
           subject_token = load_subject_token_from_output_file
@@ -106,25 +110,29 @@ module Google
           validate_response_schema response
           unless response[:success]
             if response[:code].nil? || response[:message].nil?
-              raise "Error code and message fields are required in the response."
+              raise CredentialsError, "Error code and message fields are required in the response."
             end
-            raise "Executable returned unsuccessful response: code: #{response[:code]}, message: #{response[:message]}."
+            raise CredentialsError,
+                  "Executable returned unsuccessful response: code: #{response[:code]}, message: #{response[:message]}."
           end
           if response[:expiration_time] && response[:expiration_time] < Time.now.to_i
-            raise "The token returned by the executable is expired."
+            raise CredentialsError, "The token returned by the executable is expired."
           end
-          raise "The executable response is missing the token_type field." if response[:token_type].nil?
+          if response[:token_type].nil?
+            raise CredentialsError,
+                  "The executable response is missing the token_type field."
+          end
           return response[:id_token] if ID_TOKEN_TYPE.include? response[:token_type]
           return response[:saml_response] if response[:token_type] == "urn:ietf:params:oauth:token-type:saml2"
-          raise "Executable returned unsupported token type."
+          raise CredentialsError, "Executable returned unsupported token type."
         end
 
         def validate_response_schema response
-          raise "The executable response is missing the version field." if response[:version].nil?
+          raise CredentialsError, "The executable response is missing the version field." if response[:version].nil?
           if response[:version] > EXECUTABLE_SUPPORTED_MAX_VERSION
-            raise "Executable returned unsupported version #{response[:version]}."
+            raise CredentialsError, "Executable returned unsupported version #{response[:version]}."
           end
-          raise "The executable response is missing the success field." if response[:success].nil?
+          raise CredentialsError, "The executable response is missing the success field." if response[:success].nil?
         end
 
         def inject_environment_variables
@@ -145,7 +153,8 @@ module Google
           Timeout.timeout timeout_seconds do
             output, error, status = Open3.capture3 environment_vars, command
             unless status.success?
-              raise "Executable exited with non-zero return code #{status.exitstatus}. Error: #{output}, #{error}"
+              raise CredentialsError,
+                    "Executable exited with non-zero return code #{status.exitstatus}. Error: #{output}, #{error}"
             end
             output
           end
