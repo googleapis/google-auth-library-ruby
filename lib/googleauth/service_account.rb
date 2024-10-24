@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require "google/logging/message"
 require "googleauth/signet"
 require "googleauth/credentials_loader"
 require "googleauth/json_key_reader"
@@ -123,6 +124,7 @@ module Google
         }
         key_io = StringIO.new MultiJson.dump(cred_json)
         alt = ServiceAccountJwtHeaderCredentials.make_creds json_key_io: key_io, scope: scope
+        alt.logger = logger
         alt.apply! a_hash
       end
     end
@@ -147,6 +149,7 @@ module Google
       attr_reader :project_id
       attr_reader :quota_project_id
       attr_accessor :universe_domain
+      attr_accessor :logger
 
       # Create a ServiceAccountJwtHeaderCredentials.
       #
@@ -187,10 +190,14 @@ module Google
         return a_hash if jwt_aud_uri.nil? && @scope.nil?
         jwt_token = new_jwt_token jwt_aud_uri, opts
         a_hash[AUTH_METADATA_KEY] = "Bearer #{jwt_token}"
+        logger&.debug do
+          hash = Digest::SHA256.hexdigest jwt_token
+          Google::Logging::Message.from message: "Sending JWT auth token. (sha256:#{hash})"
+        end
         a_hash
       end
 
-      # Returns a clone of a_hash updated with the authoriation header
+      # Returns a clone of a_hash updated with the authorization header
       def apply a_hash, opts = {}
         a_copy = a_hash.clone
         apply! a_copy, opts
@@ -218,6 +225,10 @@ module Google
 
         assertion["scope"] = Array(@scope).join " " if @scope
         assertion["aud"] = jwt_aud_uri if jwt_aud_uri
+
+        logger&.debug do
+          Google::Logging::Message.from message: "JWT assertion: #{assertion}"
+        end
 
         JWT.encode assertion, @signing_key, SIGNING_ALGORITHM
       end
