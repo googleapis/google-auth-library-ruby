@@ -10,4 +10,4 @@ export PATH=$GEM_HOME/bin:$PATH
 gem install --no-document toys
 toys release install-python-tools -v
 python3 -m releasetool publish-reporter-script > /tmp/publisher-script; source /tmp/publisher-script
-toys release perform -v --enable-docs < /dev/null
+toys release perform -v --force-republish --enable-docs --enable-rad < /dev/null
