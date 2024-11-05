@@ -213,7 +213,7 @@ module Google
           @private_key, @issuer, @project_id, @quota_project_id, @universe_domain =
             self.class.read_json_key json_key_io
         else
-          @private_key = options.key?(:private_key?) ? options[:private_key] : ENV[CredentialsLoader::PRIVATE_KEY_VAR]
+          @private_key = options.key?(:private_key) ? options[:private_key] : ENV[CredentialsLoader::PRIVATE_KEY_VAR]
           @issuer = options.key?(:issuer) ? options[:issuer] : ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
           @project_id = options.key?(:project_id) ? options[:project_id] : ENV[CredentialsLoader::PROJECT_ID_VAR]
           @quota_project_id = options[:quota_project_id] if options.key? :quota_project_id
