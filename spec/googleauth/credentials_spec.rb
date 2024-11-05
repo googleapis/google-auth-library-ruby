@@ -13,7 +13,8 @@
 # limitations under the License.
 
 require "googleauth"
-
+require "spec_helper"
+require "tmpdir"
 
 # This test is testing the private class Google::Auth::Credentials. We want to
 # make sure that the passed in scope propogates to the Signet object. This means

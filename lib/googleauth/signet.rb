@@ -117,6 +117,40 @@ module Signet
         end
       end
 
+      # Creates a duplicate of these credentials
+      # without the Signet::OAuth2::Client-specific 
+      # transient state (e.g. cached tokens)
+      # 
+      # @param options [Hash] Overrides for the credentials parameters.
+      # @see Signet::OAuth2::Client#update!
+      def duplicate options = {}
+        options = deep_hash_normalize options
+        new_client = self.class.new
+
+        new_client.update!(
+          {
+            authorization_uri: @authorization_uri,
+            token_credential_uri: @token_credential_uri,
+            client_id: @client_id,
+            client_secret: @client_secret,
+            scope: @scope,
+            target_audience: @target_audience,
+            redirect_uri: @redirect_uri,
+            username: @username,
+            password: @password,
+            issuer: @issuer,
+            person: @person,
+            sub: @sub,
+            audience: @audience,
+            signing_key: @signing_key,
+            extension_parameters: @extension_parameters,
+            additional_parameters: @additional_parameters,
+            access_type: @access_type,
+            universe_domain: @universe_domain
+          }.merge(options)
+        ).configure_connection options
+      end
+
       private
 
       def expires_at_from_id_token id_token

@@ -431,6 +431,37 @@ describe Google::Auth::ServiceAccountCredentials do
       end
     end
   end
+   
+  describe "duplicates" do
+    before :example do
+      @clz = ServiceAccountCredentials
+      @base_creds = @clz.make_creds(
+         json_key_io: StringIO.new(cred_json_text), 
+         scope: ["https://www.googleapis.com/auth/cloud-platform"]
+      )
+      @creds = @base_creds.duplicate
+    end
+
+    it "should duplicate the scope" do
+      expect(@creds.scope).to eq ["https://www.googleapis.com/auth/cloud-platform"]
+      expect(@creds.duplicate(scope: ["https://www.googleapis.com/auth/devstorage.read_only"]).scope).to eq ["https://www.googleapis.com/auth/devstorage.read_only"]
+    end
+
+    it "should duplicate the project_id" do
+      expect(@creds.project_id).to eq "a_project_id"
+      expect(@creds.duplicate(project_id: "test-project-id-2").project_id).to eq "test-project-id-2"
+    end
+
+    it "should duplicate the quota_project_id" do
+      expect(@creds.quota_project_id).to eq "b_project_id"
+      expect(@creds.duplicate(quota_project_id: "test-quota-project-id-2").quota_project_id).to eq "test-quota-project-id-2"
+    end
+
+    it "should duplicate the enable_self_signed_jwt" do
+      expect(@creds.enable_self_signed_jwt?).to eq false
+      expect(@creds.duplicate(enable_self_signed_jwt: true).enable_self_signed_jwt?).to eq true
+    end
+  end
 end
 
 describe Google::Auth::ServiceAccountJwtHeaderCredentials do
@@ -579,6 +610,38 @@ describe Google::Auth::ServiceAccountJwtHeaderCredentials do
 
       expect(payload["aud"]).to eq(test_uri) if not test_uri.nil?
       expect(payload["iss"]).to eq(client_email)
+    end
+  end
+
+  describe "duplicates" do
+    before :example do
+      @creds = @client.duplicate
+    end
+
+    it "should duplicate the private_key" do
+      new_key = OpenSSL::PKey::RSA.new 2048
+      expect(@creds.instance_variable_get(:@private_key)).to eq @key.to_pem
+      expect(@creds.duplicate(private_key: new_key.to_pem).instance_variable_get(:@private_key)).to eq new_key.to_pem
+    end
+
+    it "should duplicate the project_id" do
+      expect(@creds.instance_variable_get(:@issuer)).to eq "app@developer.gserviceaccount.com"
+      expect(@creds.duplicate(issuer: "test-issuer").instance_variable_get(:@issuer)).to eq "test-issuer"
+    end
+
+    it "should duplicate the project_id" do
+      expect(@creds.project_id).to eq "a_project_id"
+      expect(@creds.duplicate(project_id: "test-project-id-2").project_id).to eq "test-project-id-2"
+    end
+
+    it "should duplicate the quota_project_id" do
+      expect(@creds.quota_project_id).to eq nil
+      expect(@creds.duplicate(quota_project_id: "test-quota-project-id-2").quota_project_id).to eq "test-quota-project-id-2"
+    end
+
+    it "should duplicate the quota_project_id" do
+      expect(@creds.universe_domain).to eq "googleapis.com"
+      expect(@creds.duplicate(universe_domain: "test-universe-domain").universe_domain).to eq "test-universe-domain"
     end
   end
 end

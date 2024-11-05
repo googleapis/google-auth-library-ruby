@@ -376,4 +376,23 @@ describe Google::Auth::GCECredentials do
       end
     end
   end
+
+  describe "duplicates" do
+    before :example do
+      Google::Cloud.env.compute_smbios.override_product_name = "Google Compute Engine"
+      GCECredentials.reset_cache
+      @base_creds = GCECredentials.new(scope: ["https://www.googleapis.com/auth/cloud-platform"])
+      @creds = @base_creds.duplicate
+    end
+
+    it "should duplicate the scope" do
+      expect(@creds.scope).to eq ["https://www.googleapis.com/auth/cloud-platform"]
+      expect(@creds.duplicate(scope: ["https://www.googleapis.com/auth/devstorage.read_only"]).scope).to eq ["https://www.googleapis.com/auth/devstorage.read_only"]
+    end
+
+    it "should duplicate the universe_domain_overridden" do
+      expect(@creds.instance_variable_get(:@universe_domain_overridden)).to eq false
+      expect(@creds.duplicate(universe_domain_overridden: true).instance_variable_get(:@universe_domain_overridden)).to eq true
+    end
+  end
 end
