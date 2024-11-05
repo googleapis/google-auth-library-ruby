@@ -82,21 +82,21 @@ module Google
       end
 
       # Creates a duplicate of these credentials
-      # without the Signet::OAuth2::Client-specific 
+      # without the Signet::OAuth2::Client-specific
       # transient state (e.g. cached tokens)
-      # 
+      #
       # @param options [Hash] Overrides for the credentials parameters.
-      #   The following keys are recognized in addition to keys in the 
+      #   The following keys are recognized in addition to keys in the
       #   Signet::OAuth2::Client
       #   * `:enable_self_signed_jwt` Whether the self-signed JWT should
-      #     be used for the authentication 
+      #     be used for the authentication
       #   * `project_id` the project id to use during the authentication
       #   * `quota_project_id` the quota project id to use
       #     during the authentication
       def duplicate options = {}
         options = deep_hash_normalize options
         super(
-          { 
+          {
             enable_self_signed_jwt: @enable_self_signed_jwt,
             project_id: project_id,
             quota_project_id: quota_project_id
@@ -136,15 +136,15 @@ module Google
       end
 
       # Destructively updates these credentials
-      # 
+      #
       # @param options [Hash] Overrides for the credentials parameters.
-      #   The following keys are recognized in addition to keys in the 
+      #   The following keys are recognized in addition to keys in the
       #   Signet::OAuth2::Client
       #   * `:enable_self_signed_jwt` Whether the self-signed JWT should
-      #     be used for the authentication 
+      #     be used for the authentication
       #   * `project_id` the project id to use during the authentication
       #   * `quota_project_id` the quota project id to use
-      #     during the authentication 
+      #     during the authentication
       def update! options = {}
         # Normalize all keys to symbols to allow indifferent access.
         options = deep_hash_normalize options
@@ -213,26 +213,11 @@ module Google
           @private_key, @issuer, @project_id, @quota_project_id, @universe_domain =
             self.class.read_json_key json_key_io
         else
-          @private_key = if options.key?(:private_key)
-            options[:private_key] 
-          else
-            ENV[CredentialsLoader::PRIVATE_KEY_VAR]
-          end
-
-          @issuer = if options.key?(:issuer)
-            options[:issuer] 
-          else
-            ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
-          end
-
-          @project_id = if options.key?(:project_id)
-            options[:project_id]
-          else
-            ENV[CredentialsLoader::PROJECT_ID_VAR]
-          end
-
-          @quota_project_id = options[:quota_project_id] if options.key? :quota_project_id 
-          @universe_domain = options[:universe_domain] if options.key? :universe_domain 
+          @private_key = options.key?(:private_key?) ? options[:private_key] : ENV[CredentialsLoader::PRIVATE_KEY_VAR]
+          @issuer = options.key?(:issuer) ? options[:issuer] : ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
+          @project_id = options.key?(:project_id) ? options[:project_id] : ENV[CredentialsLoader::PROJECT_ID_VAR]
+          @quota_project_id = options[:quota_project_id] if options.key? :quota_project_id
+          @universe_domain = options[:universe_domain] if options.key? :universe_domain
         end
         @universe_domain ||= "googleapis.com"
         @project_id ||= CredentialsLoader.load_gcloud_project_id
@@ -241,7 +226,7 @@ module Google
       end
 
       # Creates a duplicate of these credentials
-      # 
+      #
       # @param options [Hash] Overrides for the credentials parameters.
       #   The following keys are recognized
       #   * `private key` the private key in string form
@@ -263,7 +248,7 @@ module Google
         }.merge(options)
 
         new_client = self.class.new options
-        new_client.update!(options)
+        new_client.update! options
       end
 
       # Construct a jwt token if the JWT_AUD_URI key is present in the input
@@ -324,7 +309,7 @@ module Google
       end
 
       # Destructively updates these credentials
-      # 
+      #
       # @param options [Hash] Overrides for the credentials parameters.
       #   The following keys are recognized
       #   * `private key` the private key in string form

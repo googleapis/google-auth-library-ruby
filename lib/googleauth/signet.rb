@@ -118,9 +118,9 @@ module Signet
       end
 
       # Creates a duplicate of these credentials
-      # without the Signet::OAuth2::Client-specific 
+      # without the Signet::OAuth2::Client-specific
       # transient state (e.g. cached tokens)
-      # 
+      #
       # @param options [Hash] Overrides for the credentials parameters.
       # @see Signet::OAuth2::Client#update!
       def duplicate options = {}

@@ -94,19 +94,19 @@ module Google
       end
 
       # Creates a duplicate of these credentials
-      # without the Signet::OAuth2::Client-specific 
+      # without the Signet::OAuth2::Client-specific
       # transient state (e.g. cached tokens)
-      # 
+      #
       # @param options [Hash] Overrides for the credentials parameters.
-      #   The following keys are recognized in addition to keys in the 
+      #   The following keys are recognized in addition to keys in the
       #   Signet::OAuth2::Client
-      #   * `:universe_domain_overridden` Whether the universe domain was 
-      #     overriden during credentials creation  
+      #   * `:universe_domain_overridden` Whether the universe domain was
+      #     overriden during credentials creation
       def duplicate options = {}
         options = deep_hash_normalize options
         super(
-          { 
-            universe_domain_overridden: @universe_domain_overridden,
+          {
+            universe_domain_overridden: @universe_domain_overridden
           }.merge(options)
         )
       end
@@ -155,12 +155,12 @@ module Google
       end
 
       # Destructively updates these credentials
-      # 
+      #
       # @param options [Hash] Overrides for the credentials parameters.
-      #   The following keys are recognized in addition to keys in the 
+      #   The following keys are recognized in addition to keys in the
       #   Signet::OAuth2::Client
-      #   * `:universe_domain_overridden` Whether the universe domain was 
-      #     overriden during credentials creation  
+      #   * `:universe_domain_overridden` Whether the universe domain was
+      #     overriden during credentials creation
       def update! options = {}
         # Normalize all keys to symbols to allow indifferent access.
         options = deep_hash_normalize options
