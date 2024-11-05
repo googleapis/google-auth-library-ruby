@@ -32,19 +32,23 @@ module Google
 
       include Google::Auth::BaseClient
       include Helpers::Connection
-      
-      attr_reader :base_credentials, :source_credentials, :impersonation_url, :scope
-      attr_reader :access_token, :expires_at
-      
+
+      attr_reader :base_credentials
+      attr_reader :source_credentials
+      attr_reader :impersonation_url
+      attr_reader :scope
+      attr_reader :access_token
+      attr_reader :expires_at
+
       # Create a ImpersonatedServiceAccountCredentials
-      # When you use service account impersonation, you start with an authenticated principal 
-      # (e.g. your user account or a service account) 
-      # and request short-lived credentials for a service account 
-      # that has the authorization that your use case requires. 
+      # When you use service account impersonation, you start with an authenticated principal
+      # (e.g. your user account or a service account)
+      # and request short-lived credentials for a service account
+      # that has the authorization that your use case requires.
       #
-      # @param base_credentials [Object] the authenticated principal that will be used 
+      # @param base_credentials [Object] the authenticated principal that will be used
       #   to fetch short-lived impersionation access token
-      # @param impersonation_url [String] the URL to use to impersonate the service account.  
+      # @param impersonation_url [String] the URL to use to impersonate the service account.
       #   This URL should be in the format:
       #   https://iamcredentials.{universe_domain}/v1/projects/-/serviceAccounts/{source_sa_email}:generateAccessToken
       #   where:
@@ -54,24 +58,25 @@ module Google
       #   Note that these are NOT the scopes that the authenticated principal should have, but
       #   the scopes that the short-lived impersonation access token should have.
       def self.make_creds options = {}
-        new(options)
+        new options
       end
 
       def initialize options = {}
-        @base_credentials, @impersonation_url, @scope  =
-          options.values_at :base_credentials, 
+        @base_credentials, @impersonation_url, @scope =
+          options.values_at :base_credentials,
                             :impersonation_url,
                             :scope
 
-        # Some credentials (all Signet-based ones and this one) include scope and a bunch of transient state (e.g. refresh status) as part of themselves
+        # Some credentials (all Signet-based ones and this one) include scope and a bunch of transient state
+        # (e.g. refresh status) as part of themselves
         # so a copy needs to be created with the scope overriden and transient state dropped
-        @source_credentials = if @base_credentials.respond_to? :duplicate 
-          @base_credentials.duplicate({
-            scope: IAM_SCOPE
-          })
-        else
-          @base_credentials
-        end
+        @source_credentials = if @base_credentials.respond_to? :duplicate
+                                @base_credentials.duplicate({
+                                                              scope: IAM_SCOPE
+                                                            })
+                              else
+                                @base_credentials
+                              end
       end
 
       # Whether the current access token expires before a given
@@ -100,10 +105,10 @@ module Google
 
         case resp.status
         when 200
-          response = MultiJson.load(resp.body)
+          response = MultiJson.load resp.body
           self.expires_at = response["expireTime"]
           self.access_token = response["accessToken"]
-          self.access_token
+          access_token
         when 403, 500
           msg = "Unexpected error code #{resp.status} #{ERROR_SUFFIX}"
           raise Signet::UnexpectedStatusError, msg
@@ -114,20 +119,20 @@ module Google
       end
 
       # Returns a clone of a_hash updated with the authoriation header
-      def apply! a_hash, opts = {}
+      def apply! a_hash, _opts = {}
         token = make_token!
         a_hash[AUTH_METADATA_KEY] = "Bearer #{token}"
         a_hash
       end
 
       # Creates a duplicate of these credentials without transient token state
-      # 
+      #
       # @param options [Hash] Overrides for the credentials parameters.
       #   The following keys are recognized
       #   * `base_credentials` the base credentials used to initialize the impersonation
       #   * `source_credentials` the authenticated credentials which usually would be
       #     base credentias with scope overridden to IAM_SCOPE
-      #   * `impersonation_url` the URL to use to make an impersonation token exchange 
+      #   * `impersonation_url` the URL to use to make an impersonation token exchange
       #   * `scope` the scope(s) to access
       def duplicate options = {}
         options = deep_hash_normalize options
@@ -136,21 +141,21 @@ module Google
           base_credentials: @base_credentials,
           source_credentials: @source_credentials,
           impersonation_url: @impersonation_url,
-          scope: @scope,
+          scope: @scope
         }.merge(options)
 
         new_client = self.class.new options
-        new_client.update!(options)
+        new_client.update! options
       end
 
       # Destructively updates these credentials
-      # 
+      #
       # @param options [Hash] Overrides for the credentials parameters.
       #   The following keys are recognized
       #   * `base_credentials` the base credentials used to initialize the impersonation
       #   * `source_credentials` the authenticated credentials which usually would be
       #     base credentias with scope overridden to IAM_SCOPE
-      #   * `impersonation_url` the URL to use to make an impersonation token exchange 
+      #   * `impersonation_url` the URL to use to make an impersonation token exchange
       #   * `scope` the scope(s) to access
       def update! options = {}
         # Normalize all keys to symbols to allow indifferent access.

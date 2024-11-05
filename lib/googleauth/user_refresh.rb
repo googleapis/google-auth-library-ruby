@@ -86,11 +86,11 @@ module Google
       end
 
       # Creates a duplicate of these credentials
-      # without the Signet::OAuth2::Client-specific 
+      # without the Signet::OAuth2::Client-specific
       # transient state (e.g. cached tokens)
-      # 
+      #
       # @param options [Hash] Overrides for the credentials parameters.
-      #   The following keys are recognized in addition to keys in the 
+      #   The following keys are recognized in addition to keys in the
       #   Signet::OAuth2::Client
       #   * `project_id` the project id to use during the authentication
       #   * `quota_project_id` the quota project id to use
@@ -98,7 +98,7 @@ module Google
       def duplicate options = {}
         options = deep_hash_normalize options
         super(
-          { 
+          {
             project_id: @project_id,
             quota_project_id: @quota_project_id
           }.merge(options)
@@ -136,15 +136,15 @@ module Google
       end
 
       # Destructively updates these credentials
-      # 
+      #
       # @param options [Hash] Overrides for the credentials parameters.
-      #   The following keys are recognized in addition to keys in the 
+      #   The following keys are recognized in addition to keys in the
       #   Signet::OAuth2::Client
       #   * `:enable_self_signed_jwt` Whether the self-signed JWT should
-      #     be used for the authentication 
+      #     be used for the authentication
       #   * `project_id` the project id to use during the authentication
       #   * `quota_project_id` the quota project id to use
-      #     during the authentication 
+      #     during the authentication
       def update! options = {}
         # Normalize all keys to symbols to allow indifferent access.
         options = deep_hash_normalize options
