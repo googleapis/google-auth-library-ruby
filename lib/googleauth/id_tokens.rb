@@ -168,7 +168,6 @@ module Google
                         aud: nil,
                         azp: nil,
                         iss: OIDC_ISSUERS
-
           verifier = Verifier.new key_source: oidc_key_source,
                                   aud:        aud,
                                   azp:        azp,
@@ -206,7 +205,6 @@ module Google
                        aud: nil,
                        azp: nil,
                        iss: IAP_ISSUERS
-
           verifier = Verifier.new key_source: iap_key_source,
                                   aud:        aud,
                                   azp:        azp,
