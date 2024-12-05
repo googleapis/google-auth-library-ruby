@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require "google/logging/message"
+
 module Google
   # Module Auth provides classes that provide Google-specific authorization
   # used to access Google APIs.
@@ -29,7 +31,12 @@ module Google
         # fetch the access token there is currently not one, or if the client
         # has expired
         fetch_access_token! opts if needs_access_token?
-        a_hash[AUTH_METADATA_KEY] = "Bearer #{send token_type}"
+        token = send token_type
+        a_hash[AUTH_METADATA_KEY] = "Bearer #{token}"
+        logger&.debug do
+          hash = Digest::SHA256.hexdigest token
+          Google::Logging::Message.from message: "Sending auth token. (sha256:#{hash})"
+        end
       end
 
       # Returns a clone of a_hash updated with the authentication token
@@ -65,6 +72,9 @@ module Google
       def expires_within?
         raise NoMethodError, "expires_within? not implemented"
       end
+
+      # The logger used to log operations on this client, such as token refresh.
+      attr_accessor :logger
 
       private
 
