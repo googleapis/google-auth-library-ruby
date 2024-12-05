@@ -1,5 +1,11 @@
 # Release History
 
+### 1.12.0 (2024-12-05)
+
+#### Features
+
+* provided opt-in debug logging ([#490](https://github.com/googleapis/google-auth-library-ruby/issues/490)) 
+
 ### 1.11.2 (2024-10-23)
 
 #### Bug Fixes
