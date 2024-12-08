@@ -24,7 +24,7 @@ module Google
       module Connection
         module_function
 
-        attr_accessor :default_connection
+        silence_warnings { attr_accessor :default_connection }
 
         def connection
           @default_connection || Faraday.default_connection
