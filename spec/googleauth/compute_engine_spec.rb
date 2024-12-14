@@ -385,6 +385,10 @@ describe Google::Auth::GCECredentials do
       @creds = @base_creds.duplicate
     end
 
+    after :example do
+      Google::Cloud.env.compute_smbios.override_product_name = nil
+    end
+
     it "should duplicate the scope" do
       expect(@creds.scope).to eq ["https://www.googleapis.com/auth/cloud-platform"]
       expect(@creds.duplicate(scope: ["https://www.googleapis.com/auth/devstorage.read_only"]).scope).to eq ["https://www.googleapis.com/auth/devstorage.read_only"]
