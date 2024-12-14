@@ -12,12 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-spec_dir = File.expand_path File.join(File.dirname(__FILE__))
-$LOAD_PATH.unshift spec_dir
-$LOAD_PATH.uniq!
-
 require "googleauth/impersonated_service_account"
-require "spec_helper"
+require_relative "../spec_helper"
 
 describe Google::Auth::ImpersonatedServiceAccountCredentials do
 
@@ -40,14 +36,16 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
 
   describe "#initialize" do
     it "should call duplicate when available" do
-      allow(@base_creds).to receive(:duplicate).and_return(@base_creds)
+      @source_creds = double("Credentials")
+      allow(@base_creds).to receive(:duplicate).and_return(@source_creds)
       creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds({
         base_credentials: @base_creds,
         impersonation_url: impersonation_url,
         scope: ["scope1", "scope2"]
       })
-      expect(@base_creds).to have_received(:duplicate)
+      expect(@source_creds).to have_received(:duplicate)
       expect(creds.base_credentials).to eq(@base_creds)
+      expect(creds.source_credentials).to eq(@source_creds)
     end
 
     it "should use base creds if they don't duplicate" do
