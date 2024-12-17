@@ -38,7 +38,7 @@ module Google
           Google::Logging::Message.from message: "Sending auth token. (sha256:#{hash})"
         end
 
-        a_hash
+        a_hash[AUTH_METADATA_KEY]
       end
 
       # Returns a clone of a_hash updated with the authentication token
