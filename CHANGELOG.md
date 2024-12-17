@@ -1,5 +1,11 @@
 # Release History
 
+### 1.12.1 (2024-12-17)
+
+#### Bug Fixes
+
+* Restored previous behavior where the apply! method returns the auth header ([#506](https://github.com/googleapis/google-auth-library-ruby/issues/506)) 
+
 ### 1.12.0 (2024-12-05)
 
 #### Features
