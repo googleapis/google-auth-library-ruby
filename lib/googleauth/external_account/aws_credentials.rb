@@ -15,6 +15,7 @@
 require "time"
 require "googleauth/external_account/base_credentials"
 require "googleauth/external_account/external_account_utils"
+require "googleauth/errors"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization used to access Google APIs.
@@ -108,13 +109,13 @@ module Google
 
         def imdsv2_session_token
           return @imdsv2_session_token unless imdsv2_session_token_invalid?
-          raise "IMDSV2 token url must be provided" if @imdsv2_session_token_url.nil?
+          raise CredentialsError, "IMDSV2 token url must be provided" if @imdsv2_session_token_url.nil?
           begin
             response = connection.put @imdsv2_session_token_url do |req|
               req.headers["x-aws-ec2-metadata-token-ttl-seconds"] = IMDSV2_TOKEN_EXPIRATION_IN_SECONDS.to_s
             end
           rescue Faraday::Error => e
-            raise "Fetching AWS IMDSV2 token error: #{e}"
+            raise CredentialsError, "Fetching AWS IMDSV2 token error: #{e}"
           end
           raise Faraday::Error unless response.success?
           @imdsv2_session_token = response.body
@@ -140,7 +141,7 @@ module Google
             raise Faraday::Error unless response.success?
             response
           rescue Faraday::Error
-            raise "Failed to retrieve AWS #{name}."
+            raise CredentialsError, "Failed to retrieve AWS #{name}."
           end
         end
 
@@ -183,7 +184,7 @@ module Google
         # credentials needed to sign requests to AWS APIs.
         def fetch_metadata_role_name
           unless @credential_verification_url
-            raise "Unable to determine the AWS metadata server security credentials endpoint"
+            raise CredentialsError, "Unable to determine the AWS metadata server security credentials endpoint"
           end
 
           get_aws_resource(@credential_verification_url, "IAM Role").body
@@ -199,7 +200,10 @@ module Google
           @region = ENV[CredentialsLoader::AWS_REGION_VAR] || ENV[CredentialsLoader::AWS_DEFAULT_REGION_VAR]
 
           unless @region
-            raise "region_url or region must be set for external account credentials" unless @region_url
+            unless @region_url
+              raise CredentialsError,
+                    "region_url or region must be set for external account credentials"
+            end
 
             @region ||= get_aws_resource(@region_url, "region").body[0..-2]
           end
@@ -236,7 +240,7 @@ module Google
         #
         def generate_signed_request aws_credentials, original_request
           uri = Addressable::URI.parse original_request[:url]
-          raise "Invalid AWS service URL" unless uri.hostname && uri.scheme == "https"
+          raise CredentialsError, "Invalid AWS service URL" unless uri.hostname && uri.scheme == "https"
           service_name = uri.host.split(".").first
 
           datetime = Time.now.utc.strftime "%Y%m%dT%H%M%SZ"
