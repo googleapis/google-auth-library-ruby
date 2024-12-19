@@ -93,6 +93,19 @@ module Google
         super options
       end
 
+      # @private
+      # Overrides universe_domain getter to fetch lazily if it hasn't been
+      # fetched yet. This is necessary specifically for Compute Engine because
+      # the universe comes from the metadata service, and isn't known
+      # immediately on credential construction. All other credential types read
+      # the universe from their json key or other immediate input.
+      def universe_domain
+        value = super
+        return value unless value.nil?
+        fetch_access_token!
+        super
+      end
+
       # Overrides the super class method to change how access tokens are
       # fetched.
       def fetch_access_token _options = {}
