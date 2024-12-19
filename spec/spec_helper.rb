@@ -26,6 +26,7 @@ require "logging"
 require "rspec/logging_helper"
 require "webmock/rspec"
 require "multi_json"
+require "google/cloud/env"
 
 # Preload adapter to work around Rubinius error with FakeFS
 MultiJson.use :json_gem

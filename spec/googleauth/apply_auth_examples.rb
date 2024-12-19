@@ -170,7 +170,7 @@ shared_examples "apply/apply! are OK" do
         want = { :foo => "bar", auth_key => "Bearer #{t}" }
         expect(got).to eq(want)
         @client.expires_at -= 3601 # default is to expire in 1hr
-        Google::Cloud.env.compute_metadata.cache.expire_all!
+        ::Google::Cloud.env.compute_metadata.cache.expire_all!
       end
     end
   end
