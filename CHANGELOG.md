@@ -1,5 +1,11 @@
 # Release History
 
+### 1.12.2 (2024-12-19)
+
+#### Bug Fixes
+
+* GCECredentials lazily fetches from the metadata server to ensure a universe domain is known ([#509](https://github.com/googleapis/google-auth-library-ruby/issues/509)) 
+
 ### 1.12.1 (2024-12-17)
 
 #### Bug Fixes
