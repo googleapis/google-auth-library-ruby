@@ -97,6 +97,11 @@ describe Google::Auth::GCECredentials do
         expect(@client.universe_domain).to eq("googleapis.com")
       end
 
+      it "sets the universe without explicit fetch_access_token" do
+        make_auth_stubs access_token: "1/abcde"
+        expect(@client.universe_domain).to eq("googleapis.com")
+      end
+
       it "returns a consistent expiry using cached data" do
         make_auth_stubs access_token: "1/abcde"
         @client.fetch_access_token!
@@ -121,6 +126,11 @@ describe Google::Auth::GCECredentials do
         expect(@client.universe_domain).to eq("googleapis.com")
       end
 
+      it "sets the universe without explicit fetch_access_token" do
+        make_auth_stubs access_token: "1/abcde"
+        expect(@client.universe_domain).to eq("googleapis.com")
+      end
+
       it "returns a consistent expiry using cached data" do
         make_auth_stubs access_token: "1/abcde"
         @client.fetch_access_token!
@@ -141,6 +151,11 @@ describe Google::Auth::GCECredentials do
       it "sets the universe" do
         make_auth_stubs access_token: "1/abcde"
         @client.fetch_access_token!
+        expect(@client.universe_domain).to eq("myuniverse.com")
+      end
+
+      it "sets the universe without explicit fetch_access_token" do
+        make_auth_stubs access_token: "1/abcde"
         expect(@client.universe_domain).to eq("myuniverse.com")
       end
 
