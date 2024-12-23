@@ -114,9 +114,9 @@ module Google
         # Some credentials (all Signet-based ones and this one) include scope and a bunch of transient state
         # (e.g. refresh status) as part of themselves
         # so a copy needs to be created with the scope overriden and transient state dropped.
-        # 
+        #
         # If a credentials does not support `duplicate` we'll try to use it as is assuming it has a broad enough scope.
-        # This might result in an "access denied" error downstream when the token from that credentials is being used for 
+        # This might result in an "access denied" error downstream when the token from that credentials is being used for
         # the token exchange.
         @source_credentials = if @base_credentials.respond_to? :duplicate
                                 @base_credentials.duplicate({
@@ -137,7 +137,7 @@ module Google
         @expires_at && @expires_at - Time.now.utc < seconds
       end
 
-      # The universe domain of the impersonated credentials. 
+      # The universe domain of the impersonated credentials.
       # Effectively this retrieves the universe domain of the source credentials.
       #
       # @return [String] The universe domain of the credentials.
@@ -225,7 +225,7 @@ module Google
       # @raise [Signet::AuthorizationError] For other unexpected response statuses.
       #
       # @return [String] The newly generated impersonation access token.
-      def fetch_access_token!
+      def fetch_access_token! _options = {}
         auth_header = {}
         auth_header = @source_credentials.apply! auth_header
 

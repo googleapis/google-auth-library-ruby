@@ -43,7 +43,7 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
         impersonation_url: impersonation_url,
         scope: ["scope1", "scope2"]
       })
-      expect(@source_creds).to have_received(:duplicate)
+      expect(@base_creds).to have_received(:duplicate)
       expect(creds.base_credentials).to eq(@base_creds)
       expect(creds.source_credentials).to eq(@source_creds)
     end
