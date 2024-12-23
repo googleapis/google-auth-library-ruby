@@ -221,6 +221,8 @@ module Google
       # for an impersonation token using the specified impersonation URL. The generated token and
       # its expiration time are cached for subsequent use.
       #
+      # @param _options [Hash] (optional) Additional options for token retrieval (currently unused).
+      #
       # @raise [Signet::UnexpectedStatusError] If the response status is 403 or 500.
       # @raise [Signet::AuthorizationError] For other unexpected response statuses.
       #
