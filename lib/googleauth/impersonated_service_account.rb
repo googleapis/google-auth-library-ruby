@@ -32,7 +32,12 @@ module Google
       # @private
       IAM_SCOPE = ["https://www.googleapis.com/auth/iam".freeze].freeze
 
+      # BaseClient most importantly implements the apply! method
+      # that returns a clone of a hash argument provided,
+      # updated with the authorization header
+      # containing the access token (impersonation token in this case).
       include Google::Auth::BaseClient
+
       include Helpers::Connection
 
       # @!attribute [r] base_credentials
@@ -145,36 +150,13 @@ module Google
         @source_credentials.universe_domain
       end
 
-      # Returns a clone of a_hash updated with the authoriation header
-      # Updates the given hash with an authorization header containing the impersonation access token.
-      #
-      # This method generates a short-lived impersonation access token (if not already cached or valid)
-      # and adds it to the provided hash as a `Bearer` token in the authorization metadata key.
-      #
-      # @param a_hash [Hash] The hash to be updated with the authorization header.
-      # @param _opts [Hash] (optional) Additional options for token application (currently unused).
-      # @return [Hash] The updated hash containing the authorization header.
-      # @raise [Signet::AuthorizationError] If token generation fails
-      # def apply! a_hash, _opts = {}
-      #   if @access_token && !expires_within?(60)
-      #     # Use the cached token if it's still valid
-      #     token = @access_token
-      #   else
-      #     # Generate a new token if the current one is expired or not present
-      #     token = fetch_access_token!
-      #   end
-
-      #   a_hash[AUTH_METADATA_KEY] = "Bearer #{token}"
-      #   a_hash
-      # end
-
       # Creates a duplicate of these credentials without transient token state
       #
       # @param options [Hash] Overrides for the credentials parameters.
       #   The following keys are recognized
       #   * `base_credentials` the base credentials used to initialize the impersonation
       #   * `source_credentials` the authenticated credentials which usually would be
-      #     base credentias with scope overridden to IAM_SCOPE
+      #     base credentials with scope overridden to IAM_SCOPE
       #   * `impersonation_url` the URL to use to make an impersonation token exchange
       #   * `scope` the scope(s) to access
       def duplicate options = {}
@@ -213,6 +195,8 @@ module Google
       end
 
       private
+
+      attr_writer :access_token
 
       # Generates a new impersonation access token by exchanging the source credentials' token
       # at the impersonation URL.
@@ -253,17 +237,24 @@ module Google
       end
 
       # Setter for the expires_at value that makes sure it is converted
+      # to Time object.
       def expires_at= new_expires_at
         @expires_at = normalize_timestamp new_expires_at
       end
 
-      attr_writer :access_token
-
+      # Returns the type of token (access_token).
+      # This method is needed for BaseClient.
       def token_type
-        # This method is needed for BaseClient
         :access_token
       end
 
+      # Normalizes a timestamp to a Time object.
+      #
+      # @param time [Time, String, nil] The timestamp to normalize.
+      #
+      # @return [Time, nil] The normalized Time object, or nil if the input is nil.
+      #
+      # @raise [RuntimeError] If the input is not a Time, String, or nil.
       def normalize_timestamp time
         case time
         when NilClass
