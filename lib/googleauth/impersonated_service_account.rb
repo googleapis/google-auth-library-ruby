@@ -45,24 +45,28 @@ module Google
       attr_reader :base_credentials
 
       # @!attribute [r] source_credentials
-      #   @return [Object] The modified version of base credentials, tailored for impersonation purposes with necessary scope adjustments.
+      #   @return [Object] The modified version of base credentials, tailored for impersonation purposes
+      #     with necessary scope adjustments.
       attr_reader :source_credentials
 
       # @!attribute [r] impersonation_url
-      #   @return [String] The URL endpoint used to generate an impersonation token. This URL should follow a specific format
-      #     to specify the impersonated service account.
+      #   @return [String] The URL endpoint used to generate an impersonation token. This URL should follow a specific
+      #     format to specify the impersonated service account.
       attr_reader :impersonation_url
 
       # @!attribute [r] scope
-      #   @return [Array<String>, String] The scope(s) required for the impersonated access token, indicating the permissions needed for the short-lived token.
+      #   @return [Array<String>, String] The scope(s) required for the impersonated access token,
+      #     indicating the permissions needed for the short-lived token.
       attr_reader :scope
 
       # @!attribute [r] access_token
-      #   @return [String, nil] The short-lived impersonation access token, retrieved and cached after making the impersonation request.
+      #   @return [String, nil] The short-lived impersonation access token, retrieved and cached
+      #     after making the impersonation request.
       attr_reader :access_token
 
       # @!attribute [r] expires_at
-      #   @return [Time, nil] The expiration time of the current access token, used to determine if the token is still valid.
+      #   @return [Time, nil] The expiration time of the current access token, used to determine
+      #     if the token is still valid.
       attr_reader :expires_at
 
       # Create a ImpersonatedServiceAccountCredentials
@@ -121,8 +125,8 @@ module Google
         # so a copy needs to be created with the scope overriden and transient state dropped.
         #
         # If a credentials does not support `duplicate` we'll try to use it as is assuming it has a broad enough scope.
-        # This might result in an "access denied" error downstream when the token from that credentials is being used for
-        # the token exchange.
+        # This might result in an "access denied" error downstream when the token from that credentials is being used
+        # for the token exchange.
         @source_credentials = if @base_credentials.respond_to? :duplicate
                                 @base_credentials.duplicate({
                                                               scope: IAM_SCOPE
