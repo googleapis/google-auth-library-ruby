@@ -217,8 +217,8 @@ module Google
       # @return [String] The newly generated impersonation access token.
       def fetch_access_token! _options = {}
         auth_header = {}
-        auth_header = @source_credentials.apply! auth_header
-
+        @source_credentials.apply! auth_header
+        
         resp = connection.post @impersonation_url do |req|
           req.headers.merge! auth_header
           req.headers["Content-Type"] = "application/json"
