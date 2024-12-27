@@ -349,33 +349,46 @@ module Google
       # Creates a new Credentials instance with the provided auth credentials, and with the default
       # values configured on the class.
       #
-      # @param [String, Hash, Signet::OAuth2::Client] keyfile
-      #   The keyfile can be provided as one of the following:
+      # @param [String, Hash, Signet::OAuth2::Client] from_creds
+      #   The source of credentials. It can be provided as one of the following:
       #
       #   * The path to a JSON keyfile (as a `String`)
       #   * The contents of a JSON keyfile (as a `Hash`)
-      #   * A `Signet::OAuth2::Client` object
+      #   * A `Signet::OAuth2::Client` credentials object
+      #   * Any credentials object that supports the methods this wrapper delegates to an inner client.
+      #
+      #   If this parameter is an object (`Signet::OAuth2::Client` or other) it will be used as an inner client.
+      #   Otherwise the inner client will be constructed from the JSON keyfile or the contens of the hash.
+      #
       # @param [Hash] options
-      #   The options for configuring the credentials instance. The following is supported:
+      #   The options for configuring this wrapper credentials object and the inner client. 
+      #   The following options are supported for this wrapper object:
+      #
+      #   * `:project_id` (and optionally `:project`) - the project identifier for the client
+      #   * `:quota_project_id` - the quota project identifier for the client
+      #   * `:logger` - the logger used to log credential operations such as token refresh.
+      #   
+      #   The following options are supported when the inner client object will be created 
+      #   (i.e. if the source of credentials is a `String` or a `Hash`):
       #
       #   * `:scope` - the scope for the client
-      #   * `project_id` (and optionally `project`) - the project identifier for the client
-      #   * `:connection_builder` - the connection builder to use for the client
-      #   * `:default_connection` - the default connection to use for the client
-      #   * `:logger` - the logger used to log credential operations such as token refresh.
+      #   * `:target_audience` - the target audience for the client
       #
-      def initialize keyfile, options = {}
-        verify_keyfile_provided! keyfile
+      #   The `options` hash will also be passed to the inner client object when it is being created.
+      #
+      def initialize source_creds, options = {}
+        raise "The source credentials passed to Google::Auth::Credentials.new were nil." if source_creds.nil?
+
         options = symbolize_hash_keys options
         @project_id = options[:project_id] || options[:project]
         @quota_project_id = options[:quota_project_id]
-        case keyfile
-        when Google::Auth::BaseClient
-          update_from_signet keyfile
+        case source_creds
+        when String
+          update_from_filepath source_creds, options
         when Hash
-          update_from_hash keyfile, options
+          update_from_hash source_creds, options
         else
-          update_from_filepath keyfile, options
+          update_from_client source_creds
         end
         setup_logging logger: options.fetch(:logger, :default)
         @project_id ||= CredentialsLoader.load_gcloud_project_id
@@ -483,10 +496,32 @@ module Google
 
       protected
 
-      # Verify that the keyfile argument is provided.
-      def verify_keyfile_provided! keyfile
-        return unless keyfile.nil?
-        raise "The keyfile passed to Google::Auth::Credentials.new was nil."
+      # Creates a duplicate of these credentials without transient token state
+      #
+      # @param options [Hash] Overrides for the credentials parameters.
+      #   The following keys are recognized
+      #   * `base_credentials` the base credentials used to initialize the impersonation
+      #   * `source_credentials` the authenticated credentials which usually would be
+      #     base credentials with scope overridden to IAM_SCOPE
+      #   * `impersonation_url` the URL to use to make an impersonation token exchange
+      #   * `scope` the scope(s) to access
+      def duplicate options = {}
+        options = deep_hash_normalize options
+
+        options = {
+          client: @client,
+          project_id: @project_id,
+          quota_project_id: @quota_project_id,
+          scope: @scope
+        }.merge(options)
+
+        new_client = if client.respond_to? :duplicate
+          @client.duplicate(options)
+        else 
+          @client
+        end
+
+        new(new_client, options)
       end
 
       # Verify that the keyfile argument is a file.
@@ -530,7 +565,8 @@ module Google
         options
       end
 
-      def update_from_signet client
+      alias :update_from_signet :update_from_client
+      def update_from_client client
         @project_id ||= client.project_id if client.respond_to? :project_id
         @quota_project_id ||= client.quota_project_id if client.respond_to? :quota_project_id
         @client = client
