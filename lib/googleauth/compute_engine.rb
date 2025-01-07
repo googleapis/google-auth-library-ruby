@@ -168,6 +168,8 @@ module Google
         @universe_domain_overridden = options[:universe_domain_overridden] if options.key? :universe_domain_overridden
 
         super(options)
+
+        self
       end
 
       private

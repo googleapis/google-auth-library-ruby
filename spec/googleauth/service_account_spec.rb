@@ -643,5 +643,10 @@ describe Google::Auth::ServiceAccountJwtHeaderCredentials do
       expect(@creds.universe_domain).to eq "googleapis.com"
       expect(@creds.duplicate(universe_domain: "test-universe-domain").universe_domain).to eq "test-universe-domain"
     end
+
+    it "should duplicate the logger" do
+      expect(@creds.logger).to be_nil
+      expect(@creds.duplicate(logger: :foo).logger).to eq :foo
+    end
   end
 end

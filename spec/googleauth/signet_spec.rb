@@ -300,5 +300,10 @@ describe Signet::OAuth2::Client do
       expect(@creds.universe_domain).to eq nil
       expect(@creds.duplicate(universe_domain: "universe-domain.example.com").universe_domain).to eq "universe-domain.example.com"
     end
+
+    it "should duplicate the logger" do
+      expect(@creds.logger).to be_nil
+      expect(@creds.duplicate(logger: :foo).logger).to eq :foo
+    end
   end
 end

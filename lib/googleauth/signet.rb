@@ -38,6 +38,20 @@ module Signet
         self
       end
 
+      alias update_signet_base update!
+      def update! options = {}
+        # Normalize all keys to symbols to allow indifferent access.
+        options = deep_hash_normalize options
+
+        # This `update!` method "overide" is created for the @logger update
+        # the `universe_domain` is also updated in `update_token!` but is
+        # included here for completeness
+        self.universe_domain = options[:universe_domain] if options.key? :universe_domain
+        @logger = options[:logger] if options.key? :logger
+
+        update_signet_base options
+      end
+
       def configure_connection options
         @connection_info =
           options[:connection_builder] || options[:default_connection]
@@ -146,7 +160,8 @@ module Signet
             extension_parameters: @extension_parameters,
             additional_parameters: @additional_parameters,
             access_type: @access_type,
-            universe_domain: @universe_domain
+            universe_domain: @universe_domain,
+            logger: @logger
           }.merge(options)
         ).configure_connection options
       end

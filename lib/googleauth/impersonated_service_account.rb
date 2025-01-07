@@ -25,17 +25,17 @@ module Google
     class ImpersonatedServiceAccountCredentials
       # @private
       ERROR_SUFFIX = <<~ERROR.freeze
-        trying to get security access token
+        when trying to get security access token
         from IAM Credentials endpoint using the credentials provided.
       ERROR
 
       # @private
       IAM_SCOPE = ["https://www.googleapis.com/auth/iam".freeze].freeze
 
-      # BaseClient most importantly implements the apply! method
-      # that returns a clone of a hash argument provided,
-      # updated with the authorization header
-      # containing the access token (impersonation token in this case).
+      # BaseClient most importantly implements the `:updater_proc` getter,
+      # that returns a reference to an `apply!` method that updates
+      # a hash argument provided with the authorization header containing
+      # the access token (impersonation token in this case).
       include Google::Auth::BaseClient
 
       include Helpers::Connection
@@ -154,6 +154,10 @@ module Google
         @source_credentials.universe_domain
       end
 
+      def logger
+        @source_credentials.logger if source_credentials.respond_to? :logger
+      end
+
       # Creates a duplicate of these credentials without transient token state
       #
       # @param options [Hash] Overrides for the credentials parameters.
@@ -195,12 +199,11 @@ module Google
         @impersonation_url = options[:impersonation_url] if options.key? :impersonation_url
         @scope = options[:scope] if options.key? :scope
 
+        # there is no `super` call here since impersonated credentials don't inherit from signet client
         self
       end
 
       private
-
-      attr_writer :access_token
 
       # Generates a new impersonation access token by exchanging the source credentials' token
       # at the impersonation URL.
@@ -217,8 +220,8 @@ module Google
       # @return [String] The newly generated impersonation access token.
       def fetch_access_token! _options = {}
         auth_header = {}
-        @source_credentials.apply! auth_header
-        
+        auth_header = @source_credentials.updater_proc.call auth_header
+
         resp = connection.post @impersonation_url do |req|
           req.headers.merge! auth_header
           req.headers["Content-Type"] = "application/json"
@@ -229,13 +232,13 @@ module Google
         when 200
           response = MultiJson.load resp.body
           self.expires_at = response["expireTime"]
-          self.access_token = response["accessToken"]
+          @access_token = response["accessToken"]
           access_token
         when 403, 500
-          msg = "Unexpected error code #{resp.status} #{ERROR_SUFFIX}"
+          msg = "Unexpected error code #{resp.status}.\n #{resp.env.response_body} #{ERROR_SUFFIX}"
           raise Signet::UnexpectedStatusError, msg
         else
-          msg = "Unexpected error code #{resp.status} #{ERROR_SUFFIX}"
+          msg = "Unexpected error code #{resp.status}.\n #{resp.env.response_body} #{ERROR_SUFFIX}"
           raise Signet::AuthorizationError, msg
         end
       end

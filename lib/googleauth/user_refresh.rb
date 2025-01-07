@@ -153,6 +153,8 @@ module Google
         @quota_project_id = options[:quota_project_id] if options.key? :quota_project_id
 
         super(options)
+
+        self
       end
     end
   end

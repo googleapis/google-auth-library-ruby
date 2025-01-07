@@ -32,12 +32,14 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
 
   before :example do
     @base_creds = double("Credentials")
+    @source_creds = double("Credentials")
+    allow(@base_creds).to receive(:duplicate).and_return(@source_creds)
+    allow(@source_creds).to receive(:updater_proc).and_return(Proc.new { |hash| {} })
   end
 
   describe "#initialize" do
     it "should call duplicate when available" do
-      @source_creds = double("Credentials")
-      allow(@base_creds).to receive(:duplicate).and_return(@source_creds)
+
       creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds({
         base_credentials: @base_creds,
         impersonation_url: impersonation_url,
@@ -64,8 +66,6 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
     end
 
     it "should call apply! of the base credentials" do
-      allow(@base_creds).to receive(:duplicate).and_return(@base_creds)
-      allow(@base_creds).to receive(:apply!).and_return({})
       creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds({
         base_credentials: @base_creds,
         impersonation_url: impersonation_url,
@@ -74,12 +74,10 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
 
       creds.apply!({})
 
-      expect(@base_creds).to have_received(:apply!)
+      expect(@source_creds).to have_received(:updater_proc)
     end
 
     it "should post to impersonation url" do
-      allow(@base_creds).to receive(:duplicate).and_return(@base_creds)
-      allow(@base_creds).to receive(:apply!).and_return({})
       creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds({
         base_credentials: @base_creds,
         impersonation_url: impersonation_url,
@@ -94,8 +92,6 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
     end
 
     it "should update internal state" do
-      allow(@base_creds).to receive(:duplicate).and_return(@base_creds)
-      allow(@base_creds).to receive(:apply!).and_return({})
       creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds({
         base_credentials: @base_creds,
         impersonation_url: impersonation_url,
@@ -111,7 +107,7 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
     describe "duplicates" do
       before :example do
         @initial_creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
-          base_credentials: :foo,
+          base_credentials: @base_creds,
           impersonation_url: "test-impersonation-url",
           scope: ["https://www.googleapis.com/auth/cloud-platform"]
         )
@@ -124,12 +120,12 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
       end
   
       it "should duplicate the base_credentials" do
-        expect(@dup_creds.base_credentials).to eq :foo
+        expect(@dup_creds.base_credentials).to eq @base_creds
         expect(@dup_creds.duplicate(base_credentials: :bar).base_credentials).to eq :bar
       end
   
       it "should duplicate the source credentials" do
-        expect(@dup_creds.source_credentials).to eq :foo
+        expect(@dup_creds.source_credentials).to eq @source_creds
         expect(@dup_creds.duplicate(source_credentials: :bar).source_credentials).to eq :bar
       end
   

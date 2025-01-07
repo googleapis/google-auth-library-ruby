@@ -99,7 +99,8 @@ module Google
           {
             enable_self_signed_jwt: @enable_self_signed_jwt,
             project_id: project_id,
-            quota_project_id: quota_project_id
+            quota_project_id: quota_project_id,
+            logger: logger
           }.merge(options)
         )
       end
@@ -154,6 +155,8 @@ module Google
         @quota_project_id = options[:quota_project_id] if options.key? :quota_project_id
 
         super(options)
+
+        self
       end
 
       private
@@ -188,8 +191,10 @@ module Google
       TOKEN_CRED_URI = "https://www.googleapis.com/oauth2/v4/token".freeze
       SIGNING_ALGORITHM = "RS256".freeze
       EXPIRY = 60
+
       extend CredentialsLoader
       extend JsonKeyReader
+
       attr_reader :project_id
       attr_reader :quota_project_id
       attr_accessor :universe_domain
@@ -242,9 +247,10 @@ module Google
           private_key: @private_key,
           issuer: @issuer,
           scope: @scope,
-          project_id: @project_id,
-          quota_project_id: @quota_project_id,
-          universe_domain: @universe_domain
+          project_id: project_id,
+          quota_project_id: quota_project_id,
+          universe_domain: universe_domain,
+          logger: logger
         }.merge(options)
 
         new_client = self.class.new options
@@ -328,7 +334,9 @@ module Google
         @project_id = options[:project_id] if options.key? :project_id
         @quota_project_id = options[:quota_project_id] if options.key? :quota_project_id
         @universe_domain = options[:universe_domain] if options.key? :universe_domain
+        @logger = options[:logger] if options.key? :logger
 
+        # there is no `super` call here since JWT credentials don't inherit from signet client
         self
       end
 
