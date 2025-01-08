@@ -321,9 +321,6 @@ module Google
       #   @return [String, Array<String>] The scope for this client. A scope is an access range
       #     defined by the authorization server. The scope can be a single value or a list of values.
       #
-      # @!attribute [r] target_audience
-      #   @return [String] The final target audience for ID tokens returned by this credential.
-      #
       # @!attribute [r] issuer
       #   @return [String] The issuer ID associated with this client.
       #
@@ -333,6 +330,9 @@ module Google
       # @!attribute [r] updater_proc
       #   @return [Proc] Returns a reference to the {Signet::OAuth2::Client#apply} method,
       #     suitable for passing as a closure.
+      #
+      # @!attribute [r] target_audience
+      #   @return [String] The final target audience for ID tokens returned by this credential.
       #
       # @!attribute [rw] universe_domain
       #   @return [String] The universe domain issuing these credentials.
@@ -566,6 +566,7 @@ module Google
       #
       #     * `:scope` - the scope for the client
       #
+      # @return [Credentials]
       def update! options = {}
         # Normalize all keys to symbols to allow indifferent access.
         options = deep_hash_normalize options
@@ -577,7 +578,7 @@ module Google
 
         @client = @client.update!(options) if @client.respond_to? :update!
 
-        # there is no `super` call here since credentials don't inherit from signet client
+        # there is no `super` call here since Credentials don't inherit from signet client
 
         self
       end

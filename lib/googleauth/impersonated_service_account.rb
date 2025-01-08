@@ -83,7 +83,7 @@ module Google
       #   where:
       #     * `{universe_domain}` is the domain of the IAMCredentials API endpoint (e.g. 'googleapis.com')
       #     * `{source_sa_email}` is the email address of the service account to impersonate
-      # @param scope [Array, String] the scope(s) to access.
+      # @param scope [Arrayy<String>, String] the scope(s) to access.
       #   Note that these are NOT the scopes that the authenticated principal should have, but
       #   the scopes that the short-lived impersonation access token should have.
       #
