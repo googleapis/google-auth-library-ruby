@@ -531,7 +531,7 @@ module Google
 
         options = {
           project_id: @project_id,
-          quota_project_id: @quota_project_id,
+          quota_project_id: @quota_project_id
         }.merge(options)
 
         new_client = if @client.respond_to? :duplicate
@@ -539,7 +539,7 @@ module Google
                      else
                        @client
                      end
-                     
+
         new_credentials = self.class.new new_client, options
         new_credentials.update! options
       end
@@ -663,7 +663,7 @@ module Google
         @client.logger = logger
       end
 
-      private 
+      private
 
       # Convert all keys in this hash (nested) to symbols for uniform retrieval
       def recursive_hash_normalize_keys val
