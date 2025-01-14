@@ -605,4 +605,69 @@ describe Google::Auth::Credentials, :private do
     creds = Google::Auth::Credentials.new signet
     expect(creds.client).to eq(signet)
   end
+
+  describe "duplicates" do
+    let :client_class do
+      Class.new do
+        attr_accessor :scope, :project_id
+        def initialize scope = nil, project_id = nil
+          @scope = scope
+          @project_id = project_id
+        end
+  
+        def duplicate options = {}
+          new_credentials = self.class.new
+          new_credentials.scope = options[:scope] if options[:scope]
+          new_credentials.project_id = options[:project_id] if options[:project_id]
+          new_credentials
+        end
+      end
+    end
+  
+    before :example do
+      @client = client_class.new
+      @base_creds = Google::Auth::Credentials.new(@client)
+      @creds = @base_creds.duplicate
+    end
+  
+    it "should call duplicate and update! on clients when clients support it" do
+      client_with_duplicate = double("ClientWithDuplicate")
+      allow(client_with_duplicate).to receive(:respond_to?).with(:duplicate).and_return(true)
+      
+      # These will be called when we create new `Google::Auth::Credentials` in this test method
+      allow(client_with_duplicate).to receive(:respond_to?).with(:project_id).and_return(false)
+      allow(client_with_duplicate).to receive(:respond_to?).with(:quota_project_id).and_return(false)
+      allow(client_with_duplicate).to receive(:respond_to?).with(:logger=).and_return(false)
+
+      duplicated_client = double("DuplicatedClient")
+      allow(duplicated_client).to receive(:respond_to?).with(:update!).and_return(true)
+
+      # These will be called when a new `Google::Auth::Credentials` will be created in the
+      # process of the `duplicate` call. 
+      # First the `client_with_duplicate` will return `duplicated_client` from its `duplicate` call
+      # Then the new `Google::Auth::Credentials` will be created with the `duplicated_client`
+      allow(duplicated_client).to receive(:respond_to?).with(:project_id).and_return(false)
+      allow(duplicated_client).to receive(:respond_to?).with(:quota_project_id).and_return(false)
+      allow(duplicated_client).to receive(:respond_to?).with(:logger=).and_return(false)
+      
+      expect(duplicated_client).to receive(:update!).and_return(duplicated_client)
+
+      expect(client_with_duplicate).to receive(:duplicate).and_return(duplicated_client)
+
+      creds = Google::Auth::Credentials.new(client_with_duplicate)
+
+      new_creds = creds.duplicate(foo: "bar")
+      expect(new_creds.client).to eq duplicated_client
+    end
+  
+    it "should duplicate the project_id" do
+      expect(@creds.project_id).to be_nil
+      expect(@creds.duplicate(project_id: "test-project-id").project_id).to eq "test-project-id"  
+    end
+  
+    it "should duplicate the quota_project_id" do
+      expect(@creds.quota_project_id).to be_nil
+      expect(@creds.duplicate(quota_project_id: "test-quota-project-id").quota_project_id).to eq "test-quota-project-id"
+    end
+  end
 end

@@ -349,7 +349,7 @@ module Google
       # Creates a new Credentials instance with the provided auth credentials, and with the default
       # values configured on the class.
       #
-      # @param [String, Hash, Signet::OAuth2::Client] from_creds
+      # @param [String, Hash, Signet::OAuth2::Client] source_creds
       #   The source of credentials. It can be provided as one of the following:
       #
       #   * The path to a JSON keyfile (as a `String`)
@@ -371,7 +371,7 @@ module Google
       #     * `:quota_project_id` - the quota project identifier for the client
       #     * `:logger` - the logger used to log credential operations such as token refresh.
       #
-      #   2. **Configuring the inner client:** When the `from_creds` parameter
+      #   2. **Configuring the inner client:** When the `source_creds` parameter
       #      is a `String` or `Hash`, a new `Signet::OAuth2::Client` is created
       #      internally. The following options are used to configure this inner client:
       #
@@ -501,7 +501,6 @@ module Google
                            :from_application_default,
                            :from_io
 
-      protected
 
       # Creates a duplicate of these credentials. This method tries to create the duplicate of the
       # wrapped credentials if they support duplication and use them as is if they don't.
@@ -517,9 +516,8 @@ module Google
       #   1. **Configuring the duplicate of the wrapper object:** Some options are used to directly
       #      configure the wrapper `Credentials` instance. These include:
       #
-      #     * `:project_id` (and optionally `:project`) - the project identifier for the client
-      #     * `:quota_project_id` - the quota project identifier for the client
-      #     * `:logger` - the logger used to log credential operations such as token refresh.
+      #     * `:project_id` (and optionally `:project`) - the project identifier for the credentials
+      #     * `:quota_project_id` - the quota project identifier for the credentials
       #
       #   2. **Configuring the duplicate of the inner client:** If the inner client supports duplication
       #   the options hash is passed to it. This allows for configuration of additional parameters,
@@ -532,10 +530,8 @@ module Google
         options = deep_hash_normalize options
 
         options = {
-          client: @client,
           project_id: @project_id,
           quota_project_id: @quota_project_id,
-          logger: @logger
         }.merge(options)
 
         new_client = if @client.respond_to? :duplicate
@@ -543,8 +539,9 @@ module Google
                      else
                        @client
                      end
-
-        new new_client, options
+                     
+        new_credentials = self.class.new new_client, options
+        new_credentials.update! options
       end
 
       # Destructively updates these credentials, including the wrapped client if it supports updating.
@@ -558,7 +555,6 @@ module Google
       #
       #     * `:project_id` (and optionally `:project`) - the project identifier for the client
       #     * `:quota_project_id` - the quota project identifier for the client
-      #     * `:logger` - the logger used to log credential operations such as token refresh.
       #
       #   2. **Updating the inner client:** If the inner client supports update
       #   the options hash is passed to it. This allows for configuration of additional parameters,
@@ -571,10 +567,8 @@ module Google
         # Normalize all keys to symbols to allow indifferent access.
         options = deep_hash_normalize options
 
-        @base_credentials = options[:base_credentials] if options.key? :base_credentials
-        @source_credentials = options[:source_credentials] if options.key? :source_credentials
-        @impersonation_url = options[:impersonation_url] if options.key? :impersonation_url
-        @scope = options[:scope] if options.key? :scope
+        @project_id = options[:project_id] if options.key? :project_id
+        @quota_project_id = options[:quota_project_id] if options.key? :quota_project_id
 
         @client = @client.update!(options) if @client.respond_to? :update!
 
@@ -582,6 +576,8 @@ module Google
 
         self
       end
+
+      protected
 
       # Verify that the keyfile argument is a file.
       def verify_keyfile_exists! keyfile
@@ -665,6 +661,23 @@ module Google
           end
         end
         @client.logger = logger
+      end
+
+      private 
+
+      # Convert all keys in this hash (nested) to symbols for uniform retrieval
+      def recursive_hash_normalize_keys val
+        if val.is_a? Hash
+          deep_hash_normalize val
+        else
+          val
+        end
+      end
+
+      def deep_hash_normalize old_hash
+        sym_hash = {}
+        old_hash&.each { |k, v| sym_hash[k.to_sym] = recursive_hash_normalize_keys v }
+        sym_hash
       end
     end
   end

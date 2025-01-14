@@ -40,33 +40,27 @@ module Google
 
       include Helpers::Connection
 
-      # @!attribute [r] base_credentials
-      #   @return [Object] The original authenticated credentials used to fetch short-lived impersonation access tokens.
+      # @return [Object] The original authenticated credentials used to fetch short-lived impersonation access tokens
       attr_reader :base_credentials
 
-      # @!attribute [r] source_credentials
-      #   @return [Object] The modified version of base credentials, tailored for impersonation purposes
-      #     with necessary scope adjustments.
+      # @return [Object] The modified version of base credentials, tailored for impersonation purposes
+      #   with necessary scope adjustments
       attr_reader :source_credentials
 
-      # @!attribute [r] impersonation_url
-      #   @return [String] The URL endpoint used to generate an impersonation token. This URL should follow a specific
-      #     format to specify the impersonated service account.
+      # @return [String] The URL endpoint used to generate an impersonation token. This URL should follow a specific
+      #   format to specify the impersonated service account.
       attr_reader :impersonation_url
 
-      # @!attribute [r] scope
-      #   @return [Array<String>, String] The scope(s) required for the impersonated access token,
-      #     indicating the permissions needed for the short-lived token.
+      # @return [Array<String>, String] The scope(s) required for the impersonated access token,
+      #   indicating the permissions needed for the short-lived token
       attr_reader :scope
 
-      # @!attribute [r] access_token
-      #   @return [String, nil] The short-lived impersonation access token, retrieved and cached
-      #     after making the impersonation request.
+      # @return [String, nil] The short-lived impersonation access token, retrieved and cached
+      #   after making the impersonation request
       attr_reader :access_token
 
-      # @!attribute [r] expires_at
-      #   @return [Time, nil] The expiration time of the current access token, used to determine
-      #     if the token is still valid.
+      # @return [Time, nil] The expiration time of the current access token, used to determine
+      #   if the token is still valid
       attr_reader :expires_at
 
       # Create a ImpersonatedServiceAccountCredentials
@@ -154,6 +148,7 @@ module Google
         @source_credentials.universe_domain
       end
 
+      # @return [Logger, nil] The logger of the credentials.
       def logger
         @source_credentials.logger if source_credentials.respond_to? :logger
       end
@@ -167,6 +162,8 @@ module Google
       #     base credentials with scope overridden to IAM_SCOPE
       #   * `impersonation_url` the URL to use to make an impersonation token exchange
       #   * `scope` the scope(s) to access
+      #
+      # @return [Google::Auth::ImpersonatedServiceAccountCredentials]
       def duplicate options = {}
         options = deep_hash_normalize options
 
@@ -177,8 +174,8 @@ module Google
           scope: @scope
         }.merge(options)
 
-        new_client = self.class.new options
-        new_client.update! options
+        new_credentials = self.class.new options
+        new_credentials.update! options
       end
 
       # Destructively updates these credentials
@@ -190,6 +187,8 @@ module Google
       #     base credentias with scope overridden to IAM_SCOPE
       #   * `impersonation_url` the URL to use to make an impersonation token exchange
       #   * `scope` the scope(s) to access
+      #
+      # @return [Google::Auth::ImpersonatedServiceAccountCredentials]
       def update! options = {}
         # Normalize all keys to symbols to allow indifferent access.
         options = deep_hash_normalize options

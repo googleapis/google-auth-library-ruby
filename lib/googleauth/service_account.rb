@@ -253,8 +253,8 @@ module Google
           logger: logger
         }.merge(options)
 
-        new_client = self.class.new options
-        new_client.update! options
+        new_credentials = self.class.new options
+        new_credentials.update! options
       end
 
       # Construct a jwt token if the JWT_AUD_URI key is present in the input
