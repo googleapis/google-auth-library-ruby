@@ -39,7 +39,7 @@ module Google
         # @param [String] token_exchange_endpoint
         #  The token exchange endpoint.
         def initialize options = {}
-          raise "Token exchange endpoint can not be nil" if options[:token_exchange_endpoint].nil?
+          raise TokenError, "Token exchange endpoint can not be nil" if options[:token_exchange_endpoint].nil?
           self.default_connection = options[:connection]
           @token_exchange_endpoint = options[:token_exchange_endpoint]
         end
@@ -81,7 +81,7 @@ module Google
           response = connection.post @token_exchange_endpoint, URI.encode_www_form(request_body), headers
 
           if response.status != 200
-            raise "Token exchange failed with status #{response.status}"
+            raise TokenError, "Token exchange failed with status #{response.status}"
           end
 
           MultiJson.load response.body
