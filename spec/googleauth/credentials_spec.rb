@@ -650,7 +650,7 @@ describe Google::Auth::Credentials, :private do
       allow(duplicated_client).to receive(:respond_to?).with(:quota_project_id).and_return(false)
       allow(duplicated_client).to receive(:respond_to?).with(:logger=).and_return(false)
       
-      expect(duplicated_client).to receive(:update!).and_return(duplicated_client)
+      #expect(duplicated_client).to receive(:update!).and_return(duplicated_client)
 
       expect(client_with_duplicate).to receive(:duplicate).and_return(duplicated_client)
 

@@ -43,8 +43,10 @@ module Signet
         # Normalize all keys to symbols to allow indifferent access.
         options = deep_hash_normalize options
 
-        # This `update!` method "overide" is created for the @logger update
-        # the `universe_domain` is also updated in `update_token!` but is
+        # This `update!` method "overide" adds the `@logger`` update and
+        # the `universe_domain` update.
+        #
+        # The `universe_domain` is also updated in `update_token!` but is
         # included here for completeness
         self.universe_domain = options[:universe_domain] if options.key? :universe_domain
         @logger = options[:logger] if options.key? :logger
@@ -139,31 +141,32 @@ module Signet
       # @see Signet::OAuth2::Client#update!
       def duplicate options = {}
         options = deep_hash_normalize options
-        new_client = self.class.new
 
-        new_client.update!(
-          {
-            authorization_uri: @authorization_uri,
-            token_credential_uri: @token_credential_uri,
-            client_id: @client_id,
-            client_secret: @client_secret,
-            scope: @scope,
-            target_audience: @target_audience,
-            redirect_uri: @redirect_uri,
-            username: @username,
-            password: @password,
-            issuer: @issuer,
-            person: @person,
-            sub: @sub,
-            audience: @audience,
-            signing_key: @signing_key,
-            extension_parameters: @extension_parameters,
-            additional_parameters: @additional_parameters,
-            access_type: @access_type,
-            universe_domain: @universe_domain,
-            logger: @logger
-          }.merge(options)
-        ).configure_connection options
+        opts = {
+          authorization_uri: @authorization_uri,
+          token_credential_uri: @token_credential_uri,
+          client_id: @client_id,
+          client_secret: @client_secret,
+          scope: @scope,
+          target_audience: @target_audience,
+          redirect_uri: @redirect_uri,
+          username: @username,
+          password: @password,
+          issuer: @issuer,
+          person: @person,
+          sub: @sub,
+          audience: @audience,
+          signing_key: @signing_key,
+          extension_parameters: @extension_parameters,
+          additional_parameters: @additional_parameters,
+          access_type: @access_type,
+          universe_domain: @universe_domain,
+          logger: @logger
+        }.merge(options)
+
+        new_client = self.class.new opts
+
+        new_client.configure_connection options
       end
 
       private

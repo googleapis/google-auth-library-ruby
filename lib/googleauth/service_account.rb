@@ -136,7 +136,11 @@ module Google
         super && !enable_self_signed_jwt?
       end
 
+      private
+
       # Destructively updates these credentials
+      #
+      # This method is called by `Signet::OAuth2::Client`'s constructor
       #
       # @param options [Hash] Overrides for the credentials parameters.
       #   The following keys are recognized in addition to keys in the
@@ -146,6 +150,7 @@ module Google
       #   * `project_id` the project id to use during the authentication
       #   * `quota_project_id` the quota project id to use
       #     during the authentication
+      # @return [Google::Auth::ServiceAccountCredentials]
       def update! options = {}
         # Normalize all keys to symbols to allow indifferent access.
         options = deep_hash_normalize options
@@ -158,8 +163,6 @@ module Google
 
         self
       end
-
-      private
 
       def apply_self_signed_jwt! a_hash
         # Use the ServiceAccountJwtHeaderCredentials using the same cred values
@@ -227,7 +230,8 @@ module Google
         @universe_domain ||= "googleapis.com"
         @project_id ||= CredentialsLoader.load_gcloud_project_id
         @signing_key = OpenSSL::PKey::RSA.new @private_key
-        @scope = options[:scope]
+        @scope = options[:scope] if options.key? :scope
+        @logger = options[:logger] if options.key? :scope
       end
 
       # Creates a duplicate of these credentials
@@ -253,8 +257,7 @@ module Google
           logger: logger
         }.merge(options)
 
-        new_credentials = self.class.new options
-        new_credentials.update! options
+        self.class.new options
       end
 
       # Construct a jwt token if the JWT_AUD_URI key is present in the input
@@ -312,32 +315,6 @@ module Google
       # Duck-types the corresponding method from BaseClient
       def needs_access_token?
         false
-      end
-
-      # Destructively updates these credentials
-      #
-      # @param options [Hash] Overrides for the credentials parameters.
-      #   The following keys are recognized
-      #   * `private key` the private key in string form
-      #   * `issuer` the SA issuer
-      #   * `scope` the scope(s) to access
-      #   * `project_id` the project id to use during the authentication
-      #   * `quota_project_id` the quota project id to use
-      #   * `universe_domain` the universe domain of the credentials
-      def update! options = {}
-        # Normalize all keys to symbols to allow indifferent access.
-        options = deep_hash_normalize options
-
-        @private_key = options[:private_key] if options.key? :private_key
-        @issuer = options[:issuer] if options.key? :issuer
-        @scope = options[:scope] if options.key? :scope
-        @project_id = options[:project_id] if options.key? :project_id
-        @quota_project_id = options[:quota_project_id] if options.key? :quota_project_id
-        @universe_domain = options[:universe_domain] if options.key? :universe_domain
-        @logger = options[:logger] if options.key? :logger
-
-        # there is no `super` call here since JWT credentials don't inherit from signet client
-        self
       end
 
       private

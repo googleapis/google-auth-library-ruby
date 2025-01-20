@@ -540,41 +540,7 @@ module Google
                        @client
                      end
 
-        new_credentials = self.class.new new_client, options
-        new_credentials.update! options
-      end
-
-      # Destructively updates these credentials, including the wrapped client if it supports updating.
-      #
-      # @param options [Hash] Overrides for the credentials parameters.
-      #
-      #   The options hash is used in two ways:
-      #
-      #   1. **Updating the wrapper object:** Some options are used to directly
-      #      configure the wrapper `Credentials` instance. These include:
-      #
-      #     * `:project_id` (and optionally `:project`) - the project identifier for the client
-      #     * `:quota_project_id` - the quota project identifier for the client
-      #
-      #   2. **Updating the inner client:** If the inner client supports update
-      #   the options hash is passed to it. This allows for configuration of additional parameters,
-      #   most importantly (but not limited to) the following:
-      #
-      #     * `:scope` - the scope for the client
-      #
-      # @return [Credentials]
-      def update! options = {}
-        # Normalize all keys to symbols to allow indifferent access.
-        options = deep_hash_normalize options
-
-        @project_id = options[:project_id] if options.key? :project_id
-        @quota_project_id = options[:quota_project_id] if options.key? :quota_project_id
-
-        @client = @client.update!(options) if @client.respond_to? :update!
-
-        # there is no `super` call here since Credentials don't inherit from signet client
-
-        self
+        self.class.new new_client, options
       end
 
       protected

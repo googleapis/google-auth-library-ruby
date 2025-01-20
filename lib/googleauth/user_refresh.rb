@@ -135,16 +135,19 @@ module Google
         missing_scope.empty?
       end
 
+      private
+
       # Destructively updates these credentials
+      #
+      # This method is called by `Signet::OAuth2::Client`'s constructor
       #
       # @param options [Hash] Overrides for the credentials parameters.
       #   The following keys are recognized in addition to keys in the
       #   Signet::OAuth2::Client
-      #   * `:enable_self_signed_jwt` Whether the self-signed JWT should
-      #     be used for the authentication
       #   * `project_id` the project id to use during the authentication
       #   * `quota_project_id` the quota project id to use
       #     during the authentication
+      # @return [Google::Auth::UserRefreshCredentials]
       def update! options = {}
         # Normalize all keys to symbols to allow indifferent access.
         options = deep_hash_normalize options

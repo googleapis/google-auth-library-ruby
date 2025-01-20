@@ -16,7 +16,7 @@ require "googleauth/impersonated_service_account"
 require_relative "../spec_helper"
 
 describe Google::Auth::ImpersonatedServiceAccountCredentials do
-
+ 
   let(:impersonation_url) {"https://iamcredentials.example.com/v1/projects/-/serviceAccounts/test:generateAccessToken"}
 
   def make_auth_stubs opts
@@ -38,6 +38,43 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
   end
 
   describe "#initialize" do
+    it "raises ArgumentError when both base_credentials and source_credentials are missing" do
+      expect {
+        Google::Auth::ImpersonatedServiceAccountCredentials.make_creds({
+          impersonation_url: impersonation_url,
+          scope: ["scope1", "scope2"]
+        })
+      }.to raise_error(ArgumentError, "Missing required option: either :base_credentials or :source_credentials")
+    end
+
+    it "raises ArgumentError when impersonation_url is missing" do
+      expect {
+        Google::Auth::ImpersonatedServiceAccountCredentials.make_creds({
+          base_credentials: @base_creds,
+          scope: ["scope1", "scope2"]
+        })
+      }.to raise_error(ArgumentError, "Missing required option: :impersonation_url")
+    end
+
+    it "raises ArgumentError when scope is missing" do
+      expect {
+        Google::Auth::ImpersonatedServiceAccountCredentials.make_creds({
+          base_credentials: @base_creds,
+          impersonation_url: impersonation_url
+        })
+      }.to raise_error(ArgumentError, "Missing required option: :scope")
+    end
+
+    it "does not raise error when source_credentials is provided without base_credentials" do
+      expect {
+        Google::Auth::ImpersonatedServiceAccountCredentials.make_creds({
+          source_credentials: @source_creds,
+          impersonation_url: impersonation_url,
+          scope: ["scope1", "scope2"]
+        })
+      }.not_to raise_error
+    end
+
     it "should call duplicate when available" do
 
       creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds({

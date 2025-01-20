@@ -69,17 +69,21 @@ module Google
       # and request short-lived credentials for a service account
       # that has the authorization that your use case requires.
       #
-      # @param base_credentials [Object] the authenticated principal that will be used
-      #   to fetch short-lived impersionation access token
-      # @param impersonation_url [String] the URL to use to impersonate the service account.
-      #   This URL should be in the format:
-      #   `https://iamcredentials.{universe_domain}/v1/projects/-/serviceAccounts/{source_sa_email}:generateAccessToken`
+      # @param options [Hash] A hash of options to configure the credentials.
+      # @option options [Object] :base_credentials (required) The authenticated principal.
+      #   It will be used as following:
+      #   * will be duplicated (with IAM scope) to create the source credentials if it supports duplication
+      #   * as source credentials otherwise.
+      # @option options [String] :impersonation_url (required) The URL to impersonate the service account.
+      #   This URL should follow the format:
+      #   `https://iamcredentials.{universe_domain}/v1/projects/-/serviceAccounts/{source_sa_email}:generateAccessToken`,
       #   where:
-      #     * `{universe_domain}` is the domain of the IAMCredentials API endpoint (e.g. 'googleapis.com')
-      #     * `{source_sa_email}` is the email address of the service account to impersonate
-      # @param scope [Arrayy<String>, String] the scope(s) to access.
-      #   Note that these are NOT the scopes that the authenticated principal should have, but
-      #   the scopes that the short-lived impersonation access token should have.
+      #     - `{universe_domain}` is the domain of the IAMCredentials API endpoint (e.g., `googleapis.com`).
+      #     - `{source_sa_email}` is the email address of the service account to impersonate.
+      # @option options [Array<String>, String] :scope (required) The scope(s) for the short-lived impersonation token,
+      #   defining the permissions required for the token.
+      # @option options [Object] :source_credentials The authenticated principal that will be used
+      #   to fetch the short-lived impersonation access token. It is an alternative to providing the base credentials.
       #
       # @return [Google::Auth::ImpersonatedServiceAccountCredentials]
       def self.make_creds options = {}
@@ -89,8 +93,10 @@ module Google
       # Initializes a new instance of ImpersonatedServiceAccountCredentials.
       #
       # @param options [Hash] A hash of options to configure the credentials.
-      # @option options [Object] :base_credentials (required) The authenticated principal that will be used
-      #   to fetch the short-lived impersonation access token.
+      # @option options [Object] :base_credentials (required) The authenticated principal.
+      #   It will be used as following:
+      #   * will be duplicated (with IAM scope) to create the source credentials if it supports duplication
+      #   * as source credentials otherwise.
       # @option options [String] :impersonation_url (required) The URL to impersonate the service account.
       #   This URL should follow the format:
       #   `https://iamcredentials.{universe_domain}/v1/projects/-/serviceAccounts/{source_sa_email}:generateAccessToken`,
@@ -99,6 +105,10 @@ module Google
       #     - `{source_sa_email}` is the email address of the service account to impersonate.
       # @option options [Array<String>, String] :scope (required) The scope(s) for the short-lived impersonation token,
       #   defining the permissions required for the token.
+      # @option options [Object] :source_credentials The authenticated principal that will be used
+      #   to fetch the short-lived impersonation access token. It is an alternative to providing the base credentials.
+      #   It is redundant to provide both source and base credentials as only source will be used,
+      #   but it can be done, e.g. when duplicating existing credentials.
       #
       # @raise [ArgumentError] If any of the required options are missing.
       #
@@ -110,7 +120,9 @@ module Google
                             :scope
 
         # Fail-fast checks for required parameters
-        raise ArgumentError, "Missing required option: :base_credentials" if @base_credentials.nil?
+        if @base_credentials.nil? && !options.key?(:source_credentials)
+          raise ArgumentError, "Missing required option: either :base_credentials or :source_credentials"
+        end
         raise ArgumentError, "Missing required option: :impersonation_url" if @impersonation_url.nil?
         raise ArgumentError, "Missing required option: :scope" if @scope.nil?
 
@@ -121,7 +133,9 @@ module Google
         # If a credentials does not support `duplicate` we'll try to use it as is assuming it has a broad enough scope.
         # This might result in an "access denied" error downstream when the token from that credentials is being used
         # for the token exchange.
-        @source_credentials = if @base_credentials.respond_to? :duplicate
+        @source_credentials = if options.key? :source_credentials
+                                options[:source_credentials]
+                              elsif @base_credentials.respond_to? :duplicate
                                 @base_credentials.duplicate({
                                                               scope: IAM_SCOPE
                                                             })
@@ -174,32 +188,7 @@ module Google
           scope: @scope
         }.merge(options)
 
-        new_credentials = self.class.new options
-        new_credentials.update! options
-      end
-
-      # Destructively updates these credentials
-      #
-      # @param options [Hash] Overrides for the credentials parameters.
-      #   The following keys are recognized
-      #   * `base_credentials` the base credentials used to initialize the impersonation
-      #   * `source_credentials` the authenticated credentials which usually would be
-      #     base credentias with scope overridden to IAM_SCOPE
-      #   * `impersonation_url` the URL to use to make an impersonation token exchange
-      #   * `scope` the scope(s) to access
-      #
-      # @return [Google::Auth::ImpersonatedServiceAccountCredentials]
-      def update! options = {}
-        # Normalize all keys to symbols to allow indifferent access.
-        options = deep_hash_normalize options
-
-        @base_credentials = options[:base_credentials] if options.key? :base_credentials
-        @source_credentials = options[:source_credentials] if options.key? :source_credentials
-        @impersonation_url = options[:impersonation_url] if options.key? :impersonation_url
-        @scope = options[:scope] if options.key? :scope
-
-        # there is no `super` call here since impersonated credentials don't inherit from signet client
-        self
+        self.class.new options
       end
 
       private

@@ -154,13 +154,18 @@ module Google
         end
       end
 
-      # Destructively updates these credentials
+      private
+
+      # Destructively updates these credentials.
+      #
+      # This method is called by `Signet::OAuth2::Client`'s constructor
       #
       # @param options [Hash] Overrides for the credentials parameters.
       #   The following keys are recognized in addition to keys in the
       #   Signet::OAuth2::Client
       #   * `:universe_domain_overridden` Whether the universe domain was
       #     overriden during credentials creation
+      # @return [Google::Auth::GCECredentials]
       def update! options = {}
         # Normalize all keys to symbols to allow indifferent access.
         options = deep_hash_normalize options
@@ -171,8 +176,6 @@ module Google
 
         self
       end
-
-      private
 
       def log_fetch_query
         if token_type == :id_token
