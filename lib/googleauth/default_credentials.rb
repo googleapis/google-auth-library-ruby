@@ -30,8 +30,18 @@ module Google
     class DefaultCredentials
       extend CredentialsLoader
 
-      # override CredentialsLoader#make_creds to use the class determined by
+      ##
+      # Override CredentialsLoader#make_creds to use the class determined by
       # loading the json.
+      #
+      # **Important:** If you accept a credential configuration (credential
+      # JSON/File/Stream) from an external source for authentication to Google
+      # Cloud, you must validate it before providing it to any Google API or
+      # library. Providing an unvalidated credential configuration to Google
+      # APIs can compromise the security of your systems and data. For more
+      # information, refer to [Validate credential configurations from external
+      # sources](https://cloud.google.com/docs/authentication/external/externally-sourced-credentials).
+      #
       def self.make_creds options = {}
         json_key_io = options[:json_key_io]
         if json_key_io
