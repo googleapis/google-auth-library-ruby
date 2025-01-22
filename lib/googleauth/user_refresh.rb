@@ -85,6 +85,26 @@ module Google
         super options
       end
 
+      # Creates a duplicate of these credentials
+      # without the Signet::OAuth2::Client-specific
+      # transient state (e.g. cached tokens)
+      #
+      # @param options [Hash] Overrides for the credentials parameters.
+      #   The following keys are recognized in addition to keys in the
+      #   Signet::OAuth2::Client
+      #   * `project_id` the project id to use during the authentication
+      #   * `quota_project_id` the quota project id to use
+      #     during the authentication
+      def duplicate options = {}
+        options = deep_hash_normalize options
+        super(
+          {
+            project_id: @project_id,
+            quota_project_id: @quota_project_id
+          }.merge(options)
+        )
+      end
+
       # Revokes the credential
       def revoke! options = {}
         c = options[:connection] || Faraday.default_connection
@@ -113,6 +133,31 @@ module Google
         missing_scope = Google::Auth::ScopeUtil.normalize(required_scope) -
                         Google::Auth::ScopeUtil.normalize(scope)
         missing_scope.empty?
+      end
+
+      private
+
+      # Destructively updates these credentials
+      #
+      # This method is called by `Signet::OAuth2::Client`'s constructor
+      #
+      # @param options [Hash] Overrides for the credentials parameters.
+      #   The following keys are recognized in addition to keys in the
+      #   Signet::OAuth2::Client
+      #   * `project_id` the project id to use during the authentication
+      #   * `quota_project_id` the quota project id to use
+      #     during the authentication
+      # @return [Google::Auth::UserRefreshCredentials]
+      def update! options = {}
+        # Normalize all keys to symbols to allow indifferent access.
+        options = deep_hash_normalize options
+
+        @project_id = options[:project_id] if options.key? :project_id
+        @quota_project_id = options[:quota_project_id] if options.key? :quota_project_id
+
+        super(options)
+
+        self
       end
     end
   end

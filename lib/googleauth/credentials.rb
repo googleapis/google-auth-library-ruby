@@ -321,9 +321,6 @@ module Google
       #   @return [String, Array<String>] The scope for this client. A scope is an access range
       #     defined by the authorization server. The scope can be a single value or a list of values.
       #
-      # @!attribute [r] target_audience
-      #   @return [String] The final target audience for ID tokens returned by this credential.
-      #
       # @!attribute [r] issuer
       #   @return [String] The issuer ID associated with this client.
       #
@@ -333,6 +330,9 @@ module Google
       # @!attribute [r] updater_proc
       #   @return [Proc] Returns a reference to the {Signet::OAuth2::Client#apply} method,
       #     suitable for passing as a closure.
+      #
+      # @!attribute [r] target_audience
+      #   @return [String] The final target audience for ID tokens returned by this credential.
       #
       # @!attribute [rw] universe_domain
       #   @return [String] The universe domain issuing these credentials.
@@ -349,33 +349,53 @@ module Google
       # Creates a new Credentials instance with the provided auth credentials, and with the default
       # values configured on the class.
       #
-      # @param [String, Hash, Signet::OAuth2::Client] keyfile
-      #   The keyfile can be provided as one of the following:
+      # @param [String, Hash, Signet::OAuth2::Client] source_creds
+      #   The source of credentials. It can be provided as one of the following:
       #
       #   * The path to a JSON keyfile (as a `String`)
       #   * The contents of a JSON keyfile (as a `Hash`)
-      #   * A `Signet::OAuth2::Client` object
+      #   * A `Signet::OAuth2::Client` credentials object
+      #   * Any credentials object that supports the methods this wrapper delegates to an inner client.
+      #
+      #   If this parameter is an object (`Signet::OAuth2::Client` or other) it will be used as an inner client.
+      #   Otherwise the inner client will be constructed from the JSON keyfile or the contens of the hash.
+      #
       # @param [Hash] options
-      #   The options for configuring the credentials instance. The following is supported:
+      #   The options for configuring this wrapper credentials object and the inner client.
+      #   The options hash is used in two ways:
       #
-      #   * `:scope` - the scope for the client
-      #   * `project_id` (and optionally `project`) - the project identifier for the client
-      #   * `:connection_builder` - the connection builder to use for the client
-      #   * `:default_connection` - the default connection to use for the client
-      #   * `:logger` - the logger used to log credential operations such as token refresh.
+      #   1. **Configuring the wrapper object:** Some options are used to directly
+      #      configure the wrapper `Credentials` instance. These include:
       #
-      def initialize keyfile, options = {}
-        verify_keyfile_provided! keyfile
+      #     * `:project_id` (and optionally `:project`) - the project identifier for the client
+      #     * `:quota_project_id` - the quota project identifier for the client
+      #     * `:logger` - the logger used to log credential operations such as token refresh.
+      #
+      #   2. **Configuring the inner client:** When the `source_creds` parameter
+      #      is a `String` or `Hash`, a new `Signet::OAuth2::Client` is created
+      #      internally. The following options are used to configure this inner client:
+      #
+      #     * `:scope` - the scope for the client
+      #     * `:target_audience` - the target audience for the client
+      #
+      #   Any other options in the `options` hash are passed directly to the
+      #   inner client constructor. This allows you to configure additional
+      #   parameters of the `Signet::OAuth2::Client`, such as connection parameters,
+      #   timeouts, etc.
+      #
+      def initialize source_creds, options = {}
+        raise "The source credentials passed to Google::Auth::Credentials.new were nil." if source_creds.nil?
+
         options = symbolize_hash_keys options
         @project_id = options[:project_id] || options[:project]
         @quota_project_id = options[:quota_project_id]
-        case keyfile
-        when Google::Auth::BaseClient
-          update_from_signet keyfile
+        case source_creds
+        when String
+          update_from_filepath source_creds, options
         when Hash
-          update_from_hash keyfile, options
+          update_from_hash source_creds, options
         else
-          update_from_filepath keyfile, options
+          update_from_client source_creds
         end
         setup_logging logger: options.fetch(:logger, :default)
         @project_id ||= CredentialsLoader.load_gcloud_project_id
@@ -481,13 +501,49 @@ module Google
                            :from_application_default,
                            :from_io
 
-      protected
 
-      # Verify that the keyfile argument is provided.
-      def verify_keyfile_provided! keyfile
-        return unless keyfile.nil?
-        raise "The keyfile passed to Google::Auth::Credentials.new was nil."
+      # Creates a duplicate of these credentials. This method tries to create the duplicate of the
+      # wrapped credentials if they support duplication and use them as is if they don't.
+      #
+      # The wrapped credentials are typically `Signet::OAuth2::Client` objects and they keep
+      # the transient state (token, refresh token, etc). The duplication discards that state,
+      # allowing e.g. to get the token with a different scope.
+      #
+      # @param options [Hash] Overrides for the credentials parameters.
+      #
+      #   The options hash is used in two ways:
+      #
+      #   1. **Configuring the duplicate of the wrapper object:** Some options are used to directly
+      #      configure the wrapper `Credentials` instance. These include:
+      #
+      #     * `:project_id` (and optionally `:project`) - the project identifier for the credentials
+      #     * `:quota_project_id` - the quota project identifier for the credentials
+      #
+      #   2. **Configuring the duplicate of the inner client:** If the inner client supports duplication
+      #   the options hash is passed to it. This allows for configuration of additional parameters,
+      #   most importantly (but not limited to) the following:
+      #
+      #     * `:scope` - the scope for the client
+      #
+      # @return [Credentials]
+      def duplicate options = {}
+        options = deep_hash_normalize options
+
+        options = {
+          project_id: @project_id,
+          quota_project_id: @quota_project_id
+        }.merge(options)
+
+        new_client = if @client.respond_to? :duplicate
+                       @client.duplicate options
+                     else
+                       @client
+                     end
+
+        self.class.new new_client, options
       end
+
+      protected
 
       # Verify that the keyfile argument is a file.
       def verify_keyfile_exists! keyfile
@@ -530,11 +586,12 @@ module Google
         options
       end
 
-      def update_from_signet client
+      def update_from_client client
         @project_id ||= client.project_id if client.respond_to? :project_id
         @quota_project_id ||= client.quota_project_id if client.respond_to? :quota_project_id
         @client = client
       end
+      alias update_from_signet update_from_client
 
       def update_from_hash hash, options
         hash = stringify_hash_keys hash
@@ -570,6 +627,23 @@ module Google
           end
         end
         @client.logger = logger
+      end
+
+      private
+
+      # Convert all keys in this hash (nested) to symbols for uniform retrieval
+      def recursive_hash_normalize_keys val
+        if val.is_a? Hash
+          deep_hash_normalize val
+        else
+          val
+        end
+      end
+
+      def deep_hash_normalize old_hash
+        sym_hash = {}
+        old_hash&.each { |k, v| sym_hash[k.to_sym] = recursive_hash_normalize_keys v }
+        sym_hash
       end
     end
   end

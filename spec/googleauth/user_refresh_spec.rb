@@ -366,4 +366,31 @@ describe Google::Auth::UserRefreshCredentials do
         .to raise_error Signet::AuthorizationError
     end
   end
+
+  describe "duplicates" do
+    before :example do
+      @key = OpenSSL::PKey::RSA.new 2048
+      @base_creds = UserRefreshCredentials.make_creds(
+        json_key_io: StringIO.new(cred_json_text),
+        scope:       "https://www.googleapis.com/auth/cloud-platform",
+      )
+
+      @creds = @base_creds.duplicate
+    end
+
+    it "should duplicate the scope" do
+      expect(@creds.scope).to eq ["https://www.googleapis.com/auth/cloud-platform"]
+      expect(@creds.duplicate(scope: ["https://www.googleapis.com/auth/devstorage.read_only"]).scope).to eq ["https://www.googleapis.com/auth/devstorage.read_only"]
+    end
+
+    it "should duplicate the project_id" do
+      expect(@creds.project_id).to eq nil
+      expect(@creds.duplicate(project_id: "test-project-id-2").project_id).to eq "test-project-id-2"
+    end
+
+    it "should duplicate the quota_project_id" do
+      expect(@creds.quota_project_id).to eq "test_project"
+      expect(@creds.duplicate(quota_project_id: "test-quota-project-id-2").quota_project_id).to eq "test-quota-project-id-2"
+    end
+  end
 end

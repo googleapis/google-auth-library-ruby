@@ -81,6 +81,30 @@ module Google
           .configure_connection(options)
       end
 
+      # Creates a duplicate of these credentials
+      # without the Signet::OAuth2::Client-specific
+      # transient state (e.g. cached tokens)
+      #
+      # @param options [Hash] Overrides for the credentials parameters.
+      #   The following keys are recognized in addition to keys in the
+      #   Signet::OAuth2::Client
+      #   * `:enable_self_signed_jwt` Whether the self-signed JWT should
+      #     be used for the authentication
+      #   * `project_id` the project id to use during the authentication
+      #   * `quota_project_id` the quota project id to use
+      #     during the authentication
+      def duplicate options = {}
+        options = deep_hash_normalize options
+        super(
+          {
+            enable_self_signed_jwt: @enable_self_signed_jwt,
+            project_id: project_id,
+            quota_project_id: quota_project_id,
+            logger: logger
+          }.merge(options)
+        )
+      end
+
       # Handles certain escape sequences that sometimes appear in input.
       # Specifically, interprets the "\n" sequence for newline, and removes
       # enclosing quotes.
@@ -114,6 +138,32 @@ module Google
 
       private
 
+      # Destructively updates these credentials
+      #
+      # This method is called by `Signet::OAuth2::Client`'s constructor
+      #
+      # @param options [Hash] Overrides for the credentials parameters.
+      #   The following keys are recognized in addition to keys in the
+      #   Signet::OAuth2::Client
+      #   * `:enable_self_signed_jwt` Whether the self-signed JWT should
+      #     be used for the authentication
+      #   * `project_id` the project id to use during the authentication
+      #   * `quota_project_id` the quota project id to use
+      #     during the authentication
+      # @return [Google::Auth::ServiceAccountCredentials]
+      def update! options = {}
+        # Normalize all keys to symbols to allow indifferent access.
+        options = deep_hash_normalize options
+
+        @enable_self_signed_jwt = options[:enable_self_signed_jwt] ? true : false
+        @project_id = options[:project_id] if options.key? :project_id
+        @quota_project_id = options[:quota_project_id] if options.key? :quota_project_id
+
+        super(options)
+
+        self
+      end
+
       def apply_self_signed_jwt! a_hash
         # Use the ServiceAccountJwtHeaderCredentials using the same cred values
         cred_json = {
@@ -144,8 +194,10 @@ module Google
       TOKEN_CRED_URI = "https://www.googleapis.com/oauth2/v4/token".freeze
       SIGNING_ALGORITHM = "RS256".freeze
       EXPIRY = 60
+
       extend CredentialsLoader
       extend JsonKeyReader
+
       attr_reader :project_id
       attr_reader :quota_project_id
       attr_accessor :universe_domain
@@ -169,16 +221,43 @@ module Google
           @private_key, @issuer, @project_id, @quota_project_id, @universe_domain =
             self.class.read_json_key json_key_io
         else
-          @private_key = ENV[CredentialsLoader::PRIVATE_KEY_VAR]
-          @issuer = ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
-          @project_id = ENV[CredentialsLoader::PROJECT_ID_VAR]
-          @quota_project_id = nil
-          @universe_domain = nil
+          @private_key = options.key?(:private_key) ? options[:private_key] : ENV[CredentialsLoader::PRIVATE_KEY_VAR]
+          @issuer = options.key?(:issuer) ? options[:issuer] : ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
+          @project_id = options.key?(:project_id) ? options[:project_id] : ENV[CredentialsLoader::PROJECT_ID_VAR]
+          @quota_project_id = options[:quota_project_id] if options.key? :quota_project_id
+          @universe_domain = options[:universe_domain] if options.key? :universe_domain
         end
         @universe_domain ||= "googleapis.com"
         @project_id ||= CredentialsLoader.load_gcloud_project_id
         @signing_key = OpenSSL::PKey::RSA.new @private_key
-        @scope = options[:scope]
+        @scope = options[:scope] if options.key? :scope
+        @logger = options[:logger] if options.key? :scope
+      end
+
+      # Creates a duplicate of these credentials
+      #
+      # @param options [Hash] Overrides for the credentials parameters.
+      #   The following keys are recognized
+      #   * `private key` the private key in string form
+      #   * `issuer` the SA issuer
+      #   * `scope` the scope(s) to access
+      #   * `project_id` the project id to use during the authentication
+      #   * `quota_project_id` the quota project id to use
+      #   * `universe_domain` the universe domain of the credentials
+      def duplicate options = {}
+        options = deep_hash_normalize options
+
+        options = {
+          private_key: @private_key,
+          issuer: @issuer,
+          scope: @scope,
+          project_id: project_id,
+          quota_project_id: quota_project_id,
+          universe_domain: universe_domain,
+          logger: logger
+        }.merge(options)
+
+        self.class.new options
       end
 
       # Construct a jwt token if the JWT_AUD_URI key is present in the input
@@ -236,6 +315,23 @@ module Google
       # Duck-types the corresponding method from BaseClient
       def needs_access_token?
         false
+      end
+
+      private
+
+      def deep_hash_normalize old_hash
+        sym_hash = {}
+        old_hash&.each { |k, v| sym_hash[k.to_sym] = recursive_hash_normalize_keys v }
+        sym_hash
+      end
+
+      # Convert all keys in this hash (nested) to symbols for uniform retrieval
+      def recursive_hash_normalize_keys val
+        if val.is_a? Hash
+          deep_hash_normalize val
+        else
+          val
+        end
       end
     end
   end
