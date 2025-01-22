@@ -1,5 +1,14 @@
 # Release History
 
+### 1.13.0 (2025-01-22)
+
+#### Features
+
+* create impersonated service credentials ([#499](https://github.com/googleapis/google-auth-library-ruby/issues/499)) 
+#### Documentation
+
+* Include note about validating externally-provided credentials ([#512](https://github.com/googleapis/google-auth-library-ruby/issues/512)) 
+
 ### 1.12.2 (2024-12-19)
 
 #### Bug Fixes
