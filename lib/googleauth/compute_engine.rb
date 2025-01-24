@@ -154,8 +154,6 @@ module Google
         end
       end
 
-      private
-
       # Destructively updates these credentials.
       #
       # This method is called by `Signet::OAuth2::Client`'s constructor
@@ -176,6 +174,8 @@ module Google
 
         self
       end
+
+      private
 
       def log_fetch_query
         if token_type == :id_token

@@ -136,8 +136,6 @@ module Google
         super && !enable_self_signed_jwt?
       end
 
-      private
-
       # Destructively updates these credentials
       #
       # This method is called by `Signet::OAuth2::Client`'s constructor
@@ -163,6 +161,8 @@ module Google
 
         self
       end
+
+      private
 
       def apply_self_signed_jwt! a_hash
         # Use the ServiceAccountJwtHeaderCredentials using the same cred values
