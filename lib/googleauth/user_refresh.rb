@@ -135,8 +135,6 @@ module Google
         missing_scope.empty?
       end
 
-      private
-
       # Destructively updates these credentials
       #
       # This method is called by `Signet::OAuth2::Client`'s constructor
