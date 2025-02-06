@@ -52,7 +52,7 @@ module Google
       # @option options [String] :universe_domain
       #   The universe domain (defaults to googleapis.com)
       def initialize options = {}
-        raise ArgumentError, "API key must be provided" if options[:api_key].nil?
+        raise ArgumentError, "API key must be provided" if options[:api_key].nil? || options[:api_key].empty?
         @api_key = options[:api_key]
         @universe_domain = options[:universe_domain] || "googleapis.com"
       end
@@ -106,6 +106,18 @@ module Google
           api_key = ENV[API_KEY_VAR]
           return nil if api_key.nil? || api_key.empty?
           new options.merge(api_key: api_key)
+        end
+
+        # Create the APIKeyCredentials.
+        #
+        # @param [Hash] options The credentials options
+        # @option options [String] :api_key
+        #   The API key to use for authentication
+        # @option options [String] :universe_domain
+        #   The universe domain (defaults to googleapis.com)
+        # @return [Google::Auth::APIKeyCredentials]
+        def make_creds options = {}
+          new options
         end
       end
 
