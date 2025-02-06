@@ -40,6 +40,12 @@ describe Google::Auth::APIKeyCredentials do
         Google::Auth::APIKeyCredentials.new
       end.must_raise ArgumentError
     end
+
+    it "raises if API key is empty" do
+      expect do
+        Google::Auth::APIKeyCredentials.new(api_key: "")
+      end.must_raise ArgumentError
+    end
   end
 
   describe "#from_env" do
