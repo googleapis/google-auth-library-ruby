@@ -13,9 +13,11 @@
 # limitations under the License.
 
 require "googleauth/application_default"
+require "googleauth/api_key"
 require "googleauth/client_id"
 require "googleauth/credentials"
 require "googleauth/default_credentials"
 require "googleauth/id_tokens"
+require "googleauth/impersonated_service_account"
 require "googleauth/user_authorizer"
 require "googleauth/web_user_authorizer"
