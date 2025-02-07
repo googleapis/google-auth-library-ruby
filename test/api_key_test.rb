@@ -90,6 +90,11 @@ describe Google::Auth::APIKeyCredentials do
       md = {}
       md = creds.apply md
       _(strio.string).wont_be :empty?
+
+      hashed_apikey = Digest::SHA256.hexdigest(api_key)
+      _(strio.string).must_include hashed_apikey # Check if the hash is logged.
+    
+      _(strio.string).wont_include api_key # Explicitly check that the raw api key is NOT logged.
     end
   end
 
