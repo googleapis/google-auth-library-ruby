@@ -32,6 +32,11 @@ module Google
     # This means that tasks like tracking the lifetime of and
     # refreshing the token are outside the scope of this class.
     #
+    # There is no JSON representation for this type of credentials.
+    # If the end-user has credentials in JSON format they should typically
+    # use the corresponding credentials type, e.g. ServiceAccountCredentials
+    # with the service account JSON.
+    #
     class BearerTokenCredentials
       include Google::Auth::BaseClient
 
@@ -138,7 +143,10 @@ module Google
       end
 
       def apply! a_hash, _opts = {}
-        a_hash[AUTHORIZATION_HEADER_NAME] = "Bearer #{@token}" # Use token_type_string method
+      require 'pry'
+      binding.pry
+
+        a_hash[AUTHORIZATION_HEADER_NAME] = "Bearer #{@token}"
         logger&.debug do
           hash = Digest::SHA256.hexdigest @token
           Google::Logging::Message.from message: "Sending #{token_type_string} auth token. (sha256:#{hash})"
