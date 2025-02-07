@@ -1,4 +1,4 @@
-# Copyright 2024 Google LLC
+# Copyright 2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,17 +32,50 @@ module Google
     class APIKeyCredentials
       include Google::Auth::BaseClient
 
-      # Authorization header key
+      # @private Authorization header key
       API_KEY_HEADER = "x-goog-api-key".freeze
 
-      # Environment variable containing API key
+      # @private Environment variable containing API key
       API_KEY_VAR = "GOOGLE_API_KEY".freeze
 
-      # @private The API key
+      # @return [String] The API key
       attr_reader :api_key
 
-      # @private The universe domain
+      # @return [String] The universe domain of the universe
+      #   this API key is for
       attr_accessor :universe_domain
+
+      class << self
+        # Creates an APIKeyCredentials from the environment.
+        # Checks the ENV['GOOGLE_API_KEY'] variable.
+        #
+        # @param [String] _scope
+        #  The scope to use for OAuth. Not used by API key auth.
+        # @param [Hash] options
+        #  The options to pass to the credentials instance
+        #
+        # @return [Google::Auth::APIKeyCredentials, nil]
+        #  Credentials if the API key environment variable is present,
+        #  nil otherwise
+        def from_env _scope = nil, options = {}
+          api_key = ENV[API_KEY_VAR]
+          return nil if api_key.nil? || api_key.empty?
+          new options.merge(api_key: api_key)
+        end
+
+        # Create the APIKeyCredentials.
+        #
+        # @param [Hash] options The credentials options
+        # @option options [String] :api_key
+        #   The API key to use for authentication
+        # @option options [String] :universe_domain
+        #   The universe domain of the universe this API key
+        #   belongs to (defaults to googleapis.com)
+        # @return [Google::Auth::APIKeyCredentials]
+        def make_creds options = {}
+          new options
+        end
+      end
 
       # Initialize the APIKeyCredentials.
       #
@@ -50,7 +83,8 @@ module Google
       # @option options [String] :api_key
       #   The API key to use for authentication
       # @option options [String] :universe_domain
-      #   The universe domain (defaults to googleapis.com)
+      #   The universe domain of the universe this API key
+      #   belongs to (defaults to googleapis.com)
       def initialize options = {}
         raise ArgumentError, "API key must be provided" if options[:api_key].nil? || options[:api_key].empty?
         @api_key = options[:api_key]
@@ -89,36 +123,6 @@ module Google
       # We don't need to fetch access tokens for API key auth
       def fetch_access_token! _options = {}
         nil
-      end
-
-      class << self
-        # Creates an APIKeyCredentials from the environment.
-        # Checks the ENV['GOOGLE_API_KEY'] variable.
-        #
-        # @param [String] scope
-        #  The scope to use for OAuth. Not used by API key auth.
-        # @param [Hash] options
-        #  The options to pass to the credentials instance
-        #
-        # @return [Google::Auth::APIKeyCredentials, nil]
-        #  Credentials if the API key environment variable is present, nil otherwise
-        def from_env _scope = nil, options = {}
-          api_key = ENV[API_KEY_VAR]
-          return nil if api_key.nil? || api_key.empty?
-          new options.merge(api_key: api_key)
-        end
-
-        # Create the APIKeyCredentials.
-        #
-        # @param [Hash] options The credentials options
-        # @option options [String] :api_key
-        #   The API key to use for authentication
-        # @option options [String] :universe_domain
-        #   The universe domain (defaults to googleapis.com)
-        # @return [Google::Auth::APIKeyCredentials]
-        def make_creds options = {}
-          new options
-        end
       end
 
       def apply! a_hash, _opts = {}
