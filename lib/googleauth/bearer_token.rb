@@ -1,4 +1,4 @@
-# Copyright 2024 Google LLC
+# Copyright 2025 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,52 +17,84 @@ require "googleauth/base_client"
 module Google
   module Auth
     ##
-    # Implementation of Bearer Token authentication.
+    # Implementation of Bearer Token authentication scenario.
     #
-    # Bearer tokens are strings representing an authorization grant.  They
-    # are typically used with OAuth 2.0.
+    # Bearer tokens are strings representing an authorization grant.
+    # They can be OAuth2 ("ya.29") tokens, JWTs, IDTokens -- anything
+    # that is sent as a `Bearer` in an `Authorization` header.
+    #
+    # Not all 'authentication' strings can be used with this class,
+    # e.g. an API key cannot since API keys are sent in a
+    # `x-goog-api-key` header or as a query parameter.
+    #
+    # This class should be used when the end-user is managing the
+    # authentication token separately, e.g. with a separate service.
+    # This means that tasks like tracking the lifetime of and
+    # refreshing the token are outside the scope of this class.
     #
     class BearerTokenCredentials
       include Google::Auth::BaseClient
 
-      # Authorization header key
-      BEARER_TOKEN_HEADER = "Authorization".freeze
+      # @private Authorization header name
+      AUTHORIZATION_HEADER_NAME = "Authorization".freeze
 
-      # Allowed token types
+      # @private Allowed token types
       ALLOWED_TOKEN_TYPES = [:access_token, :jwt, :id_token, :bearer_token].freeze
 
-      # @private The bearer token
-      attr_reader :bearer_token
+      # @return [String] The token to be sent as a part of Bearer claim
+      attr_reader :token
 
-      # @private The token expiry time (Time object or nil)
+      # @return [Time, nil] The token expiry time provided by the end-user.
       attr_reader :expiry
 
-       # @private The token type
+      # @return [Symbol] The token type. Allowed values are
+      #   :access_token, :jwt, :id_token, and :bearer_token.
       attr_reader :token_type
 
-      # @private The universe domain
+      # @return [String] The universe domain of the universe
+      #   this token is for
       attr_accessor :universe_domain
+
+      class << self
+        # Create the BearerTokenCredentials.
+        #
+        # @param [Hash] options The credentials options
+        # @option options [String] :token The bearer token to use.
+        # @option options [Time, Numeric, nil] :expiry The token expiry time provided by the end-user.
+        #   Optional, for the end-user's convenience. Can be a Time object, a number of seconds since epoch.
+        #   If the expiry is `nil`, it is treated as "token never expires".
+        # @option options [Symbol] :token_type The token type. Allowed values are
+        #   :access_token, :jwt, :id_token, and :bearer_token. Defaults to :bearer_token.
+        # @option options [String] :universe_domain The universe domain of the universe
+        #   this token is for (defaults to googleapis.com)
+        # @return [Google::Auth::BearerTokenCredentials]
+        def make_creds options = {}
+          new options
+        end
+      end
 
       # Initialize the BearerTokenCredentials.
       #
       # @param [Hash] options The credentials options
-      # @option options [String] :bearer_token The bearer token to use.
-      # @option options [Time, Numeric] :expiry The token expiry time. Can be a Time
-      #   object or a number of seconds since epoch.
+      # @option options [String] :token The bearer token to use.
+      # @option options [Time, Numeric, nil] :expiry The token expiry time provided by the end-user.
+      #   Optional, for the end-user's convenience. Can be a Time object, a number of seconds since epoch.
+      #   If the expiry is `nil`, it is treated as "token never expires".
       # @option options [Symbol] :token_type The token type. Allowed values are
       #   :access_token, :jwt, :id_token, and :bearer_token. Defaults to :bearer_token.
-      # @option options [String] :universe_domain The universe domain (defaults to googleapis.com)
+      # @option options [String] :universe_domain The universe domain of the universe
+      #   this token is for (defaults to googleapis.com)
       def initialize options = {}
-        raise ArgumentError, "Bearer token must be provided" if options[:bearer_token].nil? || options[:bearer_token].empty?
-        @bearer_token = options[:bearer_token]
-        @expiry = if options[:expiry].is_a?(Time)
+        raise ArgumentError, "Bearer token must be provided" if options[:token].nil? || options[:token].empty?
+        @token = options[:token]
+        @expiry = if options[:expiry].is_a? Time
                     options[:expiry]
-                  elsif options[:expiry].is_a?(Numeric)
-                    Time.at(options[:expiry])
+                  elsif options[:expiry].is_a? Numeric
+                    Time.at options[:expiry]
                   end
 
         @token_type = options[:token_type] || :bearer_token
-        unless ALLOWED_TOKEN_TYPES.include?(@token_type)
+        unless ALLOWED_TOKEN_TYPES.include? @token_type
           raise ArgumentError, "Invalid token type: #{@token_type}. Allowed values are #{ALLOWED_TOKEN_TYPES.inspect}"
         end
 
@@ -72,54 +104,44 @@ module Google
       # Determines if the credentials object has expired.
       #
       # @param [Numeric] seconds The optional timeout in seconds.
-      # @return [Boolean] True if the token has expired, false otherwise.
-      def expires_within? seconds = 0
-        return false if @expiry.nil?
+      # @return [Boolean] True if the token has expired, false otherwise, or
+      #   if the expiry was not provided.
+      def expires_within? seconds
+        return false if @expiry.nil? # Treat nil expiry as "never expires"
         Time.now + seconds >= @expiry
       end
 
       # Creates a duplicate of these credentials.
       #
       # @param [Hash] options Additional options for configuring the credentials
+      # @option options [String] :token The bearer token to use.
+      # @option options [Time, Numeric] :expiry The token expiry time. Can be a Time
+      #   object or a number of seconds since epoch.
+      # @option options [Symbol] :token_type The token type. Allowed values are
+      #   :access_token, :jwt, :id_token, and :bearer_token. Defaults to :bearer_token.
+      # @option options [String] :universe_domain The universe domain (defaults to googleapis.com)
       # @return [Google::Auth::BearerTokenCredentials]
       def duplicate options = {}
         self.class.new(
-          bearer_token: options[:bearer_token] || @bearer_token,
+          token: options[:token] || @token,
           expiry: options[:expiry] || @expiry,
+          token_type: options[:token_type] || @token_type,
           universe_domain: options[:universe_domain] || @universe_domain
         )
       end
 
       protected
 
-      # The token type should be :bearer
-      def token_type
-        :bearer
-      end
-
       # We don't need to fetch access tokens for bearer token auth
       def fetch_access_token! _options = {}
         nil
       end
 
-      class << self
-        # Create the BearerTokenCredentials.
-        #
-        # @param [Hash] options The credentials options
-        # @option options [String] :bearer_token The bearer token to use.
-        # @option options [Time, Numeric] :expiry The token expiry time. Can be a Time
-        #   object or a number of seconds since epoch.
-        # @option options [String] :universe_domain The universe domain (defaults to googleapis.com)
-        # @return [Google::Auth::BearerTokenCredentials]
-        def make_creds options = {}
-          new options
-        end
-      end
-
       def apply! a_hash, _opts = {}
-        a_hash[BEARER_TOKEN_HEADER] = "#{token_type_string} #{@bearer_token}" # Use token_type_string method
+        a_hash[AUTHORIZATION_HEADER_NAME] = "Bearer #{@token}" # Use token_type_string method
         logger&.debug do
-          Google::Logging::Message.from message: "Sending #{token_type_string} auth token. (truncated)" # Consider logging hash instead
+          hash = Digest::SHA256.hexdigest @token
+          Google::Logging::Message.from message: "Sending #{token_type_string} auth token. (sha256:#{hash})"
         end
         a_hash
       end
@@ -127,7 +149,7 @@ module Google
       private
 
       def token_type_string
-        @token_type.to_s.split('_').map(&:capitalize).join(' ') #Nicely format token type for the header
+        @token_type.to_s.split("_").map(&:capitalize).join(" ") # Nicely format token type for the header
       end
     end
   end
