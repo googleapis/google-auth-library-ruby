@@ -48,6 +48,11 @@ module Google
 
       # @return [String] The token to be sent as a part of Bearer claim
       attr_reader :token
+      # The following aliasing is needed for BaseClient since it sends :token_type
+      alias :access_token :token
+      alias :jwt :token
+      alias :id_token :token
+      alias :bearer_token :token
 
       # @return [Time, nil] The token expiry time provided by the end-user.
       attr_reader :expiry
@@ -135,20 +140,11 @@ module Google
         )
       end
 
-      def apply! a_hash, _opts = {}
-        a_hash[AUTH_METADATA_KEY] = "Bearer #{token}"
-        logger&.debug do
-          hash = Digest::SHA256.hexdigest @token
-          Google::Logging::Message.from message: "Sending #{token_type_string} auth token. (sha256:#{hash})"
-        end
-        a_hash
-      end
-
       protected
 
       # We don't need to fetch access tokens for bearer token auth
       def fetch_access_token! _options = {}
-        nil
+        @token
       end
 
       private
