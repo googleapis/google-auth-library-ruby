@@ -113,14 +113,13 @@ module Google
         )
       end
 
-
       # Updates the procided hash with the API Key header.
       #
       # The `apply!` method modifies the provided hash in place, adding the
       # `x-goog-api-key` header with the API Key value.
       #
       # The API Key is hashed before being logged for security purposes.
-      # 
+      #
       # NB: this method typically would be called through `updater_proc`.
       # Some older clients call it directly though, so it has to be public.
       #

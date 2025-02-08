@@ -49,10 +49,10 @@ module Google
       # @return [String] The token to be sent as a part of Bearer claim
       attr_reader :token
       # The following aliasing is needed for BaseClient since it sends :token_type
-      alias :access_token :token
-      alias :jwt :token
-      alias :id_token :token
-      alias :bearer_token :token
+      alias access_token token
+      alias jwt token
+      alias id_token token
+      alias bearer_token token
 
       # @return [Time, nil] The token expiry time provided by the end-user.
       attr_reader :expiry
