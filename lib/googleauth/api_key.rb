@@ -113,6 +113,33 @@ module Google
         )
       end
 
+
+      # Updates the procided hash with the API Key header.
+      #
+      # The `apply!` method modifies the provided hash in place, adding the
+      # `x-goog-api-key` header with the API Key value.
+      #
+      # The API Key is hashed before being logged for security purposes.
+      # 
+      # NB: this method typically would be called through `updater_proc`.
+      # Some older clients call it directly though, so it has to be public.
+      #
+      # @param [Hash] a_hash The hash to which the API Key header should be added.
+      #   This is typically a hash representing the request headers.  This hash
+      #   will be modified in place.
+      # @param [Hash] _opts  Additional options (currently not used).  Included
+      #   for consistency with the `BaseClient` interface.
+      # @return [Hash] The modified hash (the same hash passed as the `a_hash`
+      #   argument).
+      def apply! a_hash, _opts = {}
+        a_hash[API_KEY_HEADER] = @api_key
+        logger&.debug do
+          hash = Digest::SHA256.hexdigest @api_key
+          Google::Logging::Message.from message: "Sending API key auth token. (sha256:#{hash})"
+        end
+        a_hash
+      end
+
       protected
 
       # The token type should be :api_key
@@ -123,15 +150,6 @@ module Google
       # We don't need to fetch access tokens for API key auth
       def fetch_access_token! _options = {}
         nil
-      end
-
-      def apply! a_hash, _opts = {}
-        a_hash[API_KEY_HEADER] = @api_key
-        logger&.debug do
-          hash = Digest::SHA256.hexdigest @api_key
-          Google::Logging::Message.from message: "Sending API key auth token. (sha256:#{hash})"
-        end
-        a_hash
       end
     end
   end

@@ -78,7 +78,7 @@ describe Google::Auth::BearerTokenCredentials do
 
     it "adds Authorization token header to hash" do
       md = { foo: "bar" }
-      want = {:foo => "bar", Google::Auth::BearerTokenCredentials::AUTHORIZATION_HEADER_NAME => "Bearer #{token}" }
+      want = {:foo => "bar", Google::Auth::BearerTokenCredentials::AUTH_METADATA_KEY => "Bearer #{token}" }
       md = creds.apply md
       _(md).must_equal want
     end
@@ -86,7 +86,7 @@ describe Google::Auth::BearerTokenCredentials do
     it "Token type does not influence the header value" do
         creds = Google::Auth::BearerTokenCredentials.new token: token, token_type: :access_token
         md = { foo: "bar" }
-        want = {:foo => "bar", Google::Auth::BearerTokenCredentials::AUTHORIZATION_HEADER_NAME => "Bearer #{token}" }
+        want = {:foo => "bar", Google::Auth::BearerTokenCredentials::AUTH_METADATA_KEY => "Bearer #{token}" }
         md = creds.apply md
         _(md).must_equal want
     end
