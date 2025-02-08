@@ -41,7 +41,7 @@ module Google
       include Google::Auth::BaseClient
 
       # @private Authorization header name
-      AUTHORIZATION_HEADER_NAME = "Authorization".freeze
+      AUTH_METADATA_KEY = Google::Auth::BaseClient::AUTH_METADATA_KEY
 
       # @private Allowed token types
       ALLOWED_TOKEN_TYPES = [:access_token, :jwt, :id_token, :bearer_token].freeze
@@ -135,23 +135,20 @@ module Google
         )
       end
 
-      protected
-
-      # We don't need to fetch access tokens for bearer token auth
-      def fetch_access_token! _options = {}
-        nil
-      end
-
       def apply! a_hash, _opts = {}
-      require 'pry'
-      binding.pry
-
-        a_hash[AUTHORIZATION_HEADER_NAME] = "Bearer #{@token}"
+        a_hash[AUTH_METADATA_KEY] = "Bearer #{token}"
         logger&.debug do
           hash = Digest::SHA256.hexdigest @token
           Google::Logging::Message.from message: "Sending #{token_type_string} auth token. (sha256:#{hash})"
         end
         a_hash
+      end
+
+      protected
+
+      # We don't need to fetch access tokens for bearer token auth
+      def fetch_access_token! _options = {}
+        nil
       end
 
       private
