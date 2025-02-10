@@ -16,9 +16,10 @@ require "multi_json"
 require "stringio"
 
 require "googleauth/credentials_loader"
-require "googleauth/service_account"
-require "googleauth/user_refresh"
 require "googleauth/external_account"
+require "googleauth/service_account"
+require "googleauth/service_account_jwt_header"
+require "googleauth/user_refresh"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
