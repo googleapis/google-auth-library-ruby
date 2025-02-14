@@ -43,23 +43,13 @@ module Google
       # @private Authorization header name
       AUTH_METADATA_KEY = Google::Auth::BaseClient::AUTH_METADATA_KEY
 
-      # @private Allowed token types
-      ALLOWED_TOKEN_TYPES = [:access_token, :jwt, :id_token, :bearer_token].freeze
-
       # @return [String] The token to be sent as a part of Bearer claim
       attr_reader :token
       # The following aliasing is needed for BaseClient since it sends :token_type
-      alias access_token token
-      alias jwt token
-      alias id_token token
       alias bearer_token token
 
       # @return [Time, nil] The token expiration time provided by the end-user.
       attr_reader :expires_at
-
-      # @return [Symbol] The token type. Allowed values are
-      #   :access_token, :jwt, :id_token, and :bearer_token.
-      attr_reader :token_type
 
       # @return [String] The universe domain of the universe
       #   this token is for
@@ -73,8 +63,6 @@ module Google
         # @option options [Time, Numeric, nil] :expires_at The token expiration time provided by the end-user.
         #   Optional, for the end-user's convenience. Can be a Time object, a number of seconds since epoch.
         #   If `expires_at` is `nil`, it is treated as "token never expires".
-        # @option options [Symbol] :token_type The token type. Allowed values are
-        #   :access_token, :jwt, :id_token, and :bearer_token. Defaults to :bearer_token.
         # @option options [String] :universe_domain The universe domain of the universe
         #   this token is for (defaults to googleapis.com)
         # @return [Google::Auth::BearerTokenCredentials]
@@ -90,8 +78,6 @@ module Google
       # @option options [Time, Numeric, nil] :expires_at The token expiration time provided by the end-user.
       #   Optional, for the end-user's convenience. Can be a Time object, a number of seconds since epoch.
       #   If `expires_at` is `nil`, it is treated as "token never expires".
-      # @option options [Symbol] :token_type The token type. Allowed values are
-      #   :access_token, :jwt, :id_token, and :bearer_token. Defaults to :bearer_token.
       # @option options [String] :universe_domain The universe domain of the universe
       #   this token is for (defaults to googleapis.com)
       def initialize options = {}
@@ -103,11 +89,6 @@ module Google
                       when Numeric
                         Time.at options[:expires_at]
                       end
-
-        @token_type = options[:token_type] || :bearer_token
-        unless ALLOWED_TOKEN_TYPES.include? @token_type
-          raise ArgumentError, "Invalid token type: #{@token_type}. Allowed values are #{ALLOWED_TOKEN_TYPES.inspect}"
-        end
 
         @universe_domain = options[:universe_domain] || "googleapis.com"
       end
@@ -128,15 +109,12 @@ module Google
       # @option options [String] :token The bearer token to use.
       # @option options [Time, Numeric] :expires_at The token expiration time. Can be a Time
       #   object or a number of seconds since epoch.
-      # @option options [Symbol] :token_type The token type. Allowed values are
-      #   :access_token, :jwt, :id_token, and :bearer_token. Defaults to :bearer_token.
       # @option options [String] :universe_domain The universe domain (defaults to googleapis.com)
       # @return [Google::Auth::BearerTokenCredentials]
       def duplicate options = {}
         self.class.new(
           token: options[:token] || @token,
           expires_at: options[:expires_at] || @expires_at,
-          token_type: options[:token_type] || @token_type,
           universe_domain: options[:universe_domain] || @universe_domain
         )
       end
@@ -162,8 +140,8 @@ module Google
 
       private
 
-      def token_type_string
-        @token_type.to_s.split("_").map(&:capitalize).join(" ") # Nicely format token type for the header
+      def token_type
+        :bearer_token
       end
     end
   end

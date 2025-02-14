@@ -26,7 +26,6 @@ describe Google::Auth::BearerTokenCredentials do
     it "creates with token and proper defaults" do
       creds = Google::Auth::BearerTokenCredentials.new token: token
       _(creds.token).must_equal token
-      _(creds.token_type).must_equal :bearer_token
       _(creds.universe_domain).must_equal "googleapis.com"
     end
 
@@ -49,11 +48,6 @@ describe Google::Auth::BearerTokenCredentials do
       _(creds.expires_at).must_equal Time.at(expires_at_seconds)
     end
 
-    it "creates with custom token type" do
-      creds = Google::Auth::BearerTokenCredentials.new(token: token, token_type: :access_token)
-      _(creds.token_type).must_equal :access_token
-    end
-
     it "raises if bearer token is missing" do
       expect do
         Google::Auth::BearerTokenCredentials.new
@@ -63,12 +57,6 @@ describe Google::Auth::BearerTokenCredentials do
     it "raises if bearer token is empty" do
       expect do
         Google::Auth::BearerTokenCredentials.new(token: "")
-      end.must_raise ArgumentError
-    end
-
-    it "raises if invalid token type is provided" do
-      expect do
-        Google::Auth::BearerTokenCredentials.new(token: token, token_type: :invalid)
       end.must_raise ArgumentError
     end
   end
@@ -83,14 +71,6 @@ describe Google::Auth::BearerTokenCredentials do
       _(md).must_equal want
     end
 
-    it "Token type does not influence the header value" do
-      creds = Google::Auth::BearerTokenCredentials.new token: token, token_type: :access_token
-      md = { foo: "bar" }
-      want = { foo: "bar", Google::Auth::BearerTokenCredentials::AUTH_METADATA_KEY => "Bearer #{token}" }
-      md = creds.apply md
-      _(md).must_equal want
-  end
-
     it "logs (hashed token) when a logger is set, but not the raw token" do
       strio = StringIO.new
       logger = Logger.new strio
@@ -104,35 +84,21 @@ describe Google::Auth::BearerTokenCredentials do
     end
   end
 
-  describe "#token_type" do
-    it "defaults to :bearer_token" do
-      creds = Google::Auth::BearerTokenCredentials.new token: token
-      _(creds.token_type).must_equal :bearer_token
-    end
-
-    it "returns the provided token type" do
-      creds = Google::Auth::BearerTokenCredentials.new token: token, token_type: :access_token
-      _(creds.token_type).must_equal :access_token
-    end
-  end
-
   describe "#duplicate" do
-    let(:creds) { Google::Auth::BearerTokenCredentials.new token: token, expires_at: expires_at, token_type: :access_token }
+    let(:creds) { Google::Auth::BearerTokenCredentials.new token: token, expires_at: expires_at }
 
     it "creates a duplicate with same values" do
       dup = creds.duplicate
       _(dup.token).must_equal token
       _(dup.expires_at).must_equal expires_at
-      _(dup.token_type).must_equal :access_token
       _(dup.universe_domain).must_equal "googleapis.com"
     end
 
     it "allows overriding values" do
       new_expires_at = Time.now + 7200
-      dup = creds.duplicate token: "new-token", expires_at: new_expires_at, token_type: :jwt, universe_domain: example_universe_domain
+      dup = creds.duplicate token: "new-token", expires_at: new_expires_at, universe_domain: example_universe_domain
       _(dup.token).must_equal "new-token"
       _(dup.expires_at).must_equal new_expires_at
-      _(dup.token_type).must_equal :jwt
       _(dup.universe_domain).must_equal example_universe_domain
     end
   end
