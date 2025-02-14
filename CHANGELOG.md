@@ -1,5 +1,13 @@
 # Release History
 
+### 1.14.0 (2025-02-14)
+
+#### Features
+
+* add API key credentials ([#520](https://github.com/googleapis/google-auth-library-ruby/issues/520)) 
+* Add Bearer token credentials 
+* add BearerToken credentials ([#522](https://github.com/googleapis/google-auth-library-ruby/issues/522)) 
+
 ### 1.13.1 (2025-01-24)
 
 #### Bug Fixes
