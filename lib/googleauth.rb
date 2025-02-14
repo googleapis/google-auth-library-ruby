@@ -14,6 +14,7 @@
 
 require "googleauth/application_default"
 require "googleauth/api_key"
+require "googleauth/bearer_token"
 require "googleauth/client_id"
 require "googleauth/credentials"
 require "googleauth/default_credentials"
