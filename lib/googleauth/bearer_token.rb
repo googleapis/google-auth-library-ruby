@@ -54,8 +54,8 @@ module Google
       alias id_token token
       alias bearer_token token
 
-      # @return [Time, nil] The token expiry time provided by the end-user.
-      attr_reader :expiry
+      # @return [Time, nil] The token expiration time provided by the end-user.
+      attr_reader :expires_at
 
       # @return [Symbol] The token type. Allowed values are
       #   :access_token, :jwt, :id_token, and :bearer_token.
@@ -70,9 +70,9 @@ module Google
         #
         # @param [Hash] options The credentials options
         # @option options [String] :token The bearer token to use.
-        # @option options [Time, Numeric, nil] :expiry The token expiry time provided by the end-user.
+        # @option options [Time, Numeric, nil] :expires_at The token expiration time provided by the end-user.
         #   Optional, for the end-user's convenience. Can be a Time object, a number of seconds since epoch.
-        #   If the expiry is `nil`, it is treated as "token never expires".
+        #   If `expires_at` is `nil`, it is treated as "token never expires".
         # @option options [Symbol] :token_type The token type. Allowed values are
         #   :access_token, :jwt, :id_token, and :bearer_token. Defaults to :bearer_token.
         # @option options [String] :universe_domain The universe domain of the universe
@@ -87,9 +87,9 @@ module Google
       #
       # @param [Hash] options The credentials options
       # @option options [String] :token The bearer token to use.
-      # @option options [Time, Numeric, nil] :expiry The token expiry time provided by the end-user.
+      # @option options [Time, Numeric, nil] :expires_at The token expiration time provided by the end-user.
       #   Optional, for the end-user's convenience. Can be a Time object, a number of seconds since epoch.
-      #   If the expiry is `nil`, it is treated as "token never expires".
+      #   If `expires_at` is `nil`, it is treated as "token never expires".
       # @option options [Symbol] :token_type The token type. Allowed values are
       #   :access_token, :jwt, :id_token, and :bearer_token. Defaults to :bearer_token.
       # @option options [String] :universe_domain The universe domain of the universe
@@ -97,11 +97,12 @@ module Google
       def initialize options = {}
         raise ArgumentError, "Bearer token must be provided" if options[:token].nil? || options[:token].empty?
         @token = options[:token]
-        @expiry = if options[:expiry].is_a? Time
-                    options[:expiry]
-                  elsif options[:expiry].is_a? Numeric
-                    Time.at options[:expiry]
-                  end
+        @expires_at = case options[:expires_at]
+                      when Time
+                        options[:expires_at]
+                      when Numeric
+                        Time.at options[:expires_at]
+                      end
 
         @token_type = options[:token_type] || :bearer_token
         unless ALLOWED_TOKEN_TYPES.include? @token_type
@@ -115,17 +116,17 @@ module Google
       #
       # @param [Numeric] seconds The optional timeout in seconds.
       # @return [Boolean] True if the token has expired, false otherwise, or
-      #   if the expiry was not provided.
+      #   if the expires_at was not provided.
       def expires_within? seconds
-        return false if @expiry.nil? # Treat nil expiry as "never expires"
-        Time.now + seconds >= @expiry
+        return false if @expires_at.nil? # Treat nil expiration as "never expires"
+        Time.now + seconds >= @expires_at
       end
 
       # Creates a duplicate of these credentials.
       #
       # @param [Hash] options Additional options for configuring the credentials
       # @option options [String] :token The bearer token to use.
-      # @option options [Time, Numeric] :expiry The token expiry time. Can be a Time
+      # @option options [Time, Numeric] :expires_at The token expiration time. Can be a Time
       #   object or a number of seconds since epoch.
       # @option options [Symbol] :token_type The token type. Allowed values are
       #   :access_token, :jwt, :id_token, and :bearer_token. Defaults to :bearer_token.
@@ -134,7 +135,7 @@ module Google
       def duplicate options = {}
         self.class.new(
           token: options[:token] || @token,
-          expiry: options[:expiry] || @expiry,
+          expires_at: options[:expires_at] || @expires_at,
           token_type: options[:token_type] || @token_type,
           universe_domain: options[:universe_domain] || @universe_domain
         )
@@ -142,9 +143,21 @@ module Google
 
       protected
 
-      # We don't need to fetch access tokens for bearer token auth
+      ##
+      # BearerTokenCredentials do not support fetching a new token.
+      #
+      # If the token has an expiration time and is expired, this method will
+      # raise an error.
+      #
+      # @param [Hash] _options Options for fetching a new token (not used).
+      # @return [nil] Always returns nil.
+      # @raise [StandardError] If the token is expired.
       def fetch_access_token! _options = {}
-        @token
+        if @expires_at && Time.now >= @expires_at
+          raise "Bearer token has expired."
+        end
+
+        nil
       end
 
       private

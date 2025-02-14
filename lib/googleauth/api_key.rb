@@ -113,7 +113,7 @@ module Google
         )
       end
 
-      # Updates the procided hash with the API Key header.
+      # Updates the provided hash with the API Key header.
       #
       # The `apply!` method modifies the provided hash in place, adding the
       # `x-goog-api-key` header with the API Key value.
