@@ -22,9 +22,15 @@ module Google
     module Helpers
       # Connection provides a Faraday connection for use with Google::Auth.
       module Connection
-        private
+        module_function
 
-        attr_accessor :default_connection
+        def default_connection
+          @default_connection
+        end
+
+        def default_connection=(conn)
+          @default_connection = conn
+        end
 
         def connection
           @default_connection || Faraday.default_connection
