@@ -28,7 +28,7 @@ module Google
           @default_connection
         end
 
-        def default_connection=(conn)
+        def default_connection= conn
           @default_connection = conn
         end
 
