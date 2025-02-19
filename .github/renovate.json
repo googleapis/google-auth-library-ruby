@@ -1,6 +1,3 @@
 {
-  "extends": [
-    "config:base"
-  ],
-  "rangeStrategy": "widen"
+  "enabled": false
 }
