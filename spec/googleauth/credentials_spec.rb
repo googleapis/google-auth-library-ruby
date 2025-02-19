@@ -13,7 +13,8 @@
 # limitations under the License.
 
 require "googleauth"
-
+require "spec_helper"
+require "tmpdir"
 
 # This test is testing the private class Google::Auth::Credentials. We want to
 # make sure that the passed in scope propogates to the Signet object. This means
@@ -33,6 +34,9 @@ describe Google::Auth::Credentials, :private do
     }
   end
   let(:default_keyfile_content) { JSON.generate default_keyfile_hash }
+  let(:fake_path_1) { "/fake/path/to/file.txt".freeze }
+  let(:fake_path_2) { "/unknown/path/to/file.txt".freeze }
+  FAKE_DEFAULT_PATH = "/default/path/to/file.txt".freeze
 
   def stub_token_request access_token: nil, id_token: nil, uri: nil
     body_fields = { "token_type" => "Bearer", "expires_in" => 3600 }
@@ -73,14 +77,82 @@ describe Google::Auth::Credentials, :private do
     expect(client.signing_key).to be_a_kind_of(OpenSSL::PKey::RSA)
   end
 
+  describe "logger" do
+    after :example do
+      ENV["TEST_JSON_VARS"] = nil
+      ENV["GOOGLE_APPLICATION_CREDENTIALS"] = nil
+    end
+
+    it "defaults to nil" do
+      creds = Google::Auth::Credentials.new default_keyfile_hash
+      expect(creds.logger).to be_nil
+    end
+
+    it "takes a logger on the constructor" do
+      my_logger = Logger.new $stderr
+      creds = Google::Auth::Credentials.new default_keyfile_hash, logger: my_logger
+      expect(creds.logger).to equal(my_logger)
+    end
+
+    it "uses the logger in a provided signet client rather than a passed in logger" do
+      my_logger = Logger.new $stderr
+      wrong_logger = Logger.new $stderr
+      signet = Signet::OAuth2::Client.new access_token: token
+      signet.logger = my_logger
+      creds = Google::Auth::Credentials.new signet, logger: wrong_logger
+      expect(creds.logger).to equal(my_logger)
+    end
+
+    it "allows logger to be set explicitly" do
+      my_logger = Logger.new $stderr
+      creds = Google::Auth::Credentials.new default_keyfile_hash
+      creds.logger = my_logger
+      expect(creds.logger).to equal(my_logger)
+    end
+
+    class TestCredentialsForLogging < Google::Auth::Credentials
+      TOKEN_CREDENTIAL_URI = "https://example.com/token".freeze
+      AUDIENCE = "https://example.com/audience".freeze
+      SCOPE = "http://example.com/scope".freeze
+      JSON_ENV_VARS = ["TEST_JSON_VARS"].freeze
+    end
+
+    it "allows logger to be set when getting an adc-based default credential" do
+      my_logger = Logger.new $stderr
+      ENV["GOOGLE_APPLICATION_CREDENTIALS"] = fake_path_1
+      allow(::File).to receive(:exist?).with(fake_path_1) { true }
+      allow(::File).to receive(:open).with(fake_path_1).and_yield(StringIO.new default_keyfile_content)
+      creds = TestCredentialsForLogging.default logger: my_logger
+      expect(creds.logger).to equal(my_logger)
+    end
+
+    it "allows logger to be set when getting an io-based default credential" do
+      test_json_env_val = JSON.generate default_keyfile_hash
+      ENV["TEST_JSON_VARS"] = test_json_env_val
+      allow(::File).to receive(:file?).with(test_json_env_val) { false }
+      my_logger = Logger.new $stderr
+      creds = TestCredentialsForLogging.default logger: my_logger
+      expect(creds.logger).to equal(my_logger)
+    end
+  end
+
   it "uses empty paths and env_vars by default" do
     expect(Google::Auth::Credentials.paths).to eq([])
     expect(Google::Auth::Credentials.env_vars).to eq([])
   end
 
   describe "subclasses using CONSTANTS" do
+    after :example do
+      ENV["TEST_PATH"] = nil
+      ENV["TEST_JSON_VARS"] = nil
+      ENV["PATH_ENV_DUMMY"] = nil
+      ENV["PATH_ENV_TEST"] = nil
+      ENV["JSON_ENV_DUMMY"] = nil
+      ENV["JSON_ENV_TEST"] = nil
+    end
+
     it "passes in other env paths" do
-      test_path_env_val = "/unknown/path/to/file.txt".freeze
+      test_path_env_val = fake_path_1
       test_json_env_val = JSON.generate default_keyfile_hash
 
       ENV["TEST_PATH"] = test_path_env_val
@@ -117,16 +189,14 @@ describe Google::Auth::Credentials, :private do
         SCOPE = "http://example.com/scope".freeze
         PATH_ENV_VARS = %w[PATH_ENV_DUMMY PATH_ENV_TEST].freeze
         JSON_ENV_VARS = ["JSON_ENV_DUMMY"].freeze
-        DEFAULT_PATHS = ["~/default/path/to/file.txt"].freeze
+        DEFAULT_PATHS = [FAKE_DEFAULT_PATH].freeze
       end
 
-      allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
-      allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
-      allow(::ENV).to receive(:[]).with("PATH_ENV_TEST") { "/unknown/path/to/file.txt" }
-      allow(::ENV).to receive(:[]).with("https_proxy") { nil }
-      allow(::ENV).to receive(:[]).with("HTTPS_PROXY") { nil }
-      allow(::File).to receive(:file?).with("/unknown/path/to/file.txt") { true }
-      allow(::File).to receive(:read).with("/unknown/path/to/file.txt") { default_keyfile_content }
+      ENV["PATH_ENV_DUMMY"] = fake_path_1
+      ENV["PATH_ENV_TEST"] = fake_path_2
+      allow(::File).to receive(:file?).with(fake_path_1) { false }
+      allow(::File).to receive(:file?).with(fake_path_2) { true }
+      allow(::File).to receive(:read).with(fake_path_2) { default_keyfile_content }
 
       stub_token_request
 
@@ -152,16 +222,13 @@ describe Google::Auth::Credentials, :private do
         SCOPE = "http://example.com/scope".freeze
         PATH_ENV_VARS = ["PATH_ENV_DUMMY"].freeze
         JSON_ENV_VARS = %w[JSON_ENV_DUMMY JSON_ENV_TEST].freeze
-        DEFAULT_PATHS = ["~/default/path/to/file.txt"].freeze
+        DEFAULT_PATHS = [FAKE_DEFAULT_PATH].freeze
       end
 
-      allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
-      allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
+      ENV["PATH_ENV_DUMMY"] = fake_path_1
+      ENV["JSON_ENV_TEST"] = test_json_env_val
+      allow(::File).to receive(:file?).with(fake_path_1) { false }
       allow(::File).to receive(:file?).with(test_json_env_val) { false }
-      allow(::ENV).to receive(:[]).with("JSON_ENV_DUMMY") { nil }
-      allow(::ENV).to receive(:[]).with("JSON_ENV_TEST") { test_json_env_val }
-      allow(::ENV).to receive(:[]).with("https_proxy") { nil }
-      allow(::ENV).to receive(:[]).with("HTTPS_PROXY") { nil }
 
       stub_token_request
 
@@ -184,16 +251,13 @@ describe Google::Auth::Credentials, :private do
         SCOPE = "http://example.com/scope".freeze
         PATH_ENV_VARS = ["PATH_ENV_DUMMY"].freeze
         JSON_ENV_VARS = ["JSON_ENV_DUMMY"].freeze
-        DEFAULT_PATHS = ["~/default/path/to/file.txt"].freeze
+        DEFAULT_PATHS = [FAKE_DEFAULT_PATH].freeze
       end
 
-      allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
-      allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
-      allow(::ENV).to receive(:[]).with("JSON_ENV_DUMMY") { nil }
-      allow(::File).to receive(:file?).with("~/default/path/to/file.txt") { true }
-      allow(::File).to receive(:read).with("~/default/path/to/file.txt") { default_keyfile_content }
-      allow(::ENV).to receive(:[]).with("https_proxy") { nil }
-      allow(::ENV).to receive(:[]).with("HTTPS_PROXY") { nil }
+      ENV["PATH_ENV_DUMMY"] = fake_path_1
+      allow(::File).to receive(:file?).with(fake_path_1) { false }
+      allow(::File).to receive(:file?).with(FAKE_DEFAULT_PATH) { true }
+      allow(::File).to receive(:read).with(FAKE_DEFAULT_PATH) { default_keyfile_content }
 
       stub_token_request
 
@@ -217,17 +281,18 @@ describe Google::Auth::Credentials, :private do
         SCOPE = "http://example.com/scope".freeze
         PATH_ENV_VARS = ["PATH_ENV_DUMMY"].freeze
         JSON_ENV_VARS = ["JSON_ENV_DUMMY"].freeze
-        DEFAULT_PATHS = ["~/default/path/to/file.txt"].freeze
+        DEFAULT_PATHS = [FAKE_DEFAULT_PATH].freeze
       end
 
-      allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
-      allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
+      allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { fake_path_1 }
+      allow(::File).to receive(:file?).with(fake_path_1) { false }
       allow(::ENV).to receive(:[]).with("JSON_ENV_DUMMY") { nil }
       allow(::ENV).to receive(:[]).with("OS") { nil }
       allow(::ENV).to receive(:[]).with("HOME") { nil }
       allow(::ENV).to receive(:[]).with("APPDATA") { nil }
       allow(::ENV).to receive(:[]).with("ProgramData") { nil }
-      allow(::File).to receive(:file?).with("~/default/path/to/file.txt") { false }
+      allow(::ENV).to receive(:[]).with("GOOGLE_SDK_RUBY_LOGGING_GEMS") { nil }
+      allow(::File).to receive(:file?).with(FAKE_DEFAULT_PATH) { false }
 
       # stub_token_request
 
@@ -253,7 +318,7 @@ describe Google::Auth::Credentials, :private do
         SCOPE = "http://example.com/scope".freeze
         PATH_ENV_VARS = ["TEST_PATH"].freeze
         JSON_ENV_VARS = ["TEST_JSON_VARS"].freeze
-        DEFAULT_PATHS = ["~/default/path/to/file.txt"]
+        DEFAULT_PATHS = [FAKE_DEFAULT_PATH]
       end
 
       class TestCredentials7 < TestCredentials6
@@ -263,7 +328,7 @@ describe Google::Auth::Credentials, :private do
       expect(TestCredentials7.audience).to eq("https://example.com/audience")
       expect(TestCredentials7.scope).to eq(["http://example.com/scope"])
       expect(TestCredentials7.env_vars).to eq(["TEST_PATH", "TEST_JSON_VARS"])
-      expect(TestCredentials7.paths).to eq(["~/default/path/to/file.txt"])
+      expect(TestCredentials7.paths).to eq([FAKE_DEFAULT_PATH])
 
       TestCredentials7::TOKEN_CREDENTIAL_URI = "https://example.com/token2"
       expect(TestCredentials7.token_credential_uri).to eq("https://example.com/token2")
@@ -273,13 +338,17 @@ describe Google::Auth::Credentials, :private do
   end
 
   describe "subclasses using class methods" do
+    after :example do
+      ENV["TEST_PATH"] = nil
+      ENV["TEST_JSON_VARS"] = nil
+      ENV["PATH_ENV_DUMMY"] = nil
+      ENV["PATH_ENV_TEST"] = nil
+      ENV["JSON_ENV_DUMMY"] = nil
+      ENV["JSON_ENV_TEST"] = nil
+      ENV["GOOGLE_APPLICATION_CREDENTIALS"] = nil
+    end
+
     it "passes in other env paths" do
-      test_path_env_val = "/unknown/path/to/file.txt".freeze
-      test_json_env_val = JSON.generate default_keyfile_hash
-
-      ENV["TEST_PATH"] = test_path_env_val
-      ENV["TEST_JSON_VARS"] = test_json_env_val
-
       class TestCredentials11 < Google::Auth::Credentials
         self.token_credential_uri = "https://example.com/token"
         self.audience = "https://example.com/audience"
@@ -287,7 +356,10 @@ describe Google::Auth::Credentials, :private do
         self.env_vars = ["TEST_PATH", "TEST_JSON_VARS"]
       end
 
-      allow(::File).to receive(:file?).with(test_path_env_val) { false }
+      test_json_env_val = JSON.generate default_keyfile_hash
+      ENV["TEST_PATH"] = fake_path_2
+      ENV["TEST_JSON_VARS"] = test_json_env_val
+      allow(::File).to receive(:file?).with(fake_path_2) { false }
       allow(::File).to receive(:file?).with(test_json_env_val) { false }
 
       stub_token_request uri: "https://example.com/token"
@@ -311,16 +383,14 @@ describe Google::Auth::Credentials, :private do
       class TestCredentials12 < Google::Auth::Credentials
         self.scope = "http://example.com/scope"
         self.env_vars = %w[PATH_ENV_DUMMY PATH_ENV_TEST JSON_ENV_DUMMY]
-        self.paths = ["~/default/path/to/file.txt"]
+        self.paths = [FAKE_DEFAULT_PATH]
       end
 
-      allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
-      allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
-      allow(::ENV).to receive(:[]).with("PATH_ENV_TEST") { "/unknown/path/to/file.txt" }
-      allow(::File).to receive(:file?).with("/unknown/path/to/file.txt") { true }
-      allow(::File).to receive(:read).with("/unknown/path/to/file.txt") { default_keyfile_content }
-      allow(::ENV).to receive(:[]).with("https_proxy") { nil }
-      allow(::ENV).to receive(:[]).with("HTTPS_PROXY") { nil }
+      ENV["PATH_ENV_DUMMY"] = fake_path_1
+      ENV["PATH_ENV_TEST"] = fake_path_2
+      allow(::File).to receive(:file?).with(fake_path_1) { false }
+      allow(::File).to receive(:file?).with(fake_path_2) { true }
+      allow(::File).to receive(:read).with(fake_path_2) { default_keyfile_content }
 
       stub_token_request
 
@@ -343,16 +413,13 @@ describe Google::Auth::Credentials, :private do
       class TestCredentials13 < Google::Auth::Credentials
         self.scope = "http://example.com/scope"
         self.env_vars = %w[PATH_ENV_DUMMY JSON_ENV_DUMMY JSON_ENV_TEST]
-        self.paths = ["~/default/path/to/file.txt"]
+        self.paths = [FAKE_DEFAULT_PATH]
       end
 
-      allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
-      allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
+      ENV["PATH_ENV_DUMMY"] = fake_path_1
+      ENV["JSON_ENV_TEST"] = default_keyfile_content
+      allow(::File).to receive(:file?).with(fake_path_1) { false }
       allow(::File).to receive(:file?).with(default_keyfile_content) { false }
-      allow(::ENV).to receive(:[]).with("JSON_ENV_DUMMY") { nil }
-      allow(::ENV).to receive(:[]).with("JSON_ENV_TEST") { default_keyfile_content }
-      allow(::ENV).to receive(:[]).with("https_proxy") { nil }
-      allow(::ENV).to receive(:[]).with("HTTPS_PROXY") { nil }
 
       stub_token_request
 
@@ -375,16 +442,13 @@ describe Google::Auth::Credentials, :private do
       class TestCredentials14 < Google::Auth::Credentials
         self.scope = "http://example.com/scope"
         self.env_vars = %w[PATH_ENV_DUMMY JSON_ENV_DUMMY]
-        self.paths = ["~/default/path/to/file.txt"]
+        self.paths = [FAKE_DEFAULT_PATH]
       end
 
-      allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
-      allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
-      allow(::ENV).to receive(:[]).with("JSON_ENV_DUMMY") { nil }
-      allow(::File).to receive(:file?).with("~/default/path/to/file.txt") { true }
-      allow(::File).to receive(:read).with("~/default/path/to/file.txt") { default_keyfile_content }
-      allow(::ENV).to receive(:[]).with("https_proxy") { nil }
-      allow(::ENV).to receive(:[]).with("HTTPS_PROXY") { nil }
+      ENV["PATH_ENV_DUMMY"] = fake_path_1
+      allow(::File).to receive(:file?).with(fake_path_1) { false }
+      allow(::File).to receive(:file?).with(FAKE_DEFAULT_PATH) { true }
+      allow(::File).to receive(:read).with(FAKE_DEFAULT_PATH) { default_keyfile_content }
 
       stub_token_request
 
@@ -407,17 +471,15 @@ describe Google::Auth::Credentials, :private do
       class TestCredentials15 < Google::Auth::Credentials
         self.scope = "http://example.com/scope"
         self.env_vars = %w[PATH_ENV_DUMMY JSON_ENV_DUMMY]
-        self.paths = ["~/default/path/to/file.txt"]
+        self.paths = [FAKE_DEFAULT_PATH]
       end
 
-      allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
-      allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
-      allow(::ENV).to receive(:[]).with("JSON_ENV_DUMMY") { nil }
-      allow(::File).to receive(:file?).with("~/default/path/to/file.txt") { false }
-      allow(::ENV).to receive(:key?).with("GOOGLE_APPLICATION_CREDENTIALS") { true }
-      allow(::ENV).to receive(:[]).with("GOOGLE_APPLICATION_CREDENTIALS") { "/adc/path/to/file.txt" }
-      allow(::File).to receive(:exist?).with("/adc/path/to/file.txt") { true }
-      allow(::File).to receive(:open).with("/adc/path/to/file.txt").and_yield(StringIO.new default_keyfile_content)
+      ENV["PATH_ENV_DUMMY"] = fake_path_1
+      ENV["GOOGLE_APPLICATION_CREDENTIALS"] = fake_path_2
+      allow(::File).to receive(:file?).with(fake_path_1) { false }
+      allow(::File).to receive(:file?).with(FAKE_DEFAULT_PATH) { false }
+      allow(::File).to receive(:exist?).with(fake_path_2) { true }
+      allow(::File).to receive(:open).with(fake_path_2).and_yield(StringIO.new default_keyfile_content)
 
       creds = TestCredentials15.default enable_self_signed_jwt: true
       expect(creds).to be_a_kind_of(TestCredentials15)
@@ -438,19 +500,15 @@ describe Google::Auth::Credentials, :private do
       class TestCredentials16 < Google::Auth::Credentials
         self.scope = "http://example.com/scope"
         self.env_vars = %w[PATH_ENV_DUMMY JSON_ENV_DUMMY]
-        self.paths = ["~/default/path/to/file.txt"]
+        self.paths = [FAKE_DEFAULT_PATH]
       end
 
-      allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
-      allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
-      allow(::ENV).to receive(:[]).with("JSON_ENV_DUMMY") { nil }
-      allow(::File).to receive(:file?).with("~/default/path/to/file.txt") { false }
-      allow(::ENV).to receive(:key?).with("GOOGLE_APPLICATION_CREDENTIALS") { true }
-      allow(::ENV).to receive(:[]).with("GOOGLE_APPLICATION_CREDENTIALS") { "/adc/path/to/file.txt" }
-      allow(::File).to receive(:exist?).with("/adc/path/to/file.txt") { true }
-      allow(::File).to receive(:open).with("/adc/path/to/file.txt").and_yield(StringIO.new default_keyfile_content)
-      allow(::ENV).to receive(:[]).with("https_proxy") { nil }
-      allow(::ENV).to receive(:[]).with("HTTPS_PROXY") { nil }
+      ENV["PATH_ENV_DUMMY"] = fake_path_1
+      ENV["GOOGLE_APPLICATION_CREDENTIALS"] = fake_path_2
+      allow(::File).to receive(:file?).with(fake_path_1) { false }
+      allow(::File).to receive(:file?).with(FAKE_DEFAULT_PATH) { false }
+      allow(::File).to receive(:exist?).with(fake_path_2) { true }
+      allow(::File).to receive(:open).with(fake_path_2).and_yield(StringIO.new default_keyfile_content)
 
       stub_token_request
 
@@ -475,21 +533,17 @@ describe Google::Auth::Credentials, :private do
       class TestCredentials17 < Google::Auth::Credentials
         self.scope = "http://example.com/scope"
         self.env_vars = %w[PATH_ENV_DUMMY JSON_ENV_DUMMY]
-        self.paths = ["~/default/path/to/file.txt"]
+        self.paths = [FAKE_DEFAULT_PATH]
         self.token_credential_uri = "https://example.com/token2"
         self.audience = "https://example.com/token3"
       end
 
-      allow(::ENV).to receive(:[]).with("PATH_ENV_DUMMY") { "/fake/path/to/file.txt" }
-      allow(::File).to receive(:file?).with("/fake/path/to/file.txt") { false }
-      allow(::ENV).to receive(:[]).with("JSON_ENV_DUMMY") { nil }
-      allow(::File).to receive(:file?).with("~/default/path/to/file.txt") { false }
-      allow(::ENV).to receive(:key?).with("GOOGLE_APPLICATION_CREDENTIALS") { true }
-      allow(::ENV).to receive(:[]).with("GOOGLE_APPLICATION_CREDENTIALS") { "/adc/path/to/file.txt" }
-      allow(::File).to receive(:exist?).with("/adc/path/to/file.txt") { true }
-      allow(::File).to receive(:open).with("/adc/path/to/file.txt").and_yield(StringIO.new default_keyfile_content)
-      allow(::ENV).to receive(:[]).with("https_proxy") { nil }
-      allow(::ENV).to receive(:[]).with("HTTPS_PROXY") { nil }
+      ENV["PATH_ENV_DUMMY"] = fake_path_1
+      ENV["GOOGLE_APPLICATION_CREDENTIALS"] = fake_path_2
+      allow(::File).to receive(:file?).with(fake_path_1) { false }
+      allow(::File).to receive(:file?).with(FAKE_DEFAULT_PATH) { false }
+      allow(::File).to receive(:exist?).with(fake_path_2) { true }
+      allow(::File).to receive(:open).with(fake_path_2).and_yield(StringIO.new default_keyfile_content)
 
       stub_token_request uri: "https://example.com/token2"
 
@@ -513,7 +567,7 @@ describe Google::Auth::Credentials, :private do
         self.scope = "http://example.com/scope"
         self.target_audience = "https://example.com/target_audience"
         self.env_vars = ["TEST_PATH", "TEST_JSON_VARS"]
-        self.paths = ["~/default/path/to/file.txt"]
+        self.paths = [FAKE_DEFAULT_PATH]
       end
 
       class TestCredentials19 < TestCredentials18
@@ -522,7 +576,7 @@ describe Google::Auth::Credentials, :private do
       expect(TestCredentials19.scope).to eq(["http://example.com/scope"])
       expect(TestCredentials19.target_audience).to eq("https://example.com/target_audience")
       expect(TestCredentials19.env_vars).to eq(["TEST_PATH", "TEST_JSON_VARS"])
-      expect(TestCredentials19.paths).to eq(["~/default/path/to/file.txt"])
+      expect(TestCredentials19.paths).to eq([FAKE_DEFAULT_PATH])
 
       TestCredentials19.token_credential_uri = "https://example.com/token2"
       expect(TestCredentials19.token_credential_uri).to eq("https://example.com/token2")
@@ -535,7 +589,7 @@ describe Google::Auth::Credentials, :private do
     class TestCredentials20 < Google::Auth::Credentials
       self.scope = "http://example.com/scope"
       self.env_vars = ["TEST_PATH", "TEST_JSON_VARS"]
-      self.paths = ["~/default/path/to/file.txt"]
+      self.paths = [FAKE_DEFAULT_PATH]
     end
 
     Dir.mktmpdir do |dir|
@@ -550,5 +604,70 @@ describe Google::Auth::Credentials, :private do
     signet = Signet::OAuth2::Client.new access_token: token # Client#needs_access_token? will return false
     creds = Google::Auth::Credentials.new signet
     expect(creds.client).to eq(signet)
+  end
+
+  describe "duplicates" do
+    let :client_class do
+      Class.new do
+        attr_accessor :scope, :project_id
+        def initialize scope = nil, project_id = nil
+          @scope = scope
+          @project_id = project_id
+        end
+  
+        def duplicate options = {}
+          new_credentials = self.class.new
+          new_credentials.scope = options[:scope] if options[:scope]
+          new_credentials.project_id = options[:project_id] if options[:project_id]
+          new_credentials
+        end
+      end
+    end
+  
+    before :example do
+      @client = client_class.new
+      @base_creds = Google::Auth::Credentials.new(@client)
+      @creds = @base_creds.duplicate
+    end
+  
+    it "should call duplicate and update! on clients when clients support it" do
+      client_with_duplicate = double("ClientWithDuplicate")
+      allow(client_with_duplicate).to receive(:respond_to?).with(:duplicate).and_return(true)
+      
+      # These will be called when we create new `Google::Auth::Credentials` in this test method
+      allow(client_with_duplicate).to receive(:respond_to?).with(:project_id).and_return(false)
+      allow(client_with_duplicate).to receive(:respond_to?).with(:quota_project_id).and_return(false)
+      allow(client_with_duplicate).to receive(:respond_to?).with(:logger=).and_return(false)
+
+      duplicated_client = double("DuplicatedClient")
+      allow(duplicated_client).to receive(:respond_to?).with(:update!).and_return(true)
+
+      # These will be called when a new `Google::Auth::Credentials` will be created in the
+      # process of the `duplicate` call. 
+      # First the `client_with_duplicate` will return `duplicated_client` from its `duplicate` call
+      # Then the new `Google::Auth::Credentials` will be created with the `duplicated_client`
+      allow(duplicated_client).to receive(:respond_to?).with(:project_id).and_return(false)
+      allow(duplicated_client).to receive(:respond_to?).with(:quota_project_id).and_return(false)
+      allow(duplicated_client).to receive(:respond_to?).with(:logger=).and_return(false)
+      
+      #expect(duplicated_client).to receive(:update!).and_return(duplicated_client)
+
+      expect(client_with_duplicate).to receive(:duplicate).and_return(duplicated_client)
+
+      creds = Google::Auth::Credentials.new(client_with_duplicate)
+
+      new_creds = creds.duplicate(foo: "bar")
+      expect(new_creds.client).to eq duplicated_client
+    end
+  
+    it "should duplicate the project_id" do
+      expect(@creds.project_id).to be_nil
+      expect(@creds.duplicate(project_id: "test-project-id").project_id).to eq "test-project-id"  
+    end
+  
+    it "should duplicate the quota_project_id" do
+      expect(@creds.quota_project_id).to be_nil
+      expect(@creds.duplicate(quota_project_id: "test-quota-project-id").quota_project_id).to eq "test-quota-project-id"
+    end
   end
 end

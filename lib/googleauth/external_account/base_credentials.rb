@@ -76,7 +76,7 @@ module Google
         #     The retrieved subject token.
         #
         def retrieve_subject_token!
-          raise NotImplementedError
+          raise NoMethodError, "retrieve_subject_token! not implemented"
         end
 
         # Returns whether the credentials represent a workforce pool (True) or
@@ -129,7 +129,7 @@ module Google
           if @client_id.nil? && @workforce_pool_user_project
             additional_options = { userProject: @workforce_pool_user_project }
           end
-          @sts_client.exchange_token(
+          token_request = {
             audience: @audience,
             grant_type: STS_GRANT_TYPE,
             subject_token: retrieve_subject_token!,
@@ -137,10 +137,31 @@ module Google
             scopes: @service_account_impersonation_url ? IAM_SCOPE : @scope,
             requested_token_type: STS_REQUESTED_TOKEN_TYPE,
             additional_options: additional_options
-          )
+          }
+          log_token_request token_request
+          @sts_client.exchange_token token_request
+        end
+
+        def log_token_request token_request
+          logger&.info do
+            Google::Logging::Message.from(
+              message: "Requesting access token from #{token_request[:grant_type]}",
+              "credentialsId" => object_id
+            )
+          end
+          logger&.debug do
+            digest = Digest::SHA256.hexdigest token_request[:subject_token].to_s
+            loggable_request = token_request.merge subject_token: "(sha256:#{digest})"
+            Google::Logging::Message.from(
+              message: "Request data",
+              "request" => loggable_request,
+              "credentialsId" => object_id
+            )
+          end
         end
 
         def get_impersonated_access_token token, _options = {}
+          log_impersonated_token_request token
           response = connection.post @service_account_impersonation_url do |req|
             req.headers["Authorization"] = "Bearer #{token}"
             req.headers["Content-Type"] = "application/json"
@@ -152,6 +173,16 @@ module Google
           end
 
           MultiJson.load response.body
+        end
+
+        def log_impersonated_token_request original_token
+          logger&.info do
+            digest = Digest::SHA256.hexdigest original_token
+            Google::Logging::Message.from(
+              message: "Requesting impersonated access token with original token (sha256:#{digest})",
+              "credentialsId" => object_id
+            )
+          end
         end
       end
     end

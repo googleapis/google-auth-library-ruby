@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require "base64"
+require "json"
 require "signet/oauth_2/client"
 require "googleauth/base_client"
 
@@ -29,9 +31,27 @@ module Signet
 
       def update_token! options = {}
         options = deep_hash_normalize options
+        id_token_expires_at = expires_at_from_id_token options[:id_token]
+        options[:expires_at] = id_token_expires_at if id_token_expires_at
         update_token_signet_base options
         self.universe_domain = options[:universe_domain] if options.key? :universe_domain
         self
+      end
+
+      alias update_signet_base update!
+      def update! options = {}
+        # Normalize all keys to symbols to allow indifferent access.
+        options = deep_hash_normalize options
+
+        # This `update!` method "overide" adds the `@logger`` update and
+        # the `universe_domain` update.
+        #
+        # The `universe_domain` is also updated in `update_token!` but is
+        # included here for completeness
+        self.universe_domain = options[:universe_domain] if options.key? :universe_domain
+        @logger = options[:logger] if options.key? :logger
+
+        update_signet_base options
       end
 
       def configure_connection options
@@ -61,6 +81,24 @@ module Signet
         info
       end
 
+      alias googleauth_orig_generate_access_token_request generate_access_token_request
+      def generate_access_token_request options = {}
+        parameters = googleauth_orig_generate_access_token_request options
+        logger&.info do
+          Google::Logging::Message.from(
+            message: "Requesting access token from #{parameters['grant_type']}",
+            "credentialsId" => object_id
+          )
+        end
+        logger&.debug do
+          Google::Logging::Message.from(
+            message: "Token fetch params: #{parameters}",
+            "credentialsId" => object_id
+          )
+        end
+        parameters
+      end
+
       def build_default_connection
         if !defined?(@connection_info)
           nil
@@ -75,18 +113,115 @@ module Signet
         retry_count = 0
 
         begin
-          yield
+          yield.tap { |resp| log_response resp }
         rescue StandardError => e
-          raise e if e.is_a?(Signet::AuthorizationError) || e.is_a?(Signet::ParseError)
+          if e.is_a?(Signet::AuthorizationError) || e.is_a?(Signet::ParseError)
+            log_auth_error e
+            raise e
+          end
 
           if retry_count < max_retry_count
+            log_transient_error e
             retry_count += 1
             sleep retry_count * 0.3
             retry
           else
+            log_retries_exhausted e
             msg = "Unexpected error: #{e.inspect}"
             raise Signet::AuthorizationError, msg
           end
+        end
+      end
+
+      # Creates a duplicate of these credentials
+      # without the Signet::OAuth2::Client-specific
+      # transient state (e.g. cached tokens)
+      #
+      # @param options [Hash] Overrides for the credentials parameters.
+      # @see Signet::OAuth2::Client#update!
+      def duplicate options = {}
+        options = deep_hash_normalize options
+
+        opts = {
+          authorization_uri: @authorization_uri,
+          token_credential_uri: @token_credential_uri,
+          client_id: @client_id,
+          client_secret: @client_secret,
+          scope: @scope,
+          target_audience: @target_audience,
+          redirect_uri: @redirect_uri,
+          username: @username,
+          password: @password,
+          issuer: @issuer,
+          person: @person,
+          sub: @sub,
+          audience: @audience,
+          signing_key: @signing_key,
+          extension_parameters: @extension_parameters,
+          additional_parameters: @additional_parameters,
+          access_type: @access_type,
+          universe_domain: @universe_domain,
+          logger: @logger
+        }.merge(options)
+
+        new_client = self.class.new opts
+
+        new_client.configure_connection options
+      end
+
+      private
+
+      def expires_at_from_id_token id_token
+        match = /^[\w=-]+\.([\w=-]+)\.[\w=-]+$/.match id_token.to_s
+        return unless match
+        json = JSON.parse Base64.urlsafe_decode64 match[1]
+        return unless json.key? "exp"
+        Time.at json["exp"].to_i
+      rescue StandardError
+        # Shouldn't happen unless we get a garbled ID token
+        nil
+      end
+
+      def log_response token_response
+        response_hash = JSON.parse token_response rescue {}
+        if response_hash["access_token"]
+          digest = Digest::SHA256.hexdigest response_hash["access_token"]
+          response_hash["access_token"] = "(sha256:#{digest})"
+        end
+        if response_hash["id_token"]
+          digest = Digest::SHA256.hexdigest response_hash["id_token"]
+          response_hash["id_token"] = "(sha256:#{digest})"
+        end
+        Google::Logging::Message.from(
+          message: "Received auth token response: #{response_hash}",
+          "credentialsId" => object_id
+        )
+      end
+
+      def log_auth_error err
+        logger&.info do
+          Google::Logging::Message.from(
+            message: "Auth error when fetching auth token: #{err}",
+            "credentialsId" => object_id
+          )
+        end
+      end
+
+      def log_transient_error err
+        logger&.info do
+          Google::Logging::Message.from(
+            message: "Transient error when fetching auth token: #{err}",
+            "credentialsId" => object_id
+          )
+        end
+      end
+
+      def log_retries_exhausted err
+        logger&.info do
+          Google::Logging::Message.from(
+            message: "Exhausted retries when fetching auth token: #{err}",
+            "credentialsId" => object_id
+          )
         end
       end
     end

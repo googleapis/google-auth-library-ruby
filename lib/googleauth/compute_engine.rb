@@ -80,68 +80,182 @@ module Google
         alias unmemoize_all reset_cache
       end
 
+      # @private Temporary; remove when universe domain metadata endpoint is stable (see b/349488459).
+      attr_accessor :disable_universe_domain_check
+
       # Construct a GCECredentials
       def initialize options = {}
         # Override the constructor to remember whether the universe domain was
         # overridden by a constructor argument.
         @universe_domain_overridden = options["universe_domain"] || options[:universe_domain] ? true : false
+        # TODO: Remove when universe domain metadata endpoint is stable (see b/349488459).
+        @disable_universe_domain_check = true
         super options
+      end
+
+      # Creates a duplicate of these credentials
+      # without the Signet::OAuth2::Client-specific
+      # transient state (e.g. cached tokens)
+      #
+      # @param options [Hash] Overrides for the credentials parameters.
+      #   The following keys are recognized in addition to keys in the
+      #   Signet::OAuth2::Client
+      #   * `:universe_domain_overridden` Whether the universe domain was
+      #     overriden during credentials creation
+      def duplicate options = {}
+        options = deep_hash_normalize options
+        super(
+          {
+            universe_domain_overridden: @universe_domain_overridden
+          }.merge(options)
+        )
+      end
+
+      # @private
+      # Overrides universe_domain getter to fetch lazily if it hasn't been
+      # fetched yet. This is necessary specifically for Compute Engine because
+      # the universe comes from the metadata service, and isn't known
+      # immediately on credential construction. All other credential types read
+      # the universe from their json key or other immediate input.
+      def universe_domain
+        value = super
+        return value unless value.nil?
+        fetch_access_token!
+        super
       end
 
       # Overrides the super class method to change how access tokens are
       # fetched.
       def fetch_access_token _options = {}
-        if token_type == :id_token
-          query = { "audience" => target_audience, "format" => "full" }
-          entry = "service-accounts/default/identity"
-        else
-          query = {}
-          entry = "service-accounts/default/token"
-        end
+        query, entry =
+          if token_type == :id_token
+            [{ "audience" => target_audience, "format" => "full" }, "service-accounts/default/identity"]
+          else
+            [{}, "service-accounts/default/token"]
+          end
         query[:scopes] = Array(scope).join "," if scope
         begin
+          log_fetch_query
           resp = Google::Cloud.env.lookup_metadata_response "instance", entry, query: query
+          log_fetch_resp resp
           case resp.status
           when 200
             build_token_hash resp.body, resp.headers["content-type"], resp.retrieval_monotonic_time
           when 403, 500
-            msg = "Unexpected error code #{resp.status} #{UNEXPECTED_ERROR_SUFFIX}"
-            raise Signet::UnexpectedStatusError, msg
+            raise Signet::UnexpectedStatusError, "Unexpected error code #{resp.status} #{UNEXPECTED_ERROR_SUFFIX}"
           when 404
             raise Signet::AuthorizationError, NO_METADATA_SERVER_ERROR
           else
-            msg = "Unexpected error code #{resp.status} #{UNEXPECTED_ERROR_SUFFIX}"
-            raise Signet::AuthorizationError, msg
+            raise Signet::AuthorizationError, "Unexpected error code #{resp.status} #{UNEXPECTED_ERROR_SUFFIX}"
           end
         rescue Google::Cloud::Env::MetadataServerNotResponding => e
+          log_fetch_err e
           raise Signet::AuthorizationError, e.message
         end
       end
 
+      # Destructively updates these credentials.
+      #
+      # This method is called by `Signet::OAuth2::Client`'s constructor
+      #
+      # @param options [Hash] Overrides for the credentials parameters.
+      #   The following keys are recognized in addition to keys in the
+      #   Signet::OAuth2::Client
+      #   * `:universe_domain_overridden` Whether the universe domain was
+      #     overriden during credentials creation
+      # @return [Google::Auth::GCECredentials]
+      def update! options = {}
+        # Normalize all keys to symbols to allow indifferent access.
+        options = deep_hash_normalize options
+
+        @universe_domain_overridden = options[:universe_domain_overridden] if options.key? :universe_domain_overridden
+
+        super(options)
+
+        self
+      end
+
       private
+
+      def log_fetch_query
+        if token_type == :id_token
+          logger&.info do
+            Google::Logging::Message.from(
+              message: "Requesting id token from MDS with aud=#{target_audience}",
+              "credentialsId" => object_id
+            )
+          end
+        else
+          logger&.info do
+            Google::Logging::Message.from(
+              message: "Requesting access token from MDS",
+              "credentialsId" => object_id
+            )
+          end
+        end
+      end
+
+      def log_fetch_resp resp
+        logger&.info do
+          Google::Logging::Message.from(
+            message: "Received #{resp.status} from MDS",
+            "credentialsId" => object_id
+          )
+        end
+      end
+
+      def log_fetch_err _err
+        logger&.info do
+          Google::Logging::Message.from(
+            message: "MDS did not respond to token request",
+            "credentialsId" => object_id
+          )
+        end
+      end
 
       def build_token_hash body, content_type, retrieval_time
         hash =
           if ["text/html", "application/text"].include? content_type
-            { token_type.to_s => body }
+            parse_encoded_token body
           else
             Signet::OAuth2.parse_credentials body, content_type
           end
-        unless @universe_domain_overridden
-          universe_domain = Google::Cloud.env.lookup_metadata "universe", "universe_domain"
-          universe_domain = "googleapis.com" if !universe_domain || universe_domain.empty?
-          hash["universe_domain"] = universe_domain.strip
-        end
-        # The response might have been cached, which means expires_in might be
-        # stale. Update it based on the time since the data was retrieved.
-        # We also ensure expires_in is conservative; subtracting at least 1
-        # second to offset any skew from metadata server latency.
-        if hash["expires_in"].is_a? Numeric
-          offset = 1 + (Process.clock_gettime(Process::CLOCK_MONOTONIC) - retrieval_time).round
-          hash["expires_in"] -= offset if offset.positive?
-          hash["expires_in"] = 0 if hash["expires_in"].negative?
+        add_universe_domain_to hash
+        adjust_for_stale_expires_in hash, retrieval_time
+        hash
+      end
+
+      def parse_encoded_token body
+        hash = { token_type.to_s => body }
+        if token_type == :id_token
+          expires_at = expires_at_from_id_token body
+          hash["expires_at"] = expires_at if expires_at
         end
         hash
+      end
+
+      def add_universe_domain_to hash
+        return if @universe_domain_overridden
+        universe_domain =
+          if disable_universe_domain_check
+            # TODO: Remove when universe domain metadata endpoint is stable (see b/349488459).
+            "googleapis.com"
+          else
+            Google::Cloud.env.lookup_metadata "universe", "universe-domain"
+          end
+        universe_domain = "googleapis.com" if !universe_domain || universe_domain.empty?
+        hash["universe_domain"] = universe_domain.strip
+      end
+
+      # The response might have been cached, which means expires_in might be
+      # stale. Update it based on the time since the data was retrieved.
+      # We also ensure expires_in is conservative; subtracting at least 1
+      # second to offset any skew from metadata server latency.
+      def adjust_for_stale_expires_in hash, retrieval_time
+        return unless hash["expires_in"].is_a? Numeric
+        offset = 1 + (Process.clock_gettime(Process::CLOCK_MONOTONIC) - retrieval_time).round
+        hash["expires_in"] -= offset if offset.positive?
+        hash["expires_in"] = 0 if hash["expires_in"].negative?
       end
     end
   end

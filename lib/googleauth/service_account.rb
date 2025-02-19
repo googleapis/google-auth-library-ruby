@@ -12,12 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require "googleauth/signet"
-require "googleauth/credentials_loader"
-require "googleauth/json_key_reader"
 require "jwt"
 require "multi_json"
 require "stringio"
+
+require "google/logging/message"
+require "googleauth/signet"
+require "googleauth/credentials_loader"
+require "googleauth/json_key_reader"
+require "googleauth/service_account_jwt_header"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
@@ -80,6 +83,30 @@ module Google
           .configure_connection(options)
       end
 
+      # Creates a duplicate of these credentials
+      # without the Signet::OAuth2::Client-specific
+      # transient state (e.g. cached tokens)
+      #
+      # @param options [Hash] Overrides for the credentials parameters.
+      #   The following keys are recognized in addition to keys in the
+      #   Signet::OAuth2::Client
+      #   * `:enable_self_signed_jwt` Whether the self-signed JWT should
+      #     be used for the authentication
+      #   * `project_id` the project id to use during the authentication
+      #   * `quota_project_id` the quota project id to use
+      #     during the authentication
+      def duplicate options = {}
+        options = deep_hash_normalize options
+        super(
+          {
+            enable_self_signed_jwt: @enable_self_signed_jwt,
+            project_id: project_id,
+            quota_project_id: quota_project_id,
+            logger: logger
+          }.merge(options)
+        )
+      end
+
       # Handles certain escape sequences that sometimes appear in input.
       # Specifically, interprets the "\n" sequence for newline, and removes
       # enclosing quotes.
@@ -111,6 +138,32 @@ module Google
         super && !enable_self_signed_jwt?
       end
 
+      # Destructively updates these credentials
+      #
+      # This method is called by `Signet::OAuth2::Client`'s constructor
+      #
+      # @param options [Hash] Overrides for the credentials parameters.
+      #   The following keys are recognized in addition to keys in the
+      #   Signet::OAuth2::Client
+      #   * `:enable_self_signed_jwt` Whether the self-signed JWT should
+      #     be used for the authentication
+      #   * `project_id` the project id to use during the authentication
+      #   * `quota_project_id` the quota project id to use
+      #     during the authentication
+      # @return [Google::Auth::ServiceAccountCredentials]
+      def update! options = {}
+        # Normalize all keys to symbols to allow indifferent access.
+        options = deep_hash_normalize options
+
+        @enable_self_signed_jwt = options[:enable_self_signed_jwt] ? true : false
+        @project_id = options[:project_id] if options.key? :project_id
+        @quota_project_id = options[:quota_project_id] if options.key? :quota_project_id
+
+        super(options)
+
+        self
+      end
+
       private
 
       def apply_self_signed_jwt! a_hash
@@ -123,108 +176,8 @@ module Google
         }
         key_io = StringIO.new MultiJson.dump(cred_json)
         alt = ServiceAccountJwtHeaderCredentials.make_creds json_key_io: key_io, scope: scope
+        alt.logger = logger
         alt.apply! a_hash
-      end
-    end
-
-    # Authenticates requests using Google's Service Account credentials via
-    # JWT Header.
-    #
-    # This class allows authorizing requests for service accounts directly
-    # from credentials from a json key file downloaded from the developer
-    # console (via 'Generate new Json Key').  It is not part of any OAuth2
-    # flow, rather it creates a JWT and sends that as a credential.
-    #
-    # cf [Application Default Credentials](https://cloud.google.com/docs/authentication/production)
-    class ServiceAccountJwtHeaderCredentials
-      JWT_AUD_URI_KEY = :jwt_aud_uri
-      AUTH_METADATA_KEY = Google::Auth::BaseClient::AUTH_METADATA_KEY
-      TOKEN_CRED_URI = "https://www.googleapis.com/oauth2/v4/token".freeze
-      SIGNING_ALGORITHM = "RS256".freeze
-      EXPIRY = 60
-      extend CredentialsLoader
-      extend JsonKeyReader
-      attr_reader :project_id
-      attr_reader :quota_project_id
-      attr_accessor :universe_domain
-
-      # Create a ServiceAccountJwtHeaderCredentials.
-      #
-      # @param json_key_io [IO] an IO from which the JSON key can be read
-      # @param scope [string|array|nil] the scope(s) to access
-      def self.make_creds options = {}
-        json_key_io, scope = options.values_at :json_key_io, :scope
-        new json_key_io: json_key_io, scope: scope
-      end
-
-      # Initializes a ServiceAccountJwtHeaderCredentials.
-      #
-      # @param json_key_io [IO] an IO from which the JSON key can be read
-      def initialize options = {}
-        json_key_io = options[:json_key_io]
-        if json_key_io
-          @private_key, @issuer, @project_id, @quota_project_id, @universe_domain =
-            self.class.read_json_key json_key_io
-        else
-          @private_key = ENV[CredentialsLoader::PRIVATE_KEY_VAR]
-          @issuer = ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
-          @project_id = ENV[CredentialsLoader::PROJECT_ID_VAR]
-          @quota_project_id = nil
-          @universe_domain = nil
-        end
-        @universe_domain ||= "googleapis.com"
-        @project_id ||= CredentialsLoader.load_gcloud_project_id
-        @signing_key = OpenSSL::PKey::RSA.new @private_key
-        @scope = options[:scope]
-      end
-
-      # Construct a jwt token if the JWT_AUD_URI key is present in the input
-      # hash.
-      #
-      # The jwt token is used as the value of a 'Bearer '.
-      def apply! a_hash, opts = {}
-        jwt_aud_uri = a_hash.delete JWT_AUD_URI_KEY
-        return a_hash if jwt_aud_uri.nil? && @scope.nil?
-        jwt_token = new_jwt_token jwt_aud_uri, opts
-        a_hash[AUTH_METADATA_KEY] = "Bearer #{jwt_token}"
-        a_hash
-      end
-
-      # Returns a clone of a_hash updated with the authoriation header
-      def apply a_hash, opts = {}
-        a_copy = a_hash.clone
-        apply! a_copy, opts
-        a_copy
-      end
-
-      # Returns a reference to the #apply method, suitable for passing as
-      # a closure
-      def updater_proc
-        proc { |a_hash, opts = {}| apply a_hash, opts }
-      end
-
-      # Creates a jwt uri token.
-      def new_jwt_token jwt_aud_uri = nil, options = {}
-        now = Time.new
-        skew = options[:skew] || 60
-        assertion = {
-          "iss" => @issuer,
-          "sub" => @issuer,
-          "exp" => (now + EXPIRY).to_i,
-          "iat" => (now - skew).to_i
-        }
-
-        jwt_aud_uri = nil if @scope
-
-        assertion["scope"] = Array(@scope).join " " if @scope
-        assertion["aud"] = jwt_aud_uri if jwt_aud_uri
-
-        JWT.encode assertion, @signing_key, SIGNING_ALGORITHM
-      end
-
-      # Duck-types the corresponding method from BaseClient
-      def needs_access_token?
-        false
       end
     end
   end

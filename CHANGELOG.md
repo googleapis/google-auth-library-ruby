@@ -1,5 +1,52 @@
 # Release History
 
+### 1.13.1 (2025-01-24)
+
+#### Bug Fixes
+
+* Signet client subclasses no longer make the update! method private ([#516](https://github.com/googleapis/google-auth-library-ruby/issues/516)) 
+
+### 1.13.0 (2025-01-22)
+
+#### Features
+
+* create impersonated service credentials ([#499](https://github.com/googleapis/google-auth-library-ruby/issues/499)) 
+#### Documentation
+
+* Include note about validating externally-provided credentials ([#512](https://github.com/googleapis/google-auth-library-ruby/issues/512)) 
+
+### 1.12.2 (2024-12-19)
+
+#### Bug Fixes
+
+* GCECredentials lazily fetches from the metadata server to ensure a universe domain is known ([#509](https://github.com/googleapis/google-auth-library-ruby/issues/509)) 
+
+### 1.12.1 (2024-12-17)
+
+#### Bug Fixes
+
+* Restored previous behavior where the apply! method returns the auth header ([#506](https://github.com/googleapis/google-auth-library-ruby/issues/506)) 
+
+### 1.12.0 (2024-12-05)
+
+#### Features
+
+* provided opt-in debug logging ([#490](https://github.com/googleapis/google-auth-library-ruby/issues/490)) 
+
+### 1.11.2 (2024-10-23)
+
+#### Bug Fixes
+
+* Temporarily disable universe domain query from GCE metadata server ([#493](https://github.com/googleapis/google-auth-library-ruby/issues/493)) 
+* Use updated metadata path for universe-domain ([#496](https://github.com/googleapis/google-auth-library-ruby/issues/496)) 
+
+### 1.11.1 (2024-10-04)
+
+#### Bug Fixes
+
+* Fixed parsing of expiration timestamp from ID tokens ([#492](https://github.com/googleapis/google-auth-library-ruby/issues/492)) 
+* Use NoMethodError instead of NotImplementedError for unimplemented base class methods ([#487](https://github.com/googleapis/google-auth-library-ruby/issues/487)) 
+
 ### 1.11.0 (2024-02-09)
 
 #### Features

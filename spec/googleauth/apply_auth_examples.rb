@@ -62,6 +62,26 @@ shared_examples "apply/apply! are OK" do
                              ))
       expect(access_stub).to have_been_requested
     end
+
+    it "should log when a logger is set" do
+      access_stub
+      io = StringIO.new
+      @client.logger = Logger.new io
+      @client.fetch_access_token!
+      expect(io.string).to include "INFO -- : Requesting access token from"
+    end
+
+    it "should not log to stdout when a logger is not set" do
+      access_stub
+      @client.logger = nil
+      expect { @client.fetch_access_token! }.to_not output.to_stdout
+    end
+
+    it "should not log to stderr when a logger is not set" do
+      access_stub
+      @client.logger = nil
+      expect { @client.fetch_access_token! }.to_not output.to_stderr
+    end
   end
 
   describe "#apply!" do
@@ -150,7 +170,7 @@ shared_examples "apply/apply! are OK" do
         want = { :foo => "bar", auth_key => "Bearer #{t}" }
         expect(got).to eq(want)
         @client.expires_at -= 3601 # default is to expire in 1hr
-        Google::Cloud.env.compute_metadata.cache.expire_all!
+        ::Google::Cloud.env.compute_metadata.cache.expire_all!
       end
     end
   end
