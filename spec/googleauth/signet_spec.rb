@@ -199,4 +199,111 @@ describe Signet::OAuth2::Client do
       expect { @client.fetch_access_token! }.to raise_error Signet::ParseError
     end
   end
+
+  describe "duplicates" do
+    before :example do
+      @base_creds = Signet::OAuth2::Client.new(
+        token_credential_uri: "https://oauth2.googleapis.com/token",
+        scope:                "https://www.googleapis.com/auth/cloud-platform",
+        issuer:               "app@example.com",
+        audience:             "https://oauth2.googleapis.com/token",
+        signing_key:          @key
+      )
+      @creds = @base_creds.duplicate
+    end
+
+    it "should duplicate the authorization_uri" do
+      expect(@creds.authorization_uri).to eq nil
+      expect(@creds.duplicate({
+        client_id: "test-client-id-2", 
+        authorization_uri: "https://test-authorization-uri.example.com",
+        redirect_uri: "https://test-redirect-uri.example.com"
+      }).authorization_uri.to_s.start_with?("https://test-authorization-uri.example.com")).to be true
+    end
+
+    it "should duplicate the token_credential_uri" do
+      expect(@creds.token_credential_uri.to_s).to eq "https://oauth2.googleapis.com/token"
+      expect(@creds.duplicate(token_credential_uri: "test-token-credential-uri").token_credential_uri.to_s).to eq "test-token-credential-uri"
+    end
+
+    it "should duplicate the client_id" do
+      expect(@creds.client_id).to eq nil
+      expect(@creds.duplicate(client_id: "test-client-id-2").client_id).to eq "test-client-id-2"
+    end
+
+    it "should duplicate the scope" do
+      expect(@creds.scope).to eq ["https://www.googleapis.com/auth/cloud-platform"]
+      expect(@creds.duplicate(scope: ["https://www.googleapis.com/auth/devstorage.read_only"]).scope).to eq ["https://www.googleapis.com/auth/devstorage.read_only"]
+    end
+
+    it "should duplicate the target_audience" do
+      expect(@creds.target_audience).to eq nil
+      expect(@creds.duplicate(target_audience: "test-target-audience").target_audience).to eq "test-target-audience"
+    end
+
+    it "should duplicate the redirect_uri" do
+      expect(@creds.redirect_uri).to eq nil
+      expect(@creds.duplicate(redirect_uri: "https://test-redirect-uri.example.com").redirect_uri.to_s).to eq "https://test-redirect-uri.example.com"
+    end
+
+    it "should duplicate the username" do
+      expect(@creds.username).to eq nil
+      expect(@creds.duplicate(username: "test-username").username).to eq "test-username"
+    end
+
+    it "should duplicate the password" do
+      expect(@creds.password).to eq nil
+      expect(@creds.duplicate(password: "test-password").password).to eq "test-password"
+    end
+
+    it "should duplicate the issuer" do
+      expect(@creds.issuer).to eq "app@example.com"
+      expect(@creds.duplicate(issuer: "test-issuer").issuer).to eq "test-issuer"
+    end
+
+    it "should duplicate the person" do
+      expect(@creds.person).to eq nil
+      expect(@creds.duplicate(person: "test-person").person).to eq "test-person"
+    end
+
+    it "should duplicate the sub" do
+      expect(@creds.sub).to eq nil
+      expect(@creds.duplicate(sub: "test-sub").sub).to eq "test-sub"
+    end
+
+    it "should duplicate the audience" do
+      expect(@creds.audience).to eq "https://oauth2.googleapis.com/token"
+      expect(@creds.duplicate(audience: "test-audience").audience).to eq "test-audience"
+    end
+
+    it "should duplicate the signing_key" do
+      expect(@creds.signing_key).to be_a OpenSSL::PKey::RSA
+      expect(@creds.duplicate(signing_key: "test-signing-key").signing_key).to eq "test-signing-key"
+    end
+
+    it "should duplicate the extension_parameters" do
+      expect(@creds.extension_parameters).to eq({})
+      expect(@creds.duplicate(extension_parameters: {test: "test"}).extension_parameters).to eq({test: "test"})
+    end
+
+    it "should duplicate the additional_parameters" do
+      expect(@creds.additional_parameters).to eq({})
+      expect(@creds.duplicate(additional_parameters: {test: "test"}).additional_parameters).to eq({test: "test"})
+    end
+
+    it "should duplicate the access_type" do
+      expect(@creds.access_type).to eq :offline
+      expect(@creds.duplicate(access_type: :online).access_type).to eq :online
+    end
+
+    it "should duplicate the universe_domain" do
+      expect(@creds.universe_domain).to eq nil
+      expect(@creds.duplicate(universe_domain: "universe-domain.example.com").universe_domain).to eq "universe-domain.example.com"
+    end
+
+    it "should duplicate the logger" do
+      expect(@creds.logger).to be_nil
+      expect(@creds.duplicate(logger: :foo).logger).to eq :foo
+    end
+  end
 end

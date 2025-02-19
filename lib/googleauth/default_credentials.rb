@@ -16,9 +16,10 @@ require "multi_json"
 require "stringio"
 
 require "googleauth/credentials_loader"
-require "googleauth/service_account"
-require "googleauth/user_refresh"
 require "googleauth/external_account"
+require "googleauth/service_account"
+require "googleauth/service_account_jwt_header"
+require "googleauth/user_refresh"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
@@ -29,8 +30,18 @@ module Google
     class DefaultCredentials
       extend CredentialsLoader
 
-      # override CredentialsLoader#make_creds to use the class determined by
+      ##
+      # Override CredentialsLoader#make_creds to use the class determined by
       # loading the json.
+      #
+      # **Important:** If you accept a credential configuration (credential
+      # JSON/File/Stream) from an external source for authentication to Google
+      # Cloud, you must validate it before providing it to any Google API or
+      # library. Providing an unvalidated credential configuration to Google
+      # APIs can compromise the security of your systems and data. For more
+      # information, refer to [Validate credential configurations from external
+      # sources](https://cloud.google.com/docs/authentication/external/externally-sourced-credentials).
+      #
       def self.make_creds options = {}
         json_key_io = options[:json_key_io]
         if json_key_io

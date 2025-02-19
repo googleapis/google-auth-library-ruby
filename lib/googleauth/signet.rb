@@ -38,6 +38,22 @@ module Signet
         self
       end
 
+      alias update_signet_base update!
+      def update! options = {}
+        # Normalize all keys to symbols to allow indifferent access.
+        options = deep_hash_normalize options
+
+        # This `update!` method "overide" adds the `@logger`` update and
+        # the `universe_domain` update.
+        #
+        # The `universe_domain` is also updated in `update_token!` but is
+        # included here for completeness
+        self.universe_domain = options[:universe_domain] if options.key? :universe_domain
+        @logger = options[:logger] if options.key? :logger
+
+        update_signet_base options
+      end
+
       def configure_connection options
         @connection_info =
           options[:connection_builder] || options[:default_connection]
@@ -115,6 +131,42 @@ module Signet
             raise Signet::AuthorizationError, msg
           end
         end
+      end
+
+      # Creates a duplicate of these credentials
+      # without the Signet::OAuth2::Client-specific
+      # transient state (e.g. cached tokens)
+      #
+      # @param options [Hash] Overrides for the credentials parameters.
+      # @see Signet::OAuth2::Client#update!
+      def duplicate options = {}
+        options = deep_hash_normalize options
+
+        opts = {
+          authorization_uri: @authorization_uri,
+          token_credential_uri: @token_credential_uri,
+          client_id: @client_id,
+          client_secret: @client_secret,
+          scope: @scope,
+          target_audience: @target_audience,
+          redirect_uri: @redirect_uri,
+          username: @username,
+          password: @password,
+          issuer: @issuer,
+          person: @person,
+          sub: @sub,
+          audience: @audience,
+          signing_key: @signing_key,
+          extension_parameters: @extension_parameters,
+          additional_parameters: @additional_parameters,
+          access_type: @access_type,
+          universe_domain: @universe_domain,
+          logger: @logger
+        }.merge(options)
+
+        new_client = self.class.new opts
+
+        new_client.configure_connection options
       end
 
       private

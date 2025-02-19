@@ -1,5 +1,20 @@
 # Release History
 
+### 1.13.1 (2025-01-24)
+
+#### Bug Fixes
+
+* Signet client subclasses no longer make the update! method private ([#516](https://github.com/googleapis/google-auth-library-ruby/issues/516)) 
+
+### 1.13.0 (2025-01-22)
+
+#### Features
+
+* create impersonated service credentials ([#499](https://github.com/googleapis/google-auth-library-ruby/issues/499)) 
+#### Documentation
+
+* Include note about validating externally-provided credentials ([#512](https://github.com/googleapis/google-auth-library-ruby/issues/512)) 
+
 ### 1.12.2 (2024-12-19)
 
 #### Bug Fixes

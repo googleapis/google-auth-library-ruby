@@ -93,6 +93,24 @@ module Google
         super options
       end
 
+      # Creates a duplicate of these credentials
+      # without the Signet::OAuth2::Client-specific
+      # transient state (e.g. cached tokens)
+      #
+      # @param options [Hash] Overrides for the credentials parameters.
+      #   The following keys are recognized in addition to keys in the
+      #   Signet::OAuth2::Client
+      #   * `:universe_domain_overridden` Whether the universe domain was
+      #     overriden during credentials creation
+      def duplicate options = {}
+        options = deep_hash_normalize options
+        super(
+          {
+            universe_domain_overridden: @universe_domain_overridden
+          }.merge(options)
+        )
+      end
+
       # @private
       # Overrides universe_domain getter to fetch lazily if it hasn't been
       # fetched yet. This is necessary specifically for Compute Engine because
@@ -134,6 +152,27 @@ module Google
           log_fetch_err e
           raise Signet::AuthorizationError, e.message
         end
+      end
+
+      # Destructively updates these credentials.
+      #
+      # This method is called by `Signet::OAuth2::Client`'s constructor
+      #
+      # @param options [Hash] Overrides for the credentials parameters.
+      #   The following keys are recognized in addition to keys in the
+      #   Signet::OAuth2::Client
+      #   * `:universe_domain_overridden` Whether the universe domain was
+      #     overriden during credentials creation
+      # @return [Google::Auth::GCECredentials]
+      def update! options = {}
+        # Normalize all keys to symbols to allow indifferent access.
+        options = deep_hash_normalize options
+
+        @universe_domain_overridden = options[:universe_domain_overridden] if options.key? :universe_domain_overridden
+
+        super(options)
+
+        self
       end
 
       private
