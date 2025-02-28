@@ -87,7 +87,7 @@ module Google
       def initialize options = {}
         # Override the constructor to remember whether the universe domain was
         # overridden by a constructor argument.
-        @universe_domain_overridden = options["universe_domain"] || options[:universe_domain] ? true : false
+        @universe_domain_overridden = options["universe_domain"] || options[:universe_domain]
         # TODO: Remove when universe domain metadata endpoint is stable (see b/349488459).
         @disable_universe_domain_check = true
         super options

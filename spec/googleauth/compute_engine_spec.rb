@@ -395,8 +395,8 @@ describe Google::Auth::GCECredentials do
     end
 
     it "should duplicate the universe_domain_overridden" do
-      expect(@creds.instance_variable_get(:@universe_domain_overridden)).to eq false
-      expect(@creds.duplicate(universe_domain_overridden: true).instance_variable_get(:@universe_domain_overridden)).to eq true
+      expect(@creds.instance_variable_get(:@universe_domain_overridden)).to be_falsey
+      expect(@creds.duplicate(universe_domain_overridden: true).instance_variable_get(:@universe_domain_overridden)).to be_truthy
     end
   end
 end
