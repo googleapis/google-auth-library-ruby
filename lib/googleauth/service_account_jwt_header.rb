@@ -73,7 +73,7 @@ module Google
         @project_id ||= CredentialsLoader.load_gcloud_project_id
         @signing_key = OpenSSL::PKey::RSA.new @private_key
         @scope = options[:scope] if options.key? :scope
-        @logger = options[:logger] if options.key? :scope
+        @logger = options[:logger] if options.key? :logger
       end
 
       # Creates a duplicate of these credentials
