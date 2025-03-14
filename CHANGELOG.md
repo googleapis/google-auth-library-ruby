@@ -1,5 +1,19 @@
 # Release History
 
+### 1.14.0 (2025-03-14)
+
+#### Features
+
+* add API key credentials ([#520](https://github.com/googleapis/google-auth-library-ruby/issues/520)) 
+* Add Bearer token credentials 
+* add BearerToken credentials ([#522](https://github.com/googleapis/google-auth-library-ruby/issues/522)) 
+* Update minimum Ruby version to 3.0 ([#527](https://github.com/googleapis/google-auth-library-ruby/issues/527)) 
+#### Bug Fixes
+
+* Eliminated the "attribute accessor as module_function" warning ([#519](https://github.com/googleapis/google-auth-library-ruby/issues/519)) 
+* Get the project_id from gcloud ([#479](https://github.com/googleapis/google-auth-library-ruby/issues/479)) 
+* logger configuration in service account JWT header ([#525](https://github.com/googleapis/google-auth-library-ruby/issues/525)) 
+
 ### 1.13.1 (2025-01-24)
 
 #### Bug Fixes
