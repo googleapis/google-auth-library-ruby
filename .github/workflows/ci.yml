@@ -25,14 +25,17 @@ jobs:
           - os: ubuntu-latest
             ruby: "3.3"
             task: test , spec
+          - os: ubuntu-latest
+            ruby: "3.4"
+            task: test , spec
           - os: macos-latest
-            ruby: "3.3"
+            ruby: "3.4"
             task: test , spec
           - os: windows-latest
-            ruby: "3.3"
+            ruby: "3.4"
             task: test , spec
           - os: ubuntu-latest
-            ruby: "3.3"
+            ruby: "3.4"
             task: rubocop , integration , build , yardoc , linkinator
       fail-fast: false
     runs-on: ${{ matrix.os }}
