@@ -269,6 +269,15 @@ module Google
         SecureRandom.alphanumeric random_number
       end
 
+      # Returns the principal identifier for this authorizer
+      # The client ID is used as the principal for user authorizers
+      #
+      # @private
+      # @return [String] The client ID associated with this authorizer
+      def principal
+        @client_id.id
+      end
+
       private
 
       # @private Fetch stored token with given user_id

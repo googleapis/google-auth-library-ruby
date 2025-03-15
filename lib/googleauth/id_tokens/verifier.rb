@@ -61,10 +61,9 @@ module Google
         # @param iss [String,nil] If given, override the `iss` check.
         #
         # @return [Hash] the decoded payload, if verification succeeded.
-        # @raise [KeySourceError] if the key source failed to obtain public keys
-        # @raise [VerificationError] if the token verification failed.
+        # @raise [Google::Auth::IDTokens::KeySourceError] if the key source failed to obtain public keys
+        # @raise [Google::Auth::IDTokens::VerificationError] if the token verification failed.
         #     Additional data may be available in the error subclass and message.
-        #
         def verify token,
                    key_source: :default,
                    aud:        :default,

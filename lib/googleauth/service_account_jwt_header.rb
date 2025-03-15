@@ -47,7 +47,7 @@ module Google
 
       # Create a ServiceAccountJwtHeaderCredentials.
       #
-      # @param json_key_io [IO] an IO from which the JSON key can be read
+      # @param json_key_io [IO] An IO object containing the JSON key
       # @param scope [string|array|nil] the scope(s) to access
       def self.make_creds options = {}
         json_key_io, scope = options.values_at :json_key_io, :scope
@@ -56,7 +56,7 @@ module Google
 
       # Initializes a ServiceAccountJwtHeaderCredentials.
       #
-      # @param json_key_io [IO] an IO from which the JSON key can be read
+      # @param json_key_io [IO] An IO object containing the JSON key
       def initialize options = {}
         json_key_io = options[:json_key_io]
         if json_key_io
@@ -157,6 +157,13 @@ module Google
       # Duck-types the corresponding method from BaseClient
       def needs_access_token?
         false
+      end
+
+      # Returns the client email as the principal for service account JWT header credentials
+      # @private
+      # @return [String] the email address of the service account
+      def principal
+        @issuer
       end
 
       private

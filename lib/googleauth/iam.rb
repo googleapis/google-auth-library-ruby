@@ -52,8 +52,17 @@ module Google
 
       # Returns a reference to the #apply method, suitable for passing as
       # a closure
+      #
+      # @return [Proc] A procedure that updates a hash with credentials
       def updater_proc
         proc { |a_hash, _opts = {}| apply a_hash }
+      end
+
+      # Returns the IAM authority selector as the principal
+      # @private
+      # @return [String] the IAM authoirty selector
+      def principal
+        @selector
       end
     end
   end

@@ -57,7 +57,7 @@ module Google
       #
       # @param scope [String,Array<String>] Input scope(s)
       # @return [Array<String>] Always an array of strings
-      # @raise ArgumentError If the input is not a string or array of strings
+      # @raise [ArgumentError] If the input is not a string or array of strings
       #
       def self.as_array scope
         case scope

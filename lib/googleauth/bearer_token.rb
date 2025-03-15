@@ -119,6 +119,14 @@ module Google
         )
       end
 
+      # For credentials that are initialized with a token without a principal,
+      # the type of that token should be returned as a principal instead
+      # @private
+      # @return [Symbol] the token type in lieu of the principal
+      def principal
+        token_type
+      end
+
       protected
 
       ##

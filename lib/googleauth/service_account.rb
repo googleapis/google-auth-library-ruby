@@ -51,8 +51,9 @@ module Google
 
       # Creates a ServiceAccountCredentials.
       #
-      # @param json_key_io [IO] an IO from which the JSON key can be read
+      # @param json_key_io [IO] An IO object containing the JSON key
       # @param scope [string|array|nil] the scope(s) to access
+      # @raise [ArgumentError] If both scope and target_audience are specified
       def self.make_creds options = {}
         json_key_io, scope, enable_self_signed_jwt, target_audience, audience, token_credential_uri =
           options.values_at :json_key_io, :scope, :enable_self_signed_jwt, :target_audience,
@@ -110,6 +111,9 @@ module Google
       # Handles certain escape sequences that sometimes appear in input.
       # Specifically, interprets the "\n" sequence for newline, and removes
       # enclosing quotes.
+      #
+      # @param str [String] The string to unescape
+      # @return [String] The unescaped string
       def self.unescape str
         str = str.gsub '\n', "\n"
         str = str[1..-2] if str.start_with?('"') && str.end_with?('"')
@@ -162,6 +166,13 @@ module Google
         super(options)
 
         self
+      end
+
+      # Returns the client email as the principal for service account credentials
+      # @private
+      # @return [String] the email address of the service account
+      def principal
+        @issuer
       end
 
       private
