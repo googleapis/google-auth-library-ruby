@@ -26,8 +26,17 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
     body = MultiJson.dump body_fields
     stub_request(:post, impersonation_url)
       .to_return(body:    body,
-                   status:  200,
+                   status:  opts[:status] || 200,
                    headers: { "Content-Type" => "application/json" })
+  end
+
+  def make_error_stub(status, body = "error message")
+    stub_request(:post, impersonation_url)
+      .to_return(
+        body: body,
+        status: status,
+        headers: { "Content-Type" => "application/json" }
+      )
   end
 
   before :example do
@@ -169,6 +178,55 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
       it "should duplicate the impersonation_url" do
         expect(@dup_creds.impersonation_url).to eq "test-impersonation-url"
         expect(@dup_creds.duplicate(impersonation_url: "test-impersonation-url-2").impersonation_url).to eq "test-impersonation-url-2"
+      end
+    end
+  end
+
+  describe "error handling" do
+    let(:creds) do
+      Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
+        base_credentials: @base_creds,
+        impersonation_url: impersonation_url,
+        scope: ["https://www.googleapis.com/auth/cloud-platform"]
+      )
+    end
+
+    context "when response status is 403" do
+      it "raises Signet::UnexpectedStatusError" do
+        stub = make_error_stub(403, "Permission denied")
+        
+        expect { creds.apply!({}) }.to raise_error(
+          Signet::UnexpectedStatusError, 
+          /Unexpected error code 403.\n Permission denied/
+        )
+        
+        expect(stub).to have_been_requested
+      end
+    end
+
+    context "when response status is 500" do
+      it "raises Signet::UnexpectedStatusError" do
+        stub = make_error_stub(500, "Internal server error")
+        
+        expect { creds.apply!({}) }.to raise_error(
+          Signet::UnexpectedStatusError,
+          /Unexpected error code 500.\n Internal server error/
+        )
+        
+        expect(stub).to have_been_requested
+      end
+    end
+
+    context "when response status is other error code (e.g. 401)" do
+      it "raises Signet::AuthorizationError" do
+        stub = make_error_stub(401, "Unauthorized")
+        
+        expect { creds.apply!({}) }.to raise_error(
+          Signet::AuthorizationError,
+          /Unexpected error code 401.\n Unauthorized/
+        )
+        
+        expect(stub).to have_been_requested
       end
     end
   end

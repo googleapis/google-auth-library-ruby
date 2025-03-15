@@ -200,6 +200,7 @@ module Google
       # for an impersonation token using the specified impersonation URL. The generated token and
       # its expiration time are cached for subsequent use.
       #
+      # @private
       # @param _options [Hash] (optional) Additional options for token retrieval (currently unused).
       #
       # @raise [Signet::UnexpectedStatusError] If the response status is 403 or 500.
@@ -207,14 +208,8 @@ module Google
       #
       # @return [String] The newly generated impersonation access token.
       def fetch_access_token! _options = {}
-        auth_header = {}
-        auth_header = @source_credentials.updater_proc.call auth_header
-
-        resp = connection.post @impersonation_url do |req|
-          req.headers.merge! auth_header
-          req.headers["Content-Type"] = "application/json"
-          req.body = MultiJson.dump({ scope: @scope })
-        end
+        auth_header = prepare_auth_header
+        resp = make_impersonation_request auth_header
 
         case resp.status
         when 200
@@ -223,12 +218,44 @@ module Google
           @access_token = response["accessToken"]
           access_token
         when 403, 500
-          msg = "Unexpected error code #{resp.status}.\n #{resp.env.response_body} #{ERROR_SUFFIX}"
-          raise Signet::UnexpectedStatusError, msg
+          handle_error_response resp, Signet::UnexpectedStatusError
         else
-          msg = "Unexpected error code #{resp.status}.\n #{resp.env.response_body} #{ERROR_SUFFIX}"
-          raise Signet::AuthorizationError, msg
+          handle_error_response resp, Signet::AuthorizationError
         end
+      end
+
+      # Prepares the authorization header for the impersonation request
+      # by fetching a token from source credentials.
+      #
+      # @private
+      # @return [Hash] The authorization header with the source credentials' token
+      def prepare_auth_header
+        auth_header = {}
+        @source_credentials.updater_proc.call auth_header
+        auth_header
+      end
+
+      # Makes the HTTP request to the impersonation endpoint.
+      #
+      # @private
+      # @param [Hash] auth_header The authorization header containing the source token
+      # @return [Faraday::Response] The HTTP response from the impersonation endpoint
+      def make_impersonation_request auth_header
+        connection.post @impersonation_url do |req|
+          req.headers.merge! auth_header
+          req.headers["Content-Type"] = "application/json"
+          req.body = MultiJson.dump({ scope: @scope })
+        end
+      end
+
+      # Creates and raises an appropriate error based on the response.
+      #
+      # @private
+      # @param [Faraday::Response] resp The HTTP response
+      # @param [Class] error_class The error class to instantiate
+      def handle_error_response resp, error_class
+        msg = "Unexpected error code #{resp.status}.\n #{resp.env.response_body} #{ERROR_SUFFIX}"
+        raise error_class, msg
       end
 
       # Setter for the expires_at value that makes sure it is converted

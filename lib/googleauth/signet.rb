@@ -114,12 +114,10 @@ module Signet
 
         begin
           yield.tap { |resp| log_response resp }
+        rescue Signet::AuthorizationError, Signet::ParseError => e
+          log_auth_error e
+          raise e
         rescue StandardError => e
-          if e.is_a?(Signet::AuthorizationError) || e.is_a?(Signet::ParseError)
-            log_auth_error e
-            raise e
-          end
-
           if retry_count < max_retry_count
             log_transient_error e
             retry_count += 1
