@@ -36,8 +36,8 @@ module Google
         # call this API or the required scopes may not be selected:
         # https://cloud.google.com/resource-manager/reference/rest/v1/projects/get#authorization-scopes
         #
-        # @return [string,nil]
-        #     The project ID corresponding to the workload identity pool or workforce pool if determinable.
+        # @return [String, nil] The project ID corresponding to the workload identity
+        #   pool or workforce pool if determinable
         #
         def project_id
           return @project_id unless @project_id.nil?
@@ -65,7 +65,8 @@ module Google
         # STS audience pattern:
         #     `//iam.googleapis.com/projects/$PROJECT_NUMBER/locations/...`
         #
-        # @return [string, nil]
+        # @return [String, nil] The project number extracted from the audience string,
+        #   or nil if it cannot be determined
         #
         def project_number
           segments = @audience.split "/"
@@ -74,6 +75,10 @@ module Google
           segments[idx + 1]
         end
 
+        # Normalizes a timestamp value to a Time object
+        #
+        # @param time [Time, String, nil] The timestamp to normalize
+        # @return [Time, nil] The normalized timestamp or nil if input is nil
         def normalize_timestamp time
           case time
           when NilClass
@@ -87,6 +92,10 @@ module Google
           end
         end
 
+        # Extracts the service account email from the impersonation URL
+        #
+        # @return [String, nil] The service account email extracted from the
+        #   service_account_impersonation_url, or nil if it cannot be determined
         def service_account_email
           return nil if @service_account_impersonation_url.nil?
           start_idx = @service_account_impersonation_url.rindex "/"

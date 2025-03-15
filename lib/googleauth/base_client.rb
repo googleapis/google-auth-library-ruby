@@ -78,6 +78,11 @@ module Google
       # The logger used to log operations on this client, such as token refresh.
       attr_accessor :logger
 
+      # @private
+      def principal
+        raise NoMethodError, "principal not implemented"
+      end
+
       private
 
       def token_type

@@ -89,6 +89,14 @@ module Google
           %r{/iam\.googleapis\.com/locations/[^/]+/workforcePools/}.match?(@audience || "")
         end
 
+        # For external account credentials, the principal is
+        # represented by the audience, such as a workforce pool
+        # @private
+        # @return [String] the GCP principal, e.g. a workforce pool
+        def principal
+          @audience
+        end
+
         private
 
         def token_type

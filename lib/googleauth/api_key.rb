@@ -85,6 +85,7 @@ module Google
       # @option options [String] :universe_domain
       #   The universe domain of the universe this API key
       #   belongs to (defaults to googleapis.com)
+      # @raise [ArgumentError] If the API key is nil or empty
       def initialize options = {}
         raise ArgumentError, "API key must be provided" if options[:api_key].nil? || options[:api_key].empty?
         @api_key = options[:api_key]
@@ -137,6 +138,14 @@ module Google
           Google::Logging::Message.from message: "Sending API key auth token. (sha256:#{hash})"
         end
         a_hash
+      end
+
+      # For credentials that are initialized with a token without a principal,
+      # the type of that token should be returned as a principal instead
+      # @private
+      # @return [Symbol] the token type in lieu of the principal
+      def principal
+        token_type
       end
 
       protected
