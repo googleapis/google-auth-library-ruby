@@ -17,3 +17,24 @@ require "minitest/focus"
 require "webmock/minitest"
 
 require "googleauth"
+
+##
+# A simple in-memory implementation of TokenStore
+# for UserAuthorizer initialization when testing
+class TestTokenStore
+    def initialize
+        @tokens = {}
+    end
+
+    def load id
+        @tokens[id]
+    end
+
+    def store id, token
+        @tokens[id] = token
+    end
+
+    def delete id
+        @tokens.delete id
+    end
+end

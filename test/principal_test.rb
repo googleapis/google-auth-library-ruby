@@ -156,10 +156,8 @@ describe "Principal methods" do
     end
 
     it "returns the client id as principal" do
-      require "googleauth/token_store"
-      require "googleauth/stores/file_token_store"
       scope = ["https://www.googleapis.com/auth/userinfo.email"]
-      token_store = Google::Auth::Stores::FileTokenStore.new file: "/dev/null"
+      token_store = TestTokenStore.new
       authorizer = Google::Auth::UserAuthorizer.new(
         client_id,
         scope,
