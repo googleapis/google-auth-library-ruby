@@ -165,6 +165,13 @@ module Google
         self
       end
 
+      # Returns the principal identifier for GCE credentials
+      # @private
+      # @return [Symbol] :gce to represent Google Compute Engine identity
+      def principal
+        :gce_metadata
+      end
+
       private
 
       # @private

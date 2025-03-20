@@ -40,7 +40,7 @@ module Google
 
       # Create a UserRefreshCredentials.
       #
-      # @param json_key_io [IO] an IO from which the JSON key can be read
+      # @param json_key_io [IO] An IO object containing the JSON key
       # @param scope [string|array|nil] the scope(s) to access
       def self.make_creds options = {}
         json_key_io, scope = options.values_at :json_key_io, :scope
@@ -64,8 +64,11 @@ module Google
           .configure_connection(options)
       end
 
-      # Reads the client_id, client_secret and refresh_token fields from the
-      # JSON key.
+      # Reads a JSON key from an IO object and extracts required fields.
+      #
+      # @param [IO] json_key_io An IO object containing the JSON key
+      # @return [Hash] The parsed JSON key
+      # @raise [Google::Auth::Error] If the JSON is missing required fields
       def self.read_json_key json_key_io
         json_key = MultiJson.load json_key_io.read
         wanted = ["client_id", "client_secret", "refresh_token"]
@@ -156,6 +159,13 @@ module Google
         super(options)
 
         self
+      end
+
+      # Returns the client ID as the principal for user refresh credentials
+      # @private
+      # @return [String, Symbol] the client ID or :user_refresh if not available
+      def principal
+        @client_id || :user_refresh
       end
     end
   end

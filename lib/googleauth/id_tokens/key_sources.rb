@@ -72,8 +72,8 @@ module Google
           #
           # @param jwk [Hash,String] The JWK specification.
           # @return [KeyInfo]
-          # @raise [KeySourceError] If the key could not be extracted from the
-          #     JWK.
+          # @raise [Google::Auth::IDTokens::KeySourceError] If the key could not be extracted from the
+          #     JWK due to invalid type, malformed JSON, or invalid key data.
           #
           def from_jwk jwk
             jwk = symbolize_keys ensure_json_parsed jwk
@@ -94,10 +94,10 @@ module Google
           # Create an array of KeyInfo from a JWK Set, which may be given as
           # either a hash or an unparsed JSON string.
           #
-          # @param jwk [Hash,String] The JWK Set specification.
+          # @param jwk_set [Hash,String] The JWK Set specification.
           # @return [Array<KeyInfo>]
-          # @raise [KeySourceError] If a key could not be extracted from the
-          #     JWK Set.
+          # @raise [Google::Auth::IDTokens::KeySourceError] If a key could not be extracted from the
+          #     JWK Set, or if the set contains no keys.
           #
           def from_jwk_set jwk_set
             jwk_set = symbolize_keys ensure_json_parsed jwk_set
@@ -261,7 +261,8 @@ module Google
         # return the new keys.
         #
         # @return [Array<KeyInfo>]
-        # @raise [KeySourceError] if key retrieval failed.
+        # @raise [Google::Auth::IDTokens::KeySourceError] If key retrieval fails, JSON parsing
+        #     fails, or the data cannot be interpreted as keys
         #
         def refresh_keys
           @monitor.synchronize do
@@ -310,6 +311,11 @@ module Google
 
         protected
 
+        # Interpret JSON data as X509 certificates
+        #
+        # @param data [Hash] The JSON data containing certificate strings
+        # @return [Array<KeyInfo>] Array of key info objects
+        # @raise [Google::Auth::IDTokens::KeySourceError] If X509 certificates cannot be parsed
         def interpret_json data
           data.map do |id, cert_str|
             key = OpenSSL::X509::Certificate.new(cert_str).public_key
@@ -371,7 +377,7 @@ module Google
         # Attempt to refresh keys and return the new keys.
         #
         # @return [Array<KeyInfo>]
-        # @raise [KeySourceError] if key retrieval failed.
+        # @raise [Google::Auth::IDTokens::KeySourceError] If key retrieval failed for any source.
         #
         def refresh_keys
           @sources.flat_map(&:refresh_keys)
