@@ -13,9 +13,9 @@
 # limitations under the License.require "time"
 
 require "googleauth/base_client"
+require "googleauth/errors"
 require "googleauth/helpers/connection"
 require "googleauth/oauth2/sts_client"
-require "googleauth/errors"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
@@ -105,6 +105,8 @@ module Google
           :access_token
         end
 
+        # A common method for Other credentials to call during initialization
+        # @raise [Google::Auth::Error] If workforce_pool_user_project is incorrectly set
         def base_setup options
           self.default_connection = options[:connection]
 
@@ -130,9 +132,11 @@ module Google
             connection: default_connection
           )
           return unless @workforce_pool_user_project && !is_workforce_pool?
-          raise CredentialsError, "workforce_pool_user_project should not be set for non-workforce pool credentials."
+          raise InitializationError, "workforce_pool_user_project should not be set for non-workforce pool credentials."
         end
 
+        # Exchange tokens at STS endpoint
+        # @raise [Google::Auth::AuthorizationError] If the token exchange request fails
         def exchange_token
           additional_options = nil
           if @client_id.nil? && @workforce_pool_user_project
@@ -149,6 +153,12 @@ module Google
           }
           log_token_request token_request
           @sts_client.exchange_token token_request
+        rescue Google::Auth::AuthorizationError => e
+          raise Google::Auth::AuthorizationError.with_details(
+            e.message,
+            credential_type_name: self.class.name,
+            principal: principal
+          )
         end
 
         def log_token_request token_request
@@ -169,6 +179,12 @@ module Google
           end
         end
 
+        # Exchanges a token for an impersonated service account access token
+        #
+        # @param [String] token The token to exchange
+        # @param [Hash] _options Additional options (not used)
+        # @return [Hash] The response containing the impersonated access token
+        # @raise [Google::Auth::DetailedError] If the impersonation request fails
         def get_impersonated_access_token token, _options = {}
           log_impersonated_token_request token
           response = connection.post @service_account_impersonation_url do |req|
@@ -178,7 +194,11 @@ module Google
           end
 
           if response.status != 200
-            raise CredentialsError, "Service account impersonation failed with status #{response.status}"
+            raise CredentialsError.with_details(
+              "Service account impersonation failed with status #{response.status}",
+              credential_type_name: self.class.name,
+              principal: principal
+            )
           end
 
           MultiJson.load response.body

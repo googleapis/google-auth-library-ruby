@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require "googleauth/signet"
 require "googleauth/base_client"
+require "googleauth/errors"
 require "googleauth/helpers/connection"
 
 module Google
@@ -217,8 +217,8 @@ module Google
       # @private
       # @param _options [Hash] (optional) Additional options for token retrieval (currently unused).
       #
-      # @raise [Signet::UnexpectedStatusError] If the response status is 403 or 500.
-      # @raise [Signet::AuthorizationError] For other unexpected response statuses.
+      # @raise [Google::Auth::UnexpectedStatusError] If the response status is 403 or 500.
+      # @raise [Google::Auth::AuthorizationError] For other unexpected response statuses.
       #
       # @return [String] The newly generated impersonation access token.
       def fetch_access_token! _options = {}
@@ -232,9 +232,9 @@ module Google
           @access_token = response["accessToken"]
           access_token
         when 403, 500
-          handle_error_response resp, Signet::UnexpectedStatusError
+          handle_error_response resp, UnexpectedStatusError
         else
-          handle_error_response resp, Signet::AuthorizationError
+          handle_error_response resp, AuthorizationError
         end
       end
 
@@ -267,9 +267,14 @@ module Google
       # @private
       # @param [Faraday::Response] resp The HTTP response
       # @param [Class] error_class The error class to instantiate
+      # @raise [Google::Auth::DetailedError] The appropriate error with details
       def handle_error_response resp, error_class
         msg = "Unexpected error code #{resp.status}.\n #{resp.env.response_body} #{ERROR_SUFFIX}"
-        raise error_class, msg
+        raise error_class.with_details(
+          msg,
+          credential_type_name: self.class.name,
+          principal: principal
+        )
       end
 
       # Setter for the expires_at value that makes sure it is converted
@@ -290,7 +295,7 @@ module Google
       #
       # @return [Time, nil] The normalized Time object, or nil if the input is nil.
       #
-      # @raise [RuntimeError] If the input is not a Time, String, or nil.
+      # @raise [Google::Auth::DetailedError] If the input is not a Time, String, or nil.
       def normalize_timestamp time
         case time
         when NilClass
@@ -300,7 +305,8 @@ module Google
         when String
           Time.parse time
         else
-          raise "Invalid time value #{time}"
+          message = "Invalid time value #{time}"
+          raise CredentialsError.with_details(message, credential_type_name: self.class.name, principal: principal)
         end
       end
 

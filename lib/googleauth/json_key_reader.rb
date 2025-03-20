@@ -21,10 +21,17 @@ module Google
     # JsonKeyReader contains the behaviour used to read private key and
     # client email fields from the service account
     module JsonKeyReader
+      # Reads a JSON key from an IO object and extracts common fields.
+      #
+      # @param json_key_io [IO] An IO object containing the JSON key
+      # @return [Array(String, String, String, String, String)] An array containing:
+      #   private_key, client_email, project_id, quota_project_id, and universe_domain
+      # @raise [Google::Auth::Error] If client_email or private_key
+      #   fields are missing from the JSON
       def read_json_key json_key_io
         json_key = MultiJson.load json_key_io.read
-        raise CredentialsError, "missing client_email" unless json_key.key? "client_email"
-        raise CredentialsError, "missing private_key" unless json_key.key? "private_key"
+        raise InitializationError, "missing client_email" unless json_key.key? "client_email"
+        raise InitializationError, "missing private_key" unless json_key.key? "private_key"
         [
           json_key["private_key"],
           json_key["client_email"],

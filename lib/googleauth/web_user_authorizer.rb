@@ -13,10 +13,10 @@
 # limitations under the License.
 
 require "multi_json"
+require "googleauth/errors"
 require "googleauth/signet"
 require "googleauth/user_authorizer"
 require "googleauth/user_refresh"
-require "googleauth/errors"
 require "securerandom"
 
 module Google
@@ -80,6 +80,8 @@ module Google
       #
       # @param [Rack::Request] request
       #  Current request
+      # @return [String, nil]
+      #  Redirect URI if successfully extracted, nil otherwise
       def self.handle_auth_callback_deferred request
         callback_state, redirect_uri = extract_callback_state request
         request.session[CALLBACK_STATE_KEY] = MultiJson.dump callback_state
@@ -152,11 +154,13 @@ module Google
       #  Optional key-values to be returned to the oauth callback.
       # @return [String]
       #  Authorization url
+      # @raise [Google::Auth::Error]
+      #  If request is nil or request.session is nil
       def get_authorization_url options = {}
         options = options.dup
         request = options[:request]
-        raise AuthorizerError, NIL_REQUEST_ERROR if request.nil?
-        raise AuthorizerError, NIL_SESSION_ERROR if request.session.nil?
+        raise InitializationError, NIL_REQUEST_ERROR if request.nil?
+        raise InitializationError, NIL_SESSION_ERROR if request.session.nil?
 
         state = options[:state] || {}
 
@@ -182,9 +186,9 @@ module Google
       #  requested scopes
       # @return [Google::Auth::UserRefreshCredentials]
       #  Stored credentials, nil if none present
-      # @raise [Signet::AuthorizationError]
-      #  May raise an error if an authorization code is present in the session
-      #  and exchange of the code fails
+      # @raise [Google::Auth::AuthorizationError]
+      #  If the authorization code is missing, there's an error in the request,
+      #  or the state token doesn't match
       def get_credentials user_id, request = nil, scope = nil
         if request&.session&.key? CALLBACK_STATE_KEY
           # Note - in theory, no need to check required scope as this is
@@ -203,6 +207,12 @@ module Google
         end
       end
 
+      # Extract the callback state from the request
+      #
+      # @param [Rack::Request] request
+      #  Current request
+      # @return [Array<Hash, String>]
+      #  Callback state and redirect URI
       def self.extract_callback_state request
         state = MultiJson.load(request.params[STATE_PARAM] || "{}")
         redirect_uri = state[CURRENT_URI_KEY]
@@ -215,6 +225,15 @@ module Google
         [callback_state, redirect_uri]
       end
 
+      # Returns the principal identifier for this web authorizer
+      # This is a class method that returns a symbol since
+      # we might not have a client_id in the static callback context
+      #
+      # @return [Symbol] The symbol for web user authorization
+      def self.principal
+        :web_user_authorization
+      end
+
       # Verifies the results of an authorization callback
       #
       # @param [Hash] state
@@ -225,13 +244,30 @@ module Google
       #  Error message if failed
       # @param [Rack::Request] request
       #  Current request
+      # @raise [Google::Auth::AuthorizationError]
+      #  If the authorization code is missing, there's an error in the callback state,
+      #  or the state token doesn't match
       def self.validate_callback_state state, request
-        raise Signet::AuthorizationError, MISSING_AUTH_CODE_ERROR if state[AUTH_CODE_KEY].nil?
+        if state[AUTH_CODE_KEY].nil?
+          raise AuthorizationError.with_details(
+            MISSING_AUTH_CODE_ERROR,
+            credential_type_name: name,
+            principal: principal
+          )
+        end
+
         if state[ERROR_CODE_KEY]
-          raise Signet::AuthorizationError,
-                format(AUTHORIZATION_ERROR, state[ERROR_CODE_KEY])
+          raise AuthorizationError.with_details(
+            format(AUTHORIZATION_ERROR, state[ERROR_CODE_KEY]),
+            credential_type_name: name,
+            principal: principal
+          )
         elsif request.session[XSRF_KEY] != state[SESSION_ID_KEY]
-          raise Signet::AuthorizationError, INVALID_STATE_TOKEN_ERROR
+          raise AuthorizationError.with_details(
+            INVALID_STATE_TOKEN_ERROR,
+            credential_type_name: name,
+            principal: principal
+          )
         end
       end
 

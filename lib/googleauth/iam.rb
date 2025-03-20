@@ -27,8 +27,9 @@ module Google
 
       # Initializes an IAMCredentials.
       #
-      # @param selector the IAM selector.
-      # @param token the IAM token.
+      # @param selector [String] The IAM selector.
+      # @param token [String] The IAM token.
+      # @raise [TypeError] If selector or token is not a String
       def initialize selector, token
         raise TypeError unless selector.is_a? String
         raise TypeError unless token.is_a? String
@@ -37,13 +38,19 @@ module Google
       end
 
       # Adds the credential fields to the hash.
+      #
+      # @param a_hash [Hash] The hash to update with credentials
+      # @return [Hash] The updated hash with credentials
       def apply! a_hash
         a_hash[SELECTOR_KEY] = @selector
         a_hash[TOKEN_KEY] = @token
         a_hash
       end
 
-      # Returns a clone of a_hash updated with the authoriation header
+      # Returns a clone of a_hash updated with the authorization header
+      #
+      # @param a_hash [Hash] The hash to clone and update with credentials
+      # @return [Hash] A new hash with credentials
       def apply a_hash
         a_copy = a_hash.clone
         apply! a_copy

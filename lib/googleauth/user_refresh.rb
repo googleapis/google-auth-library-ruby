@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require "googleauth/signet"
 require "googleauth/credentials_loader"
-require "googleauth/scope_util"
 require "googleauth/errors"
+require "googleauth/scope_util"
+require "googleauth/signet"
 require "multi_json"
 
 module Google
@@ -74,7 +74,7 @@ module Google
         json_key = MultiJson.load json_key_io.read
         wanted = ["client_id", "client_secret", "refresh_token"]
         wanted.each do |key|
-          raise CredentialsError, "the json is missing the #{key} field" unless json_key.key? key
+          raise InitializationError, "the json is missing the #{key} field" unless json_key.key? key
         end
         json_key
       end
@@ -110,6 +110,10 @@ module Google
       end
 
       # Revokes the credential
+      #
+      # @param [Hash] options Options for revoking the credential
+      # @option options [Faraday::Connection] :connection The connection to use
+      # @raise [Google::Auth::AuthorizationError] If the revocation request fails
       def revoke! options = {}
         c = options[:connection] || Faraday.default_connection
 
@@ -121,8 +125,11 @@ module Google
             self.refresh_token = nil
             self.expires_at = 0
           else
-            raise(Signet::AuthorizationError,
-                  "Unexpected error code #{resp.status}")
+            raise AuthorizationError.with_details(
+              "Unexpected error code #{resp.status}",
+              credential_type_name: self.class.name,
+              principal: principal
+            )
           end
         end
       end

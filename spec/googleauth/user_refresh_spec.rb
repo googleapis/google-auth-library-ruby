@@ -116,7 +116,7 @@ describe Google::Auth::UserRefreshCredentials do
       Dir.mktmpdir do |dir|
         key_path = File.join dir, "does-not-exist"
         ENV[@var_name] = key_path
-        expect { @clz.from_env @scope }.to raise_error Google::Auth::CredentialsError
+        expect { @clz.from_env @scope }.to raise_error Google::Auth::InitializationError
       end
     end
 
@@ -128,7 +128,7 @@ describe Google::Auth::UserRefreshCredentials do
           FileUtils.mkdir_p File.dirname(key_path)
           File.write key_path, cred_json_text(missing)
           ENV[@var_name] = key_path
-          expect { @clz.from_env @scope }.to raise_error Google::Auth::CredentialsError
+          expect { @clz.from_env @scope }.to raise_error Google::Auth::InitializationError
         end
       end
     end
@@ -200,7 +200,7 @@ describe Google::Auth::UserRefreshCredentials do
           ENV["HOME"] = dir
           ENV["APPDATA"] = dir
           expect { @clz.from_well_known_path @scope }
-            .to raise_error Google::Auth::CredentialsError
+            .to raise_error Google::Auth::InitializationError
         end
       end
     end
@@ -260,7 +260,7 @@ describe Google::Auth::UserRefreshCredentials do
           FileUtils.mkdir_p File.dirname(@path)
           File.write @path, cred_json_text(missing)
           expect { @clz.from_system_default_path @scope }
-            .to raise_error Google::Auth::CredentialsError
+            .to raise_error Google::Auth::InitializationError
           File.delete @path
         end
       end

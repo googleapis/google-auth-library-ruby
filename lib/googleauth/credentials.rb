@@ -17,6 +17,7 @@ require "json"
 require "signet/oauth_2/client"
 
 require "googleauth/credentials_loader"
+require "googleauth/errors"
 
 module Google
   module Auth
@@ -391,8 +392,14 @@ module Google
       #   parameters of the `Signet::OAuth2::Client`, such as connection parameters,
       #   timeouts, etc.
       #
+      # @raise [Google::Auth::Error] If source_creds is nil
+      # @raise [ArgumentError] If both scope and target_audience are specified
+      #
       def initialize source_creds, options = {}
-        raise "The source credentials passed to Google::Auth::Credentials.new were nil." if source_creds.nil?
+        if source_creds.nil?
+          raise InitializationError,
+                "The source credentials passed to Google::Auth::Credentials.new were nil."
+        end
 
         options = symbolize_hash_keys options
         @project_id = options[:project_id] || options[:project]
@@ -554,9 +561,12 @@ module Google
       protected
 
       # Verify that the keyfile argument is a file.
+      #
+      # @param [String] keyfile Path to the keyfile
+      # @raise [Google::Auth::Error] If the keyfile does not exist
       def verify_keyfile_exists! keyfile
         exists = ::File.file? keyfile
-        raise "The keyfile '#{keyfile}' is not a valid file." unless exists
+        raise InitializationError, "The keyfile '#{keyfile}' is not a valid file." unless exists
       end
 
       # Initializes the Signet client.
@@ -577,6 +587,11 @@ module Google
         hash.to_h.transform_keys(&:to_sym)
       end
 
+      # Updates client options with defaults from the credential class
+      #
+      # @param [Hash] options Options to update
+      # @return [Hash] Updated options hash
+      # @raise [ArgumentError] If both scope and target_audience are specified
       def update_client_options options
         options = options.dup
 

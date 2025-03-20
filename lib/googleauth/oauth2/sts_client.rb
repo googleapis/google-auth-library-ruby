@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require "googleauth/errors"
 require "googleauth/helpers/connection"
 
 module Google
@@ -36,10 +37,12 @@ module Google
 
         # Create a new instance of the STSClient.
         #
-        # @param [String] token_exchange_endpoint
-        #  The token exchange endpoint.
+        # @param [Hash] options Configuration options
+        # @option options [String] :token_exchange_endpoint The token exchange endpoint
+        # @option options [Faraday::Connection] :connection The Faraday connection to use
+        # @raise [Google::Auth::Error] If token_exchange_endpoint is nil
         def initialize options = {}
-          raise TokenError, "Token exchange endpoint can not be nil" if options[:token_exchange_endpoint].nil?
+          raise InitializationError, "Token exchange endpoint can not be nil" if options[:token_exchange_endpoint].nil?
           self.default_connection = options[:connection]
           @token_exchange_endpoint = options[:token_exchange_endpoint]
         end
@@ -67,6 +70,8 @@ module Google
         #   The optional additional headers to pass to the token exchange endpoint.
         #
         # @return [Hash] A hash containing the token exchange response.
+        # @raise [ArgumentError] If required options are missing
+        # @raise [Google::Auth::AuthorizationError] If the token exchange request fails
         def exchange_token options = {}
           missing_required_opts = [:grant_type, :subject_token, :subject_token_type] - options.keys
           unless missing_required_opts.empty?
@@ -81,7 +86,7 @@ module Google
           response = connection.post @token_exchange_endpoint, URI.encode_www_form(request_body), headers
 
           if response.status != 200
-            raise TokenError, "Token exchange failed with status #{response.status}"
+            raise AuthorizationError, "Token exchange failed with status #{response.status}"
           end
 
           MultiJson.load response.body

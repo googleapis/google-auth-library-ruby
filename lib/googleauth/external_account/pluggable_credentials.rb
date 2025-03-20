@@ -14,9 +14,9 @@
 
 require "open3"
 require "time"
+require "googleauth/errors"
 require "googleauth/external_account/base_credentials"
 require "googleauth/external_account/external_account_utils"
-require "googleauth/errors"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization used to access Google APIs.
@@ -42,11 +42,11 @@ module Google
 
         # Initialize from options map.
         #
-        # @param [string] audience
-        # @param [hash{symbol => value}] credential_source
-        #     credential_source is a hash that contains either source file or url.
-        #     credential_source_format is either text or json. To define how we parse the credential response.
-        #
+        # @param [Hash] options Configuration options
+        # @option options [String] :audience Audience for the token
+        # @option options [Hash] :credential_source Credential source configuration that contains executable
+        #   configuration
+        # @raise [Google::Auth::Error] If executable source, command is missing, or timeout is invalid
         def initialize options = {}
           base_setup options
 
@@ -54,26 +54,32 @@ module Google
           @credential_source = options[:credential_source] || {}
           @credential_source_executable = @credential_source[:executable]
           if @credential_source_executable.nil?
-            raise CredentialsError,
+            raise InitializationError,
                   "Missing excutable source. An 'executable' must be provided"
           end
           @credential_source_executable_command = @credential_source_executable[:command]
           if @credential_source_executable_command.nil?
-            raise CredentialsError, "Missing command field. Executable command must be provided."
+            raise InitializationError, "Missing command field. Executable command must be provided."
           end
           @credential_source_executable_timeout_millis = @credential_source_executable[:timeout_millis] ||
                                                          EXECUTABLE_TIMEOUT_MILLIS_DEFAULT
           if @credential_source_executable_timeout_millis < EXECUTABLE_TIMEOUT_MILLIS_LOWER_BOUND ||
              @credential_source_executable_timeout_millis > EXECUTABLE_TIMEOUT_MILLIS_UPPER_BOUND
-            raise CredentialsError, "Timeout must be between 5 and 120 seconds."
+            raise InitializationError, "Timeout must be between 5 and 120 seconds."
           end
           @credential_source_executable_output_file = @credential_source_executable[:output_file]
         end
 
+        # Retrieves the subject token using the credential_source object.
+        #
+        # @return [String] The retrieved subject token
+        # @raise [Google::Auth::DetailedError] If executables are not allowed, if token retrieval fails,
+        #   or if the token is invalid
         def retrieve_subject_token!
           unless ENV[ENABLE_PLUGGABLE_ENV] == "1"
-            raise CredentialsError, "Executables need to be explicitly allowed " \
-                                    "(set GOOGLE_EXTERNAL_ACCOUNT_ALLOW_EXECUTABLES to '1') to run."
+            raise CredentialsError,
+                  "Executables need to be explicitly allowed (set GOOGLE_EXTERNAL_ACCOUNT_ALLOW_EXECUTABLES to '1') " \
+                  "to run."
           end
           # check output file first
           subject_token = load_subject_token_from_output_file
@@ -101,7 +107,7 @@ module Google
             subject_token = parse_subject_token response
           rescue StandardError => e
             return nil if e.message.match(/The token returned by the executable is expired/)
-            raise e
+            raise CredentialsError, e.message
           end
           subject_token
         end

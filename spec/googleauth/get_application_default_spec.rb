@@ -57,7 +57,7 @@ describe "#get_application_default" do
         key_path = File.join dir, "does-not-exist"
         ENV[@var_name] = key_path
         expect { Google::Auth.get_application_default @scope, options }
-          .to raise_error Google::Auth::CredentialsError
+          .to raise_error Google::Auth::InitializationError
       end
     end
 
@@ -68,7 +68,7 @@ describe "#get_application_default" do
           ENV["HOME"] = dir # no config present in this tmp dir
           expect do
             Google::Auth.get_application_default @scope, options
-          end.to raise_error Google::Auth::CredentialsError
+          end.to raise_error Google::Auth::InitializationError
         end
       end
     end
@@ -246,7 +246,7 @@ describe "#get_application_default" do
         ENV[@var_name] = key_path
         expect do
           Google::Auth.get_application_default @scope, options
-        end.to raise_error Google::Auth::CredentialsError
+        end.to raise_error Google::Auth::InitializationError
       end
     end
 
@@ -261,7 +261,7 @@ describe "#get_application_default" do
         ENV["APPDATA"] = dir
         expect do
           Google::Auth.get_application_default @scope, options
-        end.to raise_error Google::Auth::CredentialsError
+        end.to raise_error Google::Auth::InitializationError
       end
     end
 
@@ -271,7 +271,7 @@ describe "#get_application_default" do
       ENV[CLIENT_EMAIL_VAR] = cred_json[:client_email]
       expect do
         Google::Auth.get_application_default @scope, options
-      end.to raise_error Google::Auth::CredentialsError
+      end.to raise_error Google::Auth::InitializationError
     end
   end
 end
