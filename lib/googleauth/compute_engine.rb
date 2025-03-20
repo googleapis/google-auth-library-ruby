@@ -126,28 +126,18 @@ module Google
 
       # Overrides the super class method to change how access tokens are
       # fetched.
+      #
+      # @param [Hash] _options Options for token fetch (not used)
+      # @return [Hash] The token data hash
+      # @raise [Google::Auth::UnexpectedStatusError] On unexpected HTTP status codes
+      # @raise [Google::Auth::AuthorizationError] If metadata server is unavailable or returns error
       def fetch_access_token _options = {}
-        query, entry =
-          if token_type == :id_token
-            [{ "audience" => target_audience, "format" => "full" }, "service-accounts/default/identity"]
-          else
-            [{}, "service-accounts/default/token"]
-          end
-        query[:scopes] = Array(scope).join "," if scope
+        query, entry = build_metadata_request_params
         begin
           log_fetch_query
           resp = Google::Cloud.env.lookup_metadata_response "instance", entry, query: query
           log_fetch_resp resp
-          case resp.status
-          when 200
-            build_token_hash resp.body, resp.headers["content-type"], resp.retrieval_monotonic_time
-          when 403, 500
-            raise Signet::UnexpectedStatusError, "Unexpected error code #{resp.status} #{UNEXPECTED_ERROR_SUFFIX}"
-          when 404
-            raise Signet::AuthorizationError, NO_METADATA_SERVER_ERROR
-          else
-            raise Signet::AuthorizationError, "Unexpected error code #{resp.status} #{UNEXPECTED_ERROR_SUFFIX}"
-          end
+          handle_metadata_response resp
         rescue Google::Cloud::Env::MetadataServerNotResponding => e
           log_fetch_err e
           raise Signet::AuthorizationError, e.message
@@ -176,6 +166,38 @@ module Google
       end
 
       private
+
+      # @private
+      # Builds query parameters and endpoint for metadata request
+      # @return [Array] The query parameters and endpoint path
+      def build_metadata_request_params
+        query, entry =
+          if token_type == :id_token
+            [{ "audience" => target_audience, "format" => "full" }, "service-accounts/default/identity"]
+          else
+            [{}, "service-accounts/default/token"]
+          end
+        query[:scopes] = Array(scope).join "," if scope
+        [query, entry]
+      end
+
+      # @private
+      # Handles the response from the metadata server
+      # @param [Google::Cloud::Env::MetadataResponse] resp The metadata server response
+      # @return [Hash] The token hash on success
+      # @raise [Google::Auth::UnexpectedStatusError, Google::Auth::AuthorizationError] On error
+      def handle_metadata_response resp
+        case resp.status
+        when 200
+          build_token_hash resp.body, resp.headers["content-type"], resp.retrieval_monotonic_time
+        when 403, 500
+          raise Signet::UnexpectedStatusError, "Unexpected error code #{resp.status} #{UNEXPECTED_ERROR_SUFFIX}"
+        when 404
+          raise Signet::AuthorizationError, NO_METADATA_SERVER_ERROR
+        else
+          raise Signet::AuthorizationError, "Unexpected error code #{resp.status} #{UNEXPECTED_ERROR_SUFFIX}"
+        end
+      end
 
       def log_fetch_query
         if token_type == :id_token

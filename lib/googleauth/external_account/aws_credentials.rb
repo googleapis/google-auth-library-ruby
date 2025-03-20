@@ -113,10 +113,10 @@ module Google
             response = connection.put @imdsv2_session_token_url do |req|
               req.headers["x-aws-ec2-metadata-token-ttl-seconds"] = IMDSV2_TOKEN_EXPIRATION_IN_SECONDS.to_s
             end
+            raise Faraday::Error unless response.success?
           rescue Faraday::Error => e
             raise "Fetching AWS IMDSV2 token error: #{e}"
           end
-          raise Faraday::Error unless response.success?
           @imdsv2_session_token = response.body
           @imdsv2_session_token_expiry = Time.now + IMDSV2_TOKEN_EXPIRATION_IN_SECONDS
           @imdsv2_session_token
