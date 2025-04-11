@@ -63,7 +63,7 @@ describe Google::Auth::OAuth2::STSClient do
     it 'should appropriately handle an error response' do
       stub_request(:post, TOKEN_EXCHANGE_ENDPOINT).to_return(status: 400, body: ERROR_RESPONSE.to_json)
 
-      # Expect an exception to be raised
+      # Expect an AuthorizationError to be raised
       expect {
         sts_client.exchange_token({
           grant_type: GRANT_TYPE,
@@ -72,15 +72,15 @@ describe Google::Auth::OAuth2::STSClient do
           audience: AUDIENCE,
           requested_token_type: REQUESTED_TOKEN_TYPE
         })
-      }.to raise_error(/Token exchange failed with status 400/)
+      }.to raise_error(Google::Auth::AuthorizationError, /Token exchange failed with status 400/)
     end
   end
 
   context "with invalid parameters" do
-    it 'should raise an error if the token exchange endpoint is not provided' do
+    it 'should raise an InitializationError if the token exchange endpoint is not provided' do
       expect {
         Google::Auth::OAuth2::STSClient.new
-      }.to raise_error(/Token exchange endpoint can not be nil/)
+      }.to raise_error(Google::Auth::InitializationError, /Token exchange endpoint can not be nil/)
     end
   end
 end

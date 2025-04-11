@@ -56,8 +56,15 @@ describe "#get_application_default" do
       Dir.mktmpdir do |dir|
         key_path = File.join dir, "does-not-exist"
         ENV[@var_name] = key_path
-        expect { Google::Auth.get_application_default @scope, options }
-          .to raise_error Google::Auth::InitializationError
+        begin
+          Google::Auth.get_application_default @scope, options
+          fail "Expected to raise error"
+        rescue => e
+          expect(e).to be_a Google::Auth::InitializationError
+          expect(e).to be_a Google::Auth::Error
+          expect(e.message).to include "Unable to read the credential file"
+          expect(e.message).to include "does-not-exist"
+        end
       end
     end
 

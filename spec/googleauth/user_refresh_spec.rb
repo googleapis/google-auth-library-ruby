@@ -343,11 +343,14 @@ describe Google::Auth::UserRefreshCredentials do
                    headers: { "Content-Type" => "application/json" })
     end
 
-    it "raises an authorization error" do
+    it "raises an authorization error with detailed information" do
       stub
-      expect { @client.revoke! }.to raise_error(
-        Signet::AuthorizationError
-      )
+      expect { @client.revoke! }.to raise_error do |error|
+        expect(error).to be_a(Google::Auth::AuthorizationError)
+        expect(error.message).to match(/Unexpected error code 400/)
+        expect(error.credential_type_name).to eq("Google::Auth::UserRefreshCredentials")
+        expect(error.principal).to eq(@client.client_id)
+      end
     end
   end
 
