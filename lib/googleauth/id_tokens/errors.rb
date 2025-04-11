@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require "googleauth/errors"
+
 
 module Google
   module Auth
@@ -21,12 +23,16 @@ module Google
       ##
       # Failed to obtain keys from the key source.
       #
-      class KeySourceError < StandardError; end
+      class KeySourceError < StandardError
+        include Google::Auth::Error
+      end
 
       ##
       # Failed to verify a token.
       #
-      class VerificationError < StandardError; end
+      class VerificationError < StandardError
+        include Google::Auth::Error
+      end
 
       ##
       # Failed to verify a token because it is expired.
