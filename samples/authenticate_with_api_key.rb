@@ -34,11 +34,11 @@ def authenticate_with_api_key api_key_string
   #   end
 
   # Initialize API key credentials using the class factory method
-  credentials = Google::Auth::APIKeyCredentials.make_creds(api_key: api_key_string)
+  credentials = Google::Auth::APIKeyCredentials.make_creds api_key: api_key_string
 
   # Initialize the Language Service client with the API key credentials
   client = Google::Cloud::Language::V1::LanguageService::Client.new do |config|
-    config.credentials = credentials
+    config.credentials = ::Google::Cloud::Language::V1::LanguageService::Credentials.new credentials
   end
 
   # Create a document to analyze
