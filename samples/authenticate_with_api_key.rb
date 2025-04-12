@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# [START auth_cloud_with_api_key]
-require "googleauth/api_key"
+# [START apikeys_authenticate_api_key]
+require "googleauth"
 require "google/cloud/language/v1"
 
 def authenticate_with_api_key api_key_string
@@ -55,7 +55,7 @@ def authenticate_with_api_key api_key_string
   puts "Sentiment: #{sentiment.score}, #{sentiment.magnitude}"
   puts "Successfully authenticated using the API key"
 end
-# [END auth_cloud_with_api_key]
+# [END apikeys_authenticate_api_key]
 
 if $PROGRAM_NAME == __FILE__
   api_key = ARGV[0]
