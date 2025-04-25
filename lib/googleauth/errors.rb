@@ -58,8 +58,8 @@ module Google
         # @return [Error] The new error with details
         def with_details message, credential_type_name:, principal:
           new(message).tap do |error|
-            error.instance_variable_set :"@credential_type_name", credential_type_name
-            error.instance_variable_set :"@principal", principal
+            error.instance_variable_set :@credential_type_name, credential_type_name
+            error.instance_variable_set :@principal, principal
           end
         end
       end
