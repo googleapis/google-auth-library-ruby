@@ -63,7 +63,7 @@ module Google
       # @param [String] code_verifier
       #  Random string of 43-128 chars used to verify the key exchange using
       #  PKCE.
-      # @raise [Google::Auth::Error]
+      # @raise [Google::Auth::InitializationError]
       #  If client_id is nil or scope is nil
       def initialize client_id, scope, token_store,
                      legacy_callback_uri = nil,
@@ -135,7 +135,7 @@ module Google
       #  the requested scopes
       # @return [Google::Auth::UserRefreshCredentials]
       #  Stored credentials, nil if none present
-      # @raise [Google::Auth::DetailedError]
+      # @raise [Google::Auth::CredentialsError]
       #  If the client ID in the stored token doesn't match the configured client ID
       def get_credentials user_id, scope = nil
         saved_token = stored_token user_id
@@ -294,7 +294,7 @@ module Google
       # @param [String] user_id
       #  Unique ID of the user for loading/storing credentials.
       # @return [String] The saved token from @token_store
-      # @raise [Google::Auth::Error]
+      # @raise [Google::Auth::InitializationError]
       #  If user_id is nil or token_store is nil
       def stored_token user_id
         raise InitializationError, NIL_USER_ID_ERROR if user_id.nil?
@@ -323,7 +323,7 @@ module Google
       #  Absolute URL to resolve the callback against if necessary.
       # @return [String]
       #  Redirect URI
-      # @raise [Google::Auth::DetailedError]
+      # @raise [Google::Auth::CredentialsError]
       #  If the callback URI is relative and base_url is nil or not absolute
       def redirect_uri_for base_url
         return @callback_uri if uri_is_postmessage?(@callback_uri) || !URI(@callback_uri).scheme.nil?

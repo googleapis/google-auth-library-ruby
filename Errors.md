@@ -14,8 +14,8 @@ These errors are used throughout the main library for general authentication and
 
 ```
 Google::Auth::Error (module)
+  ├── Google::Auth::InitializationError (class)
   └── Google::Auth::DetailedError (module)
-      ├── Google::Auth::InitializationError (class)
       ├── Google::Auth::CredentialsError (class)
       ├── Google::Auth::AuthorizationError (class)
       ├── Google::Auth::UnexpectedStatusError (class)
@@ -43,7 +43,7 @@ Google::Auth::Error (module)
 
 - **`Google::Auth::DetailedError`**: Extends `Error` to include detailed information about the credential that caused the error, including the credential type and principal.
 
-### Error Classes
+## Core Authentication Error Classes
 
 - **`InitializationError`**: Raised during credential initialization when required parameters are missing or invalid.
 
@@ -63,11 +63,7 @@ Errors that include the `DetailedError` module provide additional context about 
 
 - **`principal`**: The identity associated with the credentials (e.g., an email address for service accounts, `:api_key` for API key credentials)
 
-- **`details`**: A hash containing all additional context provided when the error was created
-
-## Examples
-
-### Catching and Handling Errors
+### Example: Catching and Handling Core Errors
 
 ```ruby
 begin
@@ -87,6 +83,10 @@ rescue Google::Auth::Error => e
   puts "Unknown Google Auth error: #{e.message}"
 end
 ```
+
+## Backwards compatibility
+
+Some classes in the Google Auth Library raise standard Ruby `ArgumentError` and `TypeError`. These errors are preserved for backward compatibility, however the new code will raise `Google::Auth::InitializationError` instead.
 
 ## ID Token Verification
 
@@ -125,23 +125,25 @@ begin
   
 rescue Google::Auth::IDTokens::ExpiredTokenError => e
   puts "The token has expired. Please obtain a new one."
-  # Redirect to login page or refresh token
-  
-rescue Google::Auth::IDTokens::AudienceMismatchError => e
-  puts "This token is not intended for this application."
-  # Log potential security issue - token might be for different app
-  
+
 rescue Google::Auth::IDTokens::SignatureError => e
   puts "Invalid token signature."
-  # Log security concern - potential tampering
+
+rescue Google::Auth::IDTokens::IssuerMismatchError => e
+  puts "Invalid token issuer."
+
+rescue Google::Auth::IDTokens::AudienceMismatchError => e
+  puts "This token is not intended for this application (invalid audience)."
   
+rescue Google::Auth::IDTokens::AuthorizedPartyMismatchError => e
+  puts "Invalid token authorized party."
+
 rescue Google::Auth::IDTokens::VerificationError => e
   puts "Token verification failed: #{e.message}"
   # Generic verification error handling
   
 rescue Google::Auth::IDTokens::KeySourceError => e
   puts "Unable to retrieve verification keys: #{e.message}"
-  # Network or configuration issue with key retrieval
   
 rescue Google::Auth::Error => e
   puts "Unknown Google Auth error: #{e.message}"

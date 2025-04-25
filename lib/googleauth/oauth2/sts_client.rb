@@ -40,7 +40,7 @@ module Google
         # @param [Hash] options Configuration options
         # @option options [String] :token_exchange_endpoint The token exchange endpoint
         # @option options [Faraday::Connection] :connection The Faraday connection to use
-        # @raise [Google::Auth::Error] If token_exchange_endpoint is nil
+        # @raise [Google::Auth::InitializationError] If token_exchange_endpoint is nil
         def initialize options = {}
           raise InitializationError, "Token exchange endpoint can not be nil" if options[:token_exchange_endpoint].nil?
           self.default_connection = options[:connection]

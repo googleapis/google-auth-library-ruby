@@ -53,25 +53,6 @@ describe Google::Auth::DetailedError do
     _(error.credential_type_name).must_equal "TestCredential"
     _(error.principal).must_equal "test-principal@example.com"
   end
-  
-  it "stores all details in the details hash" do
-    custom_error = Class.new(StandardError) do
-      include Google::Auth::DetailedError
-    end
-    
-    details = {
-      credential_type_name: "TestCredential",
-      principal: "test-principal@example.com",
-      extra_info: "additional data",
-      numeric_value: 42
-    }
-    
-    error = custom_error.with_details("Custom error message", **details)
-    
-    _(error.details).must_equal details
-    _(error.details[:extra_info]).must_equal "additional data"
-    _(error.details[:numeric_value]).must_equal 42
-  end
 end
 
 describe Google::Auth::InitializationError do
@@ -95,20 +76,6 @@ describe Google::Auth::CredentialsError do
   it "includes the DetailedError module" do
     error = Google::Auth::CredentialsError.new("Credential error")
     _(error).must_be_kind_of Google::Auth::DetailedError
-  end
-  
-  it "can be created with detailed information" do
-    error = Google::Auth::CredentialsError.with_details(
-      "Failed to fetch credentials",
-      credential_type_name: "Google::Auth::BearerTokenCredentials",
-      principal: :bearer_token,
-      http_status: 401
-    )
-    
-    _(error.message).must_equal "Failed to fetch credentials"
-    _(error.credential_type_name).must_equal "Google::Auth::BearerTokenCredentials"
-    _(error.principal).must_equal :bearer_token
-    _(error.details[:http_status]).must_equal 401
   end
 end
 

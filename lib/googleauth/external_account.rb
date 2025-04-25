@@ -43,7 +43,7 @@ module Google
         #   Google::Auth::ExternalAccount::IdentityPoolCredentials,
         #   Google::Auth::ExternalAccount::PluggableAuthCredentials]
         #   The appropriate external account credentials based on the credential source
-        # @raise [Google::Auth::Error] If the json file is missing, lacks required fields,
+        # @raise [Google::Auth::InitializationError] If the json file is missing, lacks required fields,
         #   or does not contain a supported credential source
         def self.make_creds options = {}
           json_key_io, scope = options.values_at :json_key_io, :scope
@@ -63,7 +63,7 @@ module Google
         #
         # @param json_key_io [IO] An IO object containing the JSON key
         # @return [Hash] The parsed JSON key
-        # @raise [Google::Auth::Error] If the JSON is missing required fields
+        # @raise [Google::Auth::InitializationError] If the JSON is missing required fields
         def self.read_json_key json_key_io
           json_key = MultiJson.load json_key_io.read, symbolize_keys: true
           wanted = [
@@ -101,7 +101,7 @@ module Google
           # @return [Google::Auth::ExternalAccount::IdentityPoolCredentials,
           #   Google::Auth::ExternalAccount::PluggableAuthCredentials]
           #   The appropriate external account credentials
-          # @raise [Google::Auth::Error] If the credential source is not a supported type
+          # @raise [Google::Auth::InitializationError] If the credential source is not a supported type
           def make_external_account_credentials user_creds
             unless user_creds[:credential_source][:file].nil? && user_creds[:credential_source][:url].nil?
               return Google::Auth::ExternalAccount::IdentityPoolCredentials.new user_creds

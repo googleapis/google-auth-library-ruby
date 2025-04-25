@@ -110,7 +110,7 @@ module Google
         # Retrieves an IMDSv2 session token or returns a cached token if valid
         #
         # @return [String] The IMDSv2 session token
-        # @raise [Google::Auth::DetailedError] If the token URL is missing or there's an error retrieving the token
+        # @raise [Google::Auth::CredentialsError] If the token URL is missing or there's an error retrieving the token
         def imdsv2_session_token
           return @imdsv2_session_token unless imdsv2_session_token_invalid?
           if @imdsv2_session_token_url.nil?
@@ -150,7 +150,7 @@ module Google
         # @param [Hash, nil] data Optional data to send in POST requests
         # @param [Hash] headers Optional request headers
         # @return [Faraday::Response] The successful response
-        # @raise [Google::Auth::DetailedError] If the request fails
+        # @raise [Google::Auth::CredentialsError] If the request fails
         def get_aws_resource url, name, data: nil, headers: {}
           begin
             headers["x-aws-ec2-metadata-token"] = imdsv2_session_token
@@ -210,7 +210,7 @@ module Google
         # credentials needed to sign requests to AWS APIs.
         #
         # @return [String] The AWS role name
-        # @raise [Google::Auth::DetailedError] If the credential verification URL is not set or if the request fails
+        # @raise [Google::Auth::CredentialsError] If the credential verification URL is not set or if the request fails
         def fetch_metadata_role_name
           unless @credential_verification_url
             raise CredentialsError.with_details(
@@ -232,7 +232,7 @@ module Google
         # Reads the name of the AWS region from the environment
         #
         # @return [String] The name of the AWS region
-        # @raise [Google::Auth::DetailedError] If the region is not set in the environment
+        # @raise [Google::Auth::CredentialsError] If the region is not set in the environment
         #   and the region_url was not set in credentials source
         def region
           @region = ENV[CredentialsLoader::AWS_REGION_VAR] || ENV[CredentialsLoader::AWS_DEFAULT_REGION_VAR]
@@ -291,7 +291,7 @@ module Google
         #   * :method - The HTTP method
         #   * :data - The request payload (if present)
         #
-        # @raise [Google::Auth::DetailedError] If the AWS service URL is invalid
+        # @raise [Google::Auth::CredentialsError] If the AWS service URL is invalid
         #
         def generate_signed_request aws_credentials, original_request
           uri = Addressable::URI.parse original_request[:url]

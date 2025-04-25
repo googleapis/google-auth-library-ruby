@@ -73,7 +73,7 @@ module Google
       #     The following keys are recognized:
       #     * `:default_connection` The connection object to use.
       #     * `:connection_builder` A `Proc` that returns a connection.
-      # @raise [Google::Auth::Error] If the credentials file cannot be read
+      # @raise [Google::Auth::InitializationError] If the credentials file cannot be read
       def from_env scope = nil, options = {}
         options = interpret_options scope, options
         if ENV.key?(ENV_VAR) && !ENV[ENV_VAR].empty?
@@ -100,7 +100,7 @@ module Google
       #     The following keys are recognized:
       #     * `:default_connection` The connection object to use.
       #     * `:connection_builder` A `Proc` that returns a connection.
-      # @raise [Google::Auth::Error] If the credentials file cannot be read
+      # @raise [Google::Auth::InitializationError] If the credentials file cannot be read
       def from_well_known_path scope = nil, options = {}
         options = interpret_options scope, options
         home_var = OS.windows? ? "APPDATA" : "HOME"
@@ -127,7 +127,7 @@ module Google
       #     The following keys are recognized:
       #     * `:default_connection` The connection object to use.
       #     * `:connection_builder` A `Proc` that returns a connection.
-      # @raise [Google::Auth::Error] If the credentials file cannot be read or is invalid
+      # @raise [Google::Auth::InitializationError] If the credentials file cannot be read or is invalid
       def from_system_default_path scope = nil, options = {}
         options = interpret_options scope, options
         if OS.windows?

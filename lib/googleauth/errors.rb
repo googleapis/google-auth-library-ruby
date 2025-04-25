@@ -44,7 +44,7 @@ module Google
       # @return [Hash] Additional details about the error
       attr_reader :details
 
-      # Hacks
+      # @private
       def self.included base
         base.extend ClassMethods
       end
@@ -53,42 +53,29 @@ module Google
       module ClassMethods
         # Creates a new error with detailed information
         # @param message [String] The error message
-        # @param options [Hash] The options to create the error with
-        # @option options [String] :credential_type_name The credential type that raised the error
-        # @option options [String, Symbol] :principal The principal for the authentication flow
+        # @param credential_type_name [String] The credential type that raised the error
+        # @param principal [String, Symbol] The principal for the authentication flow
         # @return [Error] The new error with details
-        def with_details message, **options
+        def with_details message, credential_type_name:, principal:
           new(message).tap do |error|
-            # Store each option as an instance variable
-            options.each do |key, value|
-              error.instance_variable_set :"@#{key}", value
-            end
-            # Also store the entire options hash for convenience
-            error.instance_variable_set :@details, options
+            error.instance_variable_set :"@credential_type_name", credential_type_name
+            error.instance_variable_set :"@principal", principal
           end
         end
       end
     end
 
     ##
-    # @private
     # Error raised during Credentials initialization.
     # All new code should use this instead of ArgumentError during initializtion.
-    #
-    # The YARD documentation describing raising this error should use `Google::Auth::Error`,
-    # e.g. `@raise [Google::Auth::Error]`
     #
     class InitializationError < StandardError
       include Error
     end
 
     ##
-    # @private
     # Generic error raised during operation of Credentials
     # This should be used for all purposes not covered by other errors.
-    #
-    # The YARD documentation describing raising this error should use `Google::Auth::DetailedError`,
-    # e.g. `@raise [Google::Auth::DetailedError]`
     #
     class CredentialsError < StandardError
       include DetailedError
@@ -96,22 +83,21 @@ module Google
 
     ##
     # An error indicating the remote server refused to authorize the client.
-    # Maintains backward compatibility with Signet
-    # This is OK to use in the new code, even if the class is not Signet-based,
-    # as long as there is an exchange with a remote server.
+    # Maintains backward compatibility with Signet.
     #
-    # For the new usages, the YARD documentation describing raising this error
-    # should use `Google::Auth::DetailedError`, e.g. `@raise [Google::Auth::DetailedError]`
-    # The old usages refer to `AuthorizationError` for backwards compatibility
+    # Should not be used in the new code, even when wrapping `Signet::AuthorizationError`.
+    # New code should use CredentialsError instead.
     #
     class AuthorizationError < Signet::AuthorizationError
       include DetailedError
     end
 
     ##
-    # An error indicating that the server sent an unexpected http status
-    # Maintains backward compatibility with Signet
-    # Should not be used in the new code. Use AuthorizationError instead.
+    # An error indicating that the server sent an unexpected http status.
+    # Maintains backward compatibility with Signet.
+    #
+    # Should not be used in the new code, even when wrapping `Signet::UnexpectedStatusError`.
+    # New code should use CredentialsError instead.
     #
     class UnexpectedStatusError < Signet::UnexpectedStatusError
       include DetailedError
@@ -119,8 +105,10 @@ module Google
 
     ##
     # An error indicating the client failed to parse a value.
-    # Maintains backward compatibility with Signet
-    # Should not be used in the new code.
+    # Maintains backward compatibility with Signet.
+    #
+    # Should not be used in the new code, even when wrapping `Signet::ParseError`.
+    # New code should use CredentialsError instead.
     #
     class ParseError < Signet::ParseError
       include DetailedError

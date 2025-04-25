@@ -51,7 +51,7 @@ module Google
     #       connection to use for token refresh requests.
     #     * `:connection` The connection to use to determine whether GCE
     #       metadata credentials are available.
-    # @raise [Google::Auth::Error] If the credentials cannot be found
+    # @raise [Google::Auth::InitializationError] If the credentials cannot be found
     def get_application_default scope = nil, options = {}
       creds = DefaultCredentials.from_env(scope, options) ||
               DefaultCredentials.from_well_known_path(scope, options) ||

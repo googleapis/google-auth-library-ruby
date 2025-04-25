@@ -46,7 +46,7 @@ module Google
         # @option options [String] :audience Audience for the token
         # @option options [Hash] :credential_source Credential source configuration that contains executable
         #   configuration
-        # @raise [Google::Auth::Error] If executable source, command is missing, or timeout is invalid
+        # @raise [Google::Auth::InitializationError] If executable source, command is missing, or timeout is invalid
         def initialize options = {}
           base_setup options
 
@@ -73,7 +73,7 @@ module Google
         # Retrieves the subject token using the credential_source object.
         #
         # @return [String] The retrieved subject token
-        # @raise [Google::Auth::DetailedError] If executables are not allowed, if token retrieval fails,
+        # @raise [Google::Auth::CredentialsError] If executables are not allowed, if token retrieval fails,
         #   or if the token is invalid
         def retrieve_subject_token!
           unless ENV[ENABLE_PLUGGABLE_ENV] == "1"

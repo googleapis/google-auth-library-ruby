@@ -267,7 +267,7 @@ module Google
       # @private
       # @param [Faraday::Response] resp The HTTP response
       # @param [Class] error_class The error class to instantiate
-      # @raise [Google::Auth::DetailedError] The appropriate error with details
+      # @raise [StandardError] The appropriate error with details
       def handle_error_response resp, error_class
         msg = "Unexpected error code #{resp.status}.\n #{resp.env.response_body} #{ERROR_SUFFIX}"
         raise error_class.with_details(
@@ -295,7 +295,7 @@ module Google
       #
       # @return [Time, nil] The normalized Time object, or nil if the input is nil.
       #
-      # @raise [Google::Auth::DetailedError] If the input is not a Time, String, or nil.
+      # @raise [Google::Auth::CredentialsError] If the input is not a Time, String, or nil.
       def normalize_timestamp time
         case time
         when NilClass

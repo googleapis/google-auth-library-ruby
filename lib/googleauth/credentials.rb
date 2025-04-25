@@ -392,7 +392,7 @@ module Google
       #   parameters of the `Signet::OAuth2::Client`, such as connection parameters,
       #   timeouts, etc.
       #
-      # @raise [Google::Auth::Error] If source_creds is nil
+      # @raise [Google::Auth::InitializationError] If source_creds is nil
       # @raise [ArgumentError] If both scope and target_audience are specified
       #
       def initialize source_creds, options = {}
@@ -563,7 +563,7 @@ module Google
       # Verify that the keyfile argument is a file.
       #
       # @param [String] keyfile Path to the keyfile
-      # @raise [Google::Auth::Error] If the keyfile does not exist
+      # @raise [Google::Auth::InitializationError] If the keyfile does not exist
       def verify_keyfile_exists! keyfile
         exists = ::File.file? keyfile
         raise InitializationError, "The keyfile '#{keyfile}' is not a valid file." unless exists

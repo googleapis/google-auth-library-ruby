@@ -63,7 +63,7 @@ module Google
       # @note Direct instantiation is discouraged to avoid embedding IDs
       #       and secrets in source. See {#from_file} to load from
       #       `client_secrets.json` files.
-      # @raise [Google::Auth::Error] If id or secret is nil
+      # @raise [Google::Auth::InitializationError] If id or secret is nil
       #
       def initialize id, secret
         raise InitializationError, "Client id can not be nil" if id.nil?
@@ -79,7 +79,7 @@ module Google
       # @param [String, File] file
       #  Path of file to read from
       # @return [Google::Auth::ClientID]
-      # @raise [Google::Auth::Error] If file is nil
+      # @raise [Google::Auth::InitializationError] If file is nil
       #
       def self.from_file file
         raise InitializationError, "File can not be nil." if file.nil?
@@ -97,7 +97,7 @@ module Google
       # @param [hash] config
       #  Parsed contents of the JSON file
       # @return [Google::Auth::ClientID]
-      # @raise [Google::Auth::Error] If config is nil or missing required elements
+      # @raise [Google::Auth::InitializationError] If config is nil or missing required elements
       #
       def self.from_hash config
         raise InitializationError, "Hash can not be nil." if config.nil?

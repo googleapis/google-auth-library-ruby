@@ -69,7 +69,7 @@ module Google
       #
       # @param [IO] json_key_io An IO object containing the JSON key
       # @return [Hash] The parsed JSON key
-      # @raise [Google::Auth::Error] If the JSON is missing required fields
+      # @raise [Google::Auth::InitializationError] If the JSON is missing required fields
       def self.read_json_key json_key_io
         json_key = MultiJson.load json_key_io.read
         wanted = ["client_id", "client_secret", "refresh_token"]

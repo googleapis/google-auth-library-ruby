@@ -80,7 +80,7 @@ module Google
         #
         # @param time [Time, String, nil] The timestamp to normalize
         # @return [Time, nil] The normalized timestamp or nil if input is nil
-        # @raise [Google::Auth::Error] If the time value is not nil, Time, or String
+        # @raise [Google::Auth::CredentialsError] If the time value is not nil, Time, or String
         def normalize_timestamp time
           case time
           when NilClass

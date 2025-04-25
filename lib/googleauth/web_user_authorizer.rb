@@ -154,7 +154,7 @@ module Google
       #  Optional key-values to be returned to the oauth callback.
       # @return [String]
       #  Authorization url
-      # @raise [Google::Auth::Error]
+      # @raise [Google::Auth::InitializationError]
       #  If request is nil or request.session is nil
       def get_authorization_url options = {}
         options = options.dup

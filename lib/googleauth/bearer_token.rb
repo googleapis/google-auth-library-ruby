@@ -139,7 +139,7 @@ module Google
       #
       # @param [Hash] _options Options for fetching a new token (not used).
       # @return [nil] Always returns nil.
-      # @raise [Google::Auth::DetailedError] If the token is expired.
+      # @raise [Google::Auth::CredentialsError] If the token is expired.
       def fetch_access_token! _options = {}
         if @expires_at && Time.now >= @expires_at
           raise CredentialsError.with_details(
