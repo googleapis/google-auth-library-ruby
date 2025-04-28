@@ -1,5 +1,15 @@
 # Release History
 
+### 1.14.1 (2025-04-28)
+
+#### Bug Fixes
+
+* fix incorrect error and apply some code complexity refactoring ([#529](https://github.com/googleapis/google-auth-library-ruby/issues/529)) 
+#### Documentation
+
+* add summary documentation on credentials types and improve YARD comments 
+* add summary documentation on credentials types and improve YARD comments ([#530](https://github.com/googleapis/google-auth-library-ruby/issues/530)) 
+
 ### 1.14.0 (2025-03-14)
 
 #### Features
