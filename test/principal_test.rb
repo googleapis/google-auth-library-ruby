@@ -167,6 +167,12 @@ describe "Principal methods" do
     end
   end
 
+  describe "WebUserAuthorizer" do
+    it "should return :web_user_authorization as the principal" do
+      _(Google::Auth::WebUserAuthorizer.principal).must_equal :web_user_authorization
+    end
+  end
+
   describe "External Account Base Credentials" do
     it "returns audience as principal" do
       # Create a test class inline that includes the module

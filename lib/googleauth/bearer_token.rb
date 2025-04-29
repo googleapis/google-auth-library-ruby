@@ -13,6 +13,7 @@
 # limitations under the License.
 
 require "googleauth/base_client"
+require "googleauth/errors"
 
 module Google
   module Auth
@@ -80,6 +81,7 @@ module Google
       #   If `expires_at` is `nil`, it is treated as "token never expires".
       # @option options [String] :universe_domain The universe domain of the universe
       #   this token is for (defaults to googleapis.com)
+      # @raise [ArgumentError] If the bearer token is nil or empty
       def initialize options = {}
         raise ArgumentError, "Bearer token must be provided" if options[:token].nil? || options[:token].empty?
         @token = options[:token]
@@ -137,10 +139,14 @@ module Google
       #
       # @param [Hash] _options Options for fetching a new token (not used).
       # @return [nil] Always returns nil.
-      # @raise [StandardError] If the token is expired.
+      # @raise [Google::Auth::CredentialsError] If the token is expired.
       def fetch_access_token! _options = {}
         if @expires_at && Time.now >= @expires_at
-          raise "Bearer token has expired."
+          raise CredentialsError.with_details(
+            "Bearer token has expired.",
+            credential_type_name: self.class.name,
+            principal: principal
+          )
         end
 
         nil

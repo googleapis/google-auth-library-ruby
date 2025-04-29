@@ -13,6 +13,7 @@
 # limitations under the License.
 
 require "google-cloud-env"
+require "googleauth/errors"
 require "googleauth/signet"
 
 module Google
@@ -140,7 +141,11 @@ module Google
           handle_metadata_response resp
         rescue Google::Cloud::Env::MetadataServerNotResponding => e
           log_fetch_err e
-          raise Signet::AuthorizationError, e.message
+          raise AuthorizationError.with_details(
+            e.message,
+            credential_type_name: self.class.name,
+            principal: principal
+          )
         end
       end
 
@@ -242,6 +247,18 @@ module Google
         end
       end
 
+      # Constructs a token hash from the metadata server response
+      #
+      # @private
+      # @param [String] body The response body from the metadata server
+      # @param [String] content_type The content type of the response
+      # @param [Float] retrieval_time The monotonic time when the response was retrieved
+      #
+      # @return [Hash] A hash containing:
+      #   - access_token/id_token: The actual token depending on what was requested
+      #   - token_type: The type of token (usually "Bearer")
+      #   - expires_in: Seconds until token expiration (adjusted for freshness)
+      #   - universe_domain: The universe domain for the token (if not overridden)
       def build_token_hash body, content_type, retrieval_time
         hash =
           if ["text/html", "application/text"].include? content_type

@@ -41,6 +41,22 @@ describe Google::Auth::WebUserAuthorizer do
       )
     end
     let(:request) { Rack::Request.new env }
+    
+    it "should raise InitializationError if request is nil" do
+      expect { authorizer.get_authorization_url }.to raise_error do |error|
+        expect(error).to be_a(Google::Auth::InitializationError)
+        expect(error.message).to eq("Request is required.")
+      end
+    end
+    
+    it "should raise InitializationError if session is nil" do
+      req_without_session = double("request", session: nil)
+      expect { authorizer.get_authorization_url(request: req_without_session) }.to raise_error do |error|
+        expect(error).to be_a(Google::Auth::InitializationError)
+        expect(error.message).to eq("Sessions must be enabled")
+      end
+    end
+    
     it "should include current url in state" do
       url = authorizer.get_authorization_url request: request
       expect(url).to match(
@@ -135,11 +151,17 @@ describe Google::Auth::WebUserAuthorizer do
       expect(next_url).to eq "/foo"
     end
 
-    it "should fail if xrsf token in session and does not match request" do
+    it "should fail with AuthorizationError with detailed information if xrsf token in session and does not match request" do
       request.session["g-xsrf-token"] = "123"
-      expect { credentials }.to raise_error(Signet::AuthorizationError)
+      expect { credentials }.to raise_error do |error|
+        expect(error).to be_a(Google::Auth::AuthorizationError)
+        expect(error.message).to match(/State token does not match expected value/)
+        expect(error.credential_type_name).to eq("Google::Auth::WebUserAuthorizer")
+        expect(error.principal).to eq(:web_user_authorization)
+      end
     end
   end
+  
 
   describe "#handle_auth_callback" do
     let(:result) { authorizer.handle_auth_callback "user1", request }
@@ -147,6 +169,58 @@ describe Google::Auth::WebUserAuthorizer do
     let(:next_url) { result[1] }
 
     it_behaves_like "handles callback"
+    
+    context "when code is missing from request" do
+      let :env do
+        Rack::MockRequest.env_for(
+          "http://example.com:8080/oauth2callback?"\
+          "state=%7B%22current_uri%22%3A%22%2Ffoo%22%2C%22"\
+          "session_id%22%3A%22abc%22%7D",
+          "REMOTE_ADDR" => "10.10.10.10"
+        )
+      end
+      
+      let(:request) { Rack::Request.new env }
+      
+      before :example do
+        request.session["g-xsrf-token"] = "abc"
+      end
+      
+      it "should fail with AuthorizationError with detailed information" do
+        expect { authorizer.handle_auth_callback "user1", request }.to raise_error do |error|
+          expect(error).to be_a(Google::Auth::AuthorizationError)
+          expect(error.message).to match(/Missing authorization code in request/)
+          expect(error.credential_type_name).to eq("Google::Auth::WebUserAuthorizer")
+          expect(error.principal).to eq(:web_user_authorization)
+        end
+      end
+    end
+    
+    context "when error is present in callback state" do
+      let :env do
+        Rack::MockRequest.env_for(
+          "http://example.com:8080/oauth2callback?error=access_denied&code=authcode&"\
+          "state=%7B%22current_uri%22%3A%22%2Ffoo%22%2C%22"\
+          "session_id%22%3A%22abc%22%7D",
+          "REMOTE_ADDR" => "10.10.10.10"
+        )
+      end
+      
+      let(:request) { Rack::Request.new env }
+      
+      before :example do
+        request.session["g-xsrf-token"] = "abc"
+      end
+      
+      it "should fail with AuthorizationError with detailed information" do
+        expect { authorizer.handle_auth_callback "user1", request }.to raise_error do |error|
+          expect(error).to be_a(Google::Auth::AuthorizationError)
+          expect(error.message).to match(/Authorization error: access_denied/)
+          expect(error.credential_type_name).to eq("Google::Auth::WebUserAuthorizer")
+          expect(error.principal).to eq(:web_user_authorization)
+        end
+      end
+    end
   end
 
   describe "#handle_auth_callback_deferred and #get_credentials" do
@@ -160,5 +234,59 @@ describe Google::Auth::WebUserAuthorizer do
     end
 
     it_behaves_like "handles callback"
+    
+    context "when code is missing from request" do
+      let :env do
+        Rack::MockRequest.env_for(
+          "http://example.com:8080/oauth2callback?"\
+          "state=%7B%22current_uri%22%3A%22%2Ffoo%22%2C%22"\
+          "session_id%22%3A%22abc%22%7D",
+          "REMOTE_ADDR" => "10.10.10.10"
+        )
+      end
+      
+      let(:request) { Rack::Request.new env }
+      
+      before :example do
+        request.session["g-xsrf-token"] = "abc"
+        Google::Auth::WebUserAuthorizer.handle_auth_callback_deferred request
+      end
+      
+      it "should fail with AuthorizationError with detailed information" do
+        expect { authorizer.get_credentials "user1", request }.to raise_error do |error|
+          expect(error).to be_a(Google::Auth::AuthorizationError)
+          expect(error.message).to match(/Missing authorization code in request/)
+          expect(error.credential_type_name).to eq("Google::Auth::WebUserAuthorizer")
+          expect(error.principal).to eq(:web_user_authorization)
+        end
+      end
+    end
+    
+    context "when error is present in callback state" do
+      let :env do
+        Rack::MockRequest.env_for(
+          "http://example.com:8080/oauth2callback?error=access_denied&code=authcode&"\
+          "state=%7B%22current_uri%22%3A%22%2Ffoo%22%2C%22"\
+          "session_id%22%3A%22abc%22%7D",
+          "REMOTE_ADDR" => "10.10.10.10"
+        )
+      end
+      
+      let(:request) { Rack::Request.new env }
+      
+      before :example do
+        request.session["g-xsrf-token"] = "abc"
+        Google::Auth::WebUserAuthorizer.handle_auth_callback_deferred request
+      end
+      
+      it "should fail with AuthorizationError with detailed information" do
+        expect { authorizer.get_credentials "user1", request }.to raise_error do |error|
+          expect(error).to be_a(Google::Auth::AuthorizationError)
+          expect(error.message).to match(/Authorization error: access_denied/)
+          expect(error.credential_type_name).to eq("Google::Auth::WebUserAuthorizer")
+          expect(error.principal).to eq(:web_user_authorization)
+        end
+      end
+    end
   end
 end

@@ -15,6 +15,7 @@
 require "time"
 require "uri"
 require "googleauth/credentials_loader"
+require "googleauth/errors"
 require "googleauth/external_account/aws_credentials"
 require "googleauth/external_account/identity_pool_credentials"
 require "googleauth/external_account/pluggable_credentials"
@@ -35,30 +36,41 @@ module Google
 
         # Create a ExternalAccount::Credentials
         #
-        # @param json_key_io [IO] an IO from which the JSON key can be read
-        # @param scope [String,Array,nil] the scope(s) to access
+        # @param options [Hash] Options for creating credentials
+        # @option options [IO] :json_key_io (required) An IO object containing the JSON key
+        # @option options [String,Array,nil] :scope The scope(s) to access
+        # @return [Google::Auth::ExternalAccount::AwsCredentials,
+        #   Google::Auth::ExternalAccount::IdentityPoolCredentials,
+        #   Google::Auth::ExternalAccount::PluggableAuthCredentials]
+        #   The appropriate external account credentials based on the credential source
+        # @raise [Google::Auth::InitializationError] If the json file is missing, lacks required fields,
+        #   or does not contain a supported credential source
         def self.make_creds options = {}
           json_key_io, scope = options.values_at :json_key_io, :scope
 
-          raise "A json file is required for external account credentials." unless json_key_io
+          raise InitializationError, "A json file is required for external account credentials." unless json_key_io
           user_creds = read_json_key json_key_io
 
           # AWS credentials is determined by aws subject token type
           return make_aws_credentials user_creds, scope if user_creds[:subject_token_type] == AWS_SUBJECT_TOKEN_TYPE
 
-          raise MISSING_CREDENTIAL_SOURCE if user_creds[:credential_source].nil?
+          raise InitializationError, MISSING_CREDENTIAL_SOURCE if user_creds[:credential_source].nil?
           user_creds[:scope] = scope
           make_external_account_credentials user_creds
         end
 
         # Reads the required fields from the JSON.
+        #
+        # @param json_key_io [IO] An IO object containing the JSON key
+        # @return [Hash] The parsed JSON key
+        # @raise [Google::Auth::InitializationError] If the JSON is missing required fields
         def self.read_json_key json_key_io
           json_key = MultiJson.load json_key_io.read, symbolize_keys: true
           wanted = [
             :audience, :subject_token_type, :token_url, :credential_source
           ]
           wanted.each do |key|
-            raise "the json is missing the #{key} field" unless json_key.key? key
+            raise InitializationError, "the json is missing the #{key} field" unless json_key.key? key
           end
           json_key
         end
@@ -66,6 +78,11 @@ module Google
         class << self
           private
 
+          # Creates AWS credentials from the provided user credentials
+          #
+          # @param user_creds [Hash] The user credentials containing AWS credential source information
+          # @param scope [String,Array,nil] The scope(s) to access
+          # @return [Google::Auth::ExternalAccount::AwsCredentials] The AWS credentials
           def make_aws_credentials user_creds, scope
             Google::Auth::ExternalAccount::AwsCredentials.new(
               audience: user_creds[:audience],
@@ -78,6 +95,13 @@ module Google
             )
           end
 
+          # Creates the appropriate external account credentials based on the credential source type
+          #
+          # @param user_creds [Hash] The user credentials containing credential source information
+          # @return [Google::Auth::ExternalAccount::IdentityPoolCredentials,
+          #   Google::Auth::ExternalAccount::PluggableAuthCredentials]
+          #   The appropriate external account credentials
+          # @raise [Google::Auth::InitializationError] If the credential source is not a supported type
           def make_external_account_credentials user_creds
             unless user_creds[:credential_source][:file].nil? && user_creds[:credential_source][:url].nil?
               return Google::Auth::ExternalAccount::IdentityPoolCredentials.new user_creds
@@ -85,7 +109,7 @@ module Google
             unless user_creds[:credential_source][:executable].nil?
               return Google::Auth::ExternalAccount::PluggableAuthCredentials.new user_creds
             end
-            raise INVALID_EXTERNAL_ACCOUNT_TYPE
+            raise InitializationError, INVALID_EXTERNAL_ACCOUNT_TYPE
           end
         end
       end

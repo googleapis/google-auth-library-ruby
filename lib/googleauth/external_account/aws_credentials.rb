@@ -13,6 +13,7 @@
 # limitations under the License.
 
 require "time"
+require "googleauth/errors"
 require "googleauth/external_account/base_credentials"
 require "googleauth/external_account/external_account_utils"
 
@@ -106,17 +107,32 @@ module Google
 
         private
 
+        # Retrieves an IMDSv2 session token or returns a cached token if valid
+        #
+        # @return [String] The IMDSv2 session token
+        # @raise [Google::Auth::CredentialsError] If the token URL is missing or there's an error retrieving the token
         def imdsv2_session_token
           return @imdsv2_session_token unless imdsv2_session_token_invalid?
-          raise "IMDSV2 token url must be provided" if @imdsv2_session_token_url.nil?
+          if @imdsv2_session_token_url.nil?
+            raise CredentialsError.with_details(
+              "IMDSV2 token url must be provided",
+              credential_type_name: self.class.name,
+              principal: principal
+            )
+          end
           begin
             response = connection.put @imdsv2_session_token_url do |req|
               req.headers["x-aws-ec2-metadata-token-ttl-seconds"] = IMDSV2_TOKEN_EXPIRATION_IN_SECONDS.to_s
             end
             raise Faraday::Error unless response.success?
           rescue Faraday::Error => e
-            raise "Fetching AWS IMDSV2 token error: #{e}"
+            raise CredentialsError.with_details(
+              "Fetching AWS IMDSV2 token error: #{e}",
+              credential_type_name: self.class.name,
+              principal: principal
+            )
           end
+
           @imdsv2_session_token = response.body
           @imdsv2_session_token_expiry = Time.now + IMDSV2_TOKEN_EXPIRATION_IN_SECONDS
           @imdsv2_session_token
@@ -127,6 +143,14 @@ module Google
           @imdsv2_session_token_expiry.nil? || @imdsv2_session_token_expiry < Time.now
         end
 
+        # Makes a request to an AWS resource endpoint
+        #
+        # @param [String] url The AWS endpoint URL
+        # @param [String] name Resource name for error messages
+        # @param [Hash, nil] data Optional data to send in POST requests
+        # @param [Hash] headers Optional request headers
+        # @return [Faraday::Response] The successful response
+        # @raise [Google::Auth::CredentialsError] If the request fails
         def get_aws_resource url, name, data: nil, headers: {}
           begin
             headers["x-aws-ec2-metadata-token"] = imdsv2_session_token
@@ -136,11 +160,14 @@ module Google
                        else
                          connection.get url, nil, headers
                        end
-
             raise Faraday::Error unless response.success?
             response
           rescue Faraday::Error
-            raise "Failed to retrieve AWS #{name}."
+            raise CredentialsError.with_details(
+              "Failed to retrieve AWS #{name}.",
+              credential_type_name: self.class.name,
+              principal: principal
+            )
           end
         end
 
@@ -181,9 +208,16 @@ module Google
         # Retrieves the AWS role currently attached to the current AWS workload by querying the AWS metadata server.
         # This is needed for the AWS metadata server security credentials endpoint in order to retrieve the AWS security
         # credentials needed to sign requests to AWS APIs.
+        #
+        # @return [String] The AWS role name
+        # @raise [Google::Auth::CredentialsError] If the credential verification URL is not set or if the request fails
         def fetch_metadata_role_name
           unless @credential_verification_url
-            raise "Unable to determine the AWS metadata server security credentials endpoint"
+            raise CredentialsError.with_details(
+              "Unable to determine the AWS metadata server security credentials endpoint",
+              credential_type_name: self.class.name,
+              principal: principal
+            )
           end
 
           get_aws_resource(@credential_verification_url, "IAM Role").body
@@ -195,11 +229,22 @@ module Google
           MultiJson.load response.body
         end
 
+        # Reads the name of the AWS region from the environment
+        #
+        # @return [String] The name of the AWS region
+        # @raise [Google::Auth::CredentialsError] If the region is not set in the environment
+        #   and the region_url was not set in credentials source
         def region
           @region = ENV[CredentialsLoader::AWS_REGION_VAR] || ENV[CredentialsLoader::AWS_DEFAULT_REGION_VAR]
 
           unless @region
-            raise "region_url or region must be set for external account credentials" unless @region_url
+            unless @region_url
+              raise CredentialsError.with_details(
+                "region_url or region must be set for external account credentials",
+                credential_type_name: self.class.name,
+                principal: principal
+              )
+            end
 
             @region ||= get_aws_resource(@region_url, "region").body[0..-2]
           end
@@ -220,23 +265,45 @@ module Google
           @region_name = region_name
         end
 
-        # Generates the signed request for the provided HTTP request for calling
-        # an AWS API. This follows the steps described at:
+        # Generates an AWS signature version 4 signed request.
+        #
+        # Creates a signed request following the AWS Signature Version 4 process, which
+        # provides secure authentication for AWS API calls. The process includes creating
+        # canonical request strings, calculating signatures using the AWS credentials, and
+        # building proper authorization headers.
+        #
+        # For detailed information on the signing process, see:
         # https://docs.aws.amazon.com/general/latest/gr/sigv4_signing.html
         #
-        # @param [Hash[string, string]] aws_security_credentials
-        #     A dictionary containing the AWS security credentials.
-        # @param [string] url
-        #     The AWS service URL containing the canonical URI and query string.
-        # @param [string] method
-        #     The HTTP method used to call this API.
+        # @param [Hash] aws_credentials The AWS security credentials with the following keys:
+        #   @option aws_credentials [String] :access_key_id The AWS access key ID
+        #   @option aws_credentials [String] :secret_access_key The AWS secret access key
+        #   @option aws_credentials [String, nil] :session_token Optional AWS session token
+        # @param [Hash] original_request The request to sign with the following keys:
+        #   @option original_request [String] :url The AWS service URL (must be HTTPS)
+        #   @option original_request [String] :method The HTTP method (GET, POST, etc.)
+        #   @option original_request [Hash, nil] :headers Optional request headers
+        #   @option original_request [String, nil] :data Optional request payload
         #
-        # @return [hash{string => string}]
-        #     The AWS signed request dictionary object.
+        # @return [Hash] The signed request with the following keys:
+        #   * :url - The original URL as a string
+        #   * :headers - A hash of headers with the authorization header added
+        #   * :method - The HTTP method
+        #   * :data - The request payload (if present)
+        #
+        # @raise [Google::Auth::CredentialsError] If the AWS service URL is invalid
         #
         def generate_signed_request aws_credentials, original_request
           uri = Addressable::URI.parse original_request[:url]
-          raise "Invalid AWS service URL" unless uri.hostname && uri.scheme == "https"
+          unless uri.hostname && uri.scheme == "https"
+            # NOTE: We use AwsCredentials name but can't access its principal since AwsRequestSigner
+            # is a separate class and not a credential object with access to the audience
+            raise CredentialsError.with_details(
+              "Invalid AWS service URL",
+              credential_type_name: AwsCredentials.name,
+              principal: "aws"
+            )
+          end
           service_name = uri.host.split(".").first
 
           datetime = Time.now.utc.strftime "%Y%m%dT%H%M%SZ"

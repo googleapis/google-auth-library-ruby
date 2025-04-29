@@ -14,6 +14,7 @@
 
 require "multi_json"
 require "googleauth/credentials_loader"
+require "googleauth/errors"
 
 module Google
   module Auth
@@ -62,10 +63,11 @@ module Google
       # @note Direct instantiation is discouraged to avoid embedding IDs
       #       and secrets in source. See {#from_file} to load from
       #       `client_secrets.json` files.
+      # @raise [Google::Auth::InitializationError] If id or secret is nil
       #
       def initialize id, secret
-        raise "Client id can not be nil" if id.nil?
-        raise "Client secret can not be nil" if secret.nil?
+        raise InitializationError, "Client id can not be nil" if id.nil?
+        raise InitializationError, "Client secret can not be nil" if secret.nil?
         @id = id
         @secret = secret
       end
@@ -77,9 +79,10 @@ module Google
       # @param [String, File] file
       #  Path of file to read from
       # @return [Google::Auth::ClientID]
+      # @raise [Google::Auth::InitializationError] If file is nil
       #
       def self.from_file file
-        raise "File can not be nil." if file.nil?
+        raise InitializationError, "File can not be nil." if file.nil?
         File.open file.to_s do |f|
           json = f.read
           config = MultiJson.load json
@@ -94,11 +97,12 @@ module Google
       # @param [hash] config
       #  Parsed contents of the JSON file
       # @return [Google::Auth::ClientID]
+      # @raise [Google::Auth::InitializationError] If config is nil or missing required elements
       #
       def self.from_hash config
-        raise "Hash can not be nil." if config.nil?
+        raise InitializationError, "Hash can not be nil." if config.nil?
         raw_detail = config[INSTALLED_APP] || config[WEB_APP]
-        raise MISSING_TOP_LEVEL_ELEMENT_ERROR if raw_detail.nil?
+        raise InitializationError, MISSING_TOP_LEVEL_ELEMENT_ERROR if raw_detail.nil?
         ClientId.new raw_detail[CLIENT_ID], raw_detail[CLIENT_SECRET]
       end
     end

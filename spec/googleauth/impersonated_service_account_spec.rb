@@ -183,6 +183,25 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
   end
 
   describe "error handling" do
+    describe "normalize_timestamp" do
+      it "raises CredentialsError with detailed information for invalid time value" do
+        creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
+          base_credentials: @base_creds,
+          impersonation_url: impersonation_url,
+          scope: ["https://www.googleapis.com/auth/cloud-platform"]
+        )
+        
+        # Allow the principal method to be called on our mock source_creds
+        allow(@source_creds).to receive(:principal).and_return("test-principal")
+        
+        expect { creds.send(:normalize_timestamp, 12345) }.to raise_error do |error|
+          expect(error).to be_a(Google::Auth::CredentialsError)
+          expect(error.message).to match(/Invalid time value 12345/)
+          expect(error.credential_type_name).to eq("Google::Auth::ImpersonatedServiceAccountCredentials")
+          expect(error.principal).to eq("test-principal")
+        end
+      end
+    end
     let(:creds) do
       Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
         base_credentials: @base_creds,
@@ -191,40 +210,51 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
       )
     end
 
+    # Allow the principal method to be called on our mock source_creds
+    before do
+      allow(@source_creds).to receive(:principal).and_return("test-principal")
+    end
+
     context "when response status is 403" do
-      it "raises Signet::UnexpectedStatusError" do
+      it "raises UnexpectedStatusError with detailed information" do
         stub = make_error_stub(403, "Permission denied")
         
-        expect { creds.apply!({}) }.to raise_error(
-          Signet::UnexpectedStatusError, 
-          /Unexpected error code 403.\n Permission denied/
-        )
+        expect { creds.apply!({}) }.to raise_error do |error|
+          expect(error).to be_a(Google::Auth::UnexpectedStatusError)
+          expect(error.message).to match(/Unexpected error code 403.\n Permission denied/)
+          expect(error.credential_type_name).to eq("Google::Auth::ImpersonatedServiceAccountCredentials")
+          expect(error.principal).to eq("test-principal")
+        end
         
         expect(stub).to have_been_requested
       end
     end
 
     context "when response status is 500" do
-      it "raises Signet::UnexpectedStatusError" do
+      it "raises UnexpectedStatusError with detailed information" do
         stub = make_error_stub(500, "Internal server error")
         
-        expect { creds.apply!({}) }.to raise_error(
-          Signet::UnexpectedStatusError,
-          /Unexpected error code 500.\n Internal server error/
-        )
+        expect { creds.apply!({}) }.to raise_error do |error|
+          expect(error).to be_a(Google::Auth::UnexpectedStatusError)
+          expect(error.message).to match(/Unexpected error code 500.\n Internal server error/)
+          expect(error.credential_type_name).to eq("Google::Auth::ImpersonatedServiceAccountCredentials")
+          expect(error.principal).to eq("test-principal")
+        end
         
         expect(stub).to have_been_requested
       end
     end
 
     context "when response status is other error code (e.g. 401)" do
-      it "raises Signet::AuthorizationError" do
+      it "raises AuthorizationError with detailed information" do
         stub = make_error_stub(401, "Unauthorized")
         
-        expect { creds.apply!({}) }.to raise_error(
-          Signet::AuthorizationError,
-          /Unexpected error code 401.\n Unauthorized/
-        )
+        expect { creds.apply!({}) }.to raise_error do |error|
+          expect(error).to be_a(Google::Auth::AuthorizationError)
+          expect(error.message).to match(/Unexpected error code 401.\n Unauthorized/)
+          expect(error.credential_type_name).to eq("Google::Auth::ImpersonatedServiceAccountCredentials")
+          expect(error.principal).to eq("test-principal")
+        end
         
         expect(stub).to have_been_requested
       end

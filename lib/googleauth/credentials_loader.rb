@@ -15,6 +15,8 @@
 require "os"
 require "rbconfig"
 
+require "googleauth/errors"
+
 module Google
   # Module Auth provides classes that provide Google-specific authorization
   # used to access Google APIs.
@@ -71,11 +73,12 @@ module Google
       #     The following keys are recognized:
       #     * `:default_connection` The connection object to use.
       #     * `:connection_builder` A `Proc` that returns a connection.
+      # @raise [Google::Auth::InitializationError] If the credentials file cannot be read
       def from_env scope = nil, options = {}
         options = interpret_options scope, options
         if ENV.key?(ENV_VAR) && !ENV[ENV_VAR].empty?
           path = ENV[ENV_VAR]
-          raise "file #{path} does not exist" unless File.exist? path
+          raise InitializationError, "file #{path} does not exist" unless File.exist? path
           File.open path do |f|
             return make_creds options.merge(json_key_io: f)
           end
@@ -83,7 +86,7 @@ module Google
           make_creds options
         end
       rescue StandardError => e
-        raise "#{NOT_FOUND_ERROR}: #{e}"
+        raise InitializationError, "#{NOT_FOUND_ERROR}: #{e}"
       end
 
       # Creates an instance from a well known path.
@@ -97,6 +100,7 @@ module Google
       #     The following keys are recognized:
       #     * `:default_connection` The connection object to use.
       #     * `:connection_builder` A `Proc` that returns a connection.
+      # @raise [Google::Auth::InitializationError] If the credentials file cannot be read
       def from_well_known_path scope = nil, options = {}
         options = interpret_options scope, options
         home_var = OS.windows? ? "APPDATA" : "HOME"
@@ -109,7 +113,7 @@ module Google
           return make_creds options.merge(json_key_io: f)
         end
       rescue StandardError => e
-        raise "#{WELL_KNOWN_ERROR}: #{e}"
+        raise InitializationError, "#{WELL_KNOWN_ERROR}: #{e}"
       end
 
       # Creates an instance from the system default path
@@ -123,6 +127,7 @@ module Google
       #     The following keys are recognized:
       #     * `:default_connection` The connection object to use.
       #     * `:connection_builder` A `Proc` that returns a connection.
+      # @raise [Google::Auth::InitializationError] If the credentials file cannot be read or is invalid
       def from_system_default_path scope = nil, options = {}
         options = interpret_options scope, options
         if OS.windows?
@@ -137,7 +142,7 @@ module Google
           return make_creds options.merge(json_key_io: f)
         end
       rescue StandardError => e
-        raise "#{SYSTEM_DEFAULT_ERROR}: #{e}"
+        raise InitializationError, "#{SYSTEM_DEFAULT_ERROR}: #{e}"
       end
 
       module_function

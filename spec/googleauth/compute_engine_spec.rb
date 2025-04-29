@@ -264,18 +264,32 @@ describe Google::Auth::GCECredentials do
         expect(stub).to have_been_requested
       end
 
-      it "should fail with Signet::AuthorizationError if request times out" do
+      it "should fail with AuthorizationError including detailed error info on timeout" do
         allow_any_instance_of(Faraday::Connection).to receive(:get)
           .and_raise(Faraday::TimeoutError)
-        expect { @client.fetch_access_token! }
-          .to raise_error Signet::AuthorizationError
+        begin
+          @client.fetch_access_token!
+          fail "Expected to raise error"
+        rescue => e
+          expect(e).to be_a(Google::Auth::AuthorizationError)
+          expect(e).to be_a(Google::Auth::DetailedError)
+          expect(e.credential_type_name).to eq("Google::Auth::GCECredentials")
+          expect(e.principal).to eq(:gce_metadata)
+        end
       end
 
-      it "should fail with Signet::AuthorizationError if request fails" do
+      it "should fail with AuthorizationError including detailed error info on connection error" do
         allow_any_instance_of(Faraday::Connection).to receive(:get)
           .and_raise(Faraday::ConnectionFailed, nil)
-        expect { @client.fetch_access_token! }
-          .to raise_error Signet::AuthorizationError
+        begin
+          @client.fetch_access_token!
+          fail "Expected to raise error"
+        rescue => e
+          expect(e).to be_a(Google::Auth::AuthorizationError)
+          expect(e).to be_a(Google::Auth::DetailedError)
+          expect(e.credential_type_name).to eq("Google::Auth::GCECredentials")
+          expect(e.principal).to eq(:gce_metadata)
+        end
       end
     end
 

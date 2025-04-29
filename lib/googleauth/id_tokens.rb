@@ -160,8 +160,8 @@ module Google
         #     checking is performed. Default is to check against {OIDC_ISSUERS}.
         #
         # @return [Hash] The decoded token payload.
-        # @raise [KeySourceError] if the key source failed to obtain public keys
-        # @raise [VerificationError] if the token verification failed.
+        # @raise [Google::Auth::IDTokens::KeySourceError] if the key source failed to obtain public keys
+        # @raise [Google::Auth::IDTokens::VerificationError] if the token verification failed.
         #     Additional data may be available in the error subclass and message.
         #
         def verify_oidc token,
@@ -197,8 +197,8 @@ module Google
         #     checking is performed. Default is to check against {IAP_ISSUERS}.
         #
         # @return [Hash] The decoded token payload.
-        # @raise [KeySourceError] if the key source failed to obtain public keys
-        # @raise [VerificationError] if the token verification failed.
+        # @raise [Google::Auth::IDTokens::KeySourceError] if the key source failed to obtain public keys
+        # @raise [Google::Auth::IDTokens::VerificationError] if the token verification failed.
         #     Additional data may be available in the error subclass and message.
         #
         def verify_iap token,

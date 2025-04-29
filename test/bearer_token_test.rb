@@ -126,12 +126,18 @@ describe Google::Auth::BearerTokenCredentials do
       _(creds.send(:fetch_access_token!)).must_be_nil
     end
 
-    it "raises if token is expired" do
+    it "raises CredentialsError with details if token is expired" do
       expired_time = Time.now - 3600
       creds = Google::Auth::BearerTokenCredentials.new token: token, expires_at: expired_time
-      expect do
+      error = expect do
         creds.send(:fetch_access_token!)
-      end.must_raise StandardError
+      end.must_raise Google::Auth::CredentialsError
+      
+      _(error.credential_type_name).must_equal "Google::Auth::BearerTokenCredentials"
+      _(error.principal).must_equal :bearer_token
+      _(error.message).must_equal "Bearer token has expired."
+      _(error).must_be_kind_of Google::Auth::DetailedError
+      _(error).must_be_kind_of Google::Auth::Error
     end
 
     it "returns nil if no expiry is set" do

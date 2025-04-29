@@ -16,6 +16,7 @@ require "base64"
 require "json"
 require "signet/oauth_2/client"
 require "googleauth/base_client"
+require "googleauth/errors"
 
 module Signet
   # OAuth2 supports OAuth2 authentication.
@@ -109,6 +110,15 @@ module Signet
         end
       end
 
+      # rubocop:disable Metrics/MethodLength
+
+      # Retries the provided block with exponential backoff, handling and wrapping errors.
+      #
+      # @param [Integer] max_retry_count The maximum number of retries before giving up
+      # @yield The block to execute and potentially retry
+      # @return [Object] The result of the block if successful
+      # @raise [Google::Auth::AuthorizationError] If a Signet::AuthorizationError occurs or if retries are exhausted
+      # @raise [Google::Auth::ParseError] If a Signet::ParseError occurs during token parsing
       def retry_with_error max_retry_count = 5
         retry_count = 0
 
@@ -116,7 +126,12 @@ module Signet
           yield.tap { |resp| log_response resp }
         rescue Signet::AuthorizationError, Signet::ParseError => e
           log_auth_error e
-          raise e
+          error_class = e.is_a?(Signet::ParseError) ? Google::Auth::ParseError : Google::Auth::AuthorizationError
+          raise error_class.with_details(
+            e.message,
+            credential_type_name: self.class.name,
+            principal: respond_to?(:principal) ? principal : :signet_client
+          )
         rescue StandardError => e
           if retry_count < max_retry_count
             log_transient_error e
@@ -126,10 +141,15 @@ module Signet
           else
             log_retries_exhausted e
             msg = "Unexpected error: #{e.inspect}"
-            raise Signet::AuthorizationError, msg
+            raise Google::Auth::AuthorizationError.with_details(
+              msg,
+              credential_type_name: self.class.name,
+              principal: respond_to?(:principal) ? principal : :signet_client
+            )
           end
         end
       end
+      # rubocop:enable Metrics/MethodLength
 
       # Creates a duplicate of these credentials
       # without the Signet::OAuth2::Client-specific

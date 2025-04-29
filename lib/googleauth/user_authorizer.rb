@@ -63,12 +63,14 @@ module Google
       # @param [String] code_verifier
       #  Random string of 43-128 chars used to verify the key exchange using
       #  PKCE.
+      # @raise [Google::Auth::InitializationError]
+      #  If client_id is nil or scope is nil
       def initialize client_id, scope, token_store,
                      legacy_callback_uri = nil,
                      callback_uri: nil,
                      code_verifier: nil
-        raise NIL_CLIENT_ID_ERROR if client_id.nil?
-        raise NIL_SCOPE_ERROR if scope.nil?
+        raise InitializationError, NIL_CLIENT_ID_ERROR if client_id.nil?
+        raise InitializationError, NIL_SCOPE_ERROR if scope.nil?
 
         @client_id = client_id
         @scope = Array(scope)
@@ -133,14 +135,19 @@ module Google
       #  the requested scopes
       # @return [Google::Auth::UserRefreshCredentials]
       #  Stored credentials, nil if none present
+      # @raise [Google::Auth::CredentialsError]
+      #  If the client ID in the stored token doesn't match the configured client ID
       def get_credentials user_id, scope = nil
         saved_token = stored_token user_id
         return nil if saved_token.nil?
         data = MultiJson.load saved_token
 
         if data.fetch("client_id", @client_id.id) != @client_id.id
-          raise format(MISMATCHED_CLIENT_ID_ERROR,
-                       data["client_id"], @client_id.id)
+          raise CredentialsError.with_details(
+            format(MISMATCHED_CLIENT_ID_ERROR, data["client_id"], @client_id.id),
+            credential_type_name: self.class.name,
+            principal: principal
+          )
         end
 
         credentials = UserRefreshCredentials.new(
@@ -240,6 +247,8 @@ module Google
       #  Unique ID of the user for loading/storing credentials.
       # @param [Google::Auth::UserRefreshCredentials] credentials
       #  Credentials to store.
+      # @return [Google::Auth::UserRefreshCredentials]
+      #  The stored credentials
       def store_credentials user_id, credentials
         json = MultiJson.dump(
           client_id:              credentials.client_id,
@@ -285,9 +294,11 @@ module Google
       # @param [String] user_id
       #  Unique ID of the user for loading/storing credentials.
       # @return [String] The saved token from @token_store
+      # @raise [Google::Auth::InitializationError]
+      #  If user_id is nil or token_store is nil
       def stored_token user_id
-        raise NIL_USER_ID_ERROR if user_id.nil?
-        raise NIL_TOKEN_STORE_ERROR if @token_store.nil?
+        raise InitializationError, NIL_USER_ID_ERROR if user_id.nil?
+        raise InitializationError, NIL_TOKEN_STORE_ERROR if @token_store.nil?
 
         @token_store.load user_id
       end
@@ -312,9 +323,17 @@ module Google
       #  Absolute URL to resolve the callback against if necessary.
       # @return [String]
       #  Redirect URI
+      # @raise [Google::Auth::CredentialsError]
+      #  If the callback URI is relative and base_url is nil or not absolute
       def redirect_uri_for base_url
         return @callback_uri if uri_is_postmessage?(@callback_uri) || !URI(@callback_uri).scheme.nil?
-        raise format(MISSING_ABSOLUTE_URL_ERROR, @callback_uri) if base_url.nil? || URI(base_url).scheme.nil?
+        if base_url.nil? || URI(base_url).scheme.nil?
+          raise CredentialsError.with_details(
+            format(MISSING_ABSOLUTE_URL_ERROR, @callback_uri),
+            credential_type_name: self.class.name,
+            principal: principal
+          )
+        end
         URI.join(base_url, @callback_uri).to_s
       end
 

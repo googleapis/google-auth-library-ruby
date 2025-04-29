@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require "googleauth/errors"
+
 
 module Google
   module Auth
@@ -21,35 +23,39 @@ module Google
       ##
       # Failed to obtain keys from the key source.
       #
-      class KeySourceError < StandardError; end
+      class KeySourceError < StandardError
+        include Google::Auth::Error
+      end
 
       ##
       # Failed to verify a token.
       #
-      class VerificationError < StandardError; end
+      class VerificationError < StandardError
+        include Google::Auth::Error
+      end
 
       ##
-      # Failed to verify a token because it is expired.
+      # Failed to verify token because it is expired.
       #
       class ExpiredTokenError < VerificationError; end
 
       ##
-      # Failed to verify a token because its signature did not match.
+      # Failed to verify token because its signature did not match.
       #
       class SignatureError < VerificationError; end
 
       ##
-      # Failed to verify a token because its issuer did not match.
+      # Failed to verify token because its issuer did not match.
       #
       class IssuerMismatchError < VerificationError; end
 
       ##
-      # Failed to verify a token because its audience did not match.
+      # Failed to verify token because its audience did not match.
       #
       class AudienceMismatchError < VerificationError; end
 
       ##
-      # Failed to verify a token because its authorized party did not match.
+      # Failed to verify token because its authorized party did not match.
       #
       class AuthorizedPartyMismatchError < VerificationError; end
     end

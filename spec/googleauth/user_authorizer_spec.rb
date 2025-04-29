@@ -175,6 +175,32 @@ describe Google::Auth::UserAuthorizer do
       expect(URI(uri).query).to match(/value2/)
     end
   end
+  
+  context "when dealing with redirect URIs" do
+    let(:relative_callback_uri) { "/oauth2callback" }
+    let(:relative_authorizer) do
+      Google::Auth::UserAuthorizer.new(
+        client_id,
+        scope,
+        token_store,
+        relative_callback_uri
+      )
+    end
+    
+    it "raises CredentialsError with detailed information when base_url is missing with relative URI" do
+      expect { relative_authorizer.get_authorization_url }.to raise_error do |error|
+        expect(error).to be_a(Google::Auth::CredentialsError)
+        expect(error.message).to match(/Absolute base url required for relative callback url/)
+        expect(error.credential_type_name).to eq("Google::Auth::UserAuthorizer")
+        expect(error.principal).to eq("testclient")
+      end
+    end
+    
+    it "succeeds when base_url is provided with relative URI" do
+      uri = relative_authorizer.get_authorization_url(base_url: "https://example.com")
+      expect(URI(uri).query).to match(%r{redirect_uri=https://example.com/oauth2callback})
+    end
+  end
 
   context "when retrieving tokens" do
     let :token_json do
@@ -225,6 +251,30 @@ describe Google::Auth::UserAuthorizer do
     context "with an invalid user id" do
       it "should return nil" do
         expect(authorizer.get_credentials("notauser")).to be_nil
+      end
+    end
+    
+    context "with mismatched client_id" do
+      let :mismatched_token_json do
+        MultiJson.dump(
+          client_id:              "mismatched_client_id",
+          access_token:           "accesstoken",
+          refresh_token:          "refreshtoken",
+          expiration_time_millis: 1_441_234_742_000
+        )
+      end
+      
+      before do
+        token_store.store "user1", mismatched_token_json
+      end
+      
+      it "raises CredentialsError with detailed information" do
+        expect { authorizer.get_credentials "user1" }.to raise_error do |error|
+          expect(error).to be_a(Google::Auth::CredentialsError)
+          expect(error.message).to match(/Token client ID of mismatched_client_id does not match configured client id testclient/)
+          expect(error.credential_type_name).to eq("Google::Auth::UserAuthorizer")
+          expect(error.principal).to eq("testclient")
+        end
       end
     end
   end

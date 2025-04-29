@@ -14,6 +14,7 @@
 
 require "googleauth/compute_engine"
 require "googleauth/default_credentials"
+require "googleauth/errors"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
@@ -50,12 +51,13 @@ module Google
     #       connection to use for token refresh requests.
     #     * `:connection` The connection to use to determine whether GCE
     #       metadata credentials are available.
+    # @raise [Google::Auth::InitializationError] If the credentials cannot be found
     def get_application_default scope = nil, options = {}
       creds = DefaultCredentials.from_env(scope, options) ||
               DefaultCredentials.from_well_known_path(scope, options) ||
               DefaultCredentials.from_system_default_path(scope, options)
       return creds unless creds.nil?
-      raise NOT_FOUND_ERROR unless GCECredentials.on_gce? options
+      raise InitializationError, NOT_FOUND_ERROR unless GCECredentials.on_gce? options
       GCECredentials.new options.merge(scope: scope)
     end
   end
