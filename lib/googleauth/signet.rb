@@ -110,6 +110,8 @@ module Signet
         end
       end
 
+      # rubocop:disable Metrics/MethodLength
+
       # Retries the provided block with exponential backoff, handling and wrapping errors.
       #
       # @param [Integer] max_retry_count The maximum number of retries before giving up
@@ -117,7 +119,6 @@ module Signet
       # @return [Object] The result of the block if successful
       # @raise [Google::Auth::AuthorizationError] If a Signet::AuthorizationError occurs or if retries are exhausted
       # @raise [Google::Auth::ParseError] If a Signet::ParseError occurs during token parsing
-      # rubocop:disable Metrics/MethodLength
       def retry_with_error max_retry_count = 5
         retry_count = 0
 
