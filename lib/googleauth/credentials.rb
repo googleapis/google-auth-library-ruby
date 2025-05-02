@@ -14,6 +14,7 @@
 
 require "forwardable"
 require "json"
+require "pathname"
 require "signet/oauth_2/client"
 
 require "googleauth/credentials_loader"
@@ -358,12 +359,13 @@ module Google
       # Creates a new Credentials instance with the provided auth credentials, and with the default
       # values configured on the class.
       #
-      # @param [String, Hash, Signet::OAuth2::Client] source_creds
+      # @param [String, Pathname, Hash, Google::Auth::BaseClient] source_creds
       #   The source of credentials. It can be provided as one of the following:
       #
-      #   * The path to a JSON keyfile (as a `String`)
+      #   * The path to a JSON keyfile (as a `String` or a `Pathname`)
       #   * The contents of a JSON keyfile (as a `Hash`)
-      #   * A `Signet::OAuth2::Client` credentials object
+      #   * A `Google::Auth::BaseClient` credentials object, including but not limited to 
+      #       a `Signet::OAuth2::Client` object.
       #   * Any credentials object that supports the methods this wrapper delegates to an inner client.
       #
       #   If this parameter is an object (`Signet::OAuth2::Client` or other) it will be used as an inner client.
@@ -405,7 +407,7 @@ module Google
         @project_id = options[:project_id] || options[:project]
         @quota_project_id = options[:quota_project_id]
         case source_creds
-        when String
+        when String, Pathname
           update_from_filepath source_creds, options
         when Hash
           update_from_hash source_creds, options
