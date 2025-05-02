@@ -747,19 +747,17 @@ describe Google::Auth::Credentials, :private do
       # Same as the Signet test in the logger section
       it "uses the logger in a provided signet client rather than a passed in logger" do
         creds = Google::Auth::Credentials.new mock_client_full, logger: options_logger
-        expect(creds.logger).to eq(client_logger) # Client's logger should win
-        # Verify the final logger is pushed back to the client
+        expect(creds.logger).to eq(client_logger)
         expect(mock_client_full).to have_received(:logger=).with(client_logger)
       end
 
       it "uses passed in logger if client does not have a logger" do
-        # Scenario 1: Client doesn't respond to :logger
         creds_minimal_client = Google::Auth::Credentials.new mock_client_minimal, logger: options_logger
         expect(mock_client_minimal).to have_received(:logger=).with(options_logger)
       end
 
       it "has a nil logger if neither options nor client provide one (and client getter returns nil)" do
-        creds = Google::Auth::Credentials.new mock_client_minimal # No logger in options
+        creds = Google::Auth::Credentials.new mock_client_minimal
         expect(creds.logger).to be_nil
       end
     end
