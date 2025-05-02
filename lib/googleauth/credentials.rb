@@ -364,7 +364,7 @@ module Google
       #
       #   * The path to a JSON keyfile (as a `String` or a `Pathname`)
       #   * The contents of a JSON keyfile (as a `Hash`)
-      #   * A `Google::Auth::BaseClient` credentials object, including but not limited to 
+      #   * A `Google::Auth::BaseClient` credentials object, including but not limited to
       #       a `Signet::OAuth2::Client` object.
       #   * Any credentials object that supports the methods this wrapper delegates to an inner client.
       #
