@@ -18,7 +18,7 @@ require "minitest/autorun"
 
 describe "authenticate_with_api_key" do
   let(:api_key) { ENV["GOOGLE_API_KEY"] }
-  
+
   it "authenticates with API key" do
     skip "No API key available" if api_key.nil? || api_key.empty?
 
