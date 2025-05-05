@@ -19,9 +19,9 @@ require "google/cloud/language/v1"
 def authenticate_with_api_key api_key_string
   # Authenticates with an API key for Google Language service.
   #
-  # TODO(Developer): Replace this variable before running the sample.
+  # TODO(Developer): Uncomment the following line and set the value before running this sample.
   #
-  # @param [String] api_key_string The API key to authenticate to the service.
+  # api_key_string = "mykey12345"
   #
   # Note: You can also set the API key via environment variable:
   #   export GOOGLE_API_KEY=your-api-key
@@ -38,7 +38,7 @@ def authenticate_with_api_key api_key_string
 
   # Initialize the Language Service client with the API key credentials
   client = Google::Cloud::Language::V1::LanguageService::Client.new do |config|
-    config.credentials = ::Google::Cloud::Language::V1::LanguageService::Credentials.new credentials
+    config.credentials = credentials
   end
 
   # Create a document to analyze
