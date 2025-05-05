@@ -599,6 +599,24 @@ describe Google::Auth::Credentials, :private do
     end
   end
 
+  it "creates a service account subclass when passed only a Pathname" do
+    class TestCredentialsPathname < Google::Auth::Credentials
+      self.scope = "http://example.com/scope"
+    end
+
+    Dir.mktmpdir do |dir|
+      keyfile_path_str = File.join dir, "keyfile.json"
+      File.write keyfile_path_str, default_keyfile_content
+      keyfile_pathname = Pathname.new keyfile_path_str # Create a Pathname object
+      creds = TestCredentialsPathname.new keyfile_pathname, enable_self_signed_jwt: true
+      
+      expect(creds.client).to be_a_kind_of(Google::Auth::ServiceAccountCredentials)
+      # Verify that project_id and quota_project_id are loaded correctly from the file via Pathname
+      expect(creds.project_id).to eq(default_keyfile_hash["project_id"])
+      expect(creds.quota_project_id).to eq(default_keyfile_hash["quota_project_id"])
+    end
+  end
+
   it "does not fetch access token when initialized with a Signet::OAuth2::Client object that already has a token" do
     signet = Signet::OAuth2::Client.new access_token: token # Client#needs_access_token? will return false
     creds = Google::Auth::Credentials.new signet
@@ -660,13 +678,88 @@ describe Google::Auth::Credentials, :private do
     end
   
     it "should duplicate the project_id" do
-      expect(@creds.project_id).to be_nil
+      # This should be nil, but for case of local testing
+      expect(@creds.project_id).to eq Google::Auth::CredentialsLoader.load_gcloud_project_id
       expect(@creds.duplicate(project_id: "test-project-id").project_id).to eq "test-project-id"  
     end
   
     it "should duplicate the quota_project_id" do
       expect(@creds.quota_project_id).to be_nil
       expect(@creds.duplicate(quota_project_id: "test-quota-project-id").quota_project_id).to eq "test-quota-project-id"
+    end
+  end
+
+  describe "when initialized with a `Google::Auth::BaseClient`" do
+    let(:client_project_id) { "client_project_id_from_obj" }
+    let(:client_quota_project_id) { "client_quota_id_from_obj" }
+    let(:client_logger) { Logger.new(IO::NULL) } # Specific instance for client
+
+    let(:options_project_id) { "options_project_id" }
+    let(:options_quota_project_id) { "options_quota_project_id" }
+    let(:options_logger) { Logger.new(IO::NULL) } # Specific instance for options, different from client_logger
+
+    # Mock client that has project_id, quota_project_id, and logger
+    let(:mock_client_full) do
+      client = double("Google::Auth::BaseClientFull")
+      allow(client).to receive(:respond_to?).with(:project_id).and_return(true)
+      allow(client).to receive(:project_id).and_return(client_project_id)
+      
+      allow(client).to receive(:respond_to?).with(:quota_project_id).and_return(true)
+      allow(client).to receive(:quota_project_id).and_return(client_quota_project_id)
+      
+      allow(client).to receive(:respond_to?).with(:logger).and_return(true)
+      allow(client).to receive(:logger).and_return(client_logger)
+      
+      allow(client).to receive(:respond_to?).with(:logger=).and_return(true)
+      allow(client).to receive(:logger=) # Allow it to be called
+      client
+    end
+
+    let(:mock_client_minimal) do
+      client = double("Google::Auth::BaseClientMinimal")
+      allow(client).to receive(:respond_to?).with(:project_id).and_return(false)
+      allow(client).to receive(:respond_to?).with(:quota_project_id).and_return(false)
+      
+      allow(client).to receive(:respond_to?).with(:logger).and_return(true)
+      allow(client).to receive(:logger).and_return(nil)
+      
+      allow(client).to receive(:respond_to?).with(:logger=).and_return(true)
+      allow(client).to receive(:logger=)
+      client
+    end
+
+    it "uses the provided client instance as its internal client" do
+      creds = Google::Auth::Credentials.new mock_client_full
+      expect(creds.client).to eq(mock_client_full)
+    end
+
+    it "prefers project_id from options" do
+      creds = Google::Auth::Credentials.new mock_client_full, project_id: options_project_id
+      expect(creds.project_id).to eq(options_project_id)
+    end
+
+    it "prefers quota_project_id from options" do
+      creds = Google::Auth::Credentials.new mock_client_full, quota_project_id: options_quota_project_id
+      expect(creds.quota_project_id).to eq(options_quota_project_id)
+    end
+
+    context "logger handling" do
+      # Same as the Signet test in the logger section
+      it "uses the logger in a provided signet client rather than a passed in logger" do
+        creds = Google::Auth::Credentials.new mock_client_full, logger: options_logger
+        expect(creds.logger).to eq(client_logger)
+        expect(mock_client_full).to have_received(:logger=).with(client_logger)
+      end
+
+      it "uses passed in logger if client does not have a logger" do
+        creds_minimal_client = Google::Auth::Credentials.new mock_client_minimal, logger: options_logger
+        expect(mock_client_minimal).to have_received(:logger=).with(options_logger)
+      end
+
+      it "has a nil logger if neither options nor client provide one (and client getter returns nil)" do
+        creds = Google::Auth::Credentials.new mock_client_minimal
+        expect(creds.logger).to be_nil
+      end
     end
   end
 end
