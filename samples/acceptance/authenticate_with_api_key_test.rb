@@ -18,11 +18,11 @@ require "minitest/autorun"
 
 describe "authenticate_with_api_key" do
   let(:api_key) { ENV["GOOGLE_API_KEY"] }
-  let(:stdout_output) { capture_io { authenticate_with_api_key api_key } }
-
+  
   it "authenticates with API key" do
-    # Skip the test if API key is not provided
     skip "No API key available" if api_key.nil? || api_key.empty?
+
+    stdout_output = capture_io { authenticate_with_api_key api_key }
 
     output = stdout_output[0]
     assert_includes output, "Text: Hello, world!"
