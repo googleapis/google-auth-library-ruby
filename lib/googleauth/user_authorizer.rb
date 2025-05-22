@@ -117,12 +117,12 @@ module Google
           additional_parameters: options[:additional_parameters]
         )
         redirect_uri = redirect_uri_for options[:base_url]
-        url = credentials.authorization_uri(access_type:            "offline",
-                                            redirect_uri:           redirect_uri,
-                                            approval_prompt:        "force",
-                                            state:                  options[:state],
-                                            include_granted_scopes: true,
-                                            login_hint:             options[:login_hint])
+        url = credentials.authorization_uri(access_type:             "offline",
+                                            redirect_uri:            redirect_uri,
+                                            approval_prompt:         "force",
+                                            state:                   options[:state],
+                                            include_granted_scopes:  options[:include_granted_scopes] || false,
+                                            login_hint:              options[:login_hint])
         url.to_s
       end
 
