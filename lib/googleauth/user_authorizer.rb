@@ -121,7 +121,7 @@ module Google
                                             redirect_uri:            redirect_uri,
                                             approval_prompt:         "force",
                                             state:                   options[:state],
-                                            include_granted_scopes:  options[:include_granted_scopes] || false,
+                                            include_granted_scopes:  options[:include_granted_scopes] || true,
                                             login_hint:              options[:login_hint])
         url.to_s
       end
