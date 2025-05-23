@@ -110,19 +110,25 @@ module Google
           )
         end
 
+        if options.key?(:include_granted_scopes)
+          # If the key exists, coerce its value to true/false based on Ruby's truthiness
+          include_granted_scopes = !!options[:include_granted_scopes]
+        end
+        
         credentials = UserRefreshCredentials.new(
           client_id:     @client_id.id,
           client_secret: @client_id.secret,
           scope:         scope,
           additional_parameters: options[:additional_parameters]
         )
+        
         redirect_uri = redirect_uri_for options[:base_url]
-        url = credentials.authorization_uri(access_type:             "offline",
-                                            redirect_uri:            redirect_uri,
-                                            approval_prompt:         "force",
-                                            state:                   options[:state],
-                                            include_granted_scopes:  options[:include_granted_scopes] || true,
-                                            login_hint:              options[:login_hint])
+        url = credentials.authorization_uri(access_type:            "offline",
+                                            redirect_uri:           redirect_uri,
+                                            approval_prompt:        "force",
+                                            state:                  options[:state],
+                                            include_granted_scopes: include_granted_scopes,
+                                            login_hint:             options[:login_hint])
         url.to_s
       end
 
