@@ -198,7 +198,7 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
     return unless access_token and service_account_impersonation_url
     impersonation_endpoint(access_token).to_return(
       body: MultiJson.dump(google_token_impersonation_response.merge({
-        "accessToken" => access_token
+        accessToken: access_token
       }))
     )
   end
