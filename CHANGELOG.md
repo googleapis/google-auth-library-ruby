@@ -1,5 +1,20 @@
 # Release History
 
+### 1.15.0 (2025-08-25)
+
+#### Features
+
+* add typed errors to authentication library ([#533](https://github.com/googleapis/google-auth-library-ruby/issues/533)) 
+* Support for JWT 3.x ([#542](https://github.com/googleapis/google-auth-library-ruby/issues/542)) 
+#### Bug Fixes
+
+* fix incorrect error and apply some code complexity refactoring ([#529](https://github.com/googleapis/google-auth-library-ruby/issues/529)) 
+* support Pathname for cred loading ([#537](https://github.com/googleapis/google-auth-library-ruby/issues/537)) 
+#### Documentation
+
+* add summary documentation on credentials types and improve YARD comments 
+* add summary documentation on credentials types and improve YARD comments ([#530](https://github.com/googleapis/google-auth-library-ruby/issues/530)) 
+
 ### 1.14.0 (2025-03-14)
 
 #### Features
