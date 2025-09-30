@@ -41,6 +41,9 @@ module Google
       attr_reader :project_id
       attr_reader :quota_project_id
 
+      # The type name for this credential.
+      CREDENTIAL_TYPE_NAME = "service_account".freeze
+
       def enable_self_signed_jwt?
         # Use a self-singed JWT if there's no information that can be used to
         # obtain an OAuth token, OR if there are scopes but also an assertion
@@ -61,6 +64,13 @@ module Google
         raise ArgumentError, "Cannot specify both scope and target_audience" if scope && target_audience
 
         if json_key_io
+          json_key = MultiJson.load json_key_io.read
+          json_key_io.rewind # Rewind the stream so it can be read again.
+          unless json_key["type"] == CREDENTIAL_TYPE_NAME
+            raise Google::Auth::InitializationError,
+                  "The provided credentials were not of type '#{CREDENTIAL_TYPE_NAME}'. " \
+                  "Instead, the type was '#{json_key['type']}'."
+          end
           private_key, client_email, project_id, quota_project_id, universe_domain = read_json_key json_key_io
         else
           private_key = unescape ENV[CredentialsLoader::PRIVATE_KEY_VAR]

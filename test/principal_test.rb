@@ -64,7 +64,8 @@ describe "Principal methods" do
       test_email = "test-service-account@example.project.iam.gserviceaccount.com"
       json = {
         private_key:  @key = OpenSSL::PKey::RSA.new(2048).to_pem,
-        client_email: test_email
+        client_email: test_email,
+        type:         "service_account"
       }
       key_io = StringIO.new MultiJson.dump(json)
       creds = Google::Auth::ServiceAccountCredentials.make_creds json_key_io: key_io
@@ -129,7 +130,8 @@ describe "Principal methods" do
       json = {
         client_id: test_client_id,
         client_secret: "notsosecret",
-        refresh_token: "refreshing-token"
+        refresh_token: "refreshing-token",
+        type:          "authorized_user"
       }
       key_io = StringIO.new MultiJson.dump(json)
       creds = Google::Auth::UserRefreshCredentials.make_creds json_key_io: key_io

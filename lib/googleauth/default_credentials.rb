@@ -43,6 +43,36 @@ module Google
       # information, refer to [Validate credential configurations from external
       # sources](https://cloud.google.com/docs/authentication/external/externally-sourced-credentials).
       #
+      # @deprecated This method is deprecated and will be removed in a future version.
+      #   Please use the `make_creds` method on the specific credential class you intend to load,
+      #   e.g., `Google::Auth::ServiceAccountCredentials.make_creds`.
+      #
+      #   This method does not validate the credential configuration. The security
+      #   risk occurs when a credential configuration is accepted from a source that
+      #   is not under your control and used without validation on your side.
+      #
+      #   If you know that you will be loading credential configurations of a
+      #   specific type, it is recommended to use a credential-type-specific
+      #   `make_creds` method.
+      #   This will ensure that an unexpected credential type with potential for
+      #   malicious intent is not loaded unintentionally. You might still have to do
+      #   validation for certain credential types. Please follow the recommendation
+      #   for that method. For example, if you want to load only service accounts,
+      #   you can use:
+      #   ```
+      #   creds = Google::Auth::ServiceAccountCredentials.make_creds
+      #   ```
+      #   @see Google::Auth::ServiceAccountCredentials.make_creds
+      #
+      #   If you are loading your credential configuration from an untrusted source and have
+      #   not mitigated the risks (e.g. by validating the configuration yourself), make
+      #   these changes as soon as possible to prevent security risks to your environment.
+      #
+      #   Regardless of the method used, it is always your responsibility to validate
+      #   configurations received from external sources.
+      #
+      #   See https://cloud.google.com/docs/authentication/external/externally-sourced-credentials for more details.
+      #
       # @param options [Hash] Options for creating the credentials
       # @return [Google::Auth::Credentials] The credentials instance
       # @raise [Google::Auth::InitializationError] If the credentials cannot be determined
@@ -67,11 +97,11 @@ module Google
         type = ENV[env_var]
         raise InitializationError, "#{env_var} is undefined in env" unless type
         case type
-        when "service_account"
+        when ServiceAccountCredentials::CREDENTIAL_TYPE_NAME
           ServiceAccountCredentials
-        when "authorized_user"
+        when UserRefreshCredentials::CREDENTIAL_TYPE_NAME
           UserRefreshCredentials
-        when "external_account"
+        when ExternalAccount::Credentials::CREDENTIAL_TYPE_NAME
           ExternalAccount::Credentials
         else
           raise InitializationError, "credentials type '#{type}' is not supported"
@@ -89,11 +119,11 @@ module Google
         raise InitializationError, "the json is missing the '#{key}' field" unless json_key.key? key
         type = json_key[key]
         case type
-        when "service_account"
+        when ServiceAccountCredentials::CREDENTIAL_TYPE_NAME
           [json_key, ServiceAccountCredentials]
-        when "authorized_user"
+        when UserRefreshCredentials::CREDENTIAL_TYPE_NAME
           [json_key, UserRefreshCredentials]
-        when "external_account"
+        when ExternalAccount::Credentials::CREDENTIAL_TYPE_NAME
           [json_key, ExternalAccount::Credentials]
         else
           raise InitializationError, "credentials type '#{type}' is not supported"

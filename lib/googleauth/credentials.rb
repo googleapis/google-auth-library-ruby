@@ -16,6 +16,7 @@ require "forwardable"
 require "json"
 require "pathname"
 require "signet/oauth_2/client"
+require "multi_json"
 
 require "googleauth/credentials_loader"
 require "googleauth/errors"
@@ -508,7 +509,14 @@ module Google
           token_credential_uri:   options[:token_credential_uri] || token_credential_uri,
           audience:               options[:audience] || audience
         }
-        client = Google::Auth::DefaultCredentials.make_creds creds_input
+
+        # Determine the class, which consumes the IO stream
+        json_key, clz = Google::Auth::DefaultCredentials.determine_creds_class creds_input[:json_key_io]
+
+        # Re-serialize the parsed JSON and replace the IO stream in creds_input
+        creds_input[:json_key_io] = StringIO.new MultiJson.dump(json_key)
+
+        client = clz.make_creds creds_input
         options = options.select { |k, _v| k == :logger }
         new client, options
       end
@@ -575,8 +583,14 @@ module Google
       def init_client hash, options = {}
         options = update_client_options options
         io = StringIO.new JSON.generate hash
-        options.merge! json_key_io: io
-        Google::Auth::DefaultCredentials.make_creds options
+
+        # Determine the class, which consumes the IO stream
+        json_key, clz = Google::Auth::DefaultCredentials.determine_creds_class io
+
+        # Re-serialize the parsed JSON and create a new IO stream.
+        new_io = StringIO.new MultiJson.dump(json_key)
+
+        clz.make_creds options.merge!(json_key_io: new_io)
       end
 
       # returns a new Hash with string keys instead of symbol keys.

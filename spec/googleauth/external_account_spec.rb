@@ -240,5 +240,24 @@ describe Google::Auth::ExternalAccount::Credentials do
         audience: '//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID',
       }) }.to raise_error(/A json file is required for external account credentials./)
     end
+
+    it 'should raise an error if the credential type is not external_account' do
+      f = Tempfile.new('invalid_type')
+      begin
+        f.write(MultiJson.dump({
+          type: 'service_account',
+          audience: '//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID',
+          subject_token_type: 'urn:ietf:params:oauth:token-type:jwt',
+          token_url: 'https://sts.googleapis.com/v1/token',
+          credential_source: {},
+        }))
+        f.rewind
+        expect { Google::Auth::ExternalAccount::Credentials.make_creds(json_key_io: f) }
+          .to raise_error(Google::Auth::InitializationError, /The provided credentials were not of type 'external_account'. Instead, the type was 'service_account'./)
+      ensure
+        f.close
+        f.unlink
+      end
+    end
   end
 end

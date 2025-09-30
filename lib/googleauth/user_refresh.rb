@@ -39,21 +39,34 @@ module Google
       attr_reader :project_id
       attr_reader :quota_project_id
 
+      # The type name for this credential.
+      CREDENTIAL_TYPE_NAME = "authorized_user".freeze
+
       # Create a UserRefreshCredentials.
       #
       # @param json_key_io [IO] An IO object containing the JSON key
       # @param scope [string|array|nil] the scope(s) to access
       def self.make_creds options = {}
         json_key_io, scope = options.values_at :json_key_io, :scope
-        user_creds = read_json_key json_key_io if json_key_io
-        user_creds ||= {
-          "client_id"     => ENV[CredentialsLoader::CLIENT_ID_VAR],
-          "client_secret" => ENV[CredentialsLoader::CLIENT_SECRET_VAR],
-          "refresh_token" => ENV[CredentialsLoader::REFRESH_TOKEN_VAR],
-          "project_id"    => ENV[CredentialsLoader::PROJECT_ID_VAR],
-          "quota_project_id" => nil,
-          "universe_domain" => nil
-        }
+        if json_key_io
+          json_key = MultiJson.load json_key_io.read
+          json_key_io.rewind # Rewind the stream so it can be read again.
+          unless json_key["type"] == CREDENTIAL_TYPE_NAME
+            raise Google::Auth::InitializationError,
+                  "The provided credentials were not of type '#{CREDENTIAL_TYPE_NAME}'. " \
+                  "Instead, the type was '#{json_key['type']}'."
+          end
+          user_creds = read_json_key json_key_io
+        else
+          user_creds = {
+            "client_id"     => ENV[CredentialsLoader::CLIENT_ID_VAR],
+            "client_secret" => ENV[CredentialsLoader::CLIENT_SECRET_VAR],
+            "refresh_token" => ENV[CredentialsLoader::REFRESH_TOKEN_VAR],
+            "project_id"    => ENV[CredentialsLoader::PROJECT_ID_VAR],
+            "quota_project_id" => nil,
+            "universe_domain" => nil
+          }
+        end
         new(token_credential_uri: TOKEN_CRED_URI,
             client_id:            user_creds["client_id"],
             client_secret:        user_creds["client_secret"],

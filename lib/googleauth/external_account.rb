@@ -34,6 +34,9 @@ module Google
         MISSING_CREDENTIAL_SOURCE = "missing credential source for external account".freeze
         INVALID_EXTERNAL_ACCOUNT_TYPE = "credential source is not supported external account type".freeze
 
+        # The type name for this credential.
+        CREDENTIAL_TYPE_NAME = "external_account".freeze
+
         # Create a ExternalAccount::Credentials
         #
         # @param options [Hash] Options for creating credentials
@@ -49,6 +52,13 @@ module Google
           json_key_io, scope = options.values_at :json_key_io, :scope
 
           raise InitializationError, "A json file is required for external account credentials." unless json_key_io
+          json_key = MultiJson.load json_key_io.read
+          json_key_io.rewind # Rewind the stream so it can be read again.
+          unless json_key["type"] == CREDENTIAL_TYPE_NAME
+            raise Google::Auth::InitializationError,
+                  "The provided credentials were not of type '#{CREDENTIAL_TYPE_NAME}'. " \
+                  "Instead, the type was '#{json_key['type']}'."
+          end
           user_creds = read_json_key json_key_io
 
           # AWS credentials is determined by aws subject token type
