@@ -63,22 +63,13 @@ module Google
                             :audience, :token_credential_uri
         raise ArgumentError, "Cannot specify both scope and target_audience" if scope && target_audience
 
-        if json_key_io
-          json_key = MultiJson.load json_key_io.read
-          json_key_io.rewind # Rewind the stream so it can be read again.
-          unless json_key["type"] == CREDENTIAL_TYPE_NAME
-            raise Google::Auth::InitializationError,
-                  "The provided credentials were not of type '#{CREDENTIAL_TYPE_NAME}'. " \
-                  "Instead, the type was '#{json_key['type']}'."
+        private_key, client_email, project_id, quota_project_id, universe_domain =
+          if json_key_io
+            CredentialsLoader.load_and_verify_json_key_type json_key_io, CREDENTIAL_TYPE_NAME
+            read_json_key json_key_io
+          else
+            creds_from_env
           end
-          private_key, client_email, project_id, quota_project_id, universe_domain = read_json_key json_key_io
-        else
-          private_key = unescape ENV[CredentialsLoader::PRIVATE_KEY_VAR]
-          client_email = ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
-          project_id = ENV[CredentialsLoader::PROJECT_ID_VAR]
-          quota_project_id = nil
-          universe_domain = nil
-        end
         project_id ||= CredentialsLoader.load_gcloud_project_id
 
         new(token_credential_uri:   token_credential_uri || TOKEN_CRED_URI,
@@ -200,6 +191,20 @@ module Google
         alt.logger = logger
         alt.apply! a_hash
       end
+
+      # @private
+      # Loads service account credential details from environment variables.
+      #
+      # @return [Array<String, String, String, nil, nil>] An array containing private_key,
+      #   client_email, project_id, quota_project_id, and universe_domain.
+      def self.creds_from_env
+        private_key = unescape ENV[CredentialsLoader::PRIVATE_KEY_VAR]
+        client_email = ENV[CredentialsLoader::CLIENT_EMAIL_VAR]
+        project_id = ENV[CredentialsLoader::PROJECT_ID_VAR]
+        [private_key, client_email, project_id, nil, nil]
+      end
+
+      private_class_method :creds_from_env
     end
   end
 end

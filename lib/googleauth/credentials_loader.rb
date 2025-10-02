@@ -147,6 +147,20 @@ module Google
 
       module_function
 
+      # Loads a JSON key from an IO object, verifies its type, and rewinds the IO.
+      #
+      # @param json_key_io [IO] An IO object containing the JSON key.
+      # @param expected_type [String] The expected credential type name.
+      # @raise [Google::Auth::InitializationError] If the JSON key type does not match the expected type.
+      def load_and_verify_json_key_type json_key_io, expected_type
+        json_key = MultiJson.load json_key_io.read
+        json_key_io.rewind # Rewind the stream so it can be read again.
+        return if json_key["type"] == expected_type
+        raise Google::Auth::InitializationError,
+              "The provided credentials were not of type '#{expected_type}'. " \
+              "Instead, the type was '#{json_key['type']}'."
+      end
+
       # Finds project_id from gcloud CLI configuration
       def load_gcloud_project_id
         gcloud = GCLOUD_WINDOWS_COMMAND if OS.windows?

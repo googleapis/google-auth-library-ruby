@@ -49,13 +49,7 @@ module Google
       def self.make_creds options = {}
         json_key_io, scope = options.values_at :json_key_io, :scope
         if json_key_io
-          json_key = MultiJson.load json_key_io.read
-          json_key_io.rewind # Rewind the stream so it can be read again.
-          unless json_key["type"] == CREDENTIAL_TYPE_NAME
-            raise Google::Auth::InitializationError,
-                  "The provided credentials were not of type '#{CREDENTIAL_TYPE_NAME}'. " \
-                  "Instead, the type was '#{json_key['type']}'."
-          end
+          CredentialsLoader.load_and_verify_json_key_type json_key_io, CREDENTIAL_TYPE_NAME
           user_creds = read_json_key json_key_io
         else
           user_creds = {

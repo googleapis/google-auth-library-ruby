@@ -568,19 +568,8 @@ module Google
         self.class.new new_client, options
       end
 
-      protected
-
-      # Verify that the keyfile argument is a file.
-      #
-      # @param [String] keyfile Path to the keyfile
-      # @raise [Google::Auth::InitializationError] If the keyfile does not exist
-      def verify_keyfile_exists! keyfile
-        exists = ::File.file? keyfile
-        raise InitializationError, "The keyfile '#{keyfile}' is not a valid file." unless exists
-      end
-
       # Initializes the Signet client.
-      def init_client hash, options = {}
+      def self.init_client hash, options = {}
         options = update_client_options options
         io = StringIO.new JSON.generate hash
 
@@ -593,6 +582,39 @@ module Google
         clz.make_creds options.merge!(json_key_io: new_io)
       end
 
+      # Updates client options with defaults from the credential class
+      #
+      # @param [Hash] options Options to update
+      # @return [Hash] Updated options hash
+      # @raise [ArgumentError] If both scope and target_audience are specified
+      def self.update_client_options options
+        options = options.dup
+
+        # options have higher priority over constructor defaults
+        options[:token_credential_uri] ||= token_credential_uri
+        options[:audience] ||= audience
+        options[:scope] ||= scope
+        options[:target_audience] ||= target_audience
+
+        if !Array(options[:scope]).empty? && options[:target_audience]
+          raise ArgumentError, "Cannot specify both scope and target_audience"
+        end
+        options.delete :scope unless options[:target_audience].nil?
+
+        options
+      end
+
+      protected
+
+      # Verify that the keyfile argument is a file.
+      #
+      # @param [String] keyfile Path to the keyfile
+      # @raise [Google::Auth::InitializationError] If the keyfile does not exist
+      def verify_keyfile_exists! keyfile
+        exists = ::File.file? keyfile
+        raise InitializationError, "The keyfile '#{keyfile}' is not a valid file." unless exists
+      end
+
       # returns a new Hash with string keys instead of symbol keys.
       def stringify_hash_keys hash
         hash.to_h.transform_keys(&:to_s)
@@ -601,28 +623,6 @@ module Google
       # returns a new Hash with symbol keys instead of string keys.
       def symbolize_hash_keys hash
         hash.to_h.transform_keys(&:to_sym)
-      end
-
-      # Updates client options with defaults from the credential class
-      #
-      # @param [Hash] options Options to update
-      # @return [Hash] Updated options hash
-      # @raise [ArgumentError] If both scope and target_audience are specified
-      def update_client_options options
-        options = options.dup
-
-        # options have higher priority over constructor defaults
-        options[:token_credential_uri] ||= self.class.token_credential_uri
-        options[:audience] ||= self.class.audience
-        options[:scope] ||= self.class.scope
-        options[:target_audience] ||= self.class.target_audience
-
-        if !Array(options[:scope]).empty? && options[:target_audience]
-          raise ArgumentError, "Cannot specify both scope and target_audience"
-        end
-        options.delete :scope unless options[:target_audience].nil?
-
-        options
       end
 
       def update_from_client client
@@ -638,7 +638,7 @@ module Google
         hash["target_audience"] ||= options[:target_audience]
         @project_id ||= hash["project_id"] || hash["project"]
         @quota_project_id ||= hash["quota_project_id"]
-        @client = init_client hash, options
+        @client = self.class.init_client hash, options
       end
 
       def update_from_filepath path, options
@@ -648,7 +648,7 @@ module Google
         json["target_audience"] ||= options[:target_audience]
         @project_id ||= json["project_id"] || json["project"]
         @quota_project_id ||= json["quota_project_id"]
-        @client = init_client json, options
+        @client = self.class.init_client json, options
       end
 
       def setup_logging logger: :default
