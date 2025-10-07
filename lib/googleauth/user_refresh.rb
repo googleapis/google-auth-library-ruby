@@ -39,7 +39,8 @@ module Google
       attr_reader :project_id
       attr_reader :quota_project_id
 
-      # The type name for this credential.
+      # @private
+      # @type [::String] The type name for this credential.
       CREDENTIAL_TYPE_NAME = "authorized_user".freeze
 
       # Create a UserRefreshCredentials.
@@ -48,19 +49,19 @@ module Google
       # @param scope [string|array|nil] the scope(s) to access
       def self.make_creds options = {}
         json_key_io, scope = options.values_at :json_key_io, :scope
-        if json_key_io
-          CredentialsLoader.load_and_verify_json_key_type json_key_io, CREDENTIAL_TYPE_NAME
-          user_creds = read_json_key json_key_io
-        else
-          user_creds = {
-            "client_id"     => ENV[CredentialsLoader::CLIENT_ID_VAR],
-            "client_secret" => ENV[CredentialsLoader::CLIENT_SECRET_VAR],
-            "refresh_token" => ENV[CredentialsLoader::REFRESH_TOKEN_VAR],
-            "project_id"    => ENV[CredentialsLoader::PROJECT_ID_VAR],
-            "quota_project_id" => nil,
-            "universe_domain" => nil
-          }
-        end
+        user_creds = if json_key_io
+                       CredentialsLoader.load_and_verify_json_key_type json_key_io, CREDENTIAL_TYPE_NAME
+                       read_json_key json_key_io
+                     else
+                       {
+                         "client_id"     => ENV[CredentialsLoader::CLIENT_ID_VAR],
+                         "client_secret" => ENV[CredentialsLoader::CLIENT_SECRET_VAR],
+                         "refresh_token" => ENV[CredentialsLoader::REFRESH_TOKEN_VAR],
+                         "project_id"    => ENV[CredentialsLoader::PROJECT_ID_VAR],
+                         "quota_project_id" => nil,
+                         "universe_domain" => nil
+                       }
+                     end
         new(token_credential_uri: TOKEN_CRED_URI,
             client_id:            user_creds["client_id"],
             client_secret:        user_creds["client_secret"],

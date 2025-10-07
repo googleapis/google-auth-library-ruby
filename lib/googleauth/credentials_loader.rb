@@ -147,6 +147,18 @@ module Google
 
       module_function
 
+      # Finds project_id from gcloud CLI configuration
+      def load_gcloud_project_id
+        gcloud = GCLOUD_WINDOWS_COMMAND if OS.windows?
+        gcloud = GCLOUD_POSIX_COMMAND unless OS.windows?
+        gcloud_json = IO.popen("#{gcloud} #{GCLOUD_CONFIG_COMMAND}", err: :close, &:read)
+        config = MultiJson.load gcloud_json
+        config["configuration"]["properties"]["core"]["project"]
+      rescue StandardError
+        nil
+      end
+
+      # @private
       # Loads a JSON key from an IO object, verifies its type, and rewinds the IO.
       #
       # @param json_key_io [IO] An IO object containing the JSON key.
@@ -159,17 +171,6 @@ module Google
         raise Google::Auth::InitializationError,
               "The provided credentials were not of type '#{expected_type}'. " \
               "Instead, the type was '#{json_key['type']}'."
-      end
-
-      # Finds project_id from gcloud CLI configuration
-      def load_gcloud_project_id
-        gcloud = GCLOUD_WINDOWS_COMMAND if OS.windows?
-        gcloud = GCLOUD_POSIX_COMMAND unless OS.windows?
-        gcloud_json = IO.popen("#{gcloud} #{GCLOUD_CONFIG_COMMAND}", err: :close, &:read)
-        config = MultiJson.load gcloud_json
-        config["configuration"]["properties"]["core"]["project"]
-      rescue StandardError
-        nil
       end
 
       private

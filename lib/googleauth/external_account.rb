@@ -34,7 +34,8 @@ module Google
         MISSING_CREDENTIAL_SOURCE = "missing credential source for external account".freeze
         INVALID_EXTERNAL_ACCOUNT_TYPE = "credential source is not supported external account type".freeze
 
-        # The type name for this credential.
+        # @private
+        # @type [::String] The type name for this credential.
         CREDENTIAL_TYPE_NAME = "external_account".freeze
 
         # Create a ExternalAccount::Credentials

@@ -568,40 +568,44 @@ module Google
         self.class.new new_client, options
       end
 
-      # Initializes the Signet client.
-      def self.init_client hash, options = {}
-        options = update_client_options options
-        io = StringIO.new JSON.generate hash
+      class << self
+        private
 
-        # Determine the class, which consumes the IO stream
-        json_key, clz = Google::Auth::DefaultCredentials.determine_creds_class io
+        # Initializes the Signet client.
+        def init_client hash, options = {}
+          options = update_client_options options
+          io = StringIO.new JSON.generate hash
 
-        # Re-serialize the parsed JSON and create a new IO stream.
-        new_io = StringIO.new MultiJson.dump(json_key)
+          # Determine the class, which consumes the IO stream
+          json_key, clz = Google::Auth::DefaultCredentials.determine_creds_class io
 
-        clz.make_creds options.merge!(json_key_io: new_io)
-      end
+          # Re-serialize the parsed JSON and create a new IO stream.
+          new_io = StringIO.new MultiJson.dump(json_key)
 
-      # Updates client options with defaults from the credential class
-      #
-      # @param [Hash] options Options to update
-      # @return [Hash] Updated options hash
-      # @raise [ArgumentError] If both scope and target_audience are specified
-      def self.update_client_options options
-        options = options.dup
-
-        # options have higher priority over constructor defaults
-        options[:token_credential_uri] ||= token_credential_uri
-        options[:audience] ||= audience
-        options[:scope] ||= scope
-        options[:target_audience] ||= target_audience
-
-        if !Array(options[:scope]).empty? && options[:target_audience]
-          raise ArgumentError, "Cannot specify both scope and target_audience"
+          clz.make_creds options.merge!(json_key_io: new_io)
         end
-        options.delete :scope unless options[:target_audience].nil?
 
-        options
+        # Updates client options with defaults from the credential class
+        #
+        # @param [Hash] options Options to update
+        # @return [Hash] Updated options hash
+        # @raise [ArgumentError] If both scope and target_audience are specified
+        def update_client_options options
+          options = options.dup
+
+          # options have higher priority over constructor defaults
+          options[:token_credential_uri] ||= token_credential_uri
+          options[:audience] ||= audience
+          options[:scope] ||= scope
+          options[:target_audience] ||= target_audience
+
+          if !Array(options[:scope]).empty? && options[:target_audience]
+            raise ArgumentError, "Cannot specify both scope and target_audience"
+          end
+          options.delete :scope unless options[:target_audience].nil?
+
+          options
+        end
       end
 
       protected

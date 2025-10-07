@@ -41,7 +41,8 @@ module Google
       attr_reader :project_id
       attr_reader :quota_project_id
 
-      # The type name for this credential.
+      # @private
+      # @type [::String] The type name for this credential.
       CREDENTIAL_TYPE_NAME = "service_account".freeze
 
       def enable_self_signed_jwt?
