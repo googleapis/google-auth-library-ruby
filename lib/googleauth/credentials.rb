@@ -521,11 +521,48 @@ module Google
         new client, options
       end
 
+      # @private
+      # Initializes the Signet client.
+      def self.init_client hash, options = {}
+        options = update_client_options options
+        io = StringIO.new JSON.generate hash
+
+        # Determine the class, which consumes the IO stream
+        json_key, clz = Google::Auth::DefaultCredentials.determine_creds_class io
+
+        # Re-serialize the parsed JSON and create a new IO stream.
+        new_io = StringIO.new MultiJson.dump(json_key)
+
+        clz.make_creds options.merge!(json_key_io: new_io)
+      end
+
+      # @private
+      # Updates client options with defaults from the credential class
+      #
+      # @param [Hash] options Options to update
+      # @return [Hash] Updated options hash
+      # @raise [ArgumentError] If both scope and target_audience are specified
+      def self.update_client_options options
+        options = options.dup
+
+        # options have higher priority over constructor defaults
+        options[:token_credential_uri] ||= token_credential_uri
+        options[:audience] ||= audience
+        options[:scope] ||= scope
+        options[:target_audience] ||= target_audience
+
+        if !Array(options[:scope]).empty? && options[:target_audience]
+          raise ArgumentError, "Cannot specify both scope and target_audience"
+        end
+        options.delete :scope unless options[:target_audience].nil?
+
+        options
+      end
+
       private_class_method :from_env_vars,
                            :from_default_paths,
                            :from_application_default,
                            :from_io
-
 
       # Creates a duplicate of these credentials. This method tries to create the duplicate of the
       # wrapped credentials if they support duplication and use them as is if they don't.
@@ -566,46 +603,6 @@ module Google
                      end
 
         self.class.new new_client, options
-      end
-
-      class << self
-        private
-
-        # Initializes the Signet client.
-        def init_client hash, options = {}
-          options = update_client_options options
-          io = StringIO.new JSON.generate hash
-
-          # Determine the class, which consumes the IO stream
-          json_key, clz = Google::Auth::DefaultCredentials.determine_creds_class io
-
-          # Re-serialize the parsed JSON and create a new IO stream.
-          new_io = StringIO.new MultiJson.dump(json_key)
-
-          clz.make_creds options.merge!(json_key_io: new_io)
-        end
-
-        # Updates client options with defaults from the credential class
-        #
-        # @param [Hash] options Options to update
-        # @return [Hash] Updated options hash
-        # @raise [ArgumentError] If both scope and target_audience are specified
-        def update_client_options options
-          options = options.dup
-
-          # options have higher priority over constructor defaults
-          options[:token_credential_uri] ||= token_credential_uri
-          options[:audience] ||= audience
-          options[:scope] ||= scope
-          options[:target_audience] ||= target_audience
-
-          if !Array(options[:scope]).empty? && options[:target_audience]
-            raise ArgumentError, "Cannot specify both scope and target_audience"
-          end
-          options.delete :scope unless options[:target_audience].nil?
-
-          options
-        end
       end
 
       protected
