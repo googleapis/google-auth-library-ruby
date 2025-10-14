@@ -38,17 +38,19 @@ that exposes common initialization functionality, such as creating credentials f
    - For obtaining authentication tokens from GCE metadata server
    - Used automatically when code is running on Google Compute Engine
    - Fetches tokens from the metadata server with no additional configuration needed
+   - This credential type does not have a supported JSON form
 
 4. **Google::Auth::IAMCredentials < Signet::OAuth2::Client** - `lib/googleauth/iam.rb`
    - For IAM-based authentication (e.g. service-to-service)
    - Implements authentication-as-a-service for systems already authenticated
    - Exchanges existing credentials for a short-lived access token
+   - This credential type does not have a supported JSON form
 
 ## Service Account Authentication
 
 5. **Google::Auth::ServiceAccountCredentials < Signet::OAuth2::Client** - `lib/googleauth/service_account.rb`
    - Authenticates requests using Service Account credentials via an OAuth access token
-   - Created from JSON key file downloaded from Google Cloud Console
+   - Created from JSON key file downloaded from Google Cloud Console. The JSON form of this credential type has a `"type"` field with the value `"service_account"`.
    - Supports both OAuth access tokens and self-signed JWT authentication
    - Can specify scopes for access token requests
 
@@ -64,6 +66,7 @@ that exposes common initialization functionality, such as creating credentials f
    - Allows a GCP principal identified by a set of source credentials to impersonate a service account
    - Useful for delegation of authority and managing permissions across service accounts
    - Source credentials must have the Service Account Token Creator role on the target
+   - This credential type does not have a supported JSON form
 
 ## User Authentication
 
@@ -71,7 +74,7 @@ that exposes common initialization functionality, such as creating credentials f
    - For user refresh token authentication (from 3-legged OAuth flow)
    - Authenticates on behalf of a user who has authorized the application
    - Handles token refresh when original access token expires
-   - Typically obtained through web or installed application flow
+   - Typically obtained through web or installed application flow. The JSON form of this credential type has a `"type"` field with the value `"authorized_user"`.
 
 `Google::Auth::UserAuthorizer` (`lib/googleauth/user_authorizer.rb`) and `Google::Auth::WebUserAuthorizer` (`lib/googleauth/web_user_authorizer.rb`)
  are used to facilitate user authentication. The `UserAuthorizer` handles interactive 3-Legged-OAuth2 (3LO) user consent authorization for command-line applications.
@@ -83,6 +86,7 @@ that exposes common initialization functionality, such as creating credentials f
   types based on credential source (similar to `Google::Auth::get_application_default`).
   It is included in all External Account credentials types, and it itself includes `Google::Auth::BaseClient` module so all External
   Account credentials types include `Google::Auth::BaseClient`.
+  The JSON form of this credential type has a `"type"` field with the value `"external_account"`.
 
 9. **Google::Auth::ExternalAccount::AwsCredentials** - `lib/googleauth/external_account/aws_credentials.rb`
      - Includes `Google::Auth::BaseClient` module

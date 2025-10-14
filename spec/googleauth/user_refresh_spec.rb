@@ -82,6 +82,19 @@ describe Google::Auth::UserRefreshCredentials do
 
   it_behaves_like "apply/apply! are OK"
 
+  it "raises an error if the credential type is not authorized_user" do
+    cred_json[:type] = "service_account"
+    expect do
+      UserRefreshCredentials.make_creds(
+        json_key_io: StringIO.new(MultiJson.dump(cred_json))
+      )
+    end.to raise_error(
+      Google::Auth::InitializationError,
+      "The provided credentials were not of type 'authorized_user'. " \
+      "Instead, the type was 'service_account'."
+    )
+  end
+
   describe "#from_env" do
     before :example do
       @var_name = ENV_VAR

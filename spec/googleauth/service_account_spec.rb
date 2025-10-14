@@ -106,6 +106,19 @@ describe Google::Auth::ServiceAccountCredentials do
 
   it_behaves_like "apply/apply! are OK"
 
+  it "raises an error if the credential type is not service_account" do
+    cred_json[:type] = "authorized_user"
+    expect do
+      ServiceAccountCredentials.make_creds(
+        json_key_io: StringIO.new(MultiJson.dump(cred_json))
+      )
+    end.to raise_error(
+      Google::Auth::InitializationError,
+      "The provided credentials were not of type 'service_account'. " \
+      "Instead, the type was 'authorized_user'."
+    )
+  end
+
   describe "universe_domain" do
     it "defaults to googleapis" do
       expect(@client.universe_domain).to eq("googleapis.com")

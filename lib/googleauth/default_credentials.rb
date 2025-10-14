@@ -43,61 +43,81 @@ module Google
       # information, refer to [Validate credential configurations from external
       # sources](https://cloud.google.com/docs/authentication/external/externally-sourced-credentials).
       #
+      # @deprecated This method is deprecated and will be removed in a future version.
+      #   Please use the `make_creds` method on the specific credential class you intend to load,
+      #   e.g., `Google::Auth::ServiceAccountCredentials.make_creds`.
+      #
+      #   This method does not validate the credential configuration. The security
+      #   risk occurs when a credential configuration is accepted from a source that
+      #   is not under your control and used without validation on your side.
+      #
+      #   If you know that you will be loading credential configurations of a
+      #   specific type, it is recommended to use a credential-type-specific
+      #   `make_creds` method.
+      #   This will ensure that an unexpected credential type with potential for
+      #   malicious intent is not loaded unintentionally. You might still have to do
+      #   validation for certain credential types. Please follow the recommendation
+      #   for that method. For example, if you want to load only service accounts,
+      #   you can use:
+      #   ```
+      #   creds = Google::Auth::ServiceAccountCredentials.make_creds
+      #   ```
+      #   @see Google::Auth::ServiceAccountCredentials.make_creds
+      #
+      #   If you are loading your credential configuration from an untrusted source and have
+      #   not mitigated the risks (e.g. by validating the configuration yourself), make
+      #   these changes as soon as possible to prevent security risks to your environment.
+      #
+      #   Regardless of the method used, it is always your responsibility to validate
+      #   configurations received from external sources.
+      #
+      #   See https://cloud.google.com/docs/authentication/external/externally-sourced-credentials for more details.
+      #
       # @param options [Hash] Options for creating the credentials
       # @return [Google::Auth::Credentials] The credentials instance
       # @raise [Google::Auth::InitializationError] If the credentials cannot be determined
       def self.make_creds options = {}
         json_key_io = options[:json_key_io]
-        if json_key_io
-          json_key, clz = determine_creds_class json_key_io
+        json_key, clz = determine_creds_class json_key_io
+        if json_key
           io = StringIO.new MultiJson.dump(json_key)
           clz.make_creds options.merge(json_key_io: io)
         else
-          clz = read_creds
           clz.make_creds options
-        end
-      end
-
-      # Reads the credential type from environment and returns the appropriate class
-      #
-      # @return [Class] The credential class to use
-      # @raise [Google::Auth::InitializationError] If the credentials type is undefined or unsupported
-      def self.read_creds
-        env_var = CredentialsLoader::ACCOUNT_TYPE_VAR
-        type = ENV[env_var]
-        raise InitializationError, "#{env_var} is undefined in env" unless type
-        case type
-        when "service_account"
-          ServiceAccountCredentials
-        when "authorized_user"
-          UserRefreshCredentials
-        when "external_account"
-          ExternalAccount::Credentials
-        else
-          raise InitializationError, "credentials type '#{type}' is not supported"
         end
       end
 
       # Reads the input json and determines which creds class to use.
       #
-      # @param json_key_io [IO] An IO object containing the JSON key
-      # @return [Array(Hash, Class)] The JSON key and the credential class to use
-      # @raise [Google::Auth::InitializationError] If the JSON is missing the type field or has an unsupported type
-      def self.determine_creds_class json_key_io
-        json_key = MultiJson.load json_key_io.read
-        key = "type"
-        raise InitializationError, "the json is missing the '#{key}' field" unless json_key.key? key
-        type = json_key[key]
-        case type
-        when "service_account"
-          [json_key, ServiceAccountCredentials]
-        when "authorized_user"
-          [json_key, UserRefreshCredentials]
-        when "external_account"
-          [json_key, ExternalAccount::Credentials]
+      # @param json_key_io [IO, nil] An optional IO object containing the JSON key.
+      #   If nil, the credential type is determined from environment variables.
+      # @return [Array(Hash, Class)] The JSON key (or nil if from environment) and the credential class to use
+      # @raise [Google::Auth::InitializationError] If the JSON is missing the type field or has an unsupported type,
+      #   or if the environment variable is undefined or unsupported.
+      def self.determine_creds_class json_key_io = nil
+        if json_key_io
+          json_key = MultiJson.load json_key_io.read
+          key = "type"
+          raise InitializationError, "the json is missing the '#{key}' field" unless json_key.key? key
+          type = json_key[key]
         else
-          raise InitializationError, "credentials type '#{type}' is not supported"
+          env_var = CredentialsLoader::ACCOUNT_TYPE_VAR
+          type = ENV[env_var]
+          raise InitializationError, "#{env_var} is undefined in env" unless type
+          json_key = nil
         end
+
+        clz = case type
+              when ServiceAccountCredentials::CREDENTIAL_TYPE_NAME
+                ServiceAccountCredentials
+              when UserRefreshCredentials::CREDENTIAL_TYPE_NAME
+                UserRefreshCredentials
+              when ExternalAccount::Credentials::CREDENTIAL_TYPE_NAME
+                ExternalAccount::Credentials
+              else
+                raise InitializationError, "credentials type '#{type}' is not supported"
+              end
+        [json_key, clz]
       end
     end
   end
