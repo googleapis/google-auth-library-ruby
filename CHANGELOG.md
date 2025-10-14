@@ -1,5 +1,11 @@
 # Release History
 
+### 1.15.1 (2025-10-14)
+
+#### Bug Fixes
+
+* Deprecate method make_creds in DefaultCredentials ([#545](https://github.com/googleapis/google-auth-library-ruby/issues/545)) 
+
 ### 1.15.0 (2025-08-25)
 
 #### Features
