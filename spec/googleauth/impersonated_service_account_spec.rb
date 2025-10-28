@@ -102,7 +102,7 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
           scope: ["scope2"]
         )
         expect(creds.scope).to eq(["scope2"])
-      }
+      end
     end
   end
  

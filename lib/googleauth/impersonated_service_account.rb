@@ -94,7 +94,7 @@ module Google
         json_key_io, scope = options.values_at :json_key_io, :scope
 
         if json_key_io
-          info = MultiJson.load(json_key_io.read)
+          info = MultiJson.load json_key_io.read
           source_credentials_info = info["source_credentials"]
 
           if source_credentials_info["type"] == CREDENTIAL_TYPE_NAME

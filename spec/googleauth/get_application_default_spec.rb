@@ -247,8 +247,32 @@ describe "#get_application_default" do
       MultiJson.dump cred_json
     end
 
-    it_behaves_like "it can successfully load credentials"
-    it_behaves_like "it cannot load misconfigured credentials"
+    it "succeeds if the GOOGLE_APPLICATION_CREDENTIALS file is valid" do
+      Dir.mktmpdir do |dir|
+        key_path = File.join dir, "my_cert_file"
+        FileUtils.mkdir_p File.dirname(key_path)
+        File.write key_path, cred_json_text
+        ENV[@var_name] = key_path
+        creds = Google::Auth.get_application_default @scope, options
+        expect(creds).to be_a(Google::Auth::ImpersonatedServiceAccountCredentials)
+      end
+    end
+
+    it "fails if the GOOGLE_APPLICATION_CREDENTIALS path does not exist" do
+      Dir.mktmpdir do |dir|
+        key_path = File.join dir, "does-not-exist"
+        ENV[@var_name] = key_path
+        begin
+          Google::Auth.get_application_default @scope, options
+          fail "Expected to raise error"
+        rescue => e
+          expect(e).to be_a Google::Auth::InitializationError
+          expect(e).to be_a Google::Auth::Error
+          expect(e.message).to include "Unable to read the credential file"
+          expect(e.message).to include "does-not-exist"
+        end
+      end
+    end
   end
 
   describe "when credential type is unknown" do
