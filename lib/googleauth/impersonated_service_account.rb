@@ -102,8 +102,7 @@ module Google
           end
 
           source_credentials = DefaultCredentials.make_creds(
-            json_key_io: StringIO.new(MultiJson.dump(source_credentials_info)),
-            scope: scope
+            json_key_io: StringIO.new(MultiJson.dump(source_credentials_info))
           )
 
           impersonation_url = info["service_account_impersonation_url"]

@@ -238,7 +238,8 @@ describe "#get_application_default" do
           "type": "authorized_user",
           "client_id": "client_id",
           "client_secret": "client_secret",
-          "refresh_token": "refresh_token"
+          "refresh_token": "refresh_token",
+          "scope": "https://www.googleapis.com/auth/iam"
         }
       }
     end

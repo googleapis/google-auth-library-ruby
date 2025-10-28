@@ -75,12 +75,21 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
     end
 
     context "with recursive impersonated_service_account source credentials" do
-      let(:source_credentials_json) { impersonated_json }
+      let(:recursive_impersonated_json) do
+        {
+          "type": "impersonated_service_account",
+          "service_account_impersonation_url": impersonation_url,
+          "scopes": ["scope1"],
+          "source_credentials": {
+            "type": "impersonated_service_account"
+          }
+        }
+      end
 
       it "raises a runtime error" do
         expect {
           Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
-            json_key_io: StringIO.new(MultiJson.dump(impersonated_json))
+            json_key_io: StringIO.new(MultiJson.dump(recursive_impersonated_json))
           )
         }.to raise_error(RuntimeError, "Source credentials can't be of type impersonated_service_account")
       end
