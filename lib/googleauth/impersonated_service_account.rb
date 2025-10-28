@@ -15,7 +15,6 @@
 require "googleauth/base_client"
 require "googleauth/errors"
 require "googleauth/helpers/connection"
-require "googleauth/default_credentials"
 
 module Google
   module Auth
@@ -91,6 +90,7 @@ module Google
       #
       # @return [Google::Auth::ImpersonatedServiceAccountCredentials]
       def self.make_creds options = {}
+        require "googleauth/default_credentials"
         json_key_io, scope = options.values_at :json_key_io, :scope
 
         if json_key_io
