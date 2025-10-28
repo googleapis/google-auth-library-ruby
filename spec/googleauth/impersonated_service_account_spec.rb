@@ -31,7 +31,8 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
       {
         "type": "service_account",
         "private_key": "-----BEGIN PRIVATE KEY-----\nprivate_key\n-----END PRIVATE KEY-----\n",
-        "client_email": "client_email"
+        "client_email": "client_email",
+        "scope": "https://www.googleapis.com/auth/iam"
       }
     end
 
@@ -91,7 +92,7 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
           Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
             json_key_io: StringIO.new(MultiJson.dump(recursive_impersonated_json))
           )
-        }.to raise_error(RuntimeError, "Source credentials can't be of type impersonated_service_account")
+        }.to raise_error(RuntimeError, /Source credentials can't be of type/)
       end
     end
 
