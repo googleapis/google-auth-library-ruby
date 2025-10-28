@@ -17,6 +17,95 @@ require_relative "../spec_helper"
 
 describe Google::Auth::ImpersonatedServiceAccountCredentials do
  
+  describe ".make_creds with json_key_io" do
+    let(:authorized_user_json) do
+      {
+        "type": "authorized_user",
+        "client_id": "client_id",
+        "client_secret": "client_secret",
+        "refresh_token": "refresh_token"
+      }
+    end
+
+    let(:service_account_json) do
+      {
+        "type": "service_account",
+        "private_key": "-----BEGIN PRIVATE KEY-----\nprivate_key\n-----END PRIVATE KEY-----\n",
+        "client_email": "client_email"
+      }
+    end
+
+    let(:impersonated_json) do
+      {
+        "type": "impersonated_service_account",
+        "service_account_impersonation_url": impersonation_url,
+        "scopes": ["scope1"],
+        "source_credentials": source_credentials_json
+      }
+    end
+
+    context "with authorized_user source credentials" do
+      let(:source_credentials_json) { authorized_user_json }
+
+      it "creates credentials with UserRefreshCredentials as source" do
+        creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
+          json_key_io: StringIO.new(MultiJson.dump(impersonated_json))
+        )
+
+        expect(creds).to be_a(Google::Auth::ImpersonatedServiceAccountCredentials)
+        expect(creds.source_credentials).to be_a(Google::Auth::UserRefreshCredentials)
+        expect(creds.impersonation_url).to eq(impersonation_url)
+        expect(creds.scope).to eq(["scope1"])
+      end
+    end
+
+    context "with service_account source credentials" do
+      let(:source_credentials_json) { service_account_json }
+
+      it "creates credentials with ServiceAccountCredentials as source" do
+        creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
+          json_key_io: StringIO.new(MultiJson.dump(impersonated_json))
+        )
+
+        expect(creds).to be_a(Google::Auth::ImpersonatedServiceAccountCredentials)
+        expect(creds.source_credentials).to be_a(Google::Auth::ServiceAccountCredentials)
+        expect(creds.impersonation_url).to eq(impersonation_url)
+        expect(creds.scope).to eq(["scope1"])
+      end
+    end
+
+    context "with recursive impersonated_service_account source credentials" do
+      let(:source_credentials_json) { impersonated_json }
+
+      it "raises a runtime error" do
+        expect {
+          Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
+            json_key_io: StringIO.new(MultiJson.dump(impersonated_json))
+          )
+        }.to raise_error(RuntimeError, "Source credentials can't be of type impersonated_service_account")
+      end
+    end
+
+    context "scope handling" do
+      let(:source_credentials_json) { authorized_user_json }
+
+      it "uses scope from JSON if not provided in options" do
+        creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
+          json_key_io: StringIO.new(MultiJson.dump(impersonated_json))
+        )
+        expect(creds.scope).to eq(["scope1"])
+      end
+
+      it "uses scope from options if provided" do
+        creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
+          json_key_io: StringIO.new(MultiJson.dump(impersonated_json)),
+          scope: ["scope2"]
+        )
+        expect(creds.scope).to eq(["scope2"])
+      }
+    end
+  end
+ 
   let(:impersonation_url) {"https://iamcredentials.example.com/v1/projects/-/serviceAccounts/test:generateAccessToken"}
 
   def make_auth_stubs opts

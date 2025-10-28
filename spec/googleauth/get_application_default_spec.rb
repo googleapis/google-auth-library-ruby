@@ -229,6 +229,28 @@ describe "#get_application_default" do
     it_behaves_like "it cannot load misconfigured credentials"
   end
 
+  describe "when credential type is impersonated_service_account" do
+    let :cred_json do
+      {
+        "type": "impersonated_service_account",
+        "service_account_impersonation_url": "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/test-account@example.com:generateAccessToken",
+        "source_credentials": {
+          "type": "authorized_user",
+          "client_id": "client_id",
+          "client_secret": "client_secret",
+          "refresh_token": "refresh_token"
+        }
+      }
+    end
+
+    def cred_json_text
+      MultiJson.dump cred_json
+    end
+
+    it_behaves_like "it can successfully load credentials"
+    it_behaves_like "it cannot load misconfigured credentials"
+  end
+
   describe "when credential type is unknown" do
     let :cred_json do
       {
