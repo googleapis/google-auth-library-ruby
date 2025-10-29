@@ -229,6 +229,53 @@ describe "#get_application_default" do
     it_behaves_like "it cannot load misconfigured credentials"
   end
 
+  describe "when credential type is impersonated_service_account" do
+    let :cred_json do
+      {
+        "type": "impersonated_service_account",
+        "service_account_impersonation_url": "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/test-account@example.com:generateAccessToken",
+        "source_credentials": {
+          "type": "authorized_user",
+          "client_id": "client_id",
+          "client_secret": "client_secret",
+          "refresh_token": "refresh_token",
+          "scope": "https://www.googleapis.com/auth/iam"
+        }
+      }
+    end
+
+    def cred_json_text
+      MultiJson.dump cred_json
+    end
+
+    it "succeeds if the GOOGLE_APPLICATION_CREDENTIALS file is valid" do
+      Dir.mktmpdir do |dir|
+        key_path = File.join dir, "my_cert_file"
+        FileUtils.mkdir_p File.dirname(key_path)
+        File.write key_path, cred_json_text
+        ENV[@var_name] = key_path
+        creds = Google::Auth.get_application_default @scope, options
+        expect(creds).to be_a(Google::Auth::ImpersonatedServiceAccountCredentials)
+      end
+    end
+
+    it "fails if the GOOGLE_APPLICATION_CREDENTIALS path does not exist" do
+      Dir.mktmpdir do |dir|
+        key_path = File.join dir, "does-not-exist"
+        ENV[@var_name] = key_path
+        begin
+          Google::Auth.get_application_default @scope, options
+          fail "Expected to raise error"
+        rescue => e
+          expect(e).to be_a Google::Auth::InitializationError
+          expect(e).to be_a Google::Auth::Error
+          expect(e.message).to include "Unable to read the credential file"
+          expect(e.message).to include "does-not-exist"
+        end
+      end
+    end
+  end
+
   describe "when credential type is unknown" do
     let :cred_json do
       {

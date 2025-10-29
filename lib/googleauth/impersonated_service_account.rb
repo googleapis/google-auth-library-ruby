@@ -24,6 +24,9 @@ module Google
     # The short-lived token and its expiration time are cached.
     class ImpersonatedServiceAccountCredentials
       # @private
+      CREDENTIAL_TYPE_NAME = "impersonated_service_account".freeze
+
+      # @private
       ERROR_SUFFIX = <<~ERROR.freeze
         when trying to get security access token
         from IAM Credentials endpoint using the credentials provided.
@@ -87,7 +90,32 @@ module Google
       #
       # @return [Google::Auth::ImpersonatedServiceAccountCredentials]
       def self.make_creds options = {}
-        new options
+        require "googleauth/default_credentials"
+        json_key_io, scope = options.values_at :json_key_io, :scope
+
+        if json_key_io
+          info = MultiJson.load json_key_io.read
+          source_credentials_info = info["source_credentials"]
+
+          if source_credentials_info["type"] == CREDENTIAL_TYPE_NAME
+            raise "Source credentials can't be of type impersonated_service_account"
+          end
+
+          source_credentials = DefaultCredentials.make_creds(
+            json_key_io: StringIO.new(MultiJson.dump(source_credentials_info))
+          )
+
+          impersonation_url = info["service_account_impersonation_url"]
+          scope ||= info["scopes"]
+
+          new(
+            source_credentials: source_credentials,
+            impersonation_url:  impersonation_url,
+            scope:              scope
+          )
+        else
+          new options
+        end
       end
 
       # Initializes a new instance of ImpersonatedServiceAccountCredentials.
