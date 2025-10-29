@@ -18,6 +18,8 @@ require_relative "../spec_helper"
 describe Google::Auth::ImpersonatedServiceAccountCredentials do
  
   describe ".make_creds with json_key_io" do
+    let(:key) { OpenSSL::PKey::RSA.new 2048 }
+
     let(:authorized_user_json) do
       {
         "type": "authorized_user",
@@ -30,7 +32,7 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
     let(:service_account_json) do
       {
         "type": "service_account",
-        "private_key": "-----BEGIN PRIVATE KEY-----\nprivate_key\n-----END PRIVATE KEY-----\n",
+        "private_key": key.to_pem,
         "client_email": "client_email",
         "scope": "https://www.googleapis.com/auth/iam"
       }
