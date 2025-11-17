@@ -66,7 +66,7 @@ that exposes common initialization functionality, such as creating credentials f
    - Allows a GCP principal identified by a set of source credentials to impersonate a service account
    - Useful for delegation of authority and managing permissions across service accounts
    - Source credentials must have the Service Account Token Creator role on the target
-   - This credential type does not have a supported JSON form
+   - This credential type supports JSON configuration. The JSON form of this credential type has a `"type"` field with the value `"impersonated_service_account"`.
 
 ## User Authentication
 

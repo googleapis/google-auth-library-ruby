@@ -87,15 +87,22 @@ module Google
       #   defining the permissions required for the token.
       # @option options [Object] :source_credentials The authenticated principal that will be used
       #   to fetch the short-lived impersonation access token. It is an alternative to providing the base credentials.
+      # @option options [IO] :json_key_io The IO object that contains the credential configuration.
+      #   It is exclusive with `:base_credentials` and `:source_credentials` options.
       #
       # @return [Google::Auth::ImpersonatedServiceAccountCredentials]
       def self.make_creds options = {}
-        require "googleauth/default_credentials"
-        json_key_io, scope = options.values_at :json_key_io, :scope
+        json_key_io, scope, base_credentials, source_credentials =
+          options.values_at :json_key_io, :scope, :base_credentials, :source_credentials
 
         if json_key_io
-          info = MultiJson.load json_key_io.read
-          source_credentials_info = info["source_credentials"]
+          if base_credentials || source_credentials
+            raise "json_key_io is not compatible with base_credentials or source_credentials"
+          end
+
+          require "googleauth/default_credentials"
+          impersonated_json = MultiJson.load json_key_io.read
+          source_credentials_info = impersonated_json["source_credentials"]
 
           if source_credentials_info["type"] == CREDENTIAL_TYPE_NAME
             raise "Source credentials can't be of type impersonated_service_account"
@@ -105,8 +112,8 @@ module Google
             json_key_io: StringIO.new(MultiJson.dump(source_credentials_info))
           )
 
-          impersonation_url = info["service_account_impersonation_url"]
-          scope ||= info["scopes"]
+          impersonation_url = impersonated_json["service_account_impersonation_url"]
+          scope ||= impersonated_json["scopes"]
 
           new(
             source_credentials: source_credentials,
@@ -133,6 +140,7 @@ module Google
       #     - `{source_sa_email}` is the email address of the service account to impersonate.
       # @option options [Array<String>, String] :scope (required) The scope(s) for the short-lived impersonation token,
       #   defining the permissions required for the token.
+      #   It will override the scope from the `json_key_io` file if provided.
       # @option options [Object] :source_credentials The authenticated principal that will be used
       #   to fetch the short-lived impersonation access token. It is an alternative to providing the base credentials.
       #   It is redundant to provide both source and base credentials as only source will be used,
