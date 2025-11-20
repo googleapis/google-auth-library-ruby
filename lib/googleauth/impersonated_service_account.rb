@@ -72,6 +72,15 @@ module Google
       # and request short-lived credentials for a service account
       # that has the authorization that your use case requires.
       #
+      # @note Warning:
+      # This method does not validate the credential configuration. A security
+      # risk occurs when a credential configuration configured with malicious urls
+      # is used.
+      # When the credential configuration is accepted from an
+      # untrusted source, you should validate it before using with this method.
+      # See https://cloud.google.com/docs/authentication/external/externally-sourced-credentials
+      # for more details.
+      #
       # @param options [Hash] A hash of options to configure the credentials.
       # @option options [Object] :base_credentials (required) The authenticated principal.
       #   It will be used as following:
