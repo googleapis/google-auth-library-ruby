@@ -24,6 +24,9 @@ module Google
     # The short-lived token and its expiration time are cached.
     class ImpersonatedServiceAccountCredentials
       # @private
+      CREDENTIAL_TYPE_NAME = "impersonated_service_account".freeze
+
+      # @private
       ERROR_SUFFIX = <<~ERROR.freeze
         when trying to get security access token
         from IAM Credentials endpoint using the credentials provided.
@@ -84,11 +87,50 @@ module Google
       #   defining the permissions required for the token.
       # @option options [Object] :source_credentials The authenticated principal that will be used
       #   to fetch the short-lived impersonation access token. It is an alternative to providing the base credentials.
+      # @option options [IO] :json_key_io The IO object that contains the credential configuration.
+      #   It is exclusive with `:base_credentials` and `:source_credentials` options.
       #
       # @return [Google::Auth::ImpersonatedServiceAccountCredentials]
       def self.make_creds options = {}
-        new options
+        if options[:json_key_io]
+          make_creds_from_json options
+        else
+          new options
+        end
       end
+
+      # @private
+      def self.make_creds_from_json options
+        json_key_io = options[:json_key_io]
+        if options[:base_credentials] || options[:source_credentials]
+          raise Google::Auth::InitializationError,
+                "json_key_io is not compatible with base_credentials or source_credentials"
+        end
+
+        require "googleauth/default_credentials"
+        impersonated_json = MultiJson.load json_key_io.read
+        source_credentials_info = impersonated_json["source_credentials"]
+
+        if source_credentials_info["type"] == CREDENTIAL_TYPE_NAME
+          raise Google::Auth::InitializationError,
+                "Source credentials can't be of type impersonated_service_account, " \
+                "use delegates to chain impersonation."
+        end
+
+        source_credentials = DefaultCredentials.make_creds(
+          json_key_io: StringIO.new(MultiJson.dump(source_credentials_info))
+        )
+
+        impersonation_url = impersonated_json["service_account_impersonation_url"]
+        scope = options[:scope] || impersonated_json["scopes"]
+
+        new(
+          source_credentials: source_credentials,
+          impersonation_url:  impersonation_url,
+          scope:              scope
+        )
+      end
+      private_class_method :make_creds_from_json
 
       # Initializes a new instance of ImpersonatedServiceAccountCredentials.
       #
@@ -105,6 +147,7 @@ module Google
       #     - `{source_sa_email}` is the email address of the service account to impersonate.
       # @option options [Array<String>, String] :scope (required) The scope(s) for the short-lived impersonation token,
       #   defining the permissions required for the token.
+      #   It will override the scope from the `json_key_io` file if provided.
       # @option options [Object] :source_credentials The authenticated principal that will be used
       #   to fetch the short-lived impersonation access token. It is an alternative to providing the base credentials.
       #   It is redundant to provide both source and base credentials as only source will be used,

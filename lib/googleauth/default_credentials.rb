@@ -21,6 +21,7 @@ require "googleauth/external_account"
 require "googleauth/service_account"
 require "googleauth/service_account_jwt_header"
 require "googleauth/user_refresh"
+require "googleauth/impersonated_service_account"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
@@ -114,6 +115,8 @@ module Google
                 UserRefreshCredentials
               when ExternalAccount::Credentials::CREDENTIAL_TYPE_NAME
                 ExternalAccount::Credentials
+              when ImpersonatedServiceAccountCredentials::CREDENTIAL_TYPE_NAME
+                ImpersonatedServiceAccountCredentials
               else
                 raise InitializationError, "credentials type '#{type}' is not supported"
               end
