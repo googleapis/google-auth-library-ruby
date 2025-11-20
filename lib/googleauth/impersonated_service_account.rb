@@ -92,38 +92,45 @@ module Google
       #
       # @return [Google::Auth::ImpersonatedServiceAccountCredentials]
       def self.make_creds options = {}
-        json_key_io, scope, base_credentials, source_credentials =
-          options.values_at :json_key_io, :scope, :base_credentials, :source_credentials
-
-        if json_key_io
-          if base_credentials || source_credentials
-            raise "json_key_io is not compatible with base_credentials or source_credentials"
-          end
-
-          require "googleauth/default_credentials"
-          impersonated_json = MultiJson.load json_key_io.read
-          source_credentials_info = impersonated_json["source_credentials"]
-
-          if source_credentials_info["type"] == CREDENTIAL_TYPE_NAME
-            raise "Source credentials can't be of type impersonated_service_account"
-          end
-
-          source_credentials = DefaultCredentials.make_creds(
-            json_key_io: StringIO.new(MultiJson.dump(source_credentials_info))
-          )
-
-          impersonation_url = impersonated_json["service_account_impersonation_url"]
-          scope ||= impersonated_json["scopes"]
-
-          new(
-            source_credentials: source_credentials,
-            impersonation_url:  impersonation_url,
-            scope:              scope
-          )
+        if options[:json_key_io]
+          make_creds_from_json options
         else
           new options
         end
       end
+
+      # @private
+      def self.make_creds_from_json options
+        json_key_io = options[:json_key_io]
+        if options[:base_credentials] || options[:source_credentials]
+          raise Google::Auth::InitializationError,
+                "json_key_io is not compatible with base_credentials or source_credentials"
+        end
+
+        require "googleauth/default_credentials"
+        impersonated_json = MultiJson.load json_key_io.read
+        source_credentials_info = impersonated_json["source_credentials"]
+
+        if source_credentials_info["type"] == CREDENTIAL_TYPE_NAME
+          raise Google::Auth::InitializationError,
+                "Source credentials can't be of type impersonated_service_account, " \
+                "use delegates to chain impersonation."
+        end
+
+        source_credentials = DefaultCredentials.make_creds(
+          json_key_io: StringIO.new(MultiJson.dump(source_credentials_info))
+        )
+
+        impersonation_url = impersonated_json["service_account_impersonation_url"]
+        scope = options[:scope] || impersonated_json["scopes"]
+
+        new(
+          source_credentials: source_credentials,
+          impersonation_url:  impersonation_url,
+          scope:              scope
+        )
+      end
+      private_class_method :make_creds_from_json
 
       # Initializes a new instance of ImpersonatedServiceAccountCredentials.
       #

@@ -94,7 +94,7 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
           Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
             json_key_io: StringIO.new(MultiJson.dump(recursive_impersonated_json))
           )
-        }.to raise_error(RuntimeError, /Source credentials can't be of type/)
+        }.to raise_error(Google::Auth::InitializationError, /Source credentials can't be of type.*use delegates/)
       end
     end
 
