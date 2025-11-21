@@ -1,5 +1,14 @@
 # Release History
 
+### 1.16.0 (2025-11-21)
+
+#### Features
+
+* Add ADC support for impersonated credentials ([#547](https://github.com/googleapis/google-auth-library-ruby/issues/547)) 
+#### Bug Fixes
+
+* Include security warning in ExternalAccount and ImpersonatedServiceAccount credentials ([#551](https://github.com/googleapis/google-auth-library-ruby/issues/551)) 
+
 ### 1.15.1 (2025-10-14)
 
 #### Bug Fixes
