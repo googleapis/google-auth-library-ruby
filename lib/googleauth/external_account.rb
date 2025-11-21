@@ -40,6 +40,15 @@ module Google
 
         # Create a ExternalAccount::Credentials
         #
+        # @note Warning:
+        # This method does not validate the credential configuration. A security
+        # risk occurs when a credential configuration configured with malicious urls
+        # is used.
+        # When the credential configuration is accepted from an
+        # untrusted source, you should validate it before using with this method.
+        # See https://cloud.google.com/docs/authentication/external/externally-sourced-credentials
+        # for more details.
+        #
         # @param options [Hash] Options for creating credentials
         # @option options [IO] :json_key_io (required) An IO object containing the JSON key
         # @option options [String,Array,nil] :scope The scope(s) to access
