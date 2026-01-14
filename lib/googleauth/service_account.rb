@@ -58,7 +58,7 @@ module Google
       # @param json_key_io [IO] An IO object containing the JSON key
       # @param scope [string|array|nil] the scope(s) to access
       # @raise [ArgumentError] If both scope and target_audience are specified
-      def self.make_creds options = {}
+      def self.make_creds options = {} # rubocop:disable Metrics/MethodLength
         json_key_io, scope, enable_self_signed_jwt, target_audience, audience, token_credential_uri =
           options.values_at :json_key_io, :scope, :enable_self_signed_jwt, :target_audience,
                             :audience, :token_credential_uri
@@ -66,6 +66,13 @@ module Google
 
         private_key, client_email, project_id, quota_project_id, universe_domain =
           if json_key_io
+            json_key = MultiJson.load json_key_io.read
+            if json_key.key? "type"
+              json_key_io.rewind
+            else # Defaults to class credential 'type' if missing.
+              json_key["type"] = CREDENTIAL_TYPE_NAME
+              json_key_io = StringIO.new MultiJson.dump(json_key)
+            end
             CredentialsLoader.load_and_verify_json_key_type json_key_io, CREDENTIAL_TYPE_NAME
             read_json_key json_key_io
           else

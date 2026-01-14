@@ -119,6 +119,17 @@ describe Google::Auth::ServiceAccountCredentials do
     )
   end
 
+  it "succeeds if the credential type is missing (uses default)" do
+    key_without_type = cred_json.reject { |k, _| k == :type }
+    expect do
+      ServiceAccountCredentials.make_creds(
+        json_key_io: StringIO.new(MultiJson.dump(key_without_type))
+      )
+    end.not_to raise_error(
+        Google::Auth::InitializationError, /The provided credentials were not of type 'service_account'/
+    )
+  end
+
   describe "universe_domain" do
     it "defaults to googleapis" do
       expect(@client.universe_domain).to eq("googleapis.com")

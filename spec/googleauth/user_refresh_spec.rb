@@ -95,6 +95,17 @@ describe Google::Auth::UserRefreshCredentials do
     )
   end
 
+  it "succeeds if the credential type is missing (uses default)" do
+    key_without_type = cred_json.reject { |k, _| k == :type }
+    expect do
+      UserRefreshCredentials.make_creds(
+        json_key_io: StringIO.new(MultiJson.dump(key_without_type))
+      )
+    end.not_to raise_error(
+        Google::Auth::InitializationError, /The provided credentials were not of type 'authorized_user'/
+    )
+  end
+
   describe "#from_env" do
     before :example do
       @var_name = ENV_VAR

@@ -259,5 +259,27 @@ describe Google::Auth::ExternalAccount::Credentials do
         f.unlink
       end
     end
+
+    it 'should succeed if the credential type is missing (uses default)' do
+      f = Tempfile.new('missing_type')
+      begin
+        f.write(MultiJson.dump({
+          audience: '//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID',
+          subject_token_type: 'urn:ietf:params:oauth:token-type:jwt',
+          token_url: 'https://sts.googleapis.com/v1/token',
+          credential_source: {
+            'file' => 'external_suject_token.txt'
+          },
+        }))
+        f.rewind
+        expect { Google::Auth::ExternalAccount::Credentials.make_creds(json_key_io: f) }
+          .not_to raise_error(
+            Google::Auth::InitializationError, /The provided credentials were not of type 'external_account'/
+          )
+      ensure
+        f.close
+        f.unlink
+      end
+    end
   end
 end

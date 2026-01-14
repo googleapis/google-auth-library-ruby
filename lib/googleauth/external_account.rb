@@ -62,6 +62,13 @@ module Google
           json_key_io, scope = options.values_at :json_key_io, :scope
 
           raise InitializationError, "A json file is required for external account credentials." unless json_key_io
+          json_key = MultiJson.load json_key_io.read, symbolize_keys: true
+          if json_key.key? :type
+            json_key_io.rewind
+          else # Defaults to class credential 'type' if missing.
+            json_key[:type] = CREDENTIAL_TYPE_NAME
+            json_key_io = StringIO.new MultiJson.dump(json_key)
+          end
           CredentialsLoader.load_and_verify_json_key_type json_key_io, CREDENTIAL_TYPE_NAME
           user_creds = read_json_key json_key_io
 
