@@ -1,5 +1,11 @@
 # Release History
 
+### 1.16.1 (2026-01-15)
+
+#### Bug Fixes
+
+* restore support for JSON keys missing 'type' field ([#558](https://github.com/googleapis/google-auth-library-ruby/issues/558)) 
+
 ### 1.16.0 (2025-11-21)
 
 #### Features
