@@ -1,5 +1,12 @@
 # Release History
 
+### 1.16.2 (2026-02-26)
+
+#### Bug Fixes
+
+* initialize the JWT credentials without JSON roundtrip ([#564](https://github.com/googleapis/google-auth-library-ruby/issues/564)) 
+* return response body from revoke! for logging pipeline ([#562](https://github.com/googleapis/google-auth-library-ruby/issues/562)) 
+
 ### 1.16.1 (2026-01-15)
 
 #### Bug Fixes
