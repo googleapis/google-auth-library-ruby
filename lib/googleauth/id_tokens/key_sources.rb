@@ -135,13 +135,13 @@ module Google
             rsa_key.public_key
           end
 
-          # @private
           CURVE_NAME_MAP = {
             "P-256"     => "prime256v1",
             "P-384"     => "secp384r1",
             "P-521"     => "secp521r1",
             "secp256k1" => "secp256k1"
           }.freeze
+          private_constant :CURVE_NAME_MAP
 
           def extract_ec_key jwk
             begin
