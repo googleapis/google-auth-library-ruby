@@ -60,7 +60,7 @@ describe Google::Auth::UserRefreshCredentials do
 
   def make_auth_stubs opts
     access_token = opts[:access_token] || ""
-    body = MultiJson.dump("access_token" => access_token,
+    body = MultiJSON.generate("access_token" => access_token,
                           "token_type"   => "Bearer",
                           "expires_in"   => 3600)
     stub_request(:post, "https://oauth2.googleapis.com/token")
@@ -72,12 +72,12 @@ describe Google::Auth::UserRefreshCredentials do
 
   def cred_json_text missing = nil
     cred_json.delete missing.to_sym unless missing.nil?
-    MultiJson.dump cred_json
+    MultiJSON.generate cred_json
   end
 
   def cred_json_text_with_universe_domain missing = nil
     cred_json_with_universe_domain.delete missing.to_sym unless missing.nil?
-    MultiJson.dump cred_json_with_universe_domain
+    MultiJSON.generate cred_json_with_universe_domain
   end
 
   it_behaves_like "apply/apply! are OK"
@@ -86,7 +86,7 @@ describe Google::Auth::UserRefreshCredentials do
     cred_json[:type] = "service_account"
     expect do
       UserRefreshCredentials.make_creds(
-        json_key_io: StringIO.new(MultiJson.dump(cred_json))
+        json_key_io: StringIO.new(MultiJSON.generate(cred_json))
       )
     end.to raise_error(
       Google::Auth::InitializationError,
@@ -99,7 +99,7 @@ describe Google::Auth::UserRefreshCredentials do
     key_without_type = cred_json.reject { |k, _| k == :type }
     expect do
       UserRefreshCredentials.make_creds(
-        json_key_io: StringIO.new(MultiJson.dump(key_without_type))
+        json_key_io: StringIO.new(MultiJSON.generate(key_without_type))
       )
     end.not_to raise_error(
         Google::Auth::InitializationError, /The provided credentials were not of type 'authorized_user'/
@@ -419,7 +419,7 @@ describe Google::Auth::UserRefreshCredentials do
       strio = StringIO.new
       logger = Logger.new strio
       @client.logger = logger
-      
+
       # Stub sleep to avoid slow tests
       allow(@client).to receive(:sleep)
 

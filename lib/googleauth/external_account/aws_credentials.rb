@@ -226,7 +226,7 @@ module Google
         # Retrieves the AWS security credentials required for signing AWS requests from the AWS metadata server.
         def fetch_metadata_security_credentials role_name
           response = get_aws_resource "#{@credential_verification_url}/#{role_name}", "credentials"
-          MultiJson.load response.body
+          MultiJSON.parse response.body
         end
 
         # Reads the name of the AWS region from the environment

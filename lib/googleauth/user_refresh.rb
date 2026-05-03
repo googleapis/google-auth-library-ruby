@@ -50,12 +50,12 @@ module Google
       def self.make_creds options = {} # rubocop:disable Metrics/MethodLength
         json_key_io, scope = options.values_at :json_key_io, :scope
         user_creds = if json_key_io
-                       json_key = MultiJson.load json_key_io.read
+                       json_key = MultiJSON.parse json_key_io.read
                        if json_key.key? "type"
                          json_key_io.rewind
                        else # Defaults to class credential 'type' if missing.
                          json_key["type"] = CREDENTIAL_TYPE_NAME
-                         json_key_io = StringIO.new MultiJson.dump(json_key)
+                         json_key_io = StringIO.new MultiJSON.generate(json_key)
                        end
                        CredentialsLoader.load_and_verify_json_key_type json_key_io, CREDENTIAL_TYPE_NAME
                        read_json_key json_key_io
@@ -86,7 +86,7 @@ module Google
       # @return [Hash] The parsed JSON key
       # @raise [Google::Auth::InitializationError] If the JSON is missing required fields
       def self.read_json_key json_key_io
-        json_key = MultiJson.load json_key_io.read
+        json_key = MultiJSON.parse json_key_io.read
         wanted = ["client_id", "client_secret", "refresh_token"]
         wanted.each do |key|
           raise InitializationError, "the json is missing the #{key} field" unless json_key.key? key

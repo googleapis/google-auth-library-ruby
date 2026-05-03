@@ -81,7 +81,7 @@ module Google
         json_key_io = options[:json_key_io]
         json_key, clz = determine_creds_class json_key_io
         if json_key
-          io = StringIO.new MultiJson.dump(json_key)
+          io = StringIO.new MultiJSON.generate(json_key)
           clz.make_creds options.merge(json_key_io: io)
         else
           clz.make_creds options
@@ -97,7 +97,7 @@ module Google
       #   or if the environment variable is undefined or unsupported.
       def self.determine_creds_class json_key_io = nil
         if json_key_io
-          json_key = MultiJson.load json_key_io.read
+          json_key = MultiJSON.parse json_key_io.read
           key = "type"
           raise InitializationError, "the json is missing the '#{key}' field" unless json_key.key? key
           type = json_key[key]

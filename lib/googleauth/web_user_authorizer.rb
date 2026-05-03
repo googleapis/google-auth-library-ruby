@@ -84,7 +84,7 @@ module Google
       #  Redirect URI if successfully extracted, nil otherwise
       def self.handle_auth_callback_deferred request
         callback_state, redirect_uri = extract_callback_state request
-        request.session[CALLBACK_STATE_KEY] = MultiJson.dump callback_state
+        request.session[CALLBACK_STATE_KEY] = MultiJSON.generate callback_state
         redirect_uri
       end
 
@@ -166,10 +166,10 @@ module Google
 
         redirect_to = options[:redirect_to] || request.url
         request.session[XSRF_KEY] = SecureRandom.base64
-        options[:state] = MultiJson.dump(state.merge(
-                                           SESSION_ID_KEY  => request.session[XSRF_KEY],
-                                           CURRENT_URI_KEY => redirect_to
-                                         ))
+        options[:state] = MultiJSON.generate(state.merge(
+                                               SESSION_ID_KEY  => request.session[XSRF_KEY],
+                                               CURRENT_URI_KEY => redirect_to
+                                             ))
         options[:base_url] = request.url
         super options
       end
@@ -194,7 +194,7 @@ module Google
           # Note - in theory, no need to check required scope as this is
           # expected to be called immediately after a return from authorization
           state_json = request.session.delete CALLBACK_STATE_KEY
-          callback_state = MultiJson.load state_json
+          callback_state = MultiJSON.parse state_json
           WebUserAuthorizer.validate_callback_state callback_state, request
           get_and_store_credentials_from_code(
             user_id:  user_id,
@@ -214,7 +214,7 @@ module Google
       # @return [Array<Hash, String>]
       #  Callback state and redirect URI
       def self.extract_callback_state request
-        state = MultiJson.load(request.params[STATE_PARAM] || "{}")
+        state = MultiJSON.parse(request.params[STATE_PARAM] || "{}")
         redirect_uri = state[CURRENT_URI_KEY]
         callback_state = {
           AUTH_CODE_KEY  => request.params[AUTH_CODE_KEY],

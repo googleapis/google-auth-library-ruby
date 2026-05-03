@@ -41,14 +41,14 @@ describe Google::Auth::WebUserAuthorizer do
       )
     end
     let(:request) { Rack::Request.new env }
-    
+
     it "should raise InitializationError if request is nil" do
       expect { authorizer.get_authorization_url }.to raise_error do |error|
         expect(error).to be_a(Google::Auth::InitializationError)
         expect(error.message).to eq("Request is required.")
       end
     end
-    
+
     it "should raise InitializationError if session is nil" do
       req_without_session = double("request", session: nil)
       expect { authorizer.get_authorization_url(request: req_without_session) }.to raise_error do |error|
@@ -56,7 +56,7 @@ describe Google::Auth::WebUserAuthorizer do
         expect(error.message).to eq("Sessions must be enabled")
       end
     end
-    
+
     it "should include current url in state" do
       url = authorizer.get_authorization_url request: request
       expect(url).to match(
@@ -115,7 +115,7 @@ describe Google::Auth::WebUserAuthorizer do
 
   shared_examples "handles callback" do
     let :token_json do
-      MultiJson.dump("access_token" => "1/abc123",
+      MultiJSON.generate("access_token" => "1/abc123",
                      "token_type"   => "Bearer",
                      "expires_in"   => 3600)
     end
@@ -161,7 +161,7 @@ describe Google::Auth::WebUserAuthorizer do
       end
     end
   end
-  
+
 
   describe "#handle_auth_callback" do
     let(:result) { authorizer.handle_auth_callback "user1", request }
@@ -169,7 +169,7 @@ describe Google::Auth::WebUserAuthorizer do
     let(:next_url) { result[1] }
 
     it_behaves_like "handles callback"
-    
+
     context "when code is missing from request" do
       let :env do
         Rack::MockRequest.env_for(
@@ -179,13 +179,13 @@ describe Google::Auth::WebUserAuthorizer do
           "REMOTE_ADDR" => "10.10.10.10"
         )
       end
-      
+
       let(:request) { Rack::Request.new env }
-      
+
       before :example do
         request.session["g-xsrf-token"] = "abc"
       end
-      
+
       it "should fail with AuthorizationError with detailed information" do
         expect { authorizer.handle_auth_callback "user1", request }.to raise_error do |error|
           expect(error).to be_a(Google::Auth::AuthorizationError)
@@ -195,7 +195,7 @@ describe Google::Auth::WebUserAuthorizer do
         end
       end
     end
-    
+
     context "when error is present in callback state" do
       let :env do
         Rack::MockRequest.env_for(
@@ -205,13 +205,13 @@ describe Google::Auth::WebUserAuthorizer do
           "REMOTE_ADDR" => "10.10.10.10"
         )
       end
-      
+
       let(:request) { Rack::Request.new env }
-      
+
       before :example do
         request.session["g-xsrf-token"] = "abc"
       end
-      
+
       it "should fail with AuthorizationError with detailed information" do
         expect { authorizer.handle_auth_callback "user1", request }.to raise_error do |error|
           expect(error).to be_a(Google::Auth::AuthorizationError)
@@ -234,7 +234,7 @@ describe Google::Auth::WebUserAuthorizer do
     end
 
     it_behaves_like "handles callback"
-    
+
     context "when code is missing from request" do
       let :env do
         Rack::MockRequest.env_for(
@@ -244,14 +244,14 @@ describe Google::Auth::WebUserAuthorizer do
           "REMOTE_ADDR" => "10.10.10.10"
         )
       end
-      
+
       let(:request) { Rack::Request.new env }
-      
+
       before :example do
         request.session["g-xsrf-token"] = "abc"
         Google::Auth::WebUserAuthorizer.handle_auth_callback_deferred request
       end
-      
+
       it "should fail with AuthorizationError with detailed information" do
         expect { authorizer.get_credentials "user1", request }.to raise_error do |error|
           expect(error).to be_a(Google::Auth::AuthorizationError)
@@ -261,7 +261,7 @@ describe Google::Auth::WebUserAuthorizer do
         end
       end
     end
-    
+
     context "when error is present in callback state" do
       let :env do
         Rack::MockRequest.env_for(
@@ -271,14 +271,14 @@ describe Google::Auth::WebUserAuthorizer do
           "REMOTE_ADDR" => "10.10.10.10"
         )
       end
-      
+
       let(:request) { Rack::Request.new env }
-      
+
       before :example do
         request.session["g-xsrf-token"] = "abc"
         Google::Auth::WebUserAuthorizer.handle_auth_callback_deferred request
       end
-      
+
       it "should fail with AuthorizationError with detailed information" do
         expect { authorizer.get_credentials "user1", request }.to raise_error do |error|
           expect(error).to be_a(Google::Auth::AuthorizationError)

@@ -44,7 +44,7 @@ describe Google::Auth::Credentials, :private do
     else
       body_fields["access_token"] = access_token || "12345abcde"
     end
-    body = MultiJson.dump body_fields
+    body = MultiJSON.generate body_fields
     uri ||= "https://oauth2.googleapis.com/token"
     stub_request(:post, uri)
       .to_return(body: body, status: 200, headers: { "Content-Type" => "application/json" })
@@ -609,7 +609,7 @@ describe Google::Auth::Credentials, :private do
       File.write keyfile_path_str, default_keyfile_content
       keyfile_pathname = Pathname.new keyfile_path_str # Create a Pathname object
       creds = TestCredentialsPathname.new keyfile_pathname, enable_self_signed_jwt: true
-      
+
       expect(creds.client).to be_a_kind_of(Google::Auth::ServiceAccountCredentials)
       # Verify that project_id and quota_project_id are loaded correctly from the file via Pathname
       expect(creds.project_id).to eq(default_keyfile_hash["project_id"])
@@ -631,7 +631,7 @@ describe Google::Auth::Credentials, :private do
           @scope = scope
           @project_id = project_id
         end
-  
+
         def duplicate options = {}
           new_credentials = self.class.new
           new_credentials.scope = options[:scope] if options[:scope]
@@ -640,17 +640,17 @@ describe Google::Auth::Credentials, :private do
         end
       end
     end
-  
+
     before :example do
       @client = client_class.new
       @base_creds = Google::Auth::Credentials.new(@client)
       @creds = @base_creds.duplicate
     end
-  
+
     it "should call duplicate and update! on clients when clients support it" do
       client_with_duplicate = double("ClientWithDuplicate")
       allow(client_with_duplicate).to receive(:respond_to?).with(:duplicate).and_return(true)
-      
+
       # These will be called when we create new `Google::Auth::Credentials` in this test method
       allow(client_with_duplicate).to receive(:respond_to?).with(:project_id).and_return(false)
       allow(client_with_duplicate).to receive(:respond_to?).with(:quota_project_id).and_return(false)
@@ -660,13 +660,13 @@ describe Google::Auth::Credentials, :private do
       allow(duplicated_client).to receive(:respond_to?).with(:update!).and_return(true)
 
       # These will be called when a new `Google::Auth::Credentials` will be created in the
-      # process of the `duplicate` call. 
+      # process of the `duplicate` call.
       # First the `client_with_duplicate` will return `duplicated_client` from its `duplicate` call
       # Then the new `Google::Auth::Credentials` will be created with the `duplicated_client`
       allow(duplicated_client).to receive(:respond_to?).with(:project_id).and_return(false)
       allow(duplicated_client).to receive(:respond_to?).with(:quota_project_id).and_return(false)
       allow(duplicated_client).to receive(:respond_to?).with(:logger=).and_return(false)
-      
+
       #expect(duplicated_client).to receive(:update!).and_return(duplicated_client)
 
       expect(client_with_duplicate).to receive(:duplicate).and_return(duplicated_client)
@@ -676,13 +676,13 @@ describe Google::Auth::Credentials, :private do
       new_creds = creds.duplicate(foo: "bar")
       expect(new_creds.client).to eq duplicated_client
     end
-  
+
     it "should duplicate the project_id" do
       # This should be nil, but for case of local testing
       expect(@creds.project_id).to eq Google::Auth::CredentialsLoader.load_gcloud_project_id
-      expect(@creds.duplicate(project_id: "test-project-id").project_id).to eq "test-project-id"  
+      expect(@creds.duplicate(project_id: "test-project-id").project_id).to eq "test-project-id"
     end
-  
+
     it "should duplicate the quota_project_id" do
       expect(@creds.quota_project_id).to be_nil
       expect(@creds.duplicate(quota_project_id: "test-quota-project-id").quota_project_id).to eq "test-quota-project-id"
@@ -703,13 +703,13 @@ describe Google::Auth::Credentials, :private do
       client = double("Google::Auth::BaseClientFull")
       allow(client).to receive(:respond_to?).with(:project_id).and_return(true)
       allow(client).to receive(:project_id).and_return(client_project_id)
-      
+
       allow(client).to receive(:respond_to?).with(:quota_project_id).and_return(true)
       allow(client).to receive(:quota_project_id).and_return(client_quota_project_id)
-      
+
       allow(client).to receive(:respond_to?).with(:logger).and_return(true)
       allow(client).to receive(:logger).and_return(client_logger)
-      
+
       allow(client).to receive(:respond_to?).with(:logger=).and_return(true)
       allow(client).to receive(:logger=) # Allow it to be called
       client
@@ -719,10 +719,10 @@ describe Google::Auth::Credentials, :private do
       client = double("Google::Auth::BaseClientMinimal")
       allow(client).to receive(:respond_to?).with(:project_id).and_return(false)
       allow(client).to receive(:respond_to?).with(:quota_project_id).and_return(false)
-      
+
       allow(client).to receive(:respond_to?).with(:logger).and_return(true)
       allow(client).to receive(:logger).and_return(nil)
-      
+
       allow(client).to receive(:respond_to?).with(:logger=).and_return(true)
       allow(client).to receive(:logger=)
       client

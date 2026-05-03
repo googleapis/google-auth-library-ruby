@@ -55,7 +55,7 @@ describe Google::Auth::ServiceAccountJwtHeaderCredentials do
   end
 
   def cred_json_text
-    MultiJson.dump cred_json
+    MultiJSON.generate cred_json
   end
 
   it_behaves_like "jwt header auth"

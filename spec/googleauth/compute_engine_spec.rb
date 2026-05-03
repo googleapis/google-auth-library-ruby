@@ -48,7 +48,7 @@ describe Google::Auth::GCECredentials do
       universe_stub.to_return body: @universe_domain, status: 200, headers: {"Metadata-Flavor" => "Google" }
     end
     if opts[:access_token]
-      body = MultiJson.dump("access_token" => opts[:access_token],
+      body = MultiJSON.generate("access_token" => opts[:access_token],
                             "token_type"   => "Bearer",
                             "expires_in"   => 3600)
 

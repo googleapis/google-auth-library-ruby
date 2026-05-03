@@ -24,11 +24,11 @@ describe Google::Auth::ClientId do
       # Memoize because this included hook gets called multiple times.
       valid_config_checks = @valid_config_checks ||= Module.new do
         extend Minitest::Spec::DSL
-    
+
         it "should include a valid id" do
           _(client_id.id).must_equal "abc@example.com"
         end
-    
+
         it "should include a valid secret" do
           _(client_id.secret).must_equal "notasecret"
         end
@@ -47,7 +47,7 @@ describe Google::Auth::ClientId do
           file_path = "/client_secrets.json"
           let :client_id do
             FakeFS do
-              content = MultiJson.dump config
+              content = MultiJSON.generate config
               File.write file_path, content
               Google::Auth::ClientId.from_file file_path
             end

@@ -190,7 +190,7 @@ module Google
           response = connection.post @service_account_impersonation_url do |req|
             req.headers["Authorization"] = "Bearer #{token}"
             req.headers["Content-Type"] = "application/json"
-            req.body = MultiJson.dump({ scope: @scope })
+            req.body = MultiJSON.generate({ scope: @scope })
           end
 
           if response.status != 200
@@ -201,7 +201,7 @@ module Google
             )
           end
 
-          MultiJson.load response.body
+          MultiJSON.parse response.body
         end
 
         def log_impersonated_token_request original_token

@@ -45,7 +45,7 @@ describe Signet::OAuth2::Client do
     body_fields = { "token_type" => "Bearer", "expires_in" => 3600 }
     body_fields["access_token"] = opts[:access_token] if opts[:access_token]
     body_fields["id_token"] = opts[:id_token] if opts[:id_token]
-    body = MultiJson.dump body_fields
+    body = MultiJSON.generate body_fields
     blk = proc do |request|
       params = Addressable::URI.form_unencode request.body
       claim, _header = JWT.decode(params.assoc("assertion").last,
@@ -217,7 +217,7 @@ describe Signet::OAuth2::Client do
     it "should duplicate the authorization_uri" do
       expect(@creds.authorization_uri).to eq nil
       expect(@creds.duplicate({
-        client_id: "test-client-id-2", 
+        client_id: "test-client-id-2",
         authorization_uri: "https://test-authorization-uri.example.com",
         redirect_uri: "https://test-redirect-uri.example.com"
       }).authorization_uri.to_s.start_with?("https://test-authorization-uri.example.com")).to be true

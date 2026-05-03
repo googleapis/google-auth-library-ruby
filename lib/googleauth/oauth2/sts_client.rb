@@ -89,7 +89,7 @@ module Google
             raise AuthorizationError, "Token exchange failed with status #{response.status}"
           end
 
-          MultiJson.load response.body
+          MultiJSON.parse response.body
         end
 
         private
@@ -104,7 +104,7 @@ module Google
             subject_token_type: options[:subject_token_type]
           }
           unless options[:additional_options].nil?
-            request_body[:options] = CGI.escape MultiJson.dump(options[:additional_options], symbolize_name: true)
+            request_body[:options] = CGI.escape MultiJSON.generate(options[:additional_options])
           end
           request_body
         end

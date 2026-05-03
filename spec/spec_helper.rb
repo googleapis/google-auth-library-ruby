@@ -29,7 +29,7 @@ require "multi_json"
 require "google/cloud/env"
 
 # Preload adapter to work around Rubinius error with FakeFS
-MultiJson.use :json_gem
+MultiJSON.use :json_gem
 
 # Allow Faraday to support test stubs
 Faraday::Adapter.lookup_middleware :test

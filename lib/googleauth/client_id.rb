@@ -85,7 +85,7 @@ module Google
         raise InitializationError, "File can not be nil." if file.nil?
         File.open file.to_s do |f|
           json = f.read
-          config = MultiJson.load json
+          config = MultiJSON.parse json
           from_hash config
         end
       end

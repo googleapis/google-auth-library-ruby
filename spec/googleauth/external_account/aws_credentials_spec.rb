@@ -139,7 +139,7 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
   let :security_credential_endpoint_success do
     return unless security_credential_url and aws_metadata_role_name
     security_credential_endpoint.to_return(
-      body: MultiJson.dump(aws_security_credentials_response))
+      body: MultiJSON.generate(aws_security_credentials_response))
   end
 
   let :security_credential_endpoint_failure do
@@ -197,7 +197,7 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
   def impersonation_endpoint_success access_token
     return unless access_token and service_account_impersonation_url
     impersonation_endpoint(access_token).to_return(
-      body: MultiJson.dump(google_token_impersonation_response.merge({
+      body: MultiJSON.generate(google_token_impersonation_response.merge({
         accessToken: access_token
       }))
     )
@@ -214,7 +214,7 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
 
   def google_cred_endpoint_success access_token
     google_cred_endpoint.to_return(
-      body: MultiJson.dump(google_token_response.merge({
+      body: MultiJSON.generate(google_token_response.merge({
         "access_token" => access_token
       }))
     )

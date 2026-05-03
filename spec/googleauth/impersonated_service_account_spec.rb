@@ -16,7 +16,7 @@ require "googleauth/impersonated_service_account"
 require_relative "../spec_helper"
 
 describe Google::Auth::ImpersonatedServiceAccountCredentials do
- 
+
   describe ".make_creds with json_key_io" do
     let(:key) { OpenSSL::PKey::RSA.new 2048 }
 
@@ -52,7 +52,7 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
 
       it "creates credentials with UserRefreshCredentials as source" do
         creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
-          json_key_io: StringIO.new(MultiJson.dump(impersonated_json))
+          json_key_io: StringIO.new(MultiJSON.generate(impersonated_json))
         )
 
         expect(creds).to be_a(Google::Auth::ImpersonatedServiceAccountCredentials)
@@ -67,7 +67,7 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
 
       it "creates credentials with ServiceAccountCredentials as source" do
         creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
-          json_key_io: StringIO.new(MultiJson.dump(impersonated_json))
+          json_key_io: StringIO.new(MultiJSON.generate(impersonated_json))
         )
 
         expect(creds).to be_a(Google::Auth::ImpersonatedServiceAccountCredentials)
@@ -92,7 +92,7 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
       it "raises a runtime error" do
         expect {
           Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
-            json_key_io: StringIO.new(MultiJson.dump(recursive_impersonated_json))
+            json_key_io: StringIO.new(MultiJSON.generate(recursive_impersonated_json))
           )
         }.to raise_error(Google::Auth::InitializationError, /Source credentials can't be of type.*use delegates/)
       end
@@ -103,28 +103,28 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
 
       it "uses scope from JSON if not provided in options" do
         creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
-          json_key_io: StringIO.new(MultiJson.dump(impersonated_json))
+          json_key_io: StringIO.new(MultiJSON.generate(impersonated_json))
         )
         expect(creds.scope).to eq(["scope1"])
       end
 
       it "uses scope from options if provided" do
         creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
-          json_key_io: StringIO.new(MultiJson.dump(impersonated_json)),
+          json_key_io: StringIO.new(MultiJSON.generate(impersonated_json)),
           scope: ["scope2"]
         )
         expect(creds.scope).to eq(["scope2"])
       end
     end
   end
- 
+
   let(:impersonation_url) {"https://iamcredentials.example.com/v1/projects/-/serviceAccounts/test:generateAccessToken"}
 
   def make_auth_stubs opts
     body_fields = { "token_type" => "Bearer", "expires_in" => 3600 }
     body_fields["accessToken"] = opts[:access_token]
     body_fields["expireTime"] = opts[:expireTime]
-    body = MultiJson.dump body_fields
+    body = MultiJSON.generate body_fields
     stub_request(:post, impersonation_url)
       .to_return(body:    body,
                    status:  opts[:status] || 200,
@@ -233,7 +233,7 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
 
       hash = {}
       creds.apply!(hash)
-      
+
       expect(@stub).to have_been_requested
       expect(hash[Google::Auth::ImpersonatedServiceAccountCredentials::AUTH_METADATA_KEY]).to eq("Bearer 1/abcde")
     end
@@ -246,7 +246,7 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
       })
 
       creds.apply!({})
-      
+
       expect(creds.access_token).to eq("1/abcde")
       expect(creds.expires_within? 3600).to be true
     end
@@ -260,22 +260,22 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
         )
         @dup_creds = @initial_creds.duplicate
       end
-  
+
       it "should duplicate the scope" do
         expect(@dup_creds.scope).to eq ["https://www.googleapis.com/auth/cloud-platform"]
         expect(@dup_creds.duplicate(scope: ["https://www.googleapis.com/auth/devstorage.read_only"]).scope).to eq ["https://www.googleapis.com/auth/devstorage.read_only"]
       end
-  
+
       it "should duplicate the base_credentials" do
         expect(@dup_creds.base_credentials).to eq @base_creds
         expect(@dup_creds.duplicate(base_credentials: :bar).base_credentials).to eq :bar
       end
-  
+
       it "should duplicate the source credentials" do
         expect(@dup_creds.source_credentials).to eq @source_creds
         expect(@dup_creds.duplicate(source_credentials: :bar).source_credentials).to eq :bar
       end
-  
+
       it "should duplicate the impersonation_url" do
         expect(@dup_creds.impersonation_url).to eq "test-impersonation-url"
         expect(@dup_creds.duplicate(impersonation_url: "test-impersonation-url-2").impersonation_url).to eq "test-impersonation-url-2"
@@ -291,10 +291,10 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
           impersonation_url: impersonation_url,
           scope: ["https://www.googleapis.com/auth/cloud-platform"]
         )
-        
+
         # Allow the principal method to be called on our mock source_creds
         allow(@source_creds).to receive(:principal).and_return("test-principal")
-        
+
         expect { creds.send(:normalize_timestamp, 12345) }.to raise_error do |error|
           expect(error).to be_a(Google::Auth::CredentialsError)
           expect(error.message).to match(/Invalid time value 12345/)
@@ -319,14 +319,14 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
     context "when response status is 403" do
       it "raises UnexpectedStatusError with detailed information" do
         stub = make_error_stub(403, "Permission denied")
-        
+
         expect { creds.apply!({}) }.to raise_error do |error|
           expect(error).to be_a(Google::Auth::UnexpectedStatusError)
           expect(error.message).to match(/Unexpected error code 403.\n Permission denied/)
           expect(error.credential_type_name).to eq("Google::Auth::ImpersonatedServiceAccountCredentials")
           expect(error.principal).to eq("test-principal")
         end
-        
+
         expect(stub).to have_been_requested
       end
     end
@@ -334,14 +334,14 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
     context "when response status is 500" do
       it "raises UnexpectedStatusError with detailed information" do
         stub = make_error_stub(500, "Internal server error")
-        
+
         expect { creds.apply!({}) }.to raise_error do |error|
           expect(error).to be_a(Google::Auth::UnexpectedStatusError)
           expect(error.message).to match(/Unexpected error code 500.\n Internal server error/)
           expect(error.credential_type_name).to eq("Google::Auth::ImpersonatedServiceAccountCredentials")
           expect(error.principal).to eq("test-principal")
         end
-        
+
         expect(stub).to have_been_requested
       end
     end
@@ -349,14 +349,14 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
     context "when response status is other error code (e.g. 401)" do
       it "raises AuthorizationError with detailed information" do
         stub = make_error_stub(401, "Unauthorized")
-        
+
         expect { creds.apply!({}) }.to raise_error do |error|
           expect(error).to be_a(Google::Auth::AuthorizationError)
           expect(error.message).to match(/Unexpected error code 401.\n Unauthorized/)
           expect(error.credential_type_name).to eq("Google::Auth::ImpersonatedServiceAccountCredentials")
           expect(error.principal).to eq("test-principal")
         end
-        
+
         expect(stub).to have_been_requested
       end
     end

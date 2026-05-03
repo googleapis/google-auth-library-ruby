@@ -54,7 +54,7 @@ module Google
           end
 
           if response.status == 200
-            response_data = MultiJson.load response.body, symbolize_names: true
+            response_data = MultiJSON.parse response.body, symbolize_names: true
             @project_id = response_data[:projectId]
           end
 

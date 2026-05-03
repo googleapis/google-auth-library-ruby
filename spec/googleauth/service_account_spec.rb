@@ -79,7 +79,7 @@ describe Google::Auth::ServiceAccountCredentials do
       else
         raise "Expected access_token or id_token"
       end
-    body = MultiJson.dump body_fields
+    body = MultiJSON.generate body_fields
     blk = proc do |request|
       params = Addressable::URI.form_unencode request.body
       claim, _header = JWT.decode(params.assoc("assertion").last,
@@ -97,11 +97,11 @@ describe Google::Auth::ServiceAccountCredentials do
   end
 
   def cred_json_text
-    MultiJson.dump cred_json
+    MultiJSON.generate cred_json
   end
 
   def cred_json_text_with_universe_domain
-    MultiJson.dump cred_json_with_universe_domain
+    MultiJSON.generate cred_json_with_universe_domain
   end
 
   it_behaves_like "apply/apply! are OK"
@@ -110,7 +110,7 @@ describe Google::Auth::ServiceAccountCredentials do
     cred_json[:type] = "authorized_user"
     expect do
       ServiceAccountCredentials.make_creds(
-        json_key_io: StringIO.new(MultiJson.dump(cred_json))
+        json_key_io: StringIO.new(MultiJSON.generate(cred_json))
       )
     end.to raise_error(
       Google::Auth::InitializationError,
@@ -123,7 +123,7 @@ describe Google::Auth::ServiceAccountCredentials do
     key_without_type = cred_json.reject { |k, _| k == :type }
     expect do
       ServiceAccountCredentials.make_creds(
-        json_key_io: StringIO.new(MultiJson.dump(key_without_type))
+        json_key_io: StringIO.new(MultiJSON.generate(key_without_type))
       )
     end.not_to raise_error(
         Google::Auth::InitializationError, /The provided credentials were not of type 'service_account'/
@@ -389,12 +389,12 @@ describe Google::Auth::ServiceAccountCredentials do
       end
     end
   end
-   
+
   describe "duplicates" do
     before :example do
       @clz = ServiceAccountCredentials
       @base_creds = @clz.make_creds(
-         json_key_io: StringIO.new(cred_json_text), 
+         json_key_io: StringIO.new(cred_json_text),
          scope: ["https://www.googleapis.com/auth/cloud-platform"]
       )
       @creds = @base_creds.duplicate

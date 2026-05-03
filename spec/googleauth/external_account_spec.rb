@@ -31,7 +31,7 @@ describe Google::Auth::ExternalAccount::Credentials do
     end
 
     def load_file options
-      @tempfile.write(MultiJson.dump(options))
+      @tempfile.write(MultiJSON.generate(options))
       @tempfile.rewind
       Google::Auth::ExternalAccount::Credentials.make_creds(json_key_io: @tempfile)
     end
@@ -132,7 +132,7 @@ describe Google::Auth::ExternalAccount::Credentials do
     it 'should be able to make aws credentials' do
       f = Tempfile.new('aws')
       begin
-        f.write(MultiJson.dump({
+        f.write(MultiJSON.generate({
           type: 'external_account',
           audience: '//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID',
           subject_token_type: 'urn:ietf:params:aws:token-type:aws4_request',
@@ -155,7 +155,7 @@ describe Google::Auth::ExternalAccount::Credentials do
     it 'should be able to make identity pool credentials' do
       f = Tempfile.new('file')
       begin
-        f.write(MultiJson.dump({
+        f.write(MultiJSON.generate({
           type: 'external_account',
           audience: '//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID',
           subject_token_type: 'urn:ietf:params:oauth:token-type:jwt',
@@ -175,7 +175,7 @@ describe Google::Auth::ExternalAccount::Credentials do
     it 'should be able to make pluggable auth credentials' do
       f = Tempfile.new('file')
       begin
-        f.write(MultiJson.dump({
+        f.write(MultiJSON.generate({
           type: 'external_account',
           audience: '//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID',
           subject_token_type: 'urn:ietf:params:oauth:token-type:jwt',
@@ -206,7 +206,7 @@ describe Google::Auth::ExternalAccount::Credentials do
             credential_source: {},
           }
           creds.delete(field)
-          f.write(MultiJson.dump(creds))
+          f.write(MultiJSON.generate(creds))
           f.rewind
           expect { Google::Auth::ExternalAccount::Credentials.make_creds(json_key_io: f) }.to raise_error(/the json is missing the #{field} field/)
         ensure
@@ -219,7 +219,7 @@ describe Google::Auth::ExternalAccount::Credentials do
     it 'should raise an error for invalid credentials' do
       f = Tempfile.new('invalid')
       begin
-        f.write(MultiJson.dump({
+        f.write(MultiJSON.generate({
           type: 'external_account',
           audience: '//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID',
           subject_token_type: 'urn:ietf:params:oauth:token-type:id_token',
@@ -244,7 +244,7 @@ describe Google::Auth::ExternalAccount::Credentials do
     it 'should raise an error if the credential type is not external_account' do
       f = Tempfile.new('invalid_type')
       begin
-        f.write(MultiJson.dump({
+        f.write(MultiJSON.generate({
           type: 'service_account',
           audience: '//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID',
           subject_token_type: 'urn:ietf:params:oauth:token-type:jwt',
@@ -263,7 +263,7 @@ describe Google::Auth::ExternalAccount::Credentials do
     it 'should succeed if the credential type is missing (uses default)' do
       f = Tempfile.new('missing_type')
       begin
-        f.write(MultiJson.dump({
+        f.write(MultiJSON.generate({
           audience: '//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID',
           subject_token_type: 'urn:ietf:params:oauth:token-type:jwt',
           token_url: 'https://sts.googleapis.com/v1/token',
