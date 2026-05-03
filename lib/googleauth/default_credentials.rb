@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require "multi_json"
+require "googleauth/json_compat"
 require "stringio"
 
 require "googleauth/credentials_loader"

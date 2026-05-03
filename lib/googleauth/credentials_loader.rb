@@ -16,6 +16,7 @@ require "os"
 require "rbconfig"
 
 require "googleauth/errors"
+require "googleauth/json_compat"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization

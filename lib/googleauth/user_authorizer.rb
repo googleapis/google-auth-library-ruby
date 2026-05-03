@@ -13,7 +13,7 @@
 # limitations under the License.
 
 require "uri"
-require "multi_json"
+require "googleauth/json_compat"
 require "googleauth/signet"
 require "googleauth/user_refresh"
 require "securerandom"

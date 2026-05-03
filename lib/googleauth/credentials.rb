@@ -16,7 +16,7 @@ require "forwardable"
 require "json"
 require "pathname"
 require "signet/oauth_2/client"
-require "multi_json"
+require "googleauth/json_compat"
 
 require "googleauth/credentials_loader"
 require "googleauth/errors"
@@ -370,7 +370,7 @@ module Google
       #   * Any credentials object that supports the methods this wrapper delegates to an inner client.
       #
       #   If this parameter is an object (`Signet::OAuth2::Client` or other) it will be used as an inner client.
-      #   Otherwise the inner client will be constructed from the JSON keyfile or the contens of the hash.
+      #   Otherwise the inner client will be constructed from the JSON keyfile or the contents of the hash.
       #
       # @param [Hash] options
       #   The options for configuring this wrapper credentials object and the inner client.

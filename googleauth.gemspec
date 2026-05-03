@@ -26,7 +26,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency "google-cloud-env", "~> 2.2"
   gem.add_dependency "google-logging-utils", "~> 0.1"
   gem.add_dependency "jwt", ">= 1.4", "< 4.0"
-  gem.add_dependency "multi_json", "~> 1.21"
+  gem.add_dependency "multi_json", "1.21.0"
   gem.add_dependency "os", ">= 0.9", "< 2.0"
   gem.add_dependency "signet", ">= 0.16", "< 2.a"
 

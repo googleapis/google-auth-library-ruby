@@ -15,6 +15,7 @@
 require "googleauth/base_client"
 require "googleauth/errors"
 require "googleauth/helpers/connection"
+require "googleauth/json_compat"
 
 module Google
   module Auth

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 require "jwt"
-require "multi_json"
+require "googleauth/json_compat"
 require "stringio"
 
 require "google/logging/message"
