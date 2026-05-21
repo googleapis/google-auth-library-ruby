@@ -20,6 +20,7 @@ require "apply_auth_examples"
 require "faraday"
 require "googleauth/compute_engine"
 require "spec_helper"
+require "googleauth"
 
 describe Google::Auth::GCECredentials do
   MD_ACCESS_URI = "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token".freeze
@@ -411,6 +412,25 @@ describe Google::Auth::GCECredentials do
     it "should duplicate the universe_domain_overridden" do
       expect(@creds.instance_variable_get(:@universe_domain_overridden)).to be_falsey
       expect(@creds.duplicate(universe_domain_overridden: true).instance_variable_get(:@universe_domain_overridden)).to be_truthy
+    end
+  end
+
+  describe "#regional_access_boundary_url" do
+    it "returns the correct URL after fetching email from metadata server" do
+      stub_request(:get, "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/email")
+        .with(headers: { "Metadata-Flavor" => "Google" })
+        .to_return(body: "app@developer.gserviceaccount.com", status: 200, headers: { "Metadata-Flavor" => "Google" })
+
+      expect(@client.regional_access_boundary_url).to eq(
+        "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/app@developer.gserviceaccount.com/allowedLocations"
+      )
+    end
+
+    it "returns nil if metadata server fails" do
+      stub_request(:get, "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/email")
+        .to_return(status: 404)
+
+      expect(@client.regional_access_boundary_url).to be_nil
     end
   end
 end

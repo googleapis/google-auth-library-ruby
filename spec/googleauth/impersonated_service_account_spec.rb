@@ -14,6 +14,7 @@
 
 require "googleauth/impersonated_service_account"
 require_relative "../spec_helper"
+require "googleauth"
 
 describe Google::Auth::ImpersonatedServiceAccountCredentials do
  
@@ -359,6 +360,28 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
         
         expect(stub).to have_been_requested
       end
+    end
+  end
+
+  describe "#regional_access_boundary_url" do
+    it "returns the correct URL" do
+      creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
+        base_credentials: @base_creds,
+        impersonation_url: "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/app@developer.gserviceaccount.com:generateAccessToken",
+        scope: ["https://www.googleapis.com/auth/cloud-platform"]
+      )
+      expect(creds.regional_access_boundary_url).to eq(
+        "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/app@developer.gserviceaccount.com/allowedLocations"
+      )
+    end
+
+    it "returns nil if URL cannot be parsed" do
+      creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
+        base_credentials: @base_creds,
+        impersonation_url: "https://invalid.url",
+        scope: ["https://www.googleapis.com/auth/cloud-platform"]
+      )
+      expect(creds.regional_access_boundary_url).to be_nil
     end
   end
 end

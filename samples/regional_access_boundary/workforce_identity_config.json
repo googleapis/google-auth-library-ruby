@@ -1,0 +1,13 @@
+{
+  "type": "external_account",
+  "audience": "//iam.googleapis.com/locations/global/workforcePools/POOL_ID/providers/PROVIDER_ID",
+  "subject_token_type": "urn:ietf:params:oauth:token-type:id_token",
+  "token_url": "https://sts.googleapis.com/v1/token",
+  "credential_source": {
+    "url": "http://dummyurl.com/token",
+    "format": {
+      "type": "json",
+      "subject_token_field_name": "access_token"
+    }
+  }
+}

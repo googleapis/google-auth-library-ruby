@@ -39,6 +39,11 @@ module Google
         # Default IAM_SCOPE
         IAM_SCOPE = ["https://www.googleapis.com/auth/iam".freeze].freeze
 
+        # Workforce audience pattern.
+        WORKFORCE_AUDIENCE_PATTERN = %r{\A//iam\.([^/]+)/locations/([^/]+)/workforcePools/([^/]+)/providers/[^/]+\z}.freeze
+        # Workload audience pattern.
+        WORKLOAD_AUDIENCE_PATTERN = %r{\A//iam\.([^/]+)/projects/([^/]+)/locations/([^/]+)/workloadIdentityPools/([^/]+)/providers/[^/]+\z}.freeze
+
         include Google::Auth::BaseClient
         include Helpers::Connection
 
@@ -99,7 +104,57 @@ module Google
           @audience
         end
 
+        # Returns the regional access boundary lookup URL.
+        # Constructs the URL based on audience or impersonation URL.
+        # @internal
+        def regional_access_boundary_url
+          if @service_account_impersonation_url
+            match = @service_account_impersonation_url.match(%r{serviceAccounts/([^:]+):generateAccessToken$})
+            email = match[1] if match
+            return "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/#{email}/allowedLocations" if email
+            return nil
+          end
+
+          # Workforce Pool check
+          wf_match = @audience.match(WORKFORCE_AUDIENCE_PATTERN)
+          if wf_match
+            audience_domain = wf_match[1]
+            pool_id = wf_match[3]
+            
+            validate_universe_domain! audience_domain
+            
+            return "https://iamcredentials.googleapis.com/v1/locations/global/workforcePools/#{pool_id}/allowedLocations" if pool_id
+          end
+
+          # Workload Pool check
+          wl_match = @audience.match(WORKLOAD_AUDIENCE_PATTERN)
+          if wl_match
+            audience_domain = wl_match[1]
+            project_number = wl_match[2]
+            pool_id = wl_match[4]
+            
+            validate_universe_domain! audience_domain
+            
+            return "https://iamcredentials.googleapis.com/v1/projects/#{project_number}/locations/global/workloadIdentityPools/#{pool_id}/allowedLocations"
+          end
+
+          raise Google::Auth::AuthorizationError, "Unknown audience format: #{@audience}"
+        end
+
+        # Enable Regional Access Boundaries for External Account credentials.
+        # @internal
+        def supports_regional_access_boundary?
+          true
+        end
+
         private
+
+        def validate_universe_domain! audience_domain
+          effective_universe_domain = universe_domain || "googleapis.com"
+          if audience_domain != effective_universe_domain
+            raise Google::Auth::AuthorizationError, "Provided universe domain (#{effective_universe_domain}) does not match domain in audience (#{audience_domain})"
+          end
+        end
 
         def token_type
           # This method is needed for BaseClient

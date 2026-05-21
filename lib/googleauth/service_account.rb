@@ -184,6 +184,18 @@ module Google
         @issuer
       end
 
+      # Returns the regional access boundary lookup URL.
+      # @internal
+      def regional_access_boundary_url
+        "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/#{@issuer}/allowedLocations"
+      end
+
+      # Enable Regional Access Boundaries for Service Account credentials.
+      # @internal
+      def supports_regional_access_boundary?
+        true
+      end
+
       private
 
       def apply_self_signed_jwt! a_hash

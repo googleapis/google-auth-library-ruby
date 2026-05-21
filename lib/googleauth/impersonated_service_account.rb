@@ -258,6 +258,22 @@ module Google
         end
       end
 
+      # Returns the regional access boundary lookup URL.
+      # Constructs the URL based on the impersonation URL.
+      # @internal
+      def regional_access_boundary_url
+        match = @impersonation_url.match(%r{serviceAccounts/([^:]+):generateAccessToken$})
+        email = match[1] if match
+        return "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/#{email}/allowedLocations" if email
+        nil
+      end
+
+      # Enable Regional Access Boundaries for Impersonated credentials.
+      # @internal
+      def supports_regional_access_boundary?
+        true
+      end
+
       private
 
       # Generates a new impersonation access token by exchanging the source credentials' token

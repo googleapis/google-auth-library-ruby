@@ -377,4 +377,43 @@ describe Google::Auth::ExternalAccount::IdentityPoolCredentials do
       end
     end
   end
+
+  describe "#regional_access_boundary_url" do
+    it "returns correct URL for workload identity pool" do
+      creds = ExternalAccountCredential.new audience: AUDIENCE, credential_source: CREDENTIAL_SOURCE_TEXT, token_url: TOKEN_URL
+      expect(creds.regional_access_boundary_url).to eq(
+        "https://iamcredentials.googleapis.com/v1/projects/123456/locations/global/workloadIdentityPools/POOL_ID/allowedLocations"
+      )
+    end
+
+    it "returns correct URL for workforce identity pool" do
+      creds = ExternalAccountCredential.new audience: WORKFORCE_AUDIENCE, credential_source: CREDENTIAL_SOURCE_TEXT, token_url: TOKEN_URL
+      expect(creds.regional_access_boundary_url).to eq(
+        "https://iamcredentials.googleapis.com/v1/locations/global/workforcePools/POOL_ID/allowedLocations"
+      )
+    end
+
+    it "returns correct URL for service account impersonation" do
+      creds = ExternalAccountCredential.new(
+        audience: AUDIENCE,
+        credential_source: CREDENTIAL_SOURCE_TEXT,
+        token_url: TOKEN_URL,
+        service_account_impersonation_url: SERVICE_ACCOUNT_IMPERSONATION_URL
+      )
+      expect(creds.regional_access_boundary_url).to eq(
+        "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/#{SERVICE_ACCOUNT_EMAIL}/allowedLocations"
+      )
+    end
+
+    it "raises error for unknown audience format" do
+      creds = ExternalAccountCredential.new audience: "//invalid/format", credential_source: CREDENTIAL_SOURCE_TEXT, token_url: TOKEN_URL
+      expect { creds.regional_access_boundary_url }.to raise_error(Google::Auth::AuthorizationError, /Unknown audience format/)
+    end
+
+    it "raises error for mismatched universe domain" do
+      creds = ExternalAccountCredential.new audience: AUDIENCE, credential_source: CREDENTIAL_SOURCE_TEXT, token_url: TOKEN_URL
+      creds.universe_domain = "invalid.com"
+      expect { creds.regional_access_boundary_url }.to raise_error(Google::Auth::AuthorizationError, /does not match domain in audience/)
+    end
+  end
 end
