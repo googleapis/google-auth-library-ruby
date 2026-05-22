@@ -6,6 +6,7 @@ AllCops:
     - "integration/**/*"
     - "spec/**/*"
     - "test/**/*"
+    - "vendor/**/*"
 Metrics/BlockLength:
   Exclude:
     - "googleauth.gemspec"
