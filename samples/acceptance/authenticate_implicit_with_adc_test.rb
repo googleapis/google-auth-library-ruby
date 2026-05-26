@@ -23,8 +23,10 @@ describe "Authenticate Implicit with ADC Samples" do
     # list_buckets
     sample = SampleLoader.load "authenticate_implicit_with_adc.rb"
 
+    test_project = ENV["GOOGLE_CLOUD_PROJECT"] || storage_client.project
+
     assert_output(/Plaintext: Listed all storage buckets./) do
-      sample.run project_id: storage_client.project
+      sample.run project_id: test_project
     end
   end
 end

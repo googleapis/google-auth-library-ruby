@@ -14,26 +14,23 @@ jobs:
       matrix:
         include:
           - os: ubuntu-22.04
-            ruby: "3.1"
-            task: test , spec  
-          - os: ubuntu-22.04
             ruby: "3.2"
-            task: test , spec
+            task: "test , spec"
           - os: ubuntu-latest
             ruby: "3.3"
-            task: test , spec
+            task: "test , spec"
           - os: ubuntu-latest
             ruby: "3.4"
-            task: test , spec
+            task: "test , spec"
           - os: macos-latest
             ruby: "3.4"
-            task: test , spec
+            task: "test , spec"
           - os: windows-latest
             ruby: "3.4"
-            task: test , spec
+            task: "test , spec"
           - os: ubuntu-latest
             ruby: "3.4"
-            task: rubocop , integration , build , yardoc , linkinator
+            task: "rubocop , integration , build , yardoc , linkinator"
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -43,15 +40,13 @@ jobs:
       uses: ruby/setup-ruby@v1
       with:
         ruby-version: "${{ matrix.ruby }}"
+        bundler-cache: true
     - name: Install NodeJS 18.x
       uses: actions/setup-node@v4
       with:
         node-version: "18.x"
-    - name: Install dependencies
+    - name: Run Rake tasks
       shell: bash
       run: |
-        gem install --no-document toys
-        bundle install
-    - name: Test ${{ matrix.task }}
-      shell: bash
-      run: toys do ${{ matrix.task }} < /dev/null
+        CLEAN_TASK=$(echo "${{ matrix.task }}" | tr -d ',')
+        bundle exec rake $CLEAN_TASK

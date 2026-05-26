@@ -98,6 +98,98 @@ task linkinator: :yardoc do
   puts "--- Finished link checks ---"
 end
 
+# @private
+# Guard variable to ensure Kokoro environment is only loaded once.
+@loaded_kokoro_env = false
+
+##
+# Loads environment variables and service account credentials from the Kokoro
+# environment.
+#
+# This method replicates the mechanics used in `google-cloud-ruby` via Toys
+# to prepare the environment for integration and samples tests in CI.
+#
+# It expects the following resources to be present in the directory pointed to
+# by the `KOKORO_GFILE_DIR` environment variable:
+#
+# 1. `ruby_env_vars.json`: A JSON file containing a flat hash of key-value
+#    pairs representing environment variables. This file is REQUIRED if
+#    `KOKORO_GFILE_DIR` is set, as it is the primary mechanism for passing
+#    environment config in Kokoro.
+# 2. `secret_manager/ruby-main-ci-service-account`: A file containing the
+#    JSON key for the service account used for testing. This file is optional,
+#    but required for tests that need live cloud access.
+#
+# @raise [RuntimeError] if `KOKORO_GFILE_DIR` is set but `ruby_env_vars.json`
+#        is missing.
+#
+# @example Usage in Rake task:
+#   # To trigger this via command line:
+#   # bundle exec rake samples load_kokoro_context=true
+#   if ENV["load_kokoro_context"] == "true"
+#     load_kokoro_env
+#   end
+#
+def load_kokoro_env
+  return if @loaded_kokoro_env
+  @loaded_kokoro_env = true
+
+  gfile_dir = ENV["KOKORO_GFILE_DIR"]
+  return unless gfile_dir
+
+  load_ruby_env_vars gfile_dir
+  load_sa_credentials gfile_dir
+end
+
+# @private
+def load_ruby_env_vars gfile_dir
+  env_vars_file = File.join gfile_dir, "ruby_env_vars.json"
+  unless File.file? env_vars_file
+    raise "Kokoro environment file missing: #{env_vars_file}. " \
+          "Expected to be populated by populate-secrets.sh."
+  end
+
+  puts "Loading environment variables from #{env_vars_file}"
+  require "json"
+  env_vars = JSON.parse File.read env_vars_file
+  env_vars.each { |k, v| ENV[k] ||= v }
+end
+
+# @private
+def load_sa_credentials gfile_dir
+  keyfile = File.join gfile_dir, "secret_manager", "ruby-main-ci-service-account"
+  if File.file? keyfile
+    ENV["GOOGLE_APPLICATION_CREDENTIALS"] = keyfile
+
+    # Extract project_id from the key file if available
+    require "json"
+    key_data = JSON.parse File.read keyfile
+    if key_data["project_id"]
+      ENV["GOOGLE_CLOUD_PROJECT"] ||= key_data["project_id"]
+    end
+
+    ENV["GCLOUD_TEST_KEYFILE_JSON"] = File.read keyfile
+  else
+    puts "Warning: Secret file not found at #{keyfile}."
+    puts "Falling back to ambient credentials (e.g., default Compute Engine service account)."
+  end
+end
+
+desc "Run samples tests. Usage: bundle exec rake samples load_kokoro_context=true"
+task :samples do
+  puts "--- Starting samples tests ---"
+
+  # Load Kokoro environment if requested via command line override
+  if ENV["load_kokoro_context"] == "true"
+    load_kokoro_env
+  end
+
+  cmd = "BUNDLE_GEMFILE=samples/Gemfile bundle exec ruby -Ilib -Isamples -e " \
+        "'Dir.glob(\"samples/acceptance/*_test.rb\").each{|f| require File.expand_path(f)}'"
+  sh cmd
+  puts "--- Finished samples tests ---"
+end
+
 desc "Run all CI tasks"
 task ci: [:test, :spec, :rubocop, :integration, :build, :yardoc, :linkinator]
 
