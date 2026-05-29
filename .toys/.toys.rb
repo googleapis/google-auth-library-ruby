@@ -42,10 +42,12 @@ end
 
 expand :rubocop, bundler: true
 
-expand :yardoc do |t|
-  t.generate_output_flag = true
-  # t.fail_on_warning = true
-  t.use_bundler
+tool "yardoc" do
+  desc "Generate documentation"
+  include :exec
+  def run
+    exec ["bundle", "exec", "yard", "doc"]
+  end
 end
 alias_tool :yard, :yardoc
 

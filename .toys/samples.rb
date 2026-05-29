@@ -12,13 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-expand :minitest do |t|
-  t.name = "test"
-  t.libs = ["lib", "samples"]
-  t.use_bundler on_missing: :install, gemfile_path: "samples/Gemfile"
-  t.files = "samples/acceptance/*_test.rb"
-end
-
 desc "Run samples tests"
 
 include :exec
@@ -29,8 +22,14 @@ def run
   require "repo_context"
   RepoContext.load_kokoro_env
 
-  Dir.chdir context_directory
-  
-  puts "Samples tests ...", :bold, :cyan
-  exec_tool ["samples", "test"], name: "Samples tests"
+  Dir.chdir File.join(context_directory, "samples") do
+    puts "Updating samples bundle ...", :bold, :cyan
+    exec ["bundle", "install"]
+    
+    puts "Samples tests ...", :bold, :cyan
+    cmd = ["bundle", "exec", "ruby", "-I../lib", "-Iacceptance", "-e", 
+           "Dir.glob('acceptance/*_test.rb').each{|f| require File.expand_path(f)}"]
+    
+    exec cmd
+  end
 end

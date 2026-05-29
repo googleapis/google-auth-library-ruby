@@ -30,5 +30,13 @@ class RepoContext
     filename = "#{gfile_dir}/secret_manager/ruby-main-ci-service-account"
     raise "#{filename} is not a file" unless ::File.file? filename
     ::ENV["GOOGLE_APPLICATION_CREDENTIALS"] = filename
+
+    # Extract project_id from the key file if available
+    require "json"
+    key_data = JSON.parse File.read filename
+    if key_data["project_id"]
+      puts "Inferred project_id from keyfile: #{key_data['project_id']}"
+      ::ENV["GOOGLE_CLOUD_PROJECT"] ||= key_data["project_id"]
+    end
   end
 end
