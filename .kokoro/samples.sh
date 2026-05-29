@@ -7,7 +7,6 @@ set -eo pipefail
 export GEM_HOME=$HOME/.gem
 export PATH=$GEM_HOME/bin:$PATH
 
-bundle install
-BUNDLE_GEMFILE=samples/Gemfile bundle install
+gem install --no-document toys
 
-bundle exec rake samples load_kokoro_context=true
+toys samples < /dev/null
