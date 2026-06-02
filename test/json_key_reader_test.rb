@@ -73,5 +73,15 @@ describe Google::Auth::JsonKeyReader do
       
       _(error.message).must_equal "missing private_key"
     end
+
+    it "raises InitializationError when JSON format is invalid" do
+      json_key_io = StringIO.new("{invalid-json")
+      
+      error = assert_raises Google::Auth::InitializationError do
+        dummy_reader.read_json_key(json_key_io)
+      end
+      
+      assert_match(/Invalid JSON keyfile format/, error.message)
+    end
   end
 end

@@ -134,4 +134,16 @@ describe Google::Auth::ClientId do
       assert_match(/Client secret can not be nil/, error.message)
     end
   end
+
+  describe "with malformed JSON file" do
+    it "should raise InitializationError" do
+      FakeFS do
+        File.write "/client_secrets.json", "{invalid_json"
+        error = assert_raises Google::Auth::InitializationError do
+          Google::Auth::ClientId.from_file "/client_secrets.json"
+        end
+        assert_match(/Invalid Client ID JSON file/, error.message)
+      end
+    end
+  end
 end
