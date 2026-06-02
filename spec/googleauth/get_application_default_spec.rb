@@ -204,7 +204,7 @@ describe "#get_application_default" do
     end
 
     def cred_json_text
-      MultiJson.dump cred_json
+      JSON.generate cred_json
     end
 
     it_behaves_like "it can successfully load credentials"
@@ -222,7 +222,7 @@ describe "#get_application_default" do
     end
 
     def cred_json_text
-      MultiJson.dump cred_json
+      JSON.generate cred_json
     end
 
     it_behaves_like "it can successfully load credentials"
@@ -248,7 +248,7 @@ describe "#get_application_default" do
       Dir.mktmpdir do |dir|
         key_path = File.join dir, "my_cert_file"
         FileUtils.mkdir_p File.dirname(key_path)
-        File.write key_path, MultiJson.dump(cred_json)
+        File.write key_path, JSON.generate(cred_json)
         ENV[@var_name] = key_path
         creds = Google::Auth.get_application_default @scope, options
         expect(creds).to be_a(Google::Auth::ImpersonatedServiceAccountCredentials)
@@ -285,7 +285,7 @@ describe "#get_application_default" do
     end
 
     def cred_json_text
-      MultiJson.dump cred_json
+      JSON.generate cred_json
     end
 
     it "fails if the GOOGLE_APPLICATION_CREDENTIALS file contains the creds" do

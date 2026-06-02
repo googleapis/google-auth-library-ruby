@@ -220,7 +220,7 @@ describe Google::Auth::ExternalAccount::IdentityPoolCredentials do
           :credential_source => CREDENTIAL_SOURCE_JSON,
         },
         :file_exists => true,
-        :file_output => MultiJson.dump(SUCCESS_RESPONSE),
+        :file_output => JSON.generate(SUCCESS_RESPONSE),
         :expect_result => "ACCESS_TOKEN",
       },
       {
@@ -291,7 +291,7 @@ describe Google::Auth::ExternalAccount::IdentityPoolCredentials do
           :token_url => TOKEN_URL,
           :credential_source => CREDENTIAL_SOURCE_JSON_URL,
         },
-        :url_response => {"status": 200, "body": MultiJson.dump(SUCCESS_RESPONSE)},
+        :url_response => {"status": 200, "body": JSON.generate(SUCCESS_RESPONSE)},
         :expect_result => "ACCESS_TOKEN",
       },
       {
@@ -347,7 +347,7 @@ describe Google::Auth::ExternalAccount::IdentityPoolCredentials do
             'format': {'type': 'json', 'subject_token_field_name': 'access_token'},
           },
         },
-        :url_response => {"status": 200, "body": MultiJson.dump({
+        :url_response => {"status": 200, "body": JSON.generate({
           'issued_token_type': 'urn:ietf:params:oauth:token-type:access_token',
           'token_type': 'Bearer',
           'expires_in': 3600,

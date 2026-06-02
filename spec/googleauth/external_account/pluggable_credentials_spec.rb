@@ -228,7 +228,7 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
             }
           }
         },
-        :file_content => MultiJson.dump(EXECUTABLE_SUCCESSFUL_OIDC_RESPONSE_ID_TOKEN),
+        :file_content => JSON.generate(EXECUTABLE_SUCCESSFUL_OIDC_RESPONSE_ID_TOKEN),
         :expect_token => EXECUTABLE_OIDC_TOKEN
       },
       {
@@ -244,7 +244,7 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
             }
           }
         },
-        :file_content => MultiJson.dump(EXECUTABLE_SUCCESSFUL_OIDC_RESPONSE_JWT),
+        :file_content => JSON.generate(EXECUTABLE_SUCCESSFUL_OIDC_RESPONSE_JWT),
         :expect_token => EXECUTABLE_OIDC_TOKEN
       },
       {
@@ -260,7 +260,7 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
             }
           }
         },
-        :file_content => MultiJson.dump(EXECUTABLE_SUCCESSFUL_SAML_RESPONSE),
+        :file_content => JSON.generate(EXECUTABLE_SUCCESSFUL_SAML_RESPONSE),
         :expect_token => EXECUTABLE_SAML_TOKEN
       }
     ]
@@ -329,7 +329,7 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
           }
         },
         :executable_return => {
-          :stdout => MultiJson.dump({}),
+          :stdout => JSON.generate({}),
           :stderr => "",
           :exit_status => 0,
         },
@@ -348,7 +348,7 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
           }
         },
         :executable_return => {
-          :stdout => MultiJson.dump({:version => 1}),
+          :stdout => JSON.generate({:version => 1}),
           :stderr => "",
           :exit_status => 0
         },
@@ -367,7 +367,7 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
           }
         },
         :executable_return => {
-          :stdout => MultiJson.dump({:version => 1, :success => false}),
+          :stdout => JSON.generate({:version => 1, :success => false}),
           :stderr => "",
           :exit_status => 0
         },
@@ -386,7 +386,7 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
           }
         },
         :executable_return => {
-          :stdout => MultiJson.dump(EXECUTABLE_FAILED_RESPONSE),
+          :stdout => JSON.generate(EXECUTABLE_FAILED_RESPONSE),
           :stderr => "",
           :exit_status => 0
         },
@@ -405,7 +405,7 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
           },
         },
         :executable_return => {
-          :stdout => MultiJson.dump({
+          :stdout => JSON.generate({
             :version => 1,
             :success => true,
             :token_type => "urn:ietf:params:oauth:token-type:id_token",
@@ -430,7 +430,7 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
           },
         },
         :executable_return => {
-          :stdout => MultiJson.dump({
+          :stdout => JSON.generate({
             :version => 1,
             :success => true,
             :id_token => EXECUTABLE_OIDC_TOKEN,
@@ -472,7 +472,7 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
           }
         },
         :executable_return => {
-          :stdout => MultiJson.dump(EXECUTABLE_SUCCESSFUL_OIDC_RESPONSE_ID_TOKEN),
+          :stdout => JSON.generate(EXECUTABLE_SUCCESSFUL_OIDC_RESPONSE_ID_TOKEN),
           :stderr => "",
           :exit_status => 0
         },
@@ -491,7 +491,7 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
           }
         },
         :executable_return => {
-          :stdout => MultiJson.dump(EXECUTABLE_SUCCESSFUL_OIDC_RESPONSE_JWT),
+          :stdout => JSON.generate(EXECUTABLE_SUCCESSFUL_OIDC_RESPONSE_JWT),
           :stderr => "",
           :exit_status => 0
         },
@@ -510,7 +510,7 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
           }
         },
         :executable_return => {
-          :stdout => MultiJson.dump(EXECUTABLE_SUCCESSFUL_SAML_RESPONSE),
+          :stdout => JSON.generate(EXECUTABLE_SUCCESSFUL_SAML_RESPONSE),
           :stderr => "",
           :exit_status => 0
         },

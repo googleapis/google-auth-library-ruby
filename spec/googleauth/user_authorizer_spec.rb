@@ -204,7 +204,7 @@ describe Google::Auth::UserAuthorizer do
 
   context "when retrieving tokens" do
     let :token_json do
-      MultiJson.dump(
+      JSON.generate(
         access_token:           "accesstoken",
         refresh_token:          "refreshtoken",
         expiration_time_millis: 1_441_234_742_000
@@ -256,7 +256,7 @@ describe Google::Auth::UserAuthorizer do
     
     context "with mismatched client_id" do
       let :mismatched_token_json do
-        MultiJson.dump(
+        JSON.generate(
           client_id:              "mismatched_client_id",
           access_token:           "accesstoken",
           refresh_token:          "refreshtoken",
@@ -302,24 +302,24 @@ describe Google::Auth::UserAuthorizer do
     end
 
     it "should persist the refresh token" do
-      expect(MultiJson.load(token_json)["refresh_token"]).to eq "refreshtoken"
+      expect(JSON.parse(token_json)["refresh_token"]).to eq "refreshtoken"
     end
 
     it "should persist the access token" do
-      expect(MultiJson.load(token_json)["access_token"]).to eq "accesstoken"
+      expect(JSON.parse(token_json)["access_token"]).to eq "accesstoken"
     end
 
     it "should persist the client id" do
-      expect(MultiJson.load(token_json)["client_id"]).to eq "testclient"
+      expect(JSON.parse(token_json)["client_id"]).to eq "testclient"
     end
 
     it "should persist the scope" do
-      expect(MultiJson.load(token_json)["scope"]).to include("email", "profile")
+      expect(JSON.parse(token_json)["scope"]).to include("email", "profile")
     end
 
     it "should persist the expiry as milliseconds" do
       expected_expiry = expiry * 1000
-      expect(MultiJson.load(token_json)["expiration_time_millis"]).to eql(
+      expect(JSON.parse(token_json)["expiration_time_millis"]).to eql(
         expected_expiry
       )
     end
@@ -327,7 +327,7 @@ describe Google::Auth::UserAuthorizer do
 
   context "with valid authorization code" do
     let :token_json do
-      MultiJson.dump("access_token" => "1/abc123",
+      JSON.generate("access_token" => "1/abc123",
                      "token_type"   => "Bearer",
                      "expires_in"   => 3600)
     end
@@ -382,7 +382,7 @@ describe Google::Auth::UserAuthorizer do
 
   context "when reovking authorization" do
     let :token_json do
-      MultiJson.dump(
+      JSON.generate(
         access_token:           "accesstoken",
         refresh_token:          "refreshtoken",
         expiration_time_millis: 1_441_234_742_000

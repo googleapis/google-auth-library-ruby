@@ -115,7 +115,7 @@ describe Google::Auth::WebUserAuthorizer do
 
   shared_examples "handles callback" do
     let :token_json do
-      MultiJson.dump("access_token" => "1/abc123",
+      JSON.generate("access_token" => "1/abc123",
                      "token_type"   => "Bearer",
                      "expires_in"   => 3600)
     end

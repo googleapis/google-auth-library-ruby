@@ -13,6 +13,7 @@
 # limitations under the License.
 
 require "helper"
+require "json"
 require "fakefs/safe"
 
 describe Google::Auth::ClientId do
@@ -47,7 +48,7 @@ describe Google::Auth::ClientId do
           file_path = "/client_secrets.json"
           let :client_id do
             FakeFS do
-              content = MultiJson.dump config
+              content = JSON.generate config
               File.write file_path, content
               Google::Auth::ClientId.from_file file_path
             end
