@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require "json"
 require "googleauth/errors"
 
 module Google
@@ -29,7 +30,7 @@ module Google
       # @raise [Google::Auth::InitializationError] If client_email or private_key
       #   fields are missing from the JSON
       def read_json_key json_key_io
-        json_key = MultiJson.load json_key_io.read
+        json_key = JSON.parse json_key_io.read
         raise InitializationError, "missing client_email" unless json_key.key? "client_email"
         raise InitializationError, "missing private_key" unless json_key.key? "private_key"
         [

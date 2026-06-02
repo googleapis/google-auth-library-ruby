@@ -13,6 +13,7 @@
 # limitations under the License.
 
 require "time"
+require "json"
 require "googleauth/errors"
 require "googleauth/external_account/base_credentials"
 require "googleauth/external_account/external_account_utils"
@@ -226,7 +227,7 @@ module Google
         # Retrieves the AWS security credentials required for signing AWS requests from the AWS metadata server.
         def fetch_metadata_security_credentials role_name
           response = get_aws_resource "#{@credential_verification_url}/#{role_name}", "credentials"
-          MultiJson.load response.body
+          JSON.parse response.body
         end
 
         # Reads the name of the AWS region from the environment

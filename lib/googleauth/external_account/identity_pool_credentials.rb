@@ -13,6 +13,7 @@
 # limitations under the License.
 
 require "time"
+require "json"
 require "googleauth/errors"
 require "googleauth/external_account/base_credentials"
 require "googleauth/external_account/external_account_utils"
@@ -63,7 +64,7 @@ module Google
             token = content
           else
             begin
-              response_data = MultiJson.load content, symbolize_keys: true
+              response_data = JSON.parse content, symbolize_names: true
               token = response_data[@credential_source_field_name.to_sym]
             rescue StandardError
               raise CredentialsError, "Unable to parse subject_token from JSON resource #{resource_name} " \

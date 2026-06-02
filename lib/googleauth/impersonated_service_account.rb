@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+require "json"
 require "googleauth/base_client"
 require "googleauth/errors"
 require "googleauth/helpers/connection"
@@ -117,7 +118,7 @@ module Google
         end
 
         require "googleauth/default_credentials"
-        impersonated_json = MultiJson.load json_key_io.read
+        impersonated_json = JSON.parse json_key_io.read
         source_credentials_info = impersonated_json["source_credentials"]
 
         if source_credentials_info["type"] == CREDENTIAL_TYPE_NAME
@@ -127,7 +128,7 @@ module Google
         end
 
         source_credentials = DefaultCredentials.make_creds(
-          json_key_io: StringIO.new(MultiJson.dump(source_credentials_info))
+          json_key_io: StringIO.new(JSON.generate(source_credentials_info))
         )
 
         impersonation_url = impersonated_json["service_account_impersonation_url"]
@@ -279,7 +280,7 @@ module Google
 
         case resp.status
         when 200
-          response = MultiJson.load resp.body
+          response = JSON.parse resp.body
           self.expires_at = response["expireTime"]
           @access_token = response["accessToken"]
           access_token
@@ -310,7 +311,7 @@ module Google
         connection.post @impersonation_url do |req|
           req.headers.merge! auth_header
           req.headers["Content-Type"] = "application/json"
-          req.body = MultiJson.dump({ scope: @scope })
+          req.body = JSON.generate({ scope: @scope })
         end
       end
 
