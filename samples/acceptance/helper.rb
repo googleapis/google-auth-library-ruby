@@ -14,6 +14,4 @@
 
 require "minitest/autorun"
 require "minitest/focus"
-require "toys/utils/git_cache"
-require Toys::Utils::GitCache.new.get "https://github.com/googleapis/ruby-common-tools.git",
-                                      path: "lib/sample_loader.rb", update: 300
+require_relative "sample_loader"

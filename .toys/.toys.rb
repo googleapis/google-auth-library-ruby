@@ -16,30 +16,38 @@
 
 expand :clean, paths: :gitignore
 
-expand :rspec do |t|
-  t.libs = ["lib", "spec"]
-  t.use_bundler
+tool "spec" do
+  desc "Run RSpec tests"
+  include :exec
+  def run
+    exec ["bundle", "exec", "rspec"]
+  end
 end
 
-expand :minitest do |t|
-  t.libs = ["lib", "test"]
-  t.use_bundler
-  t.files = "test/**/*_test.rb"
+tool "test" do
+  desc "Run unit tests"
+  include :exec
+  def run
+    exec ["bundle", "exec", "ruby", "-Ilib", "-Itest", "-e", "Dir.glob('test/**/*_test.rb').each{|f| require File.expand_path(f)}"]
+  end
 end
 
-expand :minitest do |t|
-  t.name = "integration"
-  t.libs = ["lib", "integration"]
-  t.use_bundler
-  t.files = "integration/**/*_test.rb"
+tool "integration" do
+  desc "Run integration tests"
+  include :exec
+  def run
+    exec ["bundle", "exec", "ruby", "-Ilib", "-Iintegration", "-e", "Dir.glob('integration/**/*_test.rb').each{|f| require File.expand_path(f)}"]
+  end
 end
 
 expand :rubocop, bundler: true
 
-expand :yardoc do |t|
-  t.generate_output_flag = true
-  # t.fail_on_warning = true
-  t.use_bundler
+tool "yardoc" do
+  desc "Generate documentation"
+  include :exec
+  def run
+    exec ["bundle", "exec", "yard", "doc"]
+  end
 end
 alias_tool :yard, :yardoc
 
