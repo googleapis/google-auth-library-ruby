@@ -167,9 +167,9 @@ module Google
         redirect_to = options[:redirect_to] || request.url
         request.session[XSRF_KEY] = SecureRandom.base64
         options[:state] = JSON.generate(state.merge(
-                                           SESSION_ID_KEY  => request.session[XSRF_KEY],
-                                           CURRENT_URI_KEY => redirect_to
-                                         ))
+                                          SESSION_ID_KEY  => request.session[XSRF_KEY],
+                                          CURRENT_URI_KEY => redirect_to
+                                        ))
         options[:base_url] = request.url
         super options
       end

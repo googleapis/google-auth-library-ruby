@@ -54,4 +54,7 @@ jobs:
         bundle install
     - name: Test ${{ matrix.task }}
       shell: bash
-      run: toys do ${{ matrix.task }} < /dev/null
+      run: |
+        for task in $(echo "${{ matrix.task }}" | tr ',' ' '); do
+          toys "$task" < /dev/null
+        done
