@@ -27,6 +27,7 @@ Gem::Specification.new do |gem|
   gem.add_dependency "google-logging-utils", "~> 0.1"
   gem.add_dependency "jwt", ">= 1.4", "< 4.0"
   gem.add_dependency "os", ">= 0.9", "< 2.0"
+  gem.add_dependency "pstore", "~> 0.1"
   gem.add_dependency "signet", ">= 0.16", "< 2.a"
 
   if gem.respond_to? :metadata
