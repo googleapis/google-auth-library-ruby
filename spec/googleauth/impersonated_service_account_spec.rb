@@ -52,7 +52,7 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
 
       it "creates credentials with UserRefreshCredentials as source" do
         creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
-          json_key_io: StringIO.new(MultiJson.dump(impersonated_json))
+          json_key_io: StringIO.new(JSON.generate(impersonated_json))
         )
 
         expect(creds).to be_a(Google::Auth::ImpersonatedServiceAccountCredentials)
@@ -67,7 +67,7 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
 
       it "creates credentials with ServiceAccountCredentials as source" do
         creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
-          json_key_io: StringIO.new(MultiJson.dump(impersonated_json))
+          json_key_io: StringIO.new(JSON.generate(impersonated_json))
         )
 
         expect(creds).to be_a(Google::Auth::ImpersonatedServiceAccountCredentials)
@@ -92,7 +92,7 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
       it "raises a runtime error" do
         expect {
           Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
-            json_key_io: StringIO.new(MultiJson.dump(recursive_impersonated_json))
+            json_key_io: StringIO.new(JSON.generate(recursive_impersonated_json))
           )
         }.to raise_error(Google::Auth::InitializationError, /Source credentials can't be of type.*use delegates/)
       end
@@ -103,14 +103,14 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
 
       it "uses scope from JSON if not provided in options" do
         creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
-          json_key_io: StringIO.new(MultiJson.dump(impersonated_json))
+          json_key_io: StringIO.new(JSON.generate(impersonated_json))
         )
         expect(creds.scope).to eq(["scope1"])
       end
 
       it "uses scope from options if provided" do
         creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
-          json_key_io: StringIO.new(MultiJson.dump(impersonated_json)),
+          json_key_io: StringIO.new(JSON.generate(impersonated_json)),
           scope: ["scope2"]
         )
         expect(creds.scope).to eq(["scope2"])
@@ -124,7 +124,7 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
     body_fields = { "token_type" => "Bearer", "expires_in" => 3600 }
     body_fields["accessToken"] = opts[:access_token]
     body_fields["expireTime"] = opts[:expireTime]
-    body = MultiJson.dump body_fields
+    body = JSON.generate body_fields
     stub_request(:post, impersonation_url)
       .to_return(body:    body,
                    status:  opts[:status] || 200,

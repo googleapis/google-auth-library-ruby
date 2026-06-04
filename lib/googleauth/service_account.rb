@@ -13,7 +13,7 @@
 # limitations under the License.
 
 require "jwt"
-require "multi_json"
+require "json"
 require "stringio"
 
 require "google/logging/message"
@@ -66,12 +66,12 @@ module Google
 
         private_key, client_email, project_id, quota_project_id, universe_domain =
           if json_key_io
-            json_key = MultiJson.load json_key_io.read
+            json_key = JSON.parse json_key_io.read
             if json_key.key? "type"
               json_key_io.rewind
             else # Defaults to class credential 'type' if missing.
               json_key["type"] = CREDENTIAL_TYPE_NAME
-              json_key_io = StringIO.new MultiJson.dump(json_key)
+              json_key_io = StringIO.new JSON.generate(json_key)
             end
             CredentialsLoader.load_and_verify_json_key_type json_key_io, CREDENTIAL_TYPE_NAME
             read_json_key json_key_io

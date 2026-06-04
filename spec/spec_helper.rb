@@ -25,11 +25,8 @@ require "rspec"
 require "logging"
 require "rspec/logging_helper"
 require "webmock/rspec"
-require "multi_json"
 require "google/cloud/env"
 
-# Preload adapter to work around Rubinius error with FakeFS
-MultiJson.use :json_gem
 
 # Allow Faraday to support test stubs
 Faraday::Adapter.lookup_middleware :test

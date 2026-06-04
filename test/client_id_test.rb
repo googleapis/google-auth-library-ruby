@@ -13,6 +13,7 @@
 # limitations under the License.
 
 require "helper"
+require "json"
 require "fakefs/safe"
 
 describe Google::Auth::ClientId do
@@ -47,7 +48,7 @@ describe Google::Auth::ClientId do
           file_path = "/client_secrets.json"
           let :client_id do
             FakeFS do
-              content = MultiJson.dump config
+              content = JSON.generate config
               File.write file_path, content
               Google::Auth::ClientId.from_file file_path
             end
@@ -131,6 +132,18 @@ describe Google::Auth::ClientId do
         Google::Auth::ClientId.from_hash config
       end
       assert_match(/Client secret can not be nil/, error.message)
+    end
+  end
+
+  describe "with malformed JSON file" do
+    it "should raise InitializationError" do
+      FakeFS do
+        File.write "/client_secrets.json", "{invalid_json"
+        error = assert_raises Google::Auth::InitializationError do
+          Google::Auth::ClientId.from_file "/client_secrets.json"
+        end
+        assert_match(/Invalid Client ID JSON file/, error.message)
+      end
     end
   end
 end

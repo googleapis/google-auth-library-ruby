@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.require "time"
 
+require "json"
 require "googleauth/base_client"
 require "googleauth/errors"
 require "googleauth/helpers/connection"
@@ -190,7 +191,7 @@ module Google
           response = connection.post @service_account_impersonation_url do |req|
             req.headers["Authorization"] = "Bearer #{token}"
             req.headers["Content-Type"] = "application/json"
-            req.body = MultiJson.dump({ scope: @scope })
+            req.body = JSON.generate({ scope: @scope })
           end
 
           if response.status != 200
@@ -201,7 +202,7 @@ module Google
             )
           end
 
-          MultiJson.load response.body
+          JSON.parse response.body
         end
 
         def log_impersonated_token_request original_token

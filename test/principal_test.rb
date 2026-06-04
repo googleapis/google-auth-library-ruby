@@ -15,7 +15,7 @@
 require "helper"
 
 require "stringio"
-require "multi_json"
+require "json"
 
 require "googleauth/api_key"
 require "googleauth/bearer_token"
@@ -67,7 +67,7 @@ describe "Principal methods" do
         client_email: test_email,
         type:         "service_account"
       }
-      key_io = StringIO.new MultiJson.dump(json)
+      key_io = StringIO.new JSON.generate(json)
       creds = Google::Auth::ServiceAccountCredentials.make_creds json_key_io: key_io
       _(creds.principal).must_equal test_email
     end
@@ -80,7 +80,7 @@ describe "Principal methods" do
         private_key:  @key = OpenSSL::PKey::RSA.new(2048).to_pem,
         client_email: test_email
       }
-      key_io = StringIO.new MultiJson.dump(json)
+      key_io = StringIO.new JSON.generate(json)
       creds = Google::Auth::ServiceAccountJwtHeaderCredentials.make_creds json_key_io: key_io
       _(creds.principal).must_equal test_email
     end
@@ -133,7 +133,7 @@ describe "Principal methods" do
         refresh_token: "refreshing-token",
         type:          "authorized_user"
       }
-      key_io = StringIO.new MultiJson.dump(json)
+      key_io = StringIO.new JSON.generate(json)
       creds = Google::Auth::UserRefreshCredentials.make_creds json_key_io: key_io
       _(creds.principal).must_equal test_client_id
     end

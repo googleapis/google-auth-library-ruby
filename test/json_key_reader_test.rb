@@ -15,7 +15,7 @@
 require_relative "helper"
 require "googleauth/json_key_reader"
 require "stringio"
-require "multi_json"
+require "json"
 
 class DummyKeyReader
   include Google::Auth::JsonKeyReader
@@ -34,7 +34,7 @@ describe Google::Auth::JsonKeyReader do
         "universe_domain" => "googleapis.com"
       }
       
-      json_key_io = StringIO.new(MultiJson.dump(json_key_hash))
+      json_key_io = StringIO.new(JSON.generate(json_key_hash))
       
       private_key, client_email, project_id, quota_project_id, universe_domain = 
         dummy_reader.read_json_key(json_key_io)
@@ -51,7 +51,7 @@ describe Google::Auth::JsonKeyReader do
         "private_key" => "dummy-key"
       }
       
-      json_key_io = StringIO.new(MultiJson.dump(json_key_hash))
+      json_key_io = StringIO.new(JSON.generate(json_key_hash))
       
       error = assert_raises Google::Auth::InitializationError do
         dummy_reader.read_json_key(json_key_io)
@@ -65,13 +65,23 @@ describe Google::Auth::JsonKeyReader do
         "client_email" => "dummy@example.com"
       }
       
-      json_key_io = StringIO.new(MultiJson.dump(json_key_hash))
+      json_key_io = StringIO.new(JSON.generate(json_key_hash))
       
       error = assert_raises Google::Auth::InitializationError do
         dummy_reader.read_json_key(json_key_io)
       end
       
       _(error.message).must_equal "missing private_key"
+    end
+
+    it "raises InitializationError when JSON format is invalid" do
+      json_key_io = StringIO.new("{invalid-json")
+      
+      error = assert_raises Google::Auth::InitializationError do
+        dummy_reader.read_json_key(json_key_io)
+      end
+      
+      assert_match(/Invalid JSON keyfile format/, error.message)
     end
   end
 end

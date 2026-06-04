@@ -14,6 +14,7 @@
 
 require "os"
 require "rbconfig"
+require "json"
 
 require "googleauth/errors"
 
@@ -152,7 +153,7 @@ module Google
         gcloud = GCLOUD_WINDOWS_COMMAND if OS.windows?
         gcloud = GCLOUD_POSIX_COMMAND unless OS.windows?
         gcloud_json = IO.popen("#{gcloud} #{GCLOUD_CONFIG_COMMAND}", err: :close, &:read)
-        config = MultiJson.load gcloud_json
+        config = JSON.parse gcloud_json
         config["configuration"]["properties"]["core"]["project"]
       rescue StandardError
         nil
@@ -165,7 +166,11 @@ module Google
       # @param expected_type [String] The expected credential type name.
       # @raise [Google::Auth::InitializationError] If the JSON key type does not match the expected type.
       def load_and_verify_json_key_type json_key_io, expected_type
-        json_key = MultiJson.load json_key_io.read
+        begin
+          json_key = JSON.parse json_key_io.read
+        rescue JSON::ParserError => e
+          raise Google::Auth::InitializationError, "Invalid JSON keyfile format: #{e.message}"
+        end
         json_key_io.rewind # Rewind the stream so it can be read again.
         return if json_key["type"] == expected_type
         raise Google::Auth::InitializationError,

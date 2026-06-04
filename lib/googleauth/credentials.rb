@@ -16,7 +16,6 @@ require "forwardable"
 require "json"
 require "pathname"
 require "signet/oauth_2/client"
-require "multi_json"
 
 require "googleauth/credentials_loader"
 require "googleauth/errors"
@@ -514,7 +513,7 @@ module Google
         json_key, clz = Google::Auth::DefaultCredentials.determine_creds_class creds_input[:json_key_io]
 
         # Re-serialize the parsed JSON and replace the IO stream in creds_input
-        creds_input[:json_key_io] = StringIO.new MultiJson.dump(json_key)
+        creds_input[:json_key_io] = StringIO.new JSON.generate(json_key)
 
         client = clz.make_creds creds_input
         options = options.select { |k, _v| k == :logger }
@@ -531,7 +530,7 @@ module Google
         json_key, clz = Google::Auth::DefaultCredentials.determine_creds_class io
 
         # Re-serialize the parsed JSON and create a new IO stream.
-        new_io = StringIO.new MultiJson.dump(json_key)
+        new_io = StringIO.new JSON.generate(json_key)
 
         clz.make_creds options.merge!(json_key_io: new_io)
       end

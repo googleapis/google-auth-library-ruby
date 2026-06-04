@@ -14,7 +14,7 @@
 
 require "googleauth/signet"
 require "googleauth/credentials_loader"
-require "multi_json"
+require "json"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization

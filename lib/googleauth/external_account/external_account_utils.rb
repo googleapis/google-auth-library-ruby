@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.require "time"
 
+require "json"
 require "googleauth/base_client"
 require "googleauth/errors"
 require "googleauth/helpers/connection"
@@ -54,7 +55,7 @@ module Google
           end
 
           if response.status == 200
-            response_data = MultiJson.load response.body, symbolize_names: true
+            response_data = JSON.parse response.body, symbolize_names: true
             @project_id = response_data[:projectId]
           end
 

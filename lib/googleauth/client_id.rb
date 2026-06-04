@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require "multi_json"
+require "json"
 require "googleauth/credentials_loader"
 require "googleauth/errors"
 
@@ -85,7 +85,11 @@ module Google
         raise InitializationError, "File can not be nil." if file.nil?
         File.open file.to_s do |f|
           json = f.read
-          config = MultiJson.load json
+          begin
+            config = JSON.parse json
+          rescue JSON::ParserError => e
+            raise InitializationError, "Invalid Client ID JSON file: #{e.message}"
+          end
           from_hash config
         end
       end

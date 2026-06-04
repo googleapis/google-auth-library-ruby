@@ -44,7 +44,7 @@ describe Google::Auth::Credentials, :private do
     else
       body_fields["access_token"] = access_token || "12345abcde"
     end
-    body = MultiJson.dump body_fields
+    body = JSON.generate body_fields
     uri ||= "https://oauth2.googleapis.com/token"
     stub_request(:post, uri)
       .to_return(body: body, status: 200, headers: { "Content-Type" => "application/json" })

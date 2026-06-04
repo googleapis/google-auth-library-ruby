@@ -45,7 +45,7 @@ describe Signet::OAuth2::Client do
     body_fields = { "token_type" => "Bearer", "expires_in" => 3600 }
     body_fields["access_token"] = opts[:access_token] if opts[:access_token]
     body_fields["id_token"] = opts[:id_token] if opts[:id_token]
-    body = MultiJson.dump body_fields
+    body = JSON.generate body_fields
     blk = proc do |request|
       params = Addressable::URI.form_unencode request.body
       claim, _header = JWT.decode(params.assoc("assertion").last,

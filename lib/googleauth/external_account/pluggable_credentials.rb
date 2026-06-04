@@ -14,6 +14,7 @@
 
 require "open3"
 require "time"
+require "json"
 require "googleauth/errors"
 require "googleauth/external_account/base_credentials"
 require "googleauth/external_account/external_account_utils"
@@ -88,7 +89,7 @@ module Google
           env = inject_environment_variables
           output = subprocess_with_timeout env, @credential_source_executable_command,
                                            @credential_source_executable_timeout_millis
-          response = MultiJson.load output, symbolize_keys: true
+          response = JSON.parse output, symbolize_names: true
           parse_subject_token response
         end
 
@@ -99,7 +100,7 @@ module Google
           return nil unless File.exist? @credential_source_executable_output_file
           begin
             content = File.read @credential_source_executable_output_file, encoding: "utf-8"
-            response = MultiJson.load content, symbolize_keys: true
+            response = JSON.parse content, symbolize_names: true
           rescue StandardError
             return nil
           end

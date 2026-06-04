@@ -13,7 +13,7 @@
 # limitations under the License.
 
 require "uri"
-require "multi_json"
+require "json"
 require "googleauth/signet"
 require "googleauth/user_refresh"
 require "securerandom"
@@ -140,7 +140,7 @@ module Google
       def get_credentials user_id, scope = nil
         saved_token = stored_token user_id
         return nil if saved_token.nil?
-        data = MultiJson.load saved_token
+        data = JSON.parse saved_token
 
         if data.fetch("client_id", @client_id.id) != @client_id.id
           raise CredentialsError.with_details(
@@ -250,7 +250,7 @@ module Google
       # @return [Google::Auth::UserRefreshCredentials]
       #  The stored credentials
       def store_credentials user_id, credentials
-        json = MultiJson.dump(
+        json = JSON.generate(
           client_id:              credentials.client_id,
           access_token:           credentials.access_token,
           refresh_token:          credentials.refresh_token,
