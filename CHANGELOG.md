@@ -1,5 +1,11 @@
 # Release History
 
+### 1.17.0 (2026-06-04)
+
+#### Features
+
+* port googleauth from multi_json to standard lib json ([#575](https://github.com/googleapis/google-auth-library-ruby/issues/575)) ([5fe4ed9](https://github.com/googleapis/google-auth-library-ruby/commit/5fe4ed96a042f36874a609349be5911db1247c8b)), closes [#572](https://github.com/googleapis/google-auth-library-ruby/issues/572)
+
 ### 1.16.2 (2026-02-26)
 
 #### Bug Fixes
