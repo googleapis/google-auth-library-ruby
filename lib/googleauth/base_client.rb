@@ -14,6 +14,7 @@
 
 require "google/logging/message"
 require "googleauth/regional_access_boundary"
+require "googleauth/helpers/connection"
 
 module Google
   # Module Auth provides classes that provide Google-specific authorization
@@ -139,7 +140,7 @@ module Google
             # A nil or empty URL means we cannot attempt the lookup yet (e.g. waiting
             # for metadata server).
             if lookup_url && !lookup_url.empty?
-              fetcher = Google::Auth::RegionalAccessBoundary::Fetcher.new Faraday.new, lookup_url, self
+              fetcher = Google::Auth::RegionalAccessBoundary::Fetcher.new rab_connection, lookup_url, self
               data = fetcher.fetch
               cache.set data, 6 * 60 * 60 # 6 hours
             else
@@ -172,6 +173,13 @@ module Google
       def fetch_access_token!
         raise NoMethodError, "fetch_access_token! not implemented"
       end
+
+      def rab_connection
+        conn = build_default_connection if respond_to? :build_default_connection
+        conn ||= connection if respond_to? :connection
+        conn || Google::Auth::Helpers::Connection.connection
+      end
+      private :rab_connection
     end
   end
 end
