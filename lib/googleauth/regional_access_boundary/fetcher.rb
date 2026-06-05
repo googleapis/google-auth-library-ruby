@@ -19,6 +19,10 @@ require "googleauth/errors"
 module Google
   module Auth
     module RegionalAccessBoundary
+      # TransientLookupError is raised when a transient error occurs during lookup,
+      # signaling that the request should be retried.
+      class TransientLookupError < StandardError; end
+
       # Fetcher handles retrieving Regional Access Boundary data from the API.
       class Fetcher
         def initialize client, url, token
@@ -67,7 +71,7 @@ module Google
             Google::Auth::RegionalAccessBoundary::RegionalAccessBoundaryData.new body["encodedLocations"]
           elsif [500, 502, 503, 504].include? response.status
             # Retryable errors
-            raise "Retryable status: #{response.status}"
+            raise TransientLookupError, "Status: #{response.status}"
           else
             raise Google::Auth::AuthorizationError, "Lookup failed with status #{response.status}"
           end
@@ -75,7 +79,7 @@ module Google
 
         def handle_error error, attempt, start_time
           # Check if we should retry
-          is_retryable = error.message.start_with?("Retryable status:") || error.is_a?(Faraday::Error)
+          is_retryable = error.is_a?(TransientLookupError) || error.is_a?(Faraday::Error)
 
           raise Google::Auth::AuthorizationError, "RAB lookup failed: #{error.message}" unless is_retryable
           if Time.now - start_time > 60
