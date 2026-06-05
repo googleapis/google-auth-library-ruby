@@ -111,6 +111,10 @@ module Google
 
         # Returns the Regional Access Boundary lookup URL for external account credentials.
         #
+        # Design (Fail Open):
+        # Returning nil (e.g. if parsing the impersonation email fails) skips the lookup,
+        # allowing the request to proceed without the header.
+        #
         # @private
         # @return [String, nil] the constructed allowedLocations URL, or nil if
         #     required parameters (e.g. email) are missing.

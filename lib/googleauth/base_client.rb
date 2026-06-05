@@ -97,6 +97,17 @@ module Google
 
       private
 
+      # Evaluates and applies Regional Access Boundary restrictions to the metadata.
+      #
+      # Design (Fail Open):
+      # If no valid cache exists, the request proceeds without the x-allowed-locations header.
+      # Any background thread fetch operations triggered run asynchronously so the primary
+      # application thread remains unblocked.
+      #
+      # @private
+      # @param a_hash [Hash] the metadata to update.
+      # @param opts [Hash] options containing the target request URL.
+      # @return [void]
       def apply_regional_access_boundary! a_hash, opts
         return unless should_apply_rab? opts
 
@@ -115,6 +126,11 @@ module Google
         trigger_async_rab_fetch cache
       end
 
+      # Determines if a request is eligible for Regional Access Boundary restrictions.
+      #
+      # @private
+      # @param opts [Hash] request options.
+      # @return [Boolean] true if the header should be applied, false otherwise (failing open).
       def should_apply_rab? opts
         # Return early if not supported by credential type or if ID token.
         return false unless token_type != :id_token && supports_regional_access_boundary?
@@ -134,6 +150,16 @@ module Google
         !is_excluded
       end
 
+      # Triggers the asynchronous lookup for RAB allowed locations in a background thread.
+      #
+      # Design (Fail Open):
+      # - Run inside a separate Thread so lookup latency does not delay the primary API call.
+      # - If `regional_access_boundary_url` is nil, skip lookup (e.g. metadata server cold start).
+      # - Rescue all StandardErrors to ensure no background fetch failures propagate or crash the process.
+      #
+      # @private
+      # @param cache [Google::Auth::RegionalAccessBoundary::Cache] the cache instance.
+      # @return [Thread] the background thread instance.
       def trigger_async_rab_fetch cache
         Thread.new do
           begin

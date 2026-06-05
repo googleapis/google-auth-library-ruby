@@ -261,6 +261,9 @@ module Google
       # Returns the regional access boundary lookup URL.
       # Constructs the URL based on the impersonation URL.
       #
+      # Design (Fail Open):
+      # Returning nil skips the lookup, allowing the request to proceed without the header.
+      #
       # @private
       # @return [String, nil] the allowedLocations endpoint URL, or nil if impersonation email cannot be parsed.
       def regional_access_boundary_url

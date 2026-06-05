@@ -180,6 +180,9 @@ module Google
       # Returns the regional access boundary lookup URL.
       # Fetches the service account email from metadata server.
       #
+      # Design (Fail Open):
+      # Returning nil skips the lookup, allowing the request to proceed without the header.
+      #
       # @private
       # @return [String, nil] the allowedLocations endpoint URL, or nil if GCE default email is missing.
       def regional_access_boundary_url
