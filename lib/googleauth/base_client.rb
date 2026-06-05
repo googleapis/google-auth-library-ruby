@@ -151,7 +151,7 @@ module Google
           rescue StandardError => e
             # Ensure that any failure during the asynchronous lookup (network error, IAM refusal, etc.) does
             # not propagate to the primary request or cause the application to crash.
-            log_rab_warning "Regional Access Boundary lookup failed: #{e.message}"
+            log_rab_warning "Regional Access Boundary lookup failed: #{e.class} - #{e.message}"
             cache.mark_fetch_failed!
           end
         end
