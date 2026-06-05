@@ -174,9 +174,16 @@ module Google
         raise NoMethodError, "fetch_access_token! not implemented"
       end
 
+      # Returns the Faraday connection to use for Regional Access Boundary lookups.
+      #
+      # Respects the credentials-specific connection configuration if available,
+      # falling back to the global default connection to align with the rest of the library.
       def rab_connection
+        # Use the client-specific custom connection builder if present (used by Signet).
         conn = build_default_connection if respond_to? :build_default_connection
+        # Use the credentials-specific connection if present (used by External Account credentials).
         conn ||= connection if respond_to? :connection
+        # Fall back to the global configured default connection.
         conn || Google::Auth::Helpers::Connection.connection
       end
       private :rab_connection
