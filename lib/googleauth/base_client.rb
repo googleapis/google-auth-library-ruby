@@ -168,7 +168,8 @@ module Google
             # A nil or empty URL means we cannot attempt the lookup yet (e.g. waiting
             # for metadata server).
             if lookup_url && !lookup_url.empty?
-              fetcher = Google::Auth::RegionalAccessBoundary::Fetcher.new rab_connection, lookup_url, self
+              conn = Google::Auth::Helpers::Connection.connection_for self
+              fetcher = Google::Auth::RegionalAccessBoundary::Fetcher.new conn, lookup_url, self
               data = fetcher.fetch
               cache.set data, 6 * 60 * 60 # 6 hours
             else
@@ -201,20 +202,6 @@ module Google
       def fetch_access_token!
         raise NoMethodError, "fetch_access_token! not implemented"
       end
-
-      # Returns the Faraday connection to use for Regional Access Boundary lookups.
-      #
-      # Respects the credentials-specific connection configuration if available,
-      # falling back to the global default connection to align with the rest of the library.
-      def rab_connection
-        # Use the client-specific custom connection builder if present (used by Signet).
-        conn = build_default_connection if respond_to? :build_default_connection
-        # Use the credentials-specific connection if present (used by External Account credentials).
-        conn ||= connection if respond_to? :connection
-        # Fall back to the global configured default connection.
-        conn || Google::Auth::Helpers::Connection.connection
-      end
-      private :rab_connection
     end
   end
 end
