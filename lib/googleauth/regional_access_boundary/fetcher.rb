@@ -21,11 +21,10 @@ module Google
     module RegionalAccessBoundary
       # Fetcher handles retrieving Regional Access Boundary data from the API.
       class Fetcher
-        def initialize client, url, token, logger = nil
+        def initialize client, url, token
           @client = client
           @url = url
           @token = token
-          @logger = logger
         end
 
         # Fetches the data, applying retry logic for transient errors.
