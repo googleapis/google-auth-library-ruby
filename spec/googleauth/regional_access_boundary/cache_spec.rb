@@ -44,15 +44,30 @@ describe Google::Auth::RegionalAccessBoundary::Cache do
     end
 
     it "returns false when fetching" do
-      cache.mark_fetching!
+      cache.try_mark_fetching!
       expect(cache.should_fetch?).to be_falsey
     end
 
     it "returns true when fetching but PID changed (fork)" do
-      cache.mark_fetching!
+      cache.try_mark_fetching!
       # Simulate fork by stubbing Process.pid
       allow(Process).to receive(:pid).and_return(Process.pid + 1)
       expect(cache.should_fetch?).to be_truthy
+    end
+  end
+
+  describe "#try_mark_fetching!" do
+    it "returns true when empty and transitions to fetching" do
+      expect(cache.try_mark_fetching!).to be_truthy
+      # Subsequent attempts should return false because it's already fetching
+      expect(cache.try_mark_fetching!).to be_falsey
+    end
+
+    it "returns true when fetching but PID changed (fork)" do
+      expect(cache.try_mark_fetching!).to be_truthy
+      # Simulate fork by stubbing Process.pid
+      allow(Process).to receive(:pid).and_return(Process.pid + 1)
+      expect(cache.try_mark_fetching!).to be_truthy
     end
   end
 end

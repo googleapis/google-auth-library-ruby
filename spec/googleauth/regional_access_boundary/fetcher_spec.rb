@@ -21,16 +21,8 @@ require "webmock/rspec"
 describe Google::Auth::RegionalAccessBoundary::Fetcher do
   let(:client) { Faraday.new }
   let(:url) { "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/test@example.com/allowedLocations" }
-  let(:token) { double("Token", value: "secret_token", type: "Bearer") }
+  let(:token) { double("Token", token_type: :access_token, access_token: "secret_token") }
   let(:fetcher) { described_class.new client, url, token }
-
-  before do
-    WebMock.enable!
-  end
-
-  after do
-    WebMock.disable!
-  end
 
   describe "#fetch" do
     it "returns RegionalAccessBoundaryData on success" do

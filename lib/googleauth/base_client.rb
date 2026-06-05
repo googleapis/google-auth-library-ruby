@@ -104,12 +104,11 @@ module Google
         # to the outbound HTTP request if and only if a valid cache entry exists.
         a_hash["x-allowed-locations"] = header_val if header_val
 
-        # Return early if cached value or if credentials do not support RAB.
-        return unless cache.should_fetch? && respond_to?(:regional_access_boundary_url)
+        # Return early if credentials do not support RAB or if we can't transition to fetching.
+        return unless respond_to?(:regional_access_boundary_url) && cache.try_mark_fetching!
 
         # Initiate an asynchronous, non-blocking lookup if a global request is
         # made and the cache is invalid or expired.
-        cache.mark_fetching!
         trigger_async_rab_fetch cache
       end
 

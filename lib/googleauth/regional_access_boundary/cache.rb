@@ -62,8 +62,7 @@ module Google
             # If already fetching in this process, don't fetch again.
             return false if @is_fetching
 
-            # Before starting a background lookup, verify the cooldown state; if active, skip the lookup attempt.
-            # Cooldown check must come before data nil check to prevent hot loops on initial failure.
+            # Before starting a background lookup, verify the cooldown state; if active, skip.
             return false if @cooldown_expiry && Time.now < @cooldown_expiry
 
             return true if @data.nil?
@@ -76,11 +75,17 @@ module Google
           end
         end
 
-        # Marks the cache as currently fetching, recording the PID.
-        def mark_fetching!
+        # Attempts to transition the cache status to fetching if a fetch is needed.
+        # Returns true if successfully marked, false otherwise.
+        def try_mark_fetching!
           synchronize do
-            @is_fetching = true
-            @fetching_pid = Process.pid
+            if should_fetch?
+              @is_fetching = true
+              @fetching_pid = Process.pid
+              true
+            else
+              false
+            end
           end
         end
 

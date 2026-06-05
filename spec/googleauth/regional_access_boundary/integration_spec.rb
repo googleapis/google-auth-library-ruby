@@ -71,17 +71,18 @@ describe "RegionalAccessBoundary Integration" do
   before do
     # Stub the module-level cache to use our isolated test cache
     allow(Google::Auth::RegionalAccessBoundary).to receive(:cache).and_return(cache)
+    # Stub Thread.new to yield immediately, running the fetch in the main thread
+    # to avoid WebMock thread-safety issues and ensure predictable test execution.
+    allow(Thread).to receive(:new).and_yield
+
+    # Stub the allowedLocations request globally for integration specs to prevent
+    # unhandled WebMock errors in background threads.
+    stub_request(:get, /allowedLocations/)
+      .to_return(status: 200, body: MultiJson.dump({ "encodedLocations" => "0xABC" }))
   end
 
   describe "applying headers" do
     it "does not attach header on cold start but triggers fetch" do
-      # Stub Thread.new to yield immediately, running the fetch in the main thread
-      # to avoid WebMock thread-safety issues and ensure predictable test execution.
-      allow(Thread).to receive(:new).and_yield
-      
-      stub_request(:get, /allowedLocations/)
-        .to_return(status: 200, body: MultiJson.dump({ "encodedLocations" => "0xABC" }))
-        
       client.apply! headers, url: url
       
       expect(headers["x-allowed-locations"]).to be_nil
@@ -123,11 +124,6 @@ describe "RegionalAccessBoundary Integration" do
       mock_fetcher = double("Fetcher")
       allow(Google::Auth::RegionalAccessBoundary::Fetcher).to receive(:new).and_return(mock_fetcher)
       allow(mock_fetcher).to receive(:fetch).and_raise(Google::Auth::AuthorizationError, "Network error")
-      
-      # We need to make sure the thread executes synchronously or we join it to see the error handled
-      # In implementation, we will use Thread.new. In test, we can stub Thread.new to execute immediately!
-      
-      allow(Thread).to receive(:new).and_yield
       
       client.apply! headers, url: url
       
