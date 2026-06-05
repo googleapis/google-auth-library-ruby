@@ -18,11 +18,10 @@ require "multi_json"
 require "logger"
 
 def main
-  
   puts "Loading base credentials..."
   begin
     base_credentials = Google::Auth.get_application_default ["https://www.googleapis.com/auth/cloud-platform"]
-  rescue => e
+  rescue StandardError => e
     puts "Failed to load base credentials: #{e.message}"
     return
   end
@@ -38,7 +37,7 @@ def main
     scope: ["https://www.googleapis.com/auth/cloud-platform"]
   )
 
-  base_credentials.logger = Logger.new STDOUT
+  base_credentials.logger = Logger.new $stdout
   base_credentials.logger.level = Logger::INFO
 
   puts "Credential Type: #{credentials.class.name}"
@@ -48,15 +47,15 @@ def main
   url = "https://storage.googleapis.com/storage/v1/b/#{bucket_name}"
 
   headers = {}
-  
+
   puts "--- First Call to apply! ---"
   begin
     credentials.apply! headers, url: url
-  rescue => e
+  rescue StandardError => e
     puts "Error in apply!: #{e.message}"
     return
   end
-  
+
   puts "Headers:"
   puts "x-allowed-locations: #{headers['x-allowed-locations'] || 'NOT PRESENT (Expected for cold start)'}"
 
@@ -67,11 +66,11 @@ def main
   puts "--- Second Call to apply! ---"
   begin
     credentials.apply! headers, url: url
-  rescue => e
+  rescue StandardError => e
     puts "Error in apply!: #{e.message}"
     return
   end
-  
+
   puts "Headers (Second attempt):"
   x_allowed_locations = headers["x-allowed-locations"]
   puts "x-allowed-locations: #{x_allowed_locations || 'STILL NOT PRESENT'}"
@@ -90,4 +89,4 @@ def main
   puts MultiJson.dump(redacted_headers, pretty: true)
 end
 
-main if __FILE__ == $0
+main if __FILE__ == $PROGRAM_NAME

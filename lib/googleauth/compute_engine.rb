@@ -179,7 +179,7 @@ module Google
 
       # Returns the regional access boundary lookup URL.
       # Fetches the service account email from metadata server.
-      # @internal
+      # @private
       def regional_access_boundary_url
         email = Google::Cloud.env.lookup_metadata "instance", "service-accounts/default/email"
         return nil if email.nil? || email.empty?
@@ -187,7 +187,7 @@ module Google
       end
 
       # Enable Regional Access Boundaries for GCE credentials.
-      # @internal
+      # @private
       def supports_regional_access_boundary?
         true
       end

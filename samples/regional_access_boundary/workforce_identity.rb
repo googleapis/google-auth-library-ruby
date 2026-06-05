@@ -21,24 +21,23 @@ require "logger"
 include WebMock::API
 
 def main
-  
   # Enable WebMock but allow real connections for other potential calls
   WebMock.enable!
   WebMock.allow_net_connect!
-  
-  config_path = File.expand_path("workforce_identity_config.json", __dir__)
+
+  config_path = File.expand_path "workforce_identity_config.json", __dir__
   ENV["GOOGLE_APPLICATION_CREDENTIALS"] = config_path
-  
+
   puts "Loading credentials from #{config_path}..."
   begin
     credentials = Google::Auth.get_application_default ["https://www.googleapis.com/auth/cloud-platform"]
-  rescue => e
+  rescue StandardError => e
     puts "Failed to load credentials: #{e.message}"
     WebMock.disable!
     return
   end
 
-  credentials.logger = Logger.new STDOUT
+  credentials.logger = Logger.new $stdout
   credentials.logger.level = Logger::INFO
 
   puts "Credential Type: #{credentials.class.name}"
@@ -47,37 +46,37 @@ def main
   # 1. Stub the external token source
   stub_request(:get, "http://dummyurl.com/token")
     .to_return(status: 200, body: MultiJson.dump({ "access_token" => "external_subject_token" }))
-    
+
   # 2. Stub the STS token exchange
   stub_request(:post, "https://sts.googleapis.com/v1/token")
     .to_return(status: 200, body: MultiJson.dump({
-      "access_token" => "sts_access_token",
+                                                   "access_token" => "sts_access_token",
       "issued_token_type" => "urn:ietf:params:oauth:token-type:access_token",
       "token_type" => "Bearer",
       "expires_in" => 3600
-    }))
+                                                 }))
 
   # 3. Stub the RAB lookup endpoint for Workforce Identity
   url = "https://iamcredentials.googleapis.com/v1/locations/global/workforcePools/POOL_ID/allowedLocations"
   stub_request(:get, url)
     .to_return(status: 200, body: MultiJson.dump({ "encodedLocations" => "0x7ffffffffffffffe" }))
-    
+
   puts "Stubbed external token source, STS exchange, and RAB lookup."
 
   bucket_name = "trust_boundary_test_bucket"
   url = "https://storage.googleapis.com/storage/v1/b/#{bucket_name}"
 
   headers = {}
-  
+
   puts "--- First Call to apply! (should trigger fetch) ---"
   begin
     credentials.apply! headers, url: url
-  rescue => e
+  rescue StandardError => e
     puts "Error in apply!: #{e.message}"
     WebMock.disable!
     return
   end
-  
+
   puts "Headers (First attempt):"
   puts "x-allowed-locations: #{headers['x-allowed-locations'] || 'NOT PRESENT (Expected for cold start)'}"
 
@@ -88,12 +87,12 @@ def main
   puts "--- Second Call to apply! ---"
   begin
     credentials.apply! headers, url: url
-  rescue => e
+  rescue StandardError => e
     puts "Error in apply!: #{e.message}"
     WebMock.disable!
     return
   end
-  
+
   puts "Headers (Second attempt):"
   x_allowed_locations = headers["x-allowed-locations"]
   puts "x-allowed-locations: #{x_allowed_locations || 'STILL NOT PRESENT'}"
@@ -115,4 +114,4 @@ def main
   WebMock.disable!
 end
 
-main if __FILE__ == $0
+main if __FILE__ == $PROGRAM_NAME

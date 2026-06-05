@@ -6,6 +6,7 @@ AllCops:
     - "integration/**/*"
     - "spec/**/*"
     - "test/**/*"
+    - "samples/regional_access_boundary/**/*"
 Metrics/BlockLength:
   Exclude:
     - "googleauth.gemspec"

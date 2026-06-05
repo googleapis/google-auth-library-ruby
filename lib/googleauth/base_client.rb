@@ -39,61 +39,7 @@ module Google
           Google::Logging::Message.from message: "Sending auth token. (sha256:#{hash})"
         end
 
-        # Regional Access Boundary Integration
-        # Return early if not supported by credential type or if ID token.
-        return a_hash[AUTH_METADATA_KEY] unless token_type != :id_token && supports_regional_access_boundary?
-        
-        url = opts[:url]
-        # URLs matching rep.googleapis.com are regional. Fallback to assume global if URL is not provided.
-        is_global = url.nil? || !url.to_s.match?(/\.rep\.googleapis\.com|\.rep\.sandbox\.googleapis\.com/)
-        
-        # Return early if it's a regional endpoint
-        return a_hash[AUTH_METADATA_KEY] unless is_global
-        
-        url_str = url.to_s
-        # No need to attach headers/metadata for requests to the STS or IAM endpoints.
-        is_excluded = url_str.match?(%r{\Ahttps://(iam|iamcredentials|sts)\.googleapis\.com})
-        
-        # Return early if it's an excluded service (STS/IAM).
-        return a_hash[AUTH_METADATA_KEY] if is_excluded
-        
-        cache = Google::Auth::RegionalAccessBoundary.cache
-        header_val = cache.get&.encoded_locations
-        
-        # For global endpoints, attach the x-allowed-locations header to the outbound HTTP request if and only if a valid cache entry exists.
-        a_hash["x-allowed-locations"] = header_val if header_val
-        
-        # Return early if cached value or if credentials do not support RAB.
-        return a_hash[AUTH_METADATA_KEY] unless cache.should_fetch? && respond_to?(:regional_access_boundary_url)
-        
-        # Initiate an asynchronous, non-blocking lookup if a global request is made and the cache is invalid or expired.
-        cache.mark_fetching!
-        Thread.new do
-          begin
-            lookup_url = regional_access_boundary_url
-            
-            # A nil or empty URL means we cannot attempt the lookup yet (e.g. waiting
-            # for metadata server).
-            if lookup_url && !lookup_url.empty?
-              fetcher = Google::Auth::RegionalAccessBoundary::Fetcher.new Faraday.new, lookup_url, self
-              data = fetcher.fetch
-              cache.set data, 6 * 60 * 60 # 6 hours
-            else
-              # Cooldown should include failures during the preparation of the lookup endpoint (such as metadata server queries).
-              cache.mark_fetch_failed!
-            end
-          rescue => e
-            # Ensure that any failure during the asynchronous lookup (network error, IAM refusal, etc.) does
-            # not propagate to the primary request or cause the application to crash.
-            logger&.warn do
-              Google::Logging::Message.from(
-                message: "Regional Access Boundary lookup failed: #{e.message}",
-                "credentialsId" => object_id
-              )
-            end
-            cache.mark_fetch_failed!
-          end
-        end
+        apply_regional_access_boundary! a_hash, opts
 
         a_hash[AUTH_METADATA_KEY]
       end
@@ -147,6 +93,78 @@ module Google
       end
 
       private
+
+      def apply_regional_access_boundary! a_hash, opts
+        return unless should_apply_rab? opts
+
+        cache = Google::Auth::RegionalAccessBoundary.cache
+        header_val = cache.get&.encoded_locations
+
+        # For global endpoints, attach the x-allowed-locations header
+        # to the outbound HTTP request if and only if a valid cache entry exists.
+        a_hash["x-allowed-locations"] = header_val if header_val
+
+        # Return early if cached value or if credentials do not support RAB.
+        return unless cache.should_fetch? && respond_to?(:regional_access_boundary_url)
+
+        # Initiate an asynchronous, non-blocking lookup if a global request is
+        # made and the cache is invalid or expired.
+        cache.mark_fetching!
+        trigger_async_rab_fetch cache
+      end
+
+      def should_apply_rab? opts
+        # Return early if not supported by credential type or if ID token.
+        return false unless token_type != :id_token && supports_regional_access_boundary?
+
+        url = opts[:url]
+        # URLs matching rep.googleapis.com are regional. Fallback to assume global if URL is not provided.
+        is_global = url.nil? || !url.to_s.match?(/\.rep\.googleapis\.com|\.rep\.sandbox\.googleapis\.com/)
+
+        # Return early if it's a regional endpoint
+        return false unless is_global
+
+        url_str = url.to_s
+        # No need to attach headers/metadata for requests to the STS or IAM endpoints.
+        is_excluded = url_str.match? %r{\Ahttps://(iam|iamcredentials|sts)\.googleapis\.com}
+
+        # Return early if it's an excluded service (STS/IAM).
+        !is_excluded
+      end
+
+      def trigger_async_rab_fetch cache
+        Thread.new do
+          begin
+            lookup_url = regional_access_boundary_url
+
+            # A nil or empty URL means we cannot attempt the lookup yet (e.g. waiting
+            # for metadata server).
+            if lookup_url && !lookup_url.empty?
+              fetcher = Google::Auth::RegionalAccessBoundary::Fetcher.new Faraday.new, lookup_url, self
+              data = fetcher.fetch
+              cache.set data, 6 * 60 * 60 # 6 hours
+            else
+              log_rab_warning "Regional Access Boundary lookup skipped: " \
+                              "could not determine allowedLocations URL"
+              cache.mark_fetch_failed!
+            end
+          rescue StandardError => e
+            # Ensure that any failure during the asynchronous lookup (network error, IAM refusal, etc.) does
+            # not propagate to the primary request or cause the application to crash.
+            log_rab_warning "Regional Access Boundary lookup failed: #{e.message}"
+            cache.mark_fetch_failed!
+          end
+        end
+      end
+
+      def log_rab_warning msg
+        logger&.warn do
+          Google::Logging::Message.from(
+            message: msg,
+            "credentialsId" => object_id
+          )
+        end
+      end
 
       def token_type
         raise NoMethodError, "token_type not implemented"

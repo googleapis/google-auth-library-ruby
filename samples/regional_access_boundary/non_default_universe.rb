@@ -17,11 +17,10 @@ require "faraday"
 require "multi_json"
 
 def main
-  
   puts "Loading credentials..."
   begin
     credentials = Google::Auth.get_application_default
-  rescue => e
+  rescue StandardError => e
     puts "Failed to load credentials: #{e.message}"
     return
   end
@@ -36,15 +35,15 @@ def main
   url = "https://storage.example.com/storage/v1/b/#{bucket_name}"
 
   headers = {}
-  
+
   puts "--- Call to apply! with non-default universe ---"
   begin
     credentials.apply! headers, url: url
-  rescue => e
+  rescue StandardError => e
     puts "Error in apply!: #{e.message}"
     return
   end
-  
+
   puts "Headers:"
   puts "x-allowed-locations: #{headers['x-allowed-locations'] || 'NOT PRESENT (Expected for non-default universe)'}"
 
@@ -55,4 +54,4 @@ def main
   end
 end
 
-main if __FILE__ == $0
+main if __FILE__ == $PROGRAM_NAME

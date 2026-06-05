@@ -90,9 +90,11 @@ module Google
             @is_fetching = false
             @fetching_pid = nil
 
-            # If a lookup fails with a non-retriable error (or after retry exhaustion), initiate a 15-minute cooldown period with exponential backoff (up to 6 hours).
+            # If a lookup fails with a non-retriable error (or after retry
+            # exhaustion), initiate a 15-minute cooldown period with exponential
+            # backoff (up to 6 hours).
             # Add random bounded jitter (half of base to full base)
-            jitter = @cooldown_duration / 2 + rand(@cooldown_duration / 2)
+            jitter = (@cooldown_duration / 2) + rand(@cooldown_duration / 2)
             @cooldown_expiry = Time.now + jitter
 
             # Exponential backoff for the NEXT attempt, up to 6 hours max

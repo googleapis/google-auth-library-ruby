@@ -185,13 +185,13 @@ module Google
       end
 
       # Returns the regional access boundary lookup URL.
-      # @internal
+      # @private
       def regional_access_boundary_url
         "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/#{@issuer}/allowedLocations"
       end
 
       # Enable Regional Access Boundaries for Service Account credentials.
-      # @internal
+      # @private
       def supports_regional_access_boundary?
         true
       end

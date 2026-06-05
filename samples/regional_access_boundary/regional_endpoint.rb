@@ -17,11 +17,10 @@ require "faraday"
 require "multi_json"
 
 def main
-  
   puts "Loading credentials..."
   begin
     credentials = Google::Auth.get_application_default
-  rescue => e
+  rescue StandardError => e
     puts "Failed to load credentials: #{e.message}"
     return
   end
@@ -33,15 +32,15 @@ def main
   url = "https://storage.rep.googleapis.com/v1/b/trust_boundary_test_bucket"
 
   headers = {}
-  
+
   puts "--- Call to apply! with regional endpoint ---"
   begin
     credentials.apply! headers, url: url
-  rescue => e
+  rescue StandardError => e
     puts "Error in apply!: #{e.message}"
     return
   end
-  
+
   puts "Headers:"
   puts "x-allowed-locations: #{headers['x-allowed-locations'] || 'NOT PRESENT (Expected for regional endpoint)'}"
 
@@ -52,4 +51,4 @@ def main
   end
 end
 
-main if __FILE__ == $0
+main if __FILE__ == $PROGRAM_NAME

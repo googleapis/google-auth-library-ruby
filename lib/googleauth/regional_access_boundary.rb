@@ -22,7 +22,7 @@ module Google
       autoload :Fetcher, "googleauth/regional_access_boundary/fetcher"
 
       @cache = Cache.new
-      
+
       # Returns the module-level cache instance.
       def self.cache
         @cache

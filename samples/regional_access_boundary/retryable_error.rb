@@ -21,32 +21,31 @@ require "logger"
 include WebMock::API
 
 def main
-  
   # Enable WebMock but allow real connections for token fetching
   WebMock.enable!
   WebMock.allow_net_connect!
-  
+
   puts "Loading credentials..."
   begin
     credentials = Google::Auth.get_application_default ["https://www.googleapis.com/auth/cloud-platform"]
-  rescue => e
+  rescue StandardError => e
     puts "Failed to load credentials: #{e.message}"
     return
   end
 
-  credentials.logger = Logger.new STDOUT
+  credentials.logger = Logger.new $stdout
   credentials.logger.level = Logger::INFO
 
   puts "Credential Type: #{credentials.class.name}"
 
   if credentials.is_a? Google::Auth::ServiceAccountCredentials
-    email = credentials.instance_variable_get(:@issuer)
+    email = credentials.instance_variable_get :@issuer
     url = "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/#{email}/allowedLocations"
-    
+
     # Stub the RAB lookup endpoint to return a 500 error
     stub_request(:get, url)
       .to_return(status: 500, body: "Internal Server Error")
-      
+
     puts "Stubbed #{url} to return 500"
   else
     puts "This sample requires ServiceAccountCredentials to run correctly."
@@ -58,17 +57,17 @@ def main
   url = "https://storage.googleapis.com/storage/v1/b/#{bucket_name}"
 
   headers = {}
-  
+
   puts "--- First Call to apply! (should trigger fetch) ---"
   credentials.apply! headers, url: url
-  
+
   puts "\nSleeping for 70 seconds to let background fetch exhaust retries and fail..."
   sleep 70
 
   puts "\n--- Second Call to apply! (should be in cooldown) ---"
   headers = {}
   credentials.apply! headers, url: url
-  
+
   puts "Headers (Second attempt):"
   x_allowed_locations = headers["x-allowed-locations"]
   puts "x-allowed-locations: #{x_allowed_locations || 'NOT PRESENT (Expected after failure)'}"
@@ -83,4 +82,4 @@ def main
   WebMock.disable!
 end
 
-main if __FILE__ == $0
+main if __FILE__ == $PROGRAM_NAME

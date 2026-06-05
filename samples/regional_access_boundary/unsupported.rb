@@ -17,13 +17,12 @@ require "faraday"
 require "multi_json"
 
 def main
-  
   puts "Loading credentials..."
   begin
     # This will typically load UserRefreshCredentials if run on a local machine
     # after running `gcloud auth application-default login`
     credentials = Google::Auth.get_application_default ["https://www.googleapis.com/auth/cloud-platform"]
-  rescue => e
+  rescue StandardError => e
     puts "Failed to load credentials: #{e.message}"
     return
   end
@@ -34,15 +33,15 @@ def main
   url = "https://storage.googleapis.com/storage/v1/b/#{bucket_name}"
 
   headers = {}
-  
+
   puts "--- Call to apply! with unsupported credentials ---"
   begin
     credentials.apply! headers, url: url
-  rescue => e
+  rescue StandardError => e
     puts "Error in apply!: #{e.message}"
     return
   end
-  
+
   puts "Headers:"
   puts "x-allowed-locations: #{headers['x-allowed-locations'] || 'NOT PRESENT (Expected for unsupported credentials)'}"
 
@@ -53,4 +52,4 @@ def main
   end
 end
 
-main if __FILE__ == $0
+main if __FILE__ == $PROGRAM_NAME

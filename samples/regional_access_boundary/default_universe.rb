@@ -18,7 +18,6 @@ require "multi_json"
 require "logger"
 
 def main
-  
   # To run this sample, set the GOOGLE_APPLICATION_CREDENTIALS environment variable
   # to a valid service account JSON key file.
   # ENV["GOOGLE_APPLICATION_CREDENTIALS"] = "path/to/service_account.json"
@@ -26,13 +25,13 @@ def main
   puts "Loading credentials..."
   begin
     credentials = Google::Auth.get_application_default ["https://www.googleapis.com/auth/cloud-platform"]
-  rescue => e
+  rescue StandardError => e
     puts "Failed to load credentials: #{e.message}"
     puts "Please ensure GOOGLE_APPLICATION_CREDENTIALS is set to a valid JSON file."
     return
   end
 
-  credentials.logger = Logger.new STDOUT
+  credentials.logger = Logger.new $stdout
 
   puts "Credential Type: #{credentials.class.name}"
   puts "Universe Domain: #{credentials.universe_domain}"
@@ -42,7 +41,7 @@ def main
   url = "https://storage.googleapis.com/storage/v1/b/#{bucket_name}"
 
   headers = {}
-  
+
   puts "--- First Call to apply! ---"
   begin
     puts "Token Type: #{credentials.token_type}"
@@ -53,11 +52,11 @@ def main
       redacted_headers[:authorization] = "Bearer <REDACTED>"
     end
     puts "Headers after apply!: #{redacted_headers.inspect}"
-  rescue => e
+  rescue StandardError => e
     puts "Error in apply!: #{e.message}"
     return
   end
-  
+
   puts "Headers (First attempt):"
   puts "x-allowed-locations: #{headers['x-allowed-locations'] || 'NOT PRESENT (Expected for cold start in default universe)'}"
 
@@ -68,11 +67,11 @@ def main
   puts "--- Second Call to apply! ---"
   begin
     credentials.apply! headers, url: url
-  rescue => e
+  rescue StandardError => e
     puts "Error in apply!: #{e.message}"
     return
   end
-  
+
   puts "Headers (Second attempt):"
   x_allowed_locations = headers["x-allowed-locations"]
   puts "x-allowed-locations: #{x_allowed_locations || 'STILL NOT PRESENT (Lookup might have failed or still in progress)'}"
@@ -91,4 +90,4 @@ def main
   puts MultiJson.dump(redacted_headers, pretty: true)
 end
 
-main if __FILE__ == $0
+main if __FILE__ == $PROGRAM_NAME
