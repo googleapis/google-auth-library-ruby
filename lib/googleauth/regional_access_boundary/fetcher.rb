@@ -37,8 +37,7 @@ module Google
           start_time = Time.now
           attempt = 0
 
-          # For retryable errors (500, 502, 503, 504), perform retry with
-          # exponential backoff for up to one minute.
+          # Perform retry with exponential backoff for up to one minute.
           loop do
             attempt += 1
             begin
