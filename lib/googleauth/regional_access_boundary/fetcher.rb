@@ -70,8 +70,7 @@ module Google
             # Retryable errors
             raise "Retryable status: #{response.status}"
           else
-            # Non-retryable errors
-            raise Google::Auth::AuthorizationError, "Lookup failed with status #{response.status}: #{response.body}"
+            raise Google::Auth::AuthorizationError, "Lookup failed with status #{response.status}"
           end
         end
 
