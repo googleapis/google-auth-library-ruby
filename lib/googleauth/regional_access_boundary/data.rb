@@ -16,9 +16,13 @@ module Google
   module Auth
     module RegionalAccessBoundary
       # RegionalAccessBoundaryData holds the encoded locations for Regional Access Boundary.
+      #
+      # @private
       class RegionalAccessBoundaryData
+        # @return [String] the base64-encoded allowed locations payload.
         attr_reader :encoded_locations
 
+        # @param encoded_locations [String] the base64-encoded allowed locations payload.
         def initialize encoded_locations
           @encoded_locations = encoded_locations
         end

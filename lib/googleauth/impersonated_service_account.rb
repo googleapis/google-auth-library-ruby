@@ -260,7 +260,9 @@ module Google
 
       # Returns the regional access boundary lookup URL.
       # Constructs the URL based on the impersonation URL.
+      #
       # @private
+      # @return [String, nil] the allowedLocations endpoint URL, or nil if impersonation email cannot be parsed.
       def regional_access_boundary_url
         match = @impersonation_url.match %r{serviceAccounts/([^:]+):generateAccessToken$}
         email = match[1] if match
@@ -269,7 +271,9 @@ module Google
       end
 
       # Enable Regional Access Boundaries for Impersonated credentials.
+      #
       # @private
+      # @return [Boolean] true
       def supports_regional_access_boundary?
         true
       end

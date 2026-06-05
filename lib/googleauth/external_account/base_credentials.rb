@@ -131,13 +131,17 @@ module Google
         end
 
         # Enable Regional Access Boundaries for External Account credentials.
+        #
         # @private
+        # @return [Boolean] true
         def supports_regional_access_boundary?
           true
         end
 
         private
 
+        # @private
+        # @return [String, nil]
         def impersonated_rab_url
           match = @service_account_impersonation_url.match %r{serviceAccounts/([^:]+):generateAccessToken$}
           email = match[1] if match
@@ -146,6 +150,9 @@ module Google
             "serviceAccounts/#{email}/allowedLocations"
         end
 
+        # @private
+        # @param wf_match [MatchData] the audience match data.
+        # @return [String, nil]
         def workforce_rab_url wf_match
           audience_domain = wf_match[1]
           pool_id = wf_match[3]
@@ -157,6 +164,9 @@ module Google
             "workforcePools/#{pool_id}/allowedLocations"
         end
 
+        # @private
+        # @param wl_match [MatchData] the audience match data.
+        # @return [String]
         def workload_rab_url wl_match
           audience_domain = wl_match[1]
           project_number = wl_match[2]
@@ -168,6 +178,10 @@ module Google
             "locations/global/workloadIdentityPools/#{pool_id}/allowedLocations"
         end
 
+        # @private
+        # @param audience_domain [String] the audience domain.
+        # @raise [Google::Auth::AuthorizationError] if validation fails.
+        # @return [void]
         def validate_universe_domain! audience_domain
           effective_universe_domain = universe_domain || "googleapis.com"
           return unless audience_domain != effective_universe_domain

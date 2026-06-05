@@ -47,6 +47,8 @@ module Google
 
       # Whether this credential type supports Regional Access Boundaries.
       # Default is false. Override in specific credentials to enable.
+      #
+      # @return [Boolean] true if Regional Access Boundary is supported, false otherwise.
       def supports_regional_access_boundary?
         false
       end

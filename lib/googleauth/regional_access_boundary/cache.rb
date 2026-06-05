@@ -18,6 +18,8 @@ module Google
   module Auth
     module RegionalAccessBoundary
       # Cache stores and manages the lifecycle of Regional Access Boundary data.
+      #
+      # @private
       class Cache
         include MonitorMixin
 
@@ -32,6 +34,9 @@ module Google
         end
 
         # Returns the cached data if valid and not expired.
+        #
+        # @return [Google::Auth::RegionalAccessBoundary::RegionalAccessBoundaryData, nil] the cached data,
+        #     or nil if cache is empty or expired.
         def get
           synchronize do
             return nil if @data.nil?
@@ -42,6 +47,10 @@ module Google
         end
 
         # Sets the data in cache with a TTL.
+        #
+        # @param data [Google::Auth::RegionalAccessBoundary::RegionalAccessBoundaryData] the data to cache.
+        # @param ttl [Numeric] time-to-live in seconds.
+        # @return [void]
         def set data, ttl
           synchronize do
             @data = data
@@ -54,6 +63,8 @@ module Google
         end
 
         # Determines if a fetch should be initiated.
+        #
+        # @return [Boolean] true if a background fetch is needed, false otherwise.
         def should_fetch?
           synchronize do
             # If fetching but PID changed, the fetching thread was lost in fork.
@@ -76,7 +87,8 @@ module Google
         end
 
         # Attempts to transition the cache status to fetching if a fetch is needed.
-        # Returns true if successfully marked, false otherwise.
+        #
+        # @return [Boolean] true if successfully marked as fetching, false otherwise.
         def try_mark_fetching!
           synchronize do
             if should_fetch?
@@ -90,6 +102,8 @@ module Google
         end
 
         # Marks the fetch as failed, triggering cooldown.
+        #
+        # @return [void]
         def mark_fetch_failed!
           synchronize do
             @is_fetching = false

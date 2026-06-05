@@ -21,10 +21,17 @@ module Google
     module RegionalAccessBoundary
       # TransientLookupError is raised when a transient error occurs during lookup,
       # signaling that the request should be retried.
+      #
+      # @private
       class TransientLookupError < StandardError; end
 
       # Fetcher handles retrieving Regional Access Boundary data from the API.
+      #
+      # @private
       class Fetcher
+        # @param client [Faraday::Connection] the HTTP client used to fetch allowedLocations.
+        # @param url [String] the allowedLocations endpoint URL.
+        # @param token [Object] the credentials token instance.
         def initialize client, url, token
           @client = client
           @url = url
@@ -32,7 +39,9 @@ module Google
         end
 
         # Fetches the data, applying retry logic for transient errors.
+        #
         # @raise [Google::Auth::AuthorizationError] if the fetch fails.
+        # @return [Google::Auth::RegionalAccessBoundary::RegionalAccessBoundaryData] the fetched data.
         def fetch
           start_time = Time.now
           attempt = 0
@@ -51,6 +60,7 @@ module Google
 
         private
 
+        # @return [Faraday::Response] the HTTP response.
         def perform_request
           @client.get @url do |req|
             # token_type is private in some credentials, so we use send to access it.
@@ -60,6 +70,10 @@ module Google
           end
         end
 
+        # @param response [Faraday::Response] the HTTP response.
+        # @raise [Google::Auth::AuthorizationError] if the response contains invalid data.
+        # @raise [TransientLookupError] if response is retryable (5xx).
+        # @return [Google::Auth::RegionalAccessBoundary::RegionalAccessBoundaryData]
         def handle_response response
           if response.status == 200
             body = MultiJson.load response.body
@@ -76,6 +90,11 @@ module Google
           end
         end
 
+        # @param error [StandardError] the error to evaluate.
+        # @param attempt [Integer] the current retry attempt count.
+        # @param start_time [Time] the timestamp when the first lookup attempt started.
+        # @raise [Google::Auth::AuthorizationError] if the error is not retryable or retries are exhausted.
+        # @return [void]
         def handle_error error, attempt, start_time
           # Check if we should retry
           is_retryable = error.is_a?(TransientLookupError) || error.is_a?(Faraday::Error)

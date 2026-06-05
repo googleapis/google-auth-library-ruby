@@ -15,7 +15,8 @@
 module Google
   module Auth
     # RegionalAccessBoundary provides support for Regional Access Boundaries.
-    # This is an internal module and should not be used directly by users.
+    #
+    # @private
     module RegionalAccessBoundary
       autoload :RegionalAccessBoundaryData, "googleauth/regional_access_boundary/data"
       autoload :Cache, "googleauth/regional_access_boundary/cache"
@@ -24,6 +25,8 @@ module Google
       @cache = Cache.new
 
       # Returns the module-level cache instance.
+      #
+      # @return [Google::Auth::RegionalAccessBoundary::Cache] the cache instance.
       def self.cache
         @cache
       end
