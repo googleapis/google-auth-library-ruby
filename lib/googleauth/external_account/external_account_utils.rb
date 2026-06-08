@@ -101,13 +101,8 @@ module Google
         #   service_account_impersonation_url, or nil if it cannot be determined
         def service_account_email
           return nil if @service_account_impersonation_url.nil?
-          start_idx = @service_account_impersonation_url.rindex "/"
-          end_idx = @service_account_impersonation_url.index ":generateAccessToken"
-          if start_idx != -1 && end_idx != -1 && start_idx < end_idx
-            start_idx += 1
-            return @service_account_impersonation_url[start_idx..end_idx]
-          end
-          nil
+          match = @service_account_impersonation_url.match %r{serviceAccounts/([^:]+):generateAccessToken$}
+          match[1] if match
         end
       end
     end
