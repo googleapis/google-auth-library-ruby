@@ -147,8 +147,7 @@ module Google
         # @private
         # @return [String, nil]
         def impersonated_rab_url
-          match = @service_account_impersonation_url.match %r{serviceAccounts/([^:]+):generateAccessToken$}
-          email = match[1] if match
+          email = service_account_email if respond_to? :service_account_email
           return unless email
           "https://iamcredentials.googleapis.com/v1/projects/-/" \
             "serviceAccounts/#{email}/allowedLocations"
