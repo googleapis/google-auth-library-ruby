@@ -15,35 +15,15 @@
 require "googleauth"
 require "faraday"
 require "multi_json"
-require "webmock"
 require "logger"
 
-include WebMock::API
-
 def main
-  mock_mode = true
-  if ENV["GOOGLE_APPLICATION_CREDENTIALS"] &&
-     ENV["GOOGLE_APPLICATION_CREDENTIALS"] != File.expand_path("workforce_identity_config.json", __dir__)
-    mock_mode = false
-  end
-
-  if mock_mode
-    # Enable WebMock but allow real connections for other potential calls
-    WebMock.enable!
-    WebMock.allow_net_connect!
-
-    config_path = File.expand_path "workforce_identity_config.json", __dir__
-    ENV["GOOGLE_APPLICATION_CREDENTIALS"] = config_path
-    puts "Loading credentials in mock mode from #{config_path}..."
-  else
-    puts "Loading credentials in live mode from #{ENV['GOOGLE_APPLICATION_CREDENTIALS']}..."
-  end
-
+  puts "Loading credentials..."
   begin
+    # This will load credentials from GOOGLE_APPLICATION_CREDENTIALS
     credentials = Google::Auth.get_application_default ["https://www.googleapis.com/auth/cloud-platform"]
   rescue StandardError => e
     puts "Failed to load credentials: #{e.message}"
-    WebMock.disable! if mock_mode
     return
   end
 
@@ -52,28 +32,6 @@ def main
 
   puts "Credential Type: #{credentials.class.name}"
   puts "Universe Domain: #{credentials.universe_domain}"
-
-  if mock_mode
-    # 1. Stub the external token source
-    stub_request(:get, "http://dummyurl.com/token")
-      .to_return(status: 200, body: MultiJson.dump({ "access_token" => "external_subject_token" }))
-
-    # 2. Stub the STS token exchange
-    stub_request(:post, "https://sts.googleapis.com/v1/token")
-      .to_return(status: 200, body: MultiJson.dump({
-                                                     "access_token" => "sts_access_token",
-        "issued_token_type" => "urn:ietf:params:oauth:token-type:access_token",
-        "token_type" => "Bearer",
-        "expires_in" => 3600
-                                                   }))
-
-    # 3. Stub the RAB lookup endpoint for Workforce Identity
-    url = "https://iamcredentials.googleapis.com/v1/locations/global/workforcePools/POOL_ID/allowedLocations"
-    stub_request(:get, url)
-      .to_return(status: 200, body: MultiJson.dump({ "encodedLocations" => "0x7ffffffffffffffe" }))
-
-    puts "Stubbed external token source, STS exchange, and RAB lookup."
-  end
 
   bucket_name = "trust_boundary_test_bucket"
   url = "https://storage.googleapis.com/storage/v1/b/#{bucket_name}"
@@ -85,7 +43,6 @@ def main
     credentials.apply! headers, url: url
   rescue StandardError => e
     puts "Error in apply!: #{e.message}"
-    WebMock.disable! if mock_mode
     return
   end
 
@@ -101,7 +58,6 @@ def main
     credentials.apply! headers, url: url
   rescue StandardError => e
     puts "Error in apply!: #{e.message}"
-    WebMock.disable! if mock_mode
     return
   end
 
@@ -121,9 +77,6 @@ def main
     redacted_headers[:authorization] = "Bearer <REDACTED>"
   end
   puts MultiJson.dump(redacted_headers, pretty: true)
-
-  # Clean up
-  WebMock.disable! if mock_mode
 end
 
 main if __FILE__ == $PROGRAM_NAME
