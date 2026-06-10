@@ -51,8 +51,10 @@ run_test_case() {
 # 1. Setup check
 # -----------------------------------------------------------------
 if [ -z "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
-  echo "WARNING: GOOGLE_APPLICATION_CREDENTIALS is not set."
-  echo "Some test cases require a valid Service Account credentials key for byoid-test@cicpclientproj.iam.gserviceaccount.com"
+  echo "Some test cases require a valid Service Account credentials key file."
+  echo "Please follow the instructions in the 'SA JWT' tab (tab ID: t.d1buxll8o6l)"
+  echo "to download the JSON key for byoid-test@cicpclientproj.iam.gserviceaccount.com."
+  echo ""
   read -p "Enter path to SA credentials JSON (or press Enter to skip SA tests): " sa_path
   if [ -n "$sa_path" ]; then
     export GOOGLE_APPLICATION_CREDENTIALS="$sa_path"
@@ -71,10 +73,10 @@ run_test_case "1.1" \
 # -----------------------------------------------------------------
 if [ -n "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
   run_test_case "1.2" \
-    "Default universe domain: trigger RAB lookup and cache the result" \
+    "Default universe domain: trigger RAB lookup and cache the result (Instructions: 'SA JWT' tab t.d1buxll8o6l)" \
     "bundle exec ruby samples/regional_access_boundary/default_universe.rb"
 else
-  echo "Skipping 1.2: GOOGLE_APPLICATION_CREDENTIALS not set."
+  echo "Skipping 1.2: SA credentials not set. Follow the 'SA JWT' tab (t.d1buxll8o6l) instructions."
 fi
 
 # -----------------------------------------------------------------
@@ -82,10 +84,10 @@ fi
 # -----------------------------------------------------------------
 if [ -n "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
   run_test_case "1.3" \
-    "Regional Endpoints: skip RAB lookup for regional endpoints (*rep.googleapis.com)" \
+    "Regional Endpoints: skip RAB lookup for regional endpoints (Instructions: 'SA JWT' tab t.d1buxll8o6l)" \
     "bundle exec ruby samples/regional_access_boundary/regional_endpoint.rb"
 else
-  echo "Skipping 1.3: GOOGLE_APPLICATION_CREDENTIALS not set."
+  echo "Skipping 1.3: SA credentials not set. Follow the 'SA JWT' tab (t.d1buxll8o6l) instructions."
 fi
 
 # -----------------------------------------------------------------
@@ -93,22 +95,20 @@ fi
 # -----------------------------------------------------------------
 if [ -n "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
   run_test_case "2.1" \
-    "Service Account Credentials: check that allowedLocations endpoint uses SA email" \
+    "Service Account Credentials: check that allowedLocations endpoint uses SA email (Instructions: 'SA JWT' tab t.d1buxll8o6l)" \
     "bundle exec ruby samples/regional_access_boundary/default_universe.rb"
 else
-  echo "Skipping 2.1: GOOGLE_APPLICATION_CREDENTIALS not set."
+  echo "Skipping 2.1: SA credentials not set. Follow the 'SA JWT' tab (t.d1buxll8o6l) instructions."
 fi
 
 # -----------------------------------------------------------------
 # Test Case 2.2: Impersonated Credentials
 # -----------------------------------------------------------------
-echo "For Test Case 2.2, you need an Impersonated Credential JSON file."
-echo "Example structure of impersonated_credentials.json:"
-echo "{"
-echo "  \"type\": \"impersonated_service_account\","
-echo "  \"service_account_impersonation_url\": \"https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/byoid-test@cicpclientproj.iam.gserviceaccount.com:generateAccessToken\","
-echo "  \"source_credentials\": <source_credentials_from_above>"
-echo "}"
+echo ""
+echo "=== Test Case 2.2 ==="
+echo "Please follow the instructions in the 'Impersonated SA' tab (tab ID: t.nr3jtpsa0vh2)"
+echo "to generate the impersonation credentials file."
+echo ""
 read -p "Enter path to Impersonated credentials JSON (or press Enter to skip): " imp_path
 if [ -n "$imp_path" ]; then
   run_test_case "2.2" \
@@ -119,11 +119,24 @@ else
 fi
 
 # -----------------------------------------------------------------
+# Test Case 2.3 & 2.4: Compute Engine Credentials
+# -----------------------------------------------------------------
+echo ""
+echo "=== Test Case 2.3 & 2.4 (Compute Engine) ==="
+echo "To run these cases, you must SSH into the GCE VM 'byoid-test' as described in the"
+echo "'Compute Engine' tab (tab ID: t.xq21l8tg84ze) and execute the tests locally within the VM."
+echo "This script cannot run them from your local cloudtop session without ambient VM credentials."
+echo "  Command to run on VM: bundle exec ruby samples/regional_access_boundary/default_universe.rb"
+echo ""
+
+# -----------------------------------------------------------------
 # Test Case 2.5: Workforce Identity Federation (OIDC/SAML)
 # -----------------------------------------------------------------
-echo "For Test Case 2.5 (Workforce Identity Federation), please ensure you have logged in via:"
-echo "  gcloud auth application-default login --login-config=login-config.json"
-echo "Or have manually captured the OIDC/SAML token and configured workforce_identity_config.json."
+echo ""
+echo "=== Test Case 2.5 (Workforce Identity Federation) ==="
+echo "Please follow the instructions in the 'Workforce Identity' tab (tab ID: t.bfr243arjzef)"
+echo "to log in via Okta, capture the token, and build the workforce pool credentials JSON."
+echo ""
 read -p "Enter path to Workforce Identity config JSON (or press Enter to skip): " wf_path
 if [ -n "$wf_path" ]; then
   run_test_case "2.5" \
@@ -136,8 +149,10 @@ fi
 # -----------------------------------------------------------------
 # Test Case 2.7: Workload Identity Federation (AWS/Azure/etc)
 # -----------------------------------------------------------------
-echo "For Test Case 2.7 (Workload Identity Federation), you can run using mocked STS/RAB endpoints"
-echo "as configured in samples/regional_access_boundary/workload_identity.rb"
+echo ""
+echo "=== Test Case 2.7 (Workload Identity Federation) ==="
+echo "Please refer to the 'Workload Identity' tab (tab ID: t.x7uz9pu4t7) for instructions"
+echo "on generating workload credentials (SAML/OIDC/etc). The sample below runs with mocked endpoints."
 run_test_case "2.7" \
   "Workload Identity Federation: verify WIF credentials construct lookup URL and cache" \
   "bundle exec ruby samples/regional_access_boundary/workload_identity.rb"
@@ -150,7 +165,7 @@ if [ -n "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
     "Service Account Credentials - using self-signed JWT: skip RAB lookup" \
     "bundle exec ruby samples/regional_access_boundary/self_signed_jwt.rb"
 else
-  echo "Skipping 2.9: GOOGLE_APPLICATION_CREDENTIALS not set."
+  echo "Skipping 2.9: SA credentials not set. Follow the 'SA JWT' tab (t.d1buxll8o6l) instructions."
 fi
 
 # -----------------------------------------------------------------
@@ -164,21 +179,21 @@ run_test_case "2.10" \
 # Test Case 4.1: Lookup Error - Fail Open
 # -----------------------------------------------------------------
 run_test_case "4.1" \
-  "Lookup Error - Fail Open: handle lookup failures without blocking request" \
+  "Lookup Error - Fail Open: handle lookup failures without blocking request (Instructions: 'SA JWT' tab t.d1buxll8o6l)" \
   "bundle exec ruby samples/regional_access_boundary/lookup_error.rb"
 
 # -----------------------------------------------------------------
 # Test Case 4.2: Retryable Errors & Network Issues
 # -----------------------------------------------------------------
 run_test_case "4.2" \
-  "Retryable Errors: retry lookup on 50x before entering cooldown" \
+  "Retryable Errors: retry lookup on 50x before entering cooldown (Instructions: 'SA JWT' tab t.d1buxll8o6l)" \
   "bundle exec ruby samples/regional_access_boundary/retryable_error.rb"
 
 # -----------------------------------------------------------------
 # Test Case 4.3: Malformed Response
 # -----------------------------------------------------------------
 run_test_case "4.3" \
-  "Malformed Response: handle response without encodedLocations safely" \
+  "Malformed Response: handle response without encodedLocations safely (Instructions: 'SA JWT' tab t.d1buxll8o6l)" \
   "bundle exec ruby samples/regional_access_boundary/malformed_response.rb"
 
 # -----------------------------------------------------------------
@@ -186,10 +201,10 @@ run_test_case "4.3" \
 # -----------------------------------------------------------------
 if [ -n "$GOOGLE_APPLICATION_CREDENTIALS" ]; then
   run_test_case "4.4_4.5" \
-    "Cooldown Enforcement & Recovery: enforce cooldown on failures and recover after cooldown duration" \
+    "Cooldown Enforcement & Recovery: enforce cooldown and recover (Instructions: 'SA JWT' tab t.d1buxll8o6l)" \
     "bundle exec ruby samples/regional_access_boundary/cooldown_recovery.rb"
 else
-  echo "Skipping 4.4 & 4.5: GOOGLE_APPLICATION_CREDENTIALS not set."
+  echo "Skipping 4.4 & 4.5: SA credentials not set. Follow the 'SA JWT' tab (t.d1buxll8o6l) instructions."
 fi
 
 echo "================================================================="
