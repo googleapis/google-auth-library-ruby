@@ -35,16 +35,28 @@ Success! RAB header is not present for unsupported credentials.
 
 To protect your secrets, all samples redact the `Authorization` header value in the printed output.
 
-## Mocking and Dummy Configs
+## Live vs Mocked Execution
 
-To make these samples testable without requiring complex external environments (like Azure or Okta for Workload Identity, or a slow metadata server), we used `WebMock` to mock network calls in some scripts:
+To align with the **RAB Manual Testing Guide**, the samples are structured as follows:
 
-*   **`workload_identity.rb` and `workforce_identity.rb`**: These use dummy JSON configuration files (`workload_identity_config.json` and `workforce_identity_config.json`) and use `WebMock` to simulate the external token source and the STS token exchange. This allows verifying the full code path for audience parsing and URL construction without real external identities.
-*   **`lookup_error.rb`, `retryable_error.rb`, `malformed_response.rb`, `cooldown_recovery.rb`**: These use `WebMock` to simulate various failure modes of the IAM lookup endpoint to verify fail-open, retry, and cooldown behaviors.
+### Live Samples (Real-World Credentials Required)
 
-### Transparency Note
+These samples require valid configurations and credentials. They perform live network requests against Google Cloud APIs to retrieve tokens and regional access boundaries:
 
-While these scripts use `WebMock` to intercept network calls, they are **not fake**. They exercise the real code paths in `BaseClient`, `Fetcher`, and `Cache` exactly as they would run in production. The mocking is only used to provide predictable inputs and simulate backend responses that are difficult to recreate in a simple local environment without extensive infrastructure setup. They rightfully assert their value by providing a way to verify the complex logic stack (async fetch, cache, retries) in a reproducible way.
+*   **`default_universe.rb` & `regional_endpoint.rb`**: Require Service Account credentials (set via `GOOGLE_APPLICATION_CREDENTIALS`).
+*   **`impersonated.rb`**: Requires Impersonated Service Account credentials.
+*   **`workload_identity.rb` & `workforce_identity.rb`**: Require Workload Identity / Workforce Identity credentials respectively (set via `GOOGLE_APPLICATION_CREDENTIALS`).
+
+### Mocked Samples (Error and Resiliency Handling)
+
+To trigger error conditions, DNS timeouts, malformed responses, or force specific timing states (like cache cooldowns) without depending on Google Cloud infrastructure failures, the following scripts use `WebMock` to intercept and mock the IAM `allowedLocations` endpoint:
+
+*   **`lookup_error.rb`**: Mocks a 400 error to verify that the client fails open (the main API request succeeds).
+*   **`retryable_error.rb`**: Mocks 50x errors to verify that the client retries the lookup for 1 minute before entering cooldown.
+*   **`malformed_response.rb`**: Mocks an empty location response to verify that it fails open and enters cooldown.
+*   **`cooldown_recovery.rb`**: Mocks a failure followed by recovery to verify that the client resumes lookups after the cooldown expires.
+
+While these scripts use `WebMock` to intercept network calls, they exercise the real code paths in `BaseClient`, `Fetcher`, and `Cache` exactly as they run in production.
 
 ## Known Gaps
 
