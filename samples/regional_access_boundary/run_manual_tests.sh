@@ -152,10 +152,18 @@ fi
 echo ""
 echo "=== Test Case 2.7 (Workload Identity Federation) ==="
 echo "Please refer to the 'Workload Identity' tab (tab ID: t.x7uz9pu4t7) for instructions"
-echo "on generating workload credentials (SAML/OIDC/etc). The sample below runs with mocked endpoints."
-run_test_case "2.7" \
-  "Workload Identity Federation: verify WIF credentials construct lookup URL and cache" \
-  "bundle exec ruby samples/regional_access_boundary/workload_identity.rb"
+echo "on generating workload credentials (SAML/OIDC/etc)."
+echo ""
+read -p "Enter path to Workload Identity config JSON (or press Enter to skip): " wl_path
+if [ -n "$wl_path" ]; then
+  run_test_case "2.7" \
+    "Workload Identity Federation: verify WIF credentials construct lookup URL and cache" \
+    "GOOGLE_APPLICATION_CREDENTIALS=\"$wl_path\" bundle exec ruby samples/regional_access_boundary/workload_identity.rb"
+else
+  echo "Skipping 2.7: Workload credentials file not provided."
+  echo "=== TEST CASE 2.7: SKIPPED ===" >> "$LOG_FILE"
+  echo "" >> "$LOG_FILE"
+fi
 
 # -----------------------------------------------------------------
 # Test Case 2.9: Service Account with self-signed JWT
