@@ -174,5 +174,59 @@ When verifying Workforce Identity Federation (`workforce_identity.rb`), you can 
    GOOGLE_APPLICATION_CREDENTIALS="/path/to/your/saml_credentials.json" bundle exec ruby samples/regional_access_boundary/workforce_identity.rb
    ```
 
+## Running Impersonated Service Account (Headful) Locally
+
+### 1. Standard Service Account Impersonation (Test Case 2.2)
+
+To verify standard service account impersonation:
+
+1. Prerequisite: Ensure your corp account has the role `roles/iam.serviceAccountTokenCreator` on `your-impersonated-sa@your-project.iam.gserviceaccount.com`.
+2. Generate the impersonated credentials JSON file on your workstation:
+   ```bash
+   gcloud auth application-default login --impersonate-service-account=your-impersonated-sa@your-project.iam.gserviceaccount.com
+   ```
+3. Copy the content of the generated ADC file (usually at `~/.config/gcloud/application_default_credentials.json`) and save it to a local file in this workspace, e.g., `impersonated_sa.json`.
+4. Run the sample script with `GOOGLE_APPLICATION_CREDENTIALS` pointing to this file:
+   ```bash
+   GOOGLE_APPLICATION_CREDENTIALS="impersonated_sa.json" bundle exec ruby samples/regional_access_boundary/default_universe.rb
+   ```
+
+### 2. Delegated Service Account Impersonation (Test Case 2.2)
+
+To verify delegated service account impersonation:
+
+1. Prerequisite: Ensure your corp account has the role `roles/iam.serviceAccountTokenCreator` on `your-delegated-sa@your-project.iam.gserviceaccount.com` and `your-impersonated-sa@your-project.iam.gserviceaccount.com`.
+2. Generate the delegated impersonated credentials JSON file on your workstation:
+   ```bash
+   gcloud auth application-default login --impersonate-service-account=your-delegated-sa@your-project.iam.gserviceaccount.com,your-impersonated-sa@your-project.iam.gserviceaccount.com
+   ```
+3. Copy the content of the generated ADC file (usually at `~/.config/gcloud/application_default_credentials.json`) and save it to a local file in this workspace, e.g., `delegated_sa.json`.
+4. Run the sample script with `GOOGLE_APPLICATION_CREDENTIALS` pointing to this file:
+   ```bash
+   GOOGLE_APPLICATION_CREDENTIALS="delegated_sa.json" bundle exec ruby samples/regional_access_boundary/default_universe.rb
+   ```
+
+### 3. Workload Identity Federation with Impersonation (Test Case 2.8)
+
+To verify workload identity federation impersonating a service account, you can add `service_account_impersonation_url` to your workload identity JSON configuration file (e.g. AWS or Azure configuration):
+
+1. Edit your `azure_credentials.json` or `aws_credentials.json` file to append the `service_account_impersonation_url` field:
+   ```json
+   {
+     "type": "external_account",
+     "audience": "//iam.googleapis.com/projects/PROJECT_NUMBER/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID",
+     "subject_token_type": "urn:ietf:params:oauth:token-type:jwt",
+     "token_url": "https://sts.googleapis.com/v1/token",
+     "credential_source": {
+       "file": "/path/to/azure_subject_token.txt"
+     },
+     "service_account_impersonation_url": "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/your-impersonated-sa@your-project.iam.gserviceaccount.com:generateAccessToken"
+   }
+   ```
+2. Run the sample script:
+   ```bash
+   GOOGLE_APPLICATION_CREDENTIALS="azure_credentials.json" bundle exec ruby samples/regional_access_boundary/workload_identity.rb
+   ```
+
 
 

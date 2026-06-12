@@ -44,7 +44,6 @@ def main
 
   puts "--- First Call to apply! ---"
   begin
-    puts "Token Type: #{credentials.token_type}"
     result = credentials.apply! headers, url: url
     puts "apply! return value: Bearer <REDACTED>" if result
     redacted_headers = headers.dup
