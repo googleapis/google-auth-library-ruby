@@ -234,7 +234,7 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
       hash = {}
       creds.apply!(hash)
       
-      expect(@stub).to have_been_requested
+      expect(@stub).to have_been_requested.once
       expect(hash[Google::Auth::ImpersonatedServiceAccountCredentials::AUTH_METADATA_KEY]).to eq("Bearer 1/abcde")
     end
 
@@ -327,7 +327,7 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
           expect(error.principal).to eq("test-principal")
         end
         
-        expect(stub).to have_been_requested
+        expect(stub).to have_been_requested.once
       end
     end
 
@@ -342,7 +342,7 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
           expect(error.principal).to eq("test-principal")
         end
         
-        expect(stub).to have_been_requested
+        expect(stub).to have_been_requested.once
       end
     end
 
@@ -357,7 +357,7 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
           expect(error.principal).to eq("test-principal")
         end
         
-        expect(stub).to have_been_requested
+        expect(stub).to have_been_requested.once
       end
     end
   end

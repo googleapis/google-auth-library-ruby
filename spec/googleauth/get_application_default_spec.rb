@@ -146,7 +146,7 @@ describe "#get_application_default" do
           creds = Google::Auth.get_application_default @scope, options
           expect(creds).to_not be_nil
         end
-        expect(@compute_metadata_server).to have_been_requested
+        expect(@compute_metadata_server).to have_been_requested.once
       end
 
       it "honors passing options to OAuth 2 client" do
@@ -161,7 +161,7 @@ describe "#get_application_default" do
           expect(creds).to be gce_credentials
           expect(GCECredentials).to have_received(:new).with(options.merge(scope: @scope))
         end
-        expect(@compute_metadata_server).to have_been_requested
+        expect(@compute_metadata_server).to have_been_requested.once
       end
     end
 
