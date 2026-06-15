@@ -22,7 +22,11 @@ require "googleauth"
 require "spec_helper"
 require "os"
 
+include Google::Auth
+include Google::Auth::CredentialsLoader
+
 describe "#get_application_default" do
+
   # Pass unique options each time to bypass memoization
   let(:options) { |example| { dememoize: example } }
 
@@ -322,6 +326,47 @@ describe "#get_application_default" do
       expect do
         Google::Auth.get_application_default @scope, options
       end.to raise_error Google::Auth::InitializationError
+    end
+  end
+
+  describe "when credential JSON payload is unsupported" do
+    let(:unsupported_types) do
+      [
+        { type: "id_token" },
+        { type: "service_account_signer" },
+        { type: "authorized_user" } # missing client_id, client_secret, refresh_token
+      ]
+    end
+
+    it "fails if the GOOGLE_APPLICATION_CREDENTIALS file contains the unsupported creds" do
+      unsupported_types.each do |cred_json|
+        Dir.mktmpdir do |dir|
+          key_path = File.join dir, "my_cert_file"
+          FileUtils.mkdir_p File.dirname(key_path)
+          File.write key_path, JSON.generate(cred_json)
+          ENV[@var_name] = key_path
+          expect do
+            Google::Auth.get_application_default @scope, options
+          end.to raise_error Google::Auth::InitializationError
+        end
+      end
+    end
+
+    it "fails if the well known file contains the unsupported creds" do
+      unsupported_types.each do |cred_json|
+        ENV.delete @var_name unless ENV[@var_name].nil?
+        Dir.mktmpdir do |dir|
+          key_path = File.join dir, ".config", WELL_KNOWN_PATH
+          key_path = File.join dir, WELL_KNOWN_PATH if OS.windows?
+          FileUtils.mkdir_p File.dirname(key_path)
+          File.write key_path, JSON.generate(cred_json)
+          ENV["HOME"] = dir
+          ENV["APPDATA"] = dir
+          expect do
+            Google::Auth.get_application_default @scope, options
+          end.to raise_error Google::Auth::InitializationError
+        end
+      end
     end
   end
 end
