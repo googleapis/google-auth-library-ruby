@@ -447,6 +447,49 @@ describe Google::Auth::UserRefreshCredentials do
     end
   end
 
+  describe "refresh token preservation" do
+    it "preserves original refresh token if response does not include one" do
+      client = UserRefreshCredentials.make_creds(
+        json_key_io: StringIO.new(cred_json_text)
+      )
+      expect(client.refresh_token).to eq("refreshtoken")
+
+      stub = stub_request(:post, "https://oauth2.googleapis.com/token")
+        .with(body: hash_including("grant_type" => "refresh_token"))
+        .to_return(body:    JSON.generate("access_token" => "new_access_token",
+                                          "token_type"   => "Bearer",
+                                          "expires_in"   => 3600),
+                   status:  200,
+                   headers: { "Content-Type" => "application/json" })
+
+      client.fetch_access_token!
+      expect(client.access_token).to eq("new_access_token")
+      expect(client.refresh_token).to eq("refreshtoken")
+      expect(stub).to have_been_requested
+    end
+
+    it "updates refresh token if response does include a new one" do
+      client = UserRefreshCredentials.make_creds(
+        json_key_io: StringIO.new(cred_json_text)
+      )
+      expect(client.refresh_token).to eq("refreshtoken")
+
+      stub = stub_request(:post, "https://oauth2.googleapis.com/token")
+        .with(body: hash_including("grant_type" => "refresh_token"))
+        .to_return(body:    JSON.generate("access_token" => "new_access_token",
+                                          "refresh_token" => "new_refreshtoken",
+                                          "token_type"   => "Bearer",
+                                          "expires_in"   => 3600),
+                   status:  200,
+                   headers: { "Content-Type" => "application/json" })
+
+      client.fetch_access_token!
+      expect(client.access_token).to eq("new_access_token")
+      expect(client.refresh_token).to eq("new_refreshtoken")
+      expect(stub).to have_been_requested
+    end
+  end
+
   describe "duplicates" do
     before :example do
       @key = OpenSSL::PKey::RSA.new 2048
