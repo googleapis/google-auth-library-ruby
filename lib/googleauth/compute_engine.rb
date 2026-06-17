@@ -185,7 +185,9 @@ module Google
       # service account) skips the lookup, allowing the request to proceed without the header.
       #
       # @private
-      # @return [String, nil, :unsupported] the allowedLocations endpoint URL, :unsupported if default email is a non-email string, or nil if it is missing or empty.
+      # @return [String, nil, :unsupported] the allowedLocations endpoint URL,
+      #   :unsupported if default email is a non-email string, or nil if it is
+      #   missing or empty.
       def regional_access_boundary_url
         email = Google::Cloud.env.lookup_metadata "instance", "service-accounts/default/email"
         return nil if email.nil? || email.empty?
