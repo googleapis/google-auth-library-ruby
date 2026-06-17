@@ -181,12 +181,11 @@ module Google
       # Fetches the service account email from metadata server.
       #
       # Design (Fail Open):
-      # Returning nil (e.g. if the default email is missing or is not a valid email,
-      # which can occur in GKE workload federation) skips the lookup, allowing the
-      # request to proceed without the header.
+      # Returning nil (e.g. if the default email is missing) or :unsupported (if the email is not a standard
+      # service account) skips the lookup, allowing the request to proceed without the header.
       #
       # @private
-      # @return [String, nil] the allowedLocations endpoint URL, or nil if GCE default email is missing or invalid.
+      # @return [String, nil, :unsupported] the allowedLocations endpoint URL, :unsupported if default email is a non-email string, or nil if it is missing or empty.
       def regional_access_boundary_url
         email = Google::Cloud.env.lookup_metadata "instance", "service-accounts/default/email"
         return nil if email.nil? || email.empty?

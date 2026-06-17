@@ -67,6 +67,7 @@ describe "RegionalAccessBoundary Integration" do
   let(:headers) { {} }
   let(:url) { "https://storage.googleapis.com/v1/b/my-bucket" }
   let(:cache) { Google::Auth::RegionalAccessBoundary::Cache.new }
+  let(:key) { client.regional_access_boundary_url }
 
   before do
     # Stub the module-level cache to use our isolated test cache
@@ -89,12 +90,12 @@ describe "RegionalAccessBoundary Integration" do
       client.apply! headers, url: url
       
       expect(headers["x-allowed-locations"]).to be_nil
-      expect(cache.should_fetch?).to be_falsey # It should be marked as fetching
+      expect(cache.should_fetch?(key)).to be_falsey # It should be marked as fetching
     end
 
     it "attaches header when cache is populated" do
       data = Google::Auth::RegionalAccessBoundary::RegionalAccessBoundaryData.new "0xABC"
-      cache.set data, 60
+      cache.set key, data, 60
       
       client.apply! headers, url: url
       
@@ -107,20 +108,20 @@ describe "RegionalAccessBoundary Integration" do
       client.apply! headers, url: regional_url
       
       expect(headers["x-allowed-locations"]).to be_nil
-      expect(cache.should_fetch?).to be_truthy # Should not have marked as fetching
+      expect(cache.should_fetch?(key)).to be_truthy # Should not have marked as fetching
     end
 
     it "skips lookup for STS and IAM endpoints" do
       sts_url = "https://sts.googleapis.com/v1/token"
       client.apply! headers, url: sts_url
       expect(headers["x-allowed-locations"]).to be_nil
-      expect(cache.should_fetch?).to be_truthy
+      expect(cache.should_fetch?(key)).to be_truthy
 
       headers.clear # Reset headers
       iam_url = "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/test@example.com:generateAccessToken"
       client.apply! headers, url: iam_url
       expect(headers["x-allowed-locations"]).to be_nil
-      expect(cache.should_fetch?).to be_truthy
+      expect(cache.should_fetch?(key)).to be_truthy
     end
 
     it "fails open if lookup raises error" do
@@ -131,7 +132,7 @@ describe "RegionalAccessBoundary Integration" do
       client.apply! headers, url: url
       
       expect(headers["x-allowed-locations"]).to be_nil
-      expect(cache.should_fetch?).to be_falsey # Should be in cooldown
+      expect(cache.should_fetch?(key)).to be_falsey # Should be in cooldown
     end
 
     it "skips lookup for unsupported credential types" do
@@ -140,7 +141,7 @@ describe "RegionalAccessBoundary Integration" do
       client.apply! headers, url: url
       
       expect(headers["x-allowed-locations"]).to be_nil
-      expect(cache.should_fetch?).to be_truthy # Should not have marked as fetching
+      expect(cache.should_fetch?(key)).to be_truthy # Should not have marked as fetching
     end
 
     it "skips lookup for ID tokens" do
@@ -159,7 +160,7 @@ describe "RegionalAccessBoundary Integration" do
       client.apply! headers, url: url
       
       expect(headers["x-allowed-locations"]).to be_nil
-      expect(cache.should_fetch?).to be_falsey
+      expect(cache.should_fetch?(:unsupported)).to be_falsey
       
       # Try applying again to verify it does not log again or attempt fetch
       expect(client).not_to receive(:log_rab_warning)

@@ -110,20 +110,25 @@ module Google
       # @return [void]
       def apply_regional_access_boundary! a_hash, opts
         return unless should_apply_rab? opts
+        return unless respond_to? :regional_access_boundary_url
+
+        key = regional_access_boundary_url
+        # If lookup URL is nil or empty, we cannot determine identity yet (fail open).
+        return if key.nil? || key.to_s.empty?
 
         cache = Google::Auth::RegionalAccessBoundary.cache
-        header_val = cache.get&.encoded_locations
+        header_val = cache.get(key)&.encoded_locations
 
         # For global endpoints, attach the x-allowed-locations header
         # to the outbound HTTP request if and only if a valid cache entry exists.
         a_hash["x-allowed-locations"] = header_val if header_val
 
-        # Return early if credentials do not support RAB or if we can't transition to fetching.
-        return unless respond_to?(:regional_access_boundary_url) && cache.try_mark_fetching!
+        # Return early if we cannot transition to fetching for this key.
+        return unless cache.try_mark_fetching! key
 
         # Initiate an asynchronous, non-blocking lookup if a global request is
         # made and the cache is invalid or expired.
-        trigger_async_rab_fetch cache
+        trigger_async_rab_fetch cache, key
       end
 
       # Determines if a request is eligible for Regional Access Boundary restrictions.
@@ -159,33 +164,26 @@ module Google
       #
       # @private
       # @param cache [Google::Auth::RegionalAccessBoundary::Cache] the cache instance.
+      # @param key [String, Symbol] the lookup URL or sentinel key.
       # @return [Thread] the background thread instance.
-      def trigger_async_rab_fetch cache
+      def trigger_async_rab_fetch cache, key
         Thread.new do
           begin
-            lookup_url = regional_access_boundary_url
-
-            if lookup_url == :unsupported
-              cache.mark_unsupported!
+            if key == :unsupported
+              cache.mark_unsupported! key
               log_rab_warning "Regional Access Boundary lookup permanently skipped: " \
                               "identity is not a standard service account email"
-            elsif lookup_url && !lookup_url.to_s.empty?
-              conn = Google::Auth::Helpers::Connection.connection_for self
-              fetcher = Google::Auth::RegionalAccessBoundary::Fetcher.new conn, lookup_url, self
-              data = fetcher.fetch
-              cache.set data, 6 * 60 * 60 # 6 hours
             else
-              # A nil or empty URL means we cannot attempt the lookup yet (e.g. waiting
-              # for metadata server).
-              log_rab_warning "Regional Access Boundary lookup skipped: " \
-                              "could not determine allowedLocations URL"
-              cache.mark_fetch_failed!
+              conn = Google::Auth::Helpers::Connection.connection_for self
+              fetcher = Google::Auth::RegionalAccessBoundary::Fetcher.new conn, key, self
+              data = fetcher.fetch
+              cache.set key, data, 6 * 60 * 60 # 6 hours
             end
           rescue StandardError => e
             # Ensure that any failure during the asynchronous lookup (network error, IAM refusal, etc.) does
             # not propagate to the primary request or cause the application to crash.
             log_rab_warning "Regional Access Boundary lookup failed: #{e.class} - #{e.message}"
-            cache.mark_fetch_failed!
+            cache.mark_fetch_failed! key
           end
         end
       end
