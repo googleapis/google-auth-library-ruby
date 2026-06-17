@@ -157,10 +157,14 @@ module Google
 
       # Triggers the asynchronous lookup for RAB allowed locations in a background thread.
       #
-      # Design (Fail Open):
+      # Design (Fail Open & Concurrency Resilience):
       # - Run inside a separate Thread so lookup latency does not delay the primary API call.
-      # - If `regional_access_boundary_url` is nil, skip lookup (e.g. metadata server cold start).
       # - Rescue all StandardErrors to ensure no background fetch failures propagate or crash the process.
+      # - Use an `ensure` block with a `success` flag. If the thread crashes on a non-StandardError
+      #   (like NoMemoryError, SystemStackError, or RSpec's WebMock NetConnectNotAllowedError) or is killed
+      #   before completion, the `ensure` block will catch it and call `cache.mark_fetch_failed!` to reset
+      #   the fetching flag and initiate a cooldown. This prevents the cache from being stuck in an
+      #   indefinite fetching state (`@is_fetching = true`) which would block all future retries.
       #
       # @private
       # @param cache [Google::Auth::RegionalAccessBoundary::Cache] the cache instance.
@@ -168,6 +172,7 @@ module Google
       # @return [Thread] the background thread instance.
       def trigger_async_rab_fetch cache, key
         Thread.new do
+          success = false
           begin
             if key == :unsupported
               cache.mark_unsupported! key
@@ -179,11 +184,17 @@ module Google
               data = fetcher.fetch
               cache.set key, data, 6 * 60 * 60 # 6 hours
             end
+            success = true
           rescue StandardError => e
             # Ensure that any failure during the asynchronous lookup (network error, IAM refusal, etc.) does
             # not propagate to the primary request or cause the application to crash.
             log_rab_warning "Regional Access Boundary lookup failed: #{e.class} - #{e.message}"
             cache.mark_fetch_failed! key
+            success = true
+          ensure
+            # If the block was exited prematurely without setting success to true (e.g. if the thread
+            # crashed on a non-StandardError or was killed), reset the fetching state and trigger a cooldown.
+            cache.mark_fetch_failed! key unless success
           end
         end
       end
