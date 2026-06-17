@@ -433,12 +433,12 @@ describe Google::Auth::GCECredentials do
       expect(@client.regional_access_boundary_url).to be_nil
     end
 
-    it "returns nil if metadata server returns a non-email identity" do
+    it "returns :unsupported if metadata server returns a non-email identity" do
       stub_request(:get, "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/email")
         .with(headers: { "Metadata-Flavor" => "Google" })
         .to_return(body: "system:serviceaccount:default:sa", status: 200, headers: { "Metadata-Flavor" => "Google" })
 
-      expect(@client.regional_access_boundary_url).to be_nil
+      expect(@client.regional_access_boundary_url).to eq :unsupported
     end
   end
 end

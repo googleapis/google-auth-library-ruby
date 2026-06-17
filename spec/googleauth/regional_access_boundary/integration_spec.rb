@@ -74,6 +74,9 @@ describe "RegionalAccessBoundary Integration" do
     # Stub Thread.new to yield immediately, running the fetch in the main thread
     # to avoid WebMock thread-safety issues and ensure predictable test execution.
     allow(Thread).to receive(:new).and_yield
+    
+    # Re-enable RAB lookup for the test client (overriding global disable in spec_helper)
+    allow(client).to receive(:supports_regional_access_boundary?).and_return(true)
 
     # Stub the allowedLocations request globally for integration specs to prevent
     # unhandled WebMock errors in background threads.
@@ -146,7 +149,21 @@ describe "RegionalAccessBoundary Integration" do
       client.apply! headers, url: url
       
       expect(headers["x-allowed-locations"]).to be_nil
-      expect(cache.should_fetch?).to be_truthy # Should not have marked as fetching
+    end
+
+    it "permanently bypasses lookup when regional_access_boundary_url returns :unsupported" do
+      allow(client).to receive(:regional_access_boundary_url).and_return(:unsupported)
+      
+      expect(client).to receive(:log_rab_warning).with(/permanently skipped/).once
+      
+      client.apply! headers, url: url
+      
+      expect(headers["x-allowed-locations"]).to be_nil
+      expect(cache.should_fetch?).to be_falsey
+      
+      # Try applying again to verify it does not log again or attempt fetch
+      expect(client).not_to receive(:log_rab_warning)
+      client.apply! headers, url: url
     end
   end
 end

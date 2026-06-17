@@ -70,4 +70,18 @@ describe Google::Auth::RegionalAccessBoundary::Cache do
       expect(cache.try_mark_fetching!).to be_truthy
     end
   end
+
+  describe "#mark_unsupported!" do
+    it "prevents get and should_fetch? permanently" do
+      data = double("Data")
+      cache.set data, 60
+      expect(cache.get).to eq data
+
+      cache.mark_unsupported!
+
+      expect(cache.get).to be_nil
+      expect(cache.should_fetch?).to be_falsey
+      expect(cache.try_mark_fetching!).to be_falsey
+    end
+  end
 end

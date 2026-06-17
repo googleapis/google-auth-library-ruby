@@ -31,6 +31,7 @@ module Google
           @fetching_pid = nil
           @cooldown_expiry = nil
           @cooldown_duration = 15 * 60 # 15 minutes in seconds
+          @unsupported = false
         end
 
         # Returns the cached data if valid and not expired.
@@ -39,6 +40,7 @@ module Google
         #     or nil if cache is empty or expired.
         def get
           synchronize do
+            return nil if @unsupported
             return nil if @data.nil?
             # Do NOT attach header if NOW >= expireTime; treat as cache miss & trigger async lookup.
             return nil if Time.now > @expiry
@@ -67,6 +69,8 @@ module Google
         # @return [Boolean] true if a background fetch is needed, false otherwise.
         def should_fetch?
           synchronize do
+            return false if @unsupported
+
             # If fetching but PID changed, the fetching thread was lost in fork.
             return true if @is_fetching && @fetching_pid != Process.pid
 
@@ -118,6 +122,17 @@ module Google
 
             # Exponential backoff for the NEXT attempt, up to 6 hours max
             @cooldown_duration = [@cooldown_duration * 2, 6 * 60 * 60].min
+          end
+        end
+
+        # Marks the cache as permanently unsupported, bypassing future checks.
+        #
+        # @return [void]
+        def mark_unsupported!
+          synchronize do
+            @unsupported = true
+            @is_fetching = false
+            @fetching_pid = nil
           end
         end
       end

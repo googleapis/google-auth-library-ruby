@@ -165,14 +165,18 @@ module Google
           begin
             lookup_url = regional_access_boundary_url
 
-            # A nil or empty URL means we cannot attempt the lookup yet (e.g. waiting
-            # for metadata server).
-            if lookup_url && !lookup_url.empty?
+            if lookup_url == :unsupported
+              cache.mark_unsupported!
+              log_rab_warning "Regional Access Boundary lookup permanently skipped: " \
+                              "identity is not a standard service account email"
+            elsif lookup_url && !lookup_url.to_s.empty?
               conn = Google::Auth::Helpers::Connection.connection_for self
               fetcher = Google::Auth::RegionalAccessBoundary::Fetcher.new conn, lookup_url, self
               data = fetcher.fetch
               cache.set data, 6 * 60 * 60 # 6 hours
             else
+              # A nil or empty URL means we cannot attempt the lookup yet (e.g. waiting
+              # for metadata server).
               log_rab_warning "Regional Access Boundary lookup skipped: " \
                               "could not determine allowedLocations URL"
               cache.mark_fetch_failed!

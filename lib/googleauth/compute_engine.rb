@@ -191,7 +191,7 @@ module Google
         email = Google::Cloud.env.lookup_metadata "instance", "service-accounts/default/email"
         return nil if email.nil? || email.empty?
         email = email.strip
-        return nil unless email.include? "@"
+        return :unsupported unless email.include? "@"
         "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/#{email}/allowedLocations"
       end
 

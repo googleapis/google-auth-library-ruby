@@ -26,6 +26,7 @@ require "logging"
 require "rspec/logging_helper"
 require "webmock/rspec"
 require "google/cloud/env"
+require "googleauth"
 
 
 # Allow Faraday to support test stubs
@@ -42,6 +43,20 @@ RSpec.configure do |config|
 
   config.before(:each) do
     allow(Google::Auth::CredentialsLoader).to receive(:load_gcloud_project_id).and_return("my-project-id")
+    
+    # Disable Regional Access Boundary globally in tests to avoid unexpected
+    # background threads and network calls in specs that are not testing RAB.
+    [
+      Google::Auth::GCECredentials,
+      Google::Auth::ImpersonatedServiceAccountCredentials,
+      Google::Auth::ServiceAccountCredentials,
+      Google::Auth::ExternalAccount::AwsCredentials,
+      Google::Auth::ExternalAccount::IdentityPoolCredentials
+    ].each do |klass|
+      allow_any_instance_of(klass)
+        .to receive(:supports_regional_access_boundary?)
+        .and_return(false)
+    end
   end
 end
 
