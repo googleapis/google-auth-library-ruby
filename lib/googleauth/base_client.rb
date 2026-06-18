@@ -182,7 +182,7 @@ module Google
             if key == :unsupported
               cache.mark_unsupported! key
               log_rab_debug "Regional Access Boundary lookup permanently skipped: " \
-                              "identity is not a standard service account email"
+                            "identity is not a standard service account email"
             else
               conn = Google::Auth::Helpers::Connection.connection_for self
               fetcher = Google::Auth::RegionalAccessBoundary::Fetcher.new conn, key, self

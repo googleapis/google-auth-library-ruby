@@ -415,10 +415,10 @@ describe Google::Auth::ExternalAccount::IdentityPoolCredentials do
       expect { creds.regional_access_boundary_url }.to raise_error(Google::Auth::AuthorizationError, /Unknown audience format/)
     end
 
-    it "raises error for mismatched universe domain" do
-      creds = ExternalAccountCredential.new audience: workload_audience, credential_source: CREDENTIAL_SOURCE_TEXT, token_url: token_url
-      creds.universe_domain = "invalid.com"
-      expect { creds.regional_access_boundary_url }.to raise_error(Google::Auth::AuthorizationError, /does not match domain in audience/)
+    it "raises error for non-GDU audience domain" do
+      non_gdu_audience = workload_audience.sub "googleapis.com", "invalid.com"
+      creds = ExternalAccountCredential.new audience: non_gdu_audience, credential_source: CREDENTIAL_SOURCE_TEXT, token_url: token_url
+      expect { creds.regional_access_boundary_url }.to raise_error(Google::Auth::AuthorizationError, /only supported in the googleapis.com universe/)
     end
   end
 end

@@ -181,16 +181,11 @@ module Google
             "locations/global/workloadIdentityPools/#{pool_id}/allowedLocations"
         end
 
-        # @private
-        # @param audience_domain [String] the audience domain.
-        # @raise [Google::Auth::AuthorizationError] if validation fails.
-        # @return [void]
         def validate_universe_domain! audience_domain
-          effective_universe_domain = universe_domain || "googleapis.com"
-          return unless audience_domain != effective_universe_domain
+          return if audience_domain == "googleapis.com"
           raise Google::Auth::AuthorizationError,
-                "Provided universe domain (#{effective_universe_domain}) does " \
-                "not match domain in audience (#{audience_domain})"
+                "Regional Access Boundary is only supported in the googleapis.com " \
+                "universe domain. The provided audience domain is #{audience_domain}."
         end
 
         def token_type
