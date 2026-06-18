@@ -20,7 +20,7 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
 
   gem.platform = Gem::Platform::RUBY
-  gem.required_ruby_version = ">= 3.0"
+  gem.required_ruby_version = ">= 3.2"
 
   gem.add_dependency "faraday", ">= 1.0", "< 3.a"
   gem.add_dependency "google-cloud-env", "~> 2.2"

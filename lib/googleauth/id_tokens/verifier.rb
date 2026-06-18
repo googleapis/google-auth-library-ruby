@@ -109,13 +109,13 @@ module Google
           payload["azp"] ||= payload["cid"] if payload.key? "cid"
 
           # Payload content validation
-          if aud && (Array(aud) & Array(payload["aud"])).empty?
+          if aud && !Array(aud).intersect?(Array(payload["aud"]))
             raise AudienceMismatchError, "Token aud mismatch: #{payload['aud']}"
           end
-          if azp && (Array(azp) & Array(payload["azp"])).empty?
+          if azp && !Array(azp).intersect?(Array(payload["azp"]))
             raise AuthorizedPartyMismatchError, "Token azp mismatch: #{payload['azp']}"
           end
-          if iss && (Array(iss) & Array(payload["iss"])).empty?
+          if iss && !Array(iss).intersect?(Array(payload["iss"]))
             raise IssuerMismatchError, "Token iss mismatch: #{payload['iss']}"
           end
 

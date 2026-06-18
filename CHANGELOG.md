@@ -1,5 +1,11 @@
 # Release History
 
+### 1.17.1 (2026-06-08)
+
+#### Bug Fixes
+
+* repair impersonated email helper ([#578](https://github.com/googleapis/google-auth-library-ruby/issues/578)) ([6317f9b](https://github.com/googleapis/google-auth-library-ruby/commit/6317f9b3f44a26ffff569ed29a09b929cc2ab45e)), closes [#577](https://github.com/googleapis/google-auth-library-ruby/issues/577)
+
 ### 1.17.0 (2026-06-04)
 
 #### Features
