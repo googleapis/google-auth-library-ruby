@@ -14,7 +14,7 @@
 
 require "googleauth"
 require "faraday"
-require "multi_json"
+require "json"
 require "webmock"
 require "logger"
 
@@ -44,14 +44,14 @@ def main
 
     # Stub the OAuth token exchange endpoints to return a dummy token
     stub_request(:post, "https://oauth2.googleapis.com/token")
-      .to_return(status: 200, body: MultiJson.dump({
+      .to_return(status: 200, body: JSON.generate({
         "access_token" => "dummy-access-token",
         "expires_in" => 3600,
         "token_type" => "Bearer"
       }), headers: { "Content-Type" => "application/json" })
 
     stub_request(:post, "https://www.googleapis.com/oauth2/v4/token")
-      .to_return(status: 200, body: MultiJson.dump({
+      .to_return(status: 200, body: JSON.generate({
         "access_token" => "dummy-access-token",
         "expires_in" => 3600,
         "token_type" => "Bearer"
@@ -61,7 +61,7 @@ def main
     # WebMock allows chaining responses with .then
     stub_request(:get, url)
       .to_return(status: 500, body: "Internal Server Error").then
-      .to_return(status: 200, body: MultiJson.dump({ "encodedLocations" => "0x7ffffffffffffffe" }))
+      .to_return(status: 200, body: JSON.generate({ "encodedLocations" => "0x7ffffffffffffffe" }))
 
     puts "Stubbed OAuth token endpoint and #{url} to fail first, then succeed."
   else

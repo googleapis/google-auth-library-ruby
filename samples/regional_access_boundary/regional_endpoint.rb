@@ -14,7 +14,7 @@
 
 require "googleauth"
 require "faraday"
-require "multi_json"
+require "json"
 
 def main
   puts "Loading credentials..."

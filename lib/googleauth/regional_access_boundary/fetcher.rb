@@ -13,7 +13,7 @@
 # limitations under the License.
 
 require "faraday"
-require "multi_json"
+require "json"
 require "googleauth/errors"
 
 module Google
@@ -76,7 +76,7 @@ module Google
         # @return [Google::Auth::RegionalAccessBoundary::RegionalAccessBoundaryData]
         def handle_response response
           if response.status == 200
-            body = MultiJson.load response.body
+            body = ::JSON.parse response.body
             if body["encodedLocations"].nil? || body["encodedLocations"].empty?
               raise Google::Auth::AuthorizationError, "Invalid response: encodedLocations is empty"
             end

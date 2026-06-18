@@ -14,7 +14,7 @@
 
 require "googleauth"
 require "faraday"
-require "multi_json"
+require "json"
 require "logger"
 
 def main
@@ -76,7 +76,7 @@ def main
   if redacted_headers[:authorization]
     redacted_headers[:authorization] = "Bearer <REDACTED>"
   end
-  puts MultiJson.dump(redacted_headers, pretty: true)
+  puts JSON.pretty_generate(redacted_headers)
 end
 
 main if __FILE__ == $PROGRAM_NAME
