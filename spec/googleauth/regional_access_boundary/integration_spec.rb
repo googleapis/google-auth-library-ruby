@@ -22,10 +22,12 @@ class TestClient
 
   attr_accessor :access_token
   attr_accessor :logger
+  attr_accessor :universe_domain
 
   def initialize
     @access_token = "secret_token"
     @logger = nil
+    @universe_domain = "googleapis.com"
   end
 
   def token_type
@@ -167,10 +169,19 @@ describe "RegionalAccessBoundary Integration" do
       expect(headers["x-allowed-locations"]).to be_nil
     end
 
+    it "skips lookup for non-GDU universe domains" do
+      client.universe_domain = "custom-universe.com"
+
+      client.apply! headers, url: url
+
+      expect(headers["x-allowed-locations"]).to be_nil
+      expect(cache.should_fetch?(key)).to be_truthy # Should not have marked as fetching
+    end
+
     it "permanently bypasses lookup when regional_access_boundary_url returns :unsupported" do
       allow(client).to receive(:regional_access_boundary_url).and_return(:unsupported)
 
-      expect(client).to receive(:log_rab_warning).with(/permanently skipped/).once
+      expect(client).to receive(:log_rab_debug).with(/permanently skipped/).once
 
       client.apply! headers, url: url
 
@@ -178,7 +189,7 @@ describe "RegionalAccessBoundary Integration" do
       expect(cache.should_fetch?(:unsupported)).to be_falsey
 
       # Try applying again to verify it does not log again or attempt fetch
-      expect(client).not_to receive(:log_rab_warning)
+      expect(client).not_to receive(:log_rab_debug)
       client.apply! headers, url: url
     end
   end

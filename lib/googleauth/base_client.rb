@@ -140,6 +140,11 @@ module Google
         # Skip if credential is an ID token, or if it doesn't support RAB.
         return false if token_type == :id_token || !supports_regional_access_boundary?
 
+        # Skip lookup for non-default universe domains.
+        # A nil or empty universe domain is treated as GDU (googleapis.com).
+        ud = universe_domain if respond_to? :universe_domain
+        return false if ud && !ud.to_s.empty? && ud != "googleapis.com"
+
         url = opts[:url]
         # URLs matching rep.googleapis.com are regional. Fallback to assume global if URL is not provided.
         is_global = url.nil? || !url.to_s.match?(/\.rep\.googleapis\.com|\.rep\.sandbox\.googleapis\.com/)
@@ -176,7 +181,7 @@ module Google
           begin
             if key == :unsupported
               cache.mark_unsupported! key
-              log_rab_warning "Regional Access Boundary lookup permanently skipped: " \
+              log_rab_debug "Regional Access Boundary lookup permanently skipped: " \
                               "identity is not a standard service account email"
             else
               conn = Google::Auth::Helpers::Connection.connection_for self
@@ -188,7 +193,7 @@ module Google
           rescue StandardError => e
             # Ensure that any failure during the asynchronous lookup (network error, IAM refusal, etc.) does
             # not propagate to the primary request or cause the application to crash.
-            log_rab_warning "Regional Access Boundary lookup failed: #{e.class} - #{e.message}"
+            log_rab_debug "Regional Access Boundary lookup failed: #{e.class} - #{e.message}"
             cache.mark_fetch_failed! key
             success = true
           ensure
@@ -199,8 +204,8 @@ module Google
         end
       end
 
-      def log_rab_warning msg
-        logger&.warn do
+      def log_rab_debug msg
+        logger&.debug do
           Google::Logging::Message.from(
             message: msg,
             "credentialsId" => object_id
