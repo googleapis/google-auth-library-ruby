@@ -50,10 +50,9 @@ RSpec.configure do |config|
       Google::Auth::GCECredentials,
       Google::Auth::ImpersonatedServiceAccountCredentials,
       Google::Auth::ServiceAccountCredentials,
-      Google::Auth::ExternalAccount::AwsCredentials,
-      Google::Auth::ExternalAccount::IdentityPoolCredentials
-    ].each do |klass|
-      allow_any_instance_of(klass)
+      Google::Auth::ExternalAccount::BaseCredentials
+    ].each do |klass_or_module|
+      allow_any_instance_of(klass_or_module)
         .to receive(:supports_regional_access_boundary?)
         .and_return(false)
     end
