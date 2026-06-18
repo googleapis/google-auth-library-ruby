@@ -137,8 +137,8 @@ module Google
       # @param opts [Hash] request options.
       # @return [Boolean] true if the header should be applied, false otherwise (failing open).
       def should_apply_rab? opts
-        # Return early if not supported by credential type or if ID token.
-        return false unless token_type != :id_token && supports_regional_access_boundary?
+        # Skip if credential is an ID token, or if it doesn't support RAB.
+        return false if token_type == :id_token || !supports_regional_access_boundary?
 
         url = opts[:url]
         # URLs matching rep.googleapis.com are regional. Fallback to assume global if URL is not provided.
