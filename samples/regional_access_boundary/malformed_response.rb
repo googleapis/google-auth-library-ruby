@@ -42,11 +42,26 @@ def main
     email = credentials.instance_variable_get :@issuer
     url = "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/#{email}/allowedLocations"
 
+    # Stub the OAuth token exchange endpoints to return a dummy token
+    stub_request(:post, "https://oauth2.googleapis.com/token")
+      .to_return(status: 200, body: MultiJson.dump({
+        "access_token" => "dummy-access-token",
+        "expires_in" => 3600,
+        "token_type" => "Bearer"
+      }), headers: { "Content-Type" => "application/json" })
+
+    stub_request(:post, "https://www.googleapis.com/oauth2/v4/token")
+      .to_return(status: 200, body: MultiJson.dump({
+        "access_token" => "dummy-access-token",
+        "expires_in" => 3600,
+        "token_type" => "Bearer"
+      }), headers: { "Content-Type" => "application/json" })
+
     # Stub the RAB lookup endpoint to return a malformed response (missing encodedLocations)
     stub_request(:get, url)
       .to_return(status: 200, body: MultiJson.dump({ "locations" => ["us-central1"] }))
 
-    puts "Stubbed #{url} to return malformed response"
+    puts "Stubbed OAuth token endpoint and #{url} to return malformed response"
   else
     puts "This sample requires ServiceAccountCredentials to run correctly."
     WebMock.disable!
