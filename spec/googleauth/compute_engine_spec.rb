@@ -195,7 +195,7 @@ describe Google::Auth::GCECredentials do
         stub = make_auth_stubs access_token: "1/abcdef1234567890", scope: scopes
         @client = GCECredentials.new(scope: scopes)
         @client.fetch_access_token!
-        expect(stub).to have_been_requested
+        expect(stub).to have_been_requested.once
       end
     end
 
@@ -220,7 +220,7 @@ describe Google::Auth::GCECredentials do
         token = "#{Base64.urlsafe_encode64 JSON.dump header}.#{Base64.urlsafe_encode64 JSON.dump payload}.xxxxx"
         stub = make_auth_stubs id_token: token
         @id_client.fetch_access_token!
-        expect(stub).to have_been_requested
+        expect(stub).to have_been_requested.once
         expect(@id_client.expires_at.to_i).to eq(expiry_time)
       end
     end
@@ -234,7 +234,7 @@ describe Google::Auth::GCECredentials do
                           headers: { "Metadata-Flavor" => "Google" })
         expect { @client.fetch_access_token! }
           .to raise_error Signet::AuthorizationError
-        expect(stub).to have_been_requested
+        expect(stub).to have_been_requested.once
       end
 
       it "should fail if the metadata request returns a 403" do
@@ -261,7 +261,7 @@ describe Google::Auth::GCECredentials do
                           headers: { "Metadata-Flavor" => "Google" })
         expect { @client.fetch_access_token! }
           .to raise_error Signet::AuthorizationError
-        expect(stub).to have_been_requested
+        expect(stub).to have_been_requested.once
       end
 
       it "should fail with AuthorizationError including detailed error info on timeout" do
@@ -300,7 +300,7 @@ describe Google::Auth::GCECredentials do
                           headers: { "Metadata-Flavor" => "Google" })
         expect { @id_client.fetch_access_token! }
           .to raise_error Signet::AuthorizationError
-        expect(stub).to have_been_requested
+        expect(stub).to have_been_requested.once
       end
 
       it "should fail if the metadata request returns a 403" do
@@ -327,7 +327,7 @@ describe Google::Auth::GCECredentials do
                           headers: { "Metadata-Flavor" => "Google" })
         expect { @id_client.fetch_access_token! }
           .to raise_error Signet::AuthorizationError
-        expect(stub).to have_been_requested
+        expect(stub).to have_been_requested.once
       end
 
       it "should fail with Signet::AuthorizationError if request times out" do
@@ -353,7 +353,7 @@ describe Google::Auth::GCECredentials do
              .to_return(status:  200,
                         headers: { "Metadata-Flavor" => "Google" })
       expect(GCECredentials.on_gce?({}, true)).to eq(true)
-      expect(stub).to have_been_requested
+      expect(stub).to have_been_requested.once
     end
 
     it "should be false when Metadata-Flavor is not Google" do
@@ -362,7 +362,7 @@ describe Google::Auth::GCECredentials do
              .to_return(status:  200,
                         headers: { "Metadata-Flavor" => "NotGoogle" })
       expect(GCECredentials.on_gce?({}, true)).to eq(false)
-      expect(stub).to have_been_requested
+      expect(stub).to have_been_requested.once
     end
 
     it "should be false if the response is not 200" do
@@ -371,7 +371,7 @@ describe Google::Auth::GCECredentials do
              .to_return(status:  404,
                         headers: { "Metadata-Flavor" => "Google" })
       expect(GCECredentials.on_gce?({}, true)).to eq(false)
-      expect(stub).to have_been_requested
+      expect(stub).to have_been_requested.once
     end
 
     it "should honor GCE_METADATA_HOST environment variable" do
@@ -383,7 +383,7 @@ describe Google::Auth::GCECredentials do
                .to_return(status:  200,
                           headers: { "Metadata-Flavor" => "Google" })
         expect(GCECredentials.on_gce?({}, true)).to eq(true)
-        expect(stub).to have_been_requested
+        expect(stub).to have_been_requested.once
       ensure
         ENV.delete "GCE_METADATA_HOST"
         Google::Cloud.env.compute_metadata.reset!

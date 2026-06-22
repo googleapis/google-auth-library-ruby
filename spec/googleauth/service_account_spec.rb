@@ -201,7 +201,7 @@ describe Google::Auth::ServiceAccountCredentials do
       id_token = "#{Base64.urlsafe_encode64 JSON.dump header}.#{Base64.urlsafe_encode64 JSON.dump payload}.xxxxx"
       stub = make_auth_stubs id_token: id_token
       @id_client.fetch_access_token!
-      expect(stub).to have_been_requested
+      expect(stub).to have_been_requested.once
       expect(@id_client.id_token).to eq(id_token)
       expect(@id_client.expires_at.to_i).to eq(expiry_time)
     end

@@ -76,7 +76,7 @@ describe Signet::OAuth2::Client do
       @client.apply! md
       want = { foo: "bar", authorization: "Bearer #{token}" }
       expect(md).to eq(want)
-      expect(stub).to have_been_requested
+      expect(stub).to have_been_requested.once
     end
 
     it "honors connection_builder" do
@@ -90,7 +90,7 @@ describe Signet::OAuth2::Client do
       @client.apply! md
       want = { foo: "bar", authorization: "Bearer #{token}" }
       expect(md).to eq(want)
-      expect(stub).to have_been_requested
+      expect(stub).to have_been_requested.once
     end
   end
 

@@ -42,7 +42,7 @@ shared_examples "apply/apply! are OK" do
       access_stub
       @client.fetch_access_token!
       expect(@client.access_token).to eq(token)
-      expect(access_stub).to have_been_requested
+      expect(access_stub).to have_been_requested.once
     end
 
     it "should set id_token to the fetched value" do
@@ -50,7 +50,7 @@ shared_examples "apply/apply! are OK" do
       id_stub
       @id_client.fetch_access_token!
       expect(@id_client.id_token).to eq(token)
-      expect(id_stub).to have_been_requested
+      expect(id_stub).to have_been_requested.once
     end
 
     it "should notify refresh listeners after updating" do
@@ -61,7 +61,7 @@ shared_examples "apply/apply! are OK" do
       end.to yield_with_args(have_attributes(
                                access_token: "1/abcdef1234567890"
                              ))
-      expect(access_stub).to have_been_requested
+      expect(access_stub).to have_been_requested.once
     end
 
     it "should log when a logger is set" do
@@ -94,7 +94,7 @@ shared_examples "apply/apply! are OK" do
       @client.apply! md
       want = { :foo => "bar", auth_key => "Bearer #{token}" }
       expect(md).to eq(want)
-      expect(stub).to have_been_requested
+      expect(stub).to have_been_requested.once
     end
 
     it "should update the target hash with fetched ID token" do
@@ -106,7 +106,7 @@ shared_examples "apply/apply! are OK" do
       @id_client.apply! md
       want = { :foo => "bar", auth_key => "Bearer #{token}" }
       expect(md).to eq(want)
-      expect(stub).to have_been_requested
+      expect(stub).to have_been_requested.once
     end
   end
 
@@ -119,7 +119,7 @@ shared_examples "apply/apply! are OK" do
       got = the_proc.call md
       want = { :foo => "bar", auth_key => "Bearer #{token}" }
       expect(got).to eq(want)
-      expect(stub).to have_been_requested
+      expect(stub).to have_been_requested.once
     end
   end
 
@@ -132,7 +132,7 @@ shared_examples "apply/apply! are OK" do
       @client.apply md
       want = { foo: "bar" }
       expect(md).to eq(want)
-      expect(stub).to have_been_requested
+      expect(stub).to have_been_requested.once
     end
 
     it "should add the token to the returned hash" do
@@ -143,7 +143,7 @@ shared_examples "apply/apply! are OK" do
       got = @client.apply md
       want = { :foo => "bar", auth_key => "Bearer #{token}" }
       expect(got).to eq(want)
-      expect(stub).to have_been_requested
+      expect(stub).to have_been_requested.once
     end
 
     it "should not fetch a new token if the current is not expired" do
@@ -157,7 +157,7 @@ shared_examples "apply/apply! are OK" do
         want = { :foo => "bar", auth_key => "Bearer #{token}" }
         expect(got).to eq(want)
       end
-      expect(stub).to have_been_requested
+      expect(stub).to have_been_requested.once
     end
 
     it "should fetch a new token if the current one is expired" do
