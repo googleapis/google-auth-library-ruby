@@ -34,7 +34,7 @@ scopes =  ['https://www.googleapis.com/auth/cloud-platform',
            'https://www.googleapis.com/auth/compute']
 authorization = Google::Auth.get_application_default(scopes)
 
-# Add the the access token obtained using the authorization to a hash, e.g
+# Add the access token obtained using the authorization to a hash, e.g
 # headers.
 some_headers = {}
 authorization.apply(some_headers)
