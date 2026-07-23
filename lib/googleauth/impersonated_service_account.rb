@@ -297,9 +297,9 @@ module Google
       # @private
       # @return [Hash] The authorization header with the source credentials' token
       def prepare_auth_header
-        auth_header = {}
-        @source_credentials.updater_proc.call auth_header
-        auth_header
+        # updater_proc returns a new hash containing authorization headers
+        # rather than mutating the passed hash in place.
+        @source_credentials.updater_proc.call({})
       end
 
       # Makes the HTTP request to the impersonation endpoint.

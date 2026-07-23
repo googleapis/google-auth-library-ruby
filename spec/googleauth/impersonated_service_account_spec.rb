@@ -126,13 +126,15 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
     body_fields["expireTime"] = opts[:expireTime]
     body = JSON.generate body_fields
     stub_request(:post, impersonation_url)
+      .with(headers: { "Authorization" => "Bearer source_token" })
       .to_return(body:    body,
-                   status:  opts[:status] || 200,
-                   headers: { "Content-Type" => "application/json" })
+                 status:  opts[:status] || 200,
+                 headers: { "Content-Type" => "application/json" })
   end
 
   def make_error_stub(status, body = "error message")
     stub_request(:post, impersonation_url)
+      .with(headers: { "Authorization" => "Bearer source_token" })
       .to_return(
         body: body,
         status: status,
@@ -144,7 +146,9 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
     @base_creds = double("Credentials")
     @source_creds = double("Credentials")
     allow(@base_creds).to receive(:duplicate).and_return(@source_creds)
-    allow(@source_creds).to receive(:updater_proc).and_return(Proc.new { |hash| {} })
+    allow(@source_creds).to receive(:updater_proc).and_return(
+      proc { |hash, opts = {}| hash.clone.tap { |h| h[:authorization] = "Bearer source_token" } }
+    )
   end
 
   describe "#initialize" do
@@ -231,11 +235,11 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
         scope: ["scope1", "scope2"]
       })
 
-      hash = {}
-      creds.apply!(hash)
+      headers = {}
+      creds.apply!(headers)
       
       expect(@stub).to have_been_requested.once
-      expect(hash[Google::Auth::ImpersonatedServiceAccountCredentials::AUTH_METADATA_KEY]).to eq("Bearer 1/abcde")
+      expect(headers[Google::Auth::ImpersonatedServiceAccountCredentials::AUTH_METADATA_KEY]).to eq("Bearer 1/abcde")
     end
 
     it "should update internal state" do
@@ -249,6 +253,35 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
       
       expect(creds.access_token).to eq("1/abcde")
       expect(creds.expires_within? 3600).to be true
+    end
+
+    it "should correctly apply auth headers when source is a real UserRefreshCredentials" do
+      source_creds = Google::Auth::UserRefreshCredentials.new(
+        client_id: "client_id",
+        client_secret: "client_secret",
+        refresh_token: "refresh_token"
+      )
+      source_creds.access_token = "source_user_token"
+
+      creds = Google::Auth::ImpersonatedServiceAccountCredentials.new(
+        source_credentials: source_creds,
+        impersonation_url: impersonation_url,
+        scope: ["scope1"]
+      )
+
+      token_stub = stub_request(:post, impersonation_url)
+        .with(headers: { "Authorization" => "Bearer source_user_token" })
+        .to_return(
+          body: JSON.generate({ "accessToken" => "impersonated_token", "expireTime" => (Time.now.utc + 3600).to_s }),
+          status: 200,
+          headers: { "Content-Type" => "application/json" }
+        )
+
+      headers = {}
+      creds.apply!(headers)
+
+      expect(token_stub).to have_been_requested.once
+      expect(headers[:authorization]).to eq("Bearer impersonated_token")
     end
 
     describe "duplicates" do
