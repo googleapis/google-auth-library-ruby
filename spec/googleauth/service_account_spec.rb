@@ -125,9 +125,51 @@ describe Google::Auth::ServiceAccountCredentials do
       ServiceAccountCredentials.make_creds(
         json_key_io: StringIO.new(JSON.generate(key_without_type))
       )
-    end.not_to raise_error(
-        Google::Auth::InitializationError, /The provided credentials were not of type 'service_account'/
-    )
+    end.not_to raise_error
+  end
+
+  it "raises InitializationError when credentials are missing" do
+    expect do
+      ServiceAccountCredentials.make_creds(
+        scope: "https://www.googleapis.com/auth/userinfo.profile"
+      )
+    end.to raise_error(Google::Auth::InitializationError, /Missing required field/)
+  end
+
+  it "raises InitializationError when json_key_io is passed a String instead of an IO object" do
+    expect do
+      ServiceAccountCredentials.make_creds(
+        json_key_io: cred_json_text
+      )
+    end.to raise_error(Google::Auth::InitializationError, "Expected an IO object for json_key_io")
+  end
+
+  it "warns when unrecognized options are provided" do
+    expect do
+      ServiceAccountCredentials.make_creds(
+        json_key_io: StringIO.new(cred_json_text),
+        scopes: ["https://www.googleapis.com/auth/userinfo.profile"]
+      )
+    end.to output(/Unrecognized option\(s\) for ServiceAccountCredentials\.make_creds: :scopes/).to_stderr
+  end
+
+  it "warns when string key option names are provided" do
+    expect do
+      ServiceAccountCredentials.make_creds(
+        json_key_io: StringIO.new(cred_json_text),
+        "scope" => ["https://www.googleapis.com/auth/userinfo.profile"]
+      )
+    end.to output(/Unrecognized option\(s\) for ServiceAccountCredentials\.make_creds: "scope"/).to_stderr
+  end
+
+  describe ".unescape" do
+    it "returns nil when given nil" do
+      expect(ServiceAccountCredentials.unescape(nil)).to be_nil
+    end
+
+    it "unescapes newlines and surrounding quotes" do
+      expect(ServiceAccountCredentials.unescape("\"line1\\nline2\"")).to eq("line1\nline2")
+    end
   end
 
   describe "universe_domain" do
