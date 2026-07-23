@@ -1,5 +1,11 @@
 # Release History
 
+### 1.17.2 (2026-07-23)
+
+#### Bug Fixes
+
+* return auth header from source_credentials in ImpersonatedServiceAccountCredentials ([#586](https://github.com/googleapis/google-auth-library-ruby/issues/586)) 
+
 ### 1.17.1 (2026-06-08)
 
 #### Bug Fixes
