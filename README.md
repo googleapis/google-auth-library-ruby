@@ -145,30 +145,30 @@ get('/oauth2callback') do
 end
 ```
 
-### Example (Command Line) [Deprecated]
+### Example (Command Line / Installed App)
 
-The Google Auth OOB flow has been discontiued on January 31, 2023. The OOB flow is a legacy flow that is no longer considered secure. To continue using Google Auth, please migrate your applications to a more secure flow. For more information on how to do this, please refer to this [OOB Migration](https://developers.google.com/identity/protocols/oauth2/resources/oob-migration) guide.
+Command line and desktop applications should use the Loopback IP redirect flow (`http://localhost`) as recommended in the [OOB Migration Guide](https://developers.google.com/identity/protocols/oauth2/resources/oob-migration).
 
 ```ruby
-require 'googleauth'
-require 'googleauth/stores/file_token_store'
+require "googleauth"
+require "googleauth/stores/file_token_store"
 
-OOB_URI = 'urn:ietf:wg:oauth:2.0:oob'
+LOOPBACK_URI = "http://localhost"
 
-scope = 'https://www.googleapis.com/auth/drive'
-client_id = Google::Auth::ClientId.from_file('/path/to/client_secrets.json')
-token_store = Google::Auth::Stores::FileTokenStore.new(
-  :file => '/path/to/tokens.yaml')
-authorizer = Google::Auth::UserAuthorizer.new(client_id, scope, token_store)
+scope = "https://www.googleapis.com/auth/drive"
+client_id = Google::Auth::ClientId.from_file "/path/to/client_secrets.json"
+token_store = Google::Auth::Stores::FileTokenStore.new file: "/path/to/tokens.yaml"
+authorizer = Google::Auth::UserAuthorizer.new client_id, scope, token_store
 
-user_id = ENV['USER']
-credentials = authorizer.get_credentials(user_id)
+user_id = ENV["USER"]
+credentials = authorizer.get_credentials user_id
 if credentials.nil?
-  url = authorizer.get_authorization_url(base_url: OOB_URI )
+  url = authorizer.get_authorization_url base_url: LOOPBACK_URI
   puts "Open #{url} in your browser and enter the resulting code:"
   code = gets
   credentials = authorizer.get_and_store_credentials_from_code(
-    user_id: user_id, code: code, base_url: OOB_URI)
+    user_id: user_id, code: code, base_url: LOOPBACK_URI
+  )
 end
 
 # OK to use credentials
