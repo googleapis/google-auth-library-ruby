@@ -39,6 +39,16 @@ module Google
         # Default IAM_SCOPE
         IAM_SCOPE = ["https://www.googleapis.com/auth/iam".freeze].freeze
 
+        # Workforce audience pattern.
+        WORKFORCE_AUDIENCE_PATTERN = %r{
+          \A//iam\.([^/]+)/locations/([^/]+)/workforcePools/([^/]+)/providers/[^/]+\z
+        }x
+        # Workload audience pattern.
+        WORKLOAD_AUDIENCE_PATTERN = %r{
+          \A//iam\.([^/]+)/projects/([^/]+)/locations/([^/]+)/
+          workloadIdentityPools/([^/]+)/providers/[^/]+\z
+        }x
+
         include Google::Auth::BaseClient
         include Helpers::Connection
 
@@ -99,7 +109,84 @@ module Google
           @audience
         end
 
+        # Returns the Regional Access Boundary lookup URL for external account credentials.
+        #
+        # Design (Fail Open):
+        # Returning nil (e.g. if parsing the impersonation email fails) skips the lookup,
+        # allowing the request to proceed without the header.
+        #
+        # @private
+        # @return [String, nil] the constructed allowedLocations URL, or nil if
+        #     required parameters (e.g. email) are missing.
+        # @raise [Google::Auth::AuthorizationError] if the audience format is
+        #     unknown or universe domain validation fails.
+        def regional_access_boundary_url
+          return impersonated_rab_url if @service_account_impersonation_url
+
+          # Workforce Pool check
+          wf_match = @audience.match WORKFORCE_AUDIENCE_PATTERN
+          return workforce_rab_url wf_match if wf_match
+
+          # Workload Pool check
+          wl_match = @audience.match WORKLOAD_AUDIENCE_PATTERN
+          return workload_rab_url wl_match if wl_match
+
+          raise Google::Auth::AuthorizationError, "Unknown audience format: #{@audience}"
+        end
+
+        # Enable Regional Access Boundaries for External Account credentials.
+        #
+        # @private
+        # @return [Boolean] true
+        def supports_regional_access_boundary?
+          true
+        end
+
         private
+
+        # @private
+        # @return [String, nil]
+        def impersonated_rab_url
+          email = service_account_email if respond_to? :service_account_email
+          return unless email
+          "https://iamcredentials.googleapis.com/v1/projects/-/" \
+            "serviceAccounts/#{email}/allowedLocations"
+        end
+
+        # @private
+        # @param wf_match [MatchData] the audience match data.
+        # @return [String, nil]
+        def workforce_rab_url wf_match
+          audience_domain = wf_match[1]
+          pool_id = wf_match[3]
+
+          validate_universe_domain! audience_domain
+
+          return unless pool_id
+          "https://iamcredentials.googleapis.com/v1/locations/global/" \
+            "workforcePools/#{pool_id}/allowedLocations"
+        end
+
+        # @private
+        # @param wl_match [MatchData] the audience match data.
+        # @return [String]
+        def workload_rab_url wl_match
+          audience_domain = wl_match[1]
+          project_number = wl_match[2]
+          pool_id = wl_match[4]
+
+          validate_universe_domain! audience_domain
+
+          "https://iamcredentials.googleapis.com/v1/projects/#{project_number}/" \
+            "locations/global/workloadIdentityPools/#{pool_id}/allowedLocations"
+        end
+
+        def validate_universe_domain! audience_domain
+          return if audience_domain == "googleapis.com"
+          raise Google::Auth::AuthorizationError,
+                "Regional Access Boundary is only supported in the googleapis.com " \
+                "universe domain. The provided audience domain is #{audience_domain}."
+        end
 
         def token_type
           # This method is needed for BaseClient

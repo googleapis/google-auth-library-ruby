@@ -420,4 +420,12 @@ describe Google::Auth::ServiceAccountCredentials do
       expect(@creds.duplicate(enable_self_signed_jwt: true).enable_self_signed_jwt?).to eq true
     end
   end
+
+  describe "#regional_access_boundary_url" do
+    it "returns the correct URL" do
+      expect(@client.regional_access_boundary_url).to eq(
+        "https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/app@developer.gserviceaccount.com/allowedLocations"
+      )
+    end
+  end
 end
