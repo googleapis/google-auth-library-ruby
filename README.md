@@ -164,7 +164,9 @@ user_id = ENV["USER"]
 credentials = authorizer.get_credentials user_id
 if credentials.nil?
   url = authorizer.get_authorization_url base_url: LOOPBACK_URI
-  puts "Open #{url} in your browser and enter the resulting code:"
+  puts "Open the following URL in your browser: #{url}"
+  puts "After authorizing, your browser will redirect to localhost with an authorization code."
+  puts "Enter the authorization code:"
   code = gets
   credentials = authorizer.get_and_store_credentials_from_code(
     user_id: user_id, code: code, base_url: LOOPBACK_URI
