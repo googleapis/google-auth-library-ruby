@@ -45,6 +45,19 @@ module Google
       # @type [::String] The type name for this credential.
       CREDENTIAL_TYPE_NAME = "service_account".freeze
 
+      # @private
+      # @type [Array<Symbol>] Allowed option keys for make_creds.
+      VALID_MAKE_CREDS_OPTIONS = [
+        :json_key_io,
+        :scope,
+        :enable_self_signed_jwt,
+        :target_audience,
+        :audience,
+        :token_credential_uri,
+        :default_connection,
+        :connection_builder
+      ].freeze
+
       def enable_self_signed_jwt?
         # Use a self-singed JWT if there's no information that can be used to
         # obtain an OAuth token, OR if there are scopes but also an assertion
@@ -55,10 +68,20 @@ module Google
 
       # Creates a ServiceAccountCredentials.
       #
-      # @param json_key_io [IO] An IO object containing the JSON key
-      # @param scope [string|array|nil] the scope(s) to access
+      # @param json_key_io [IO, nil] Optional. An IO object containing the JSON key
+      # @param scope [String, Array<String>, nil] Optional. The scope(s) to access
+      # @param enable_self_signed_jwt [Boolean, nil] Optional. Whether to use self-signed JWTs
+      # @param target_audience [String, nil] Optional. The target audience for ID token requests
+      # @param audience [String, nil] Optional. Custom token endpoint audience URI
+      # @param token_credential_uri [String, nil] Optional. Custom token credential URI
+      # @param default_connection [Faraday::Connection, nil] Optional. The connection object to use
+      # @param connection_builder [Proc, nil] Optional. A Proc that returns a Faraday connection
       # @raise [ArgumentError] If both scope and target_audience are specified
+      # @raise [InitializationError] If json_key_io is not an IO object, or
+      #   if required credential fields (private_key or client_email) are missing
       def self.make_creds options = {} # rubocop:disable Metrics/MethodLength
+        validate_make_creds_options options
+
         json_key_io, scope, enable_self_signed_jwt, target_audience, audience, token_credential_uri =
           options.values_at :json_key_io, :scope, :enable_self_signed_jwt, :target_audience,
                             :audience, :token_credential_uri
@@ -66,6 +89,9 @@ module Google
 
         private_key, client_email, project_id, quota_project_id, universe_domain =
           if json_key_io
+            unless json_key_io.respond_to? :read
+              raise InitializationError, "Expected an IO object for json_key_io"
+            end
             json_key = JSON.parse json_key_io.read
             if json_key.key? "type"
               json_key_io.rewind
@@ -78,6 +104,10 @@ module Google
           else
             creds_from_env
           end
+
+        raise InitializationError, "Missing required field: private_key" unless private_key
+        raise InitializationError, "Missing required field: client_email" unless client_email
+
         project_id ||= CredentialsLoader.load_gcloud_project_id
 
         new(token_credential_uri:   token_credential_uri || TOKEN_CRED_URI,
@@ -122,8 +152,9 @@ module Google
       # enclosing quotes.
       #
       # @param str [String] The string to unescape
-      # @return [String] The unescaped string
+      # @return [String, nil] The unescaped string, or nil if input is nil
       def self.unescape str
+        return nil unless str
         str = str.gsub '\n', "\n"
         str = str[1..-2] if str.start_with?('"') && str.end_with?('"')
         str
@@ -212,7 +243,20 @@ module Google
         [private_key, client_email, project_id, nil, nil]
       end
 
-      private_class_method :creds_from_env
+      # @private
+      # Validates options passed to make_creds and emits a warning for unrecognized keys.
+      #
+      # @param options [Hash] The options hash to validate.
+      def self.validate_make_creds_options options
+        return unless options.is_a? Hash
+
+        unknown_keys = options.keys - VALID_MAKE_CREDS_OPTIONS
+        return if unknown_keys.empty?
+
+        warn "Unrecognized option(s) for ServiceAccountCredentials.make_creds: #{unknown_keys.map(&:inspect).join ', '}"
+      end
+
+      private_class_method :creds_from_env, :validate_make_creds_options
     end
   end
 end
