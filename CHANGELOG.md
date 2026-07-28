@@ -1,5 +1,11 @@
 # Release History
 
+### 1.17.3 (2026-07-27)
+
+#### Bug Fixes
+
+* Add option validation and error handling to ServiceAccountCredentials.make_creds ([#588](https://github.com/googleapis/google-auth-library-ruby/issues/588)) ([3da9927](https://github.com/googleapis/google-auth-library-ruby/commit/3da9927091e3ffc4f2d062a404d837de962a6f97)), refs [#482](https://github.com/googleapis/google-auth-library-ruby/issues/482) [#544](https://github.com/googleapis/google-auth-library-ruby/issues/544)
+
 ### 1.17.2 (2026-07-23)
 
 #### Bug Fixes
