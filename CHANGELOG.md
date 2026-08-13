@@ -1,5 +1,11 @@
 # Release History
 
+### 1.17.4 (2026-08-13)
+
+#### Documentation
+
+* Update CLI/installed app example to use loopback IP redirect ([#589](https://github.com/googleapis/google-auth-library-ruby/issues/589)) 
+
 ### 1.17.3 (2026-07-27)
 
 #### Bug Fixes
