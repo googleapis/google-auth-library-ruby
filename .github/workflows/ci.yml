@@ -55,7 +55,7 @@ jobs:
     - name: Install dependencies
       shell: bash
       run: |
-        gem install --no-document toys
+        gem install --no-document toys -v '~> 0.22.0'
         bundle install
     - name: Test ${{ matrix.task }}
       shell: bash
