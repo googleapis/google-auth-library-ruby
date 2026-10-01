@@ -7,7 +7,7 @@ set -eo pipefail
 export GEM_HOME=$HOME/.gem
 export PATH=$GEM_HOME/bin:$PATH
 
-gem install --no-document toys
+gem install --no-document toys -v '~> 0.22.0'
 
 # To run acceptance tests for samples, we need the `sample_loader.rb` helper
 # from the `googleapis/ruby-common-tools` repository.
