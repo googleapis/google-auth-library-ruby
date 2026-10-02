@@ -55,12 +55,11 @@ jobs:
     - name: Install dependencies
       shell: bash
       run: |
-        gem install --no-document toys -v '~> 0.22.0'
         bundle install
     - name: Test ${{ matrix.task }}
       shell: bash
       # zizmor: ignore[template-injection]
       run: |
         for task in $(echo "${{ matrix.task }}" | tr ',' ' '); do
-          toys "$task" < /dev/null
+          bundle exec rake "$task" < /dev/null
         done
