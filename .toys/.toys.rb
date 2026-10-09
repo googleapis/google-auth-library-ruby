@@ -49,7 +49,7 @@ tool "yardoc" do
     exec ["bundle", "exec", "yard", "doc"]
   end
 end
-alias_tool :yard, :yardoc
+tool "yard", delegate_relative: "yardoc"
 
 expand :gem_build
 
