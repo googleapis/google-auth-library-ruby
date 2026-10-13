@@ -295,3 +295,4 @@ about the client or APIs on [StackOverflow](http://stackoverflow.com).
 
 [application default credentials]: https://cloud.google.com/docs/authentication/provide-credentials-adc
 [license]: https://github.com/googleapis/google-auth-library-ruby/tree/main/LICENSE
+
