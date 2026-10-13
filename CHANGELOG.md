@@ -1,5 +1,11 @@
 # Release History
 
+### 1.17.5 (2026-10-13)
+
+#### Documentation
+
+* trigger a release to verify the new publishing pipeline ([#601](https://github.com/googleapis/google-auth-library-ruby/issues/601)) 
+
 ### 1.17.4 (2026-08-13)
 
 #### Documentation
