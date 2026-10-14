@@ -40,7 +40,6 @@ accept your pull requests.
 * Commit and push until you are happy with your contribution.
 * Make sure to add tests for it. This is important so I don't break it
   in a future version unintentionally.
-* Add an entry to the [Changelog](CHANGELOG.md) accordingly. See [changelog entry format](#changelog-entry-format).
 * Please try not to mess with the Rakefile, version, or history. If you want to
   have your own version, or is otherwise necessary, that is fine, but please
   isolate to its own commit so I can cherry-pick around it.
@@ -50,25 +49,8 @@ accept your pull requests.
 * Open a [pull request][4] that relates to *only* one subject with a clear title
   and description in grammatically correct, complete sentences.
 
-### Changelog entry format
-
-Here are a few examples:
-
-```
-* makes the scope parameter's optional in all APIs. (@tbetbetbe[])
-* [#14](https://github.com/google/google-auth-library-ruby/issues/14): ADC Support for JWT Service Tokens. ([@tbetbetbe][])
-```
-
-* Mark it up in [Markdown syntax][6].
-* The entry line should start with `* ` (an asterisk and a space).
-* If the change has a related GitHub issue (e.g. a bug fix for a reported issue), put a link to the issue as `[#123](https://github.com/google/google-auth-library-ruby/issues/11): `.
-* Describe the brief of the change. The sentence should end with a punctuation.
-* At the end of the entry, add an implicit link to your GitHub user page as `([@username][])`.
-* If this is your first contribution to google-auth-library-ruby project, add a link definition for the implicit link to the bottom of the changelog as `[@username]: https://github.com/username`.
-
 [1]: https://github.com/google/google-auth-ruby-library/issues
 [2]: http://gun.io/blog/how-to-github-fork-branch-and-pull-request
 [3]: http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
 [4]: https://help.github.com/articles/using-pull-requests
 [5]: http://gitready.com/advanced/2009/02/10/squashing-commits-with-rebase.html
-[6]: http://daringfireball.net/projects/markdown/syntax
