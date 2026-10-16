@@ -32,6 +32,9 @@ module Google
         EXECUTABLE_TIMEOUT_MILLIS_DEFAULT = 30 * 1000
         EXECUTABLE_TIMEOUT_MILLIS_LOWER_BOUND = 5 * 1000
         EXECUTABLE_TIMEOUT_MILLIS_UPPER_BOUND = 120 * 1000
+        # How long a timed-out executable has to exit after TERM before it is sent KILL.
+        EXECUTABLE_TERMINATION_GRACE_MILLIS = 1000
+        private_constant :EXECUTABLE_TERMINATION_GRACE_MILLIS
         ID_TOKEN_TYPE = ["urn:ietf:params:oauth:token-type:jwt", "urn:ietf:params:oauth:token-type:id_token"].freeze
 
         include Google::Auth::ExternalAccount::BaseCredentials
@@ -156,15 +159,87 @@ module Google
           env
         end
 
-        def subprocess_with_timeout environment_vars, command, timeout_seconds
-          Timeout.timeout timeout_seconds do
-            output, error, status = Open3.capture3 environment_vars, command
+        # Runs the executable and returns its stdout.
+        #
+        # The executable has timeout_millis to exit and close its output. If it overruns,
+        # it is terminated and reaped before the error is raised, so it is not left running.
+        #
+        # @param [Hash] environment_vars The environment for the executable
+        # @param [String] command The executable command line
+        # @param [Integer] timeout_millis The timeout in milliseconds
+        # @return [String] The stdout of the executable
+        # @raise [Google::Auth::CredentialsError] If the executable times out or exits with a non-zero code
+        def subprocess_with_timeout environment_vars, command, timeout_millis
+          stdin, stdout, stderr, wait_thr = Open3.popen3 environment_vars, command
+          begin
+            deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + (timeout_millis / 1000.0)
+            stdin.close
+            # One reader thread per pipe drains it while the executable runs, so output larger
+            # than the OS pipe buffer cannot block the executable. Each thread is the only
+            # reader of its pipe and hands back what it read through Thread#value.
+            readers = [stdout, stderr].map { |pipe| Thread.new { read_pipe pipe } }
+            # wait_thr is the Open3 waiter thread; once it has finished, the executable has
+            # exited and been reaped. All three threads share one deadline.
+            finished = [wait_thr, *readers].all? do |thread|
+              thread.join [deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC), 0].max
+            end
+            unless finished
+              raise CredentialsError,
+                    "The executable failed to finish within the timeout specified (#{timeout_millis} ms)."
+            end
+            output, error = readers.map(&:value)
+            status = wait_thr.value
             unless status.success?
               raise CredentialsError,
                     "Executable exited with non-zero return code #{status.exitstatus}. Error: #{output}, #{error}"
             end
             output
+          ensure
+            terminate_executable wait_thr
+            # Closing the pipes also wakes any reader still blocked on a pipe that a descendant
+            # of the executable holds open, so joining the readers cannot hang.
+            [stdin, stdout, stderr].each(&:close)
+            readers&.each(&:join)
           end
+        end
+
+        # Reads a pipe to EOF. Runs on a reader thread from #subprocess_with_timeout.
+        #
+        # @param [IO] pipe The pipe to read
+        # @return [String, nil] The output, or nil if the pipe was closed during cleanup
+        def read_pipe pipe
+          pipe.read
+        rescue IOError
+          nil
+        end
+
+        # Stops the executable if it is still running and waits for it to be reaped. TERM goes
+        # first so the executable can clean up. If it is still running after the grace period,
+        # KILL follows. Windows cannot send TERM, so the executable is killed right away there.
+        # Each wait is bounded. A process that survives KILL is reaped by the waiter thread
+        # whenever it exits.
+        #
+        # @param [Process::Waiter] wait_thr The Open3 waiter thread of the executable
+        def terminate_executable wait_thr
+          return unless wait_thr.alive?
+          grace_seconds = EXECUTABLE_TERMINATION_GRACE_MILLIS / 1000.0
+          return if signal_executable("TERM", wait_thr.pid) && wait_thr.join(grace_seconds)
+          signal_executable "KILL", wait_thr.pid
+          wait_thr.join grace_seconds
+        end
+
+        # Sends a signal to the executable.
+        #
+        # @param [String] signal The signal name
+        # @param [Integer] pid The process ID of the executable
+        # @return [Boolean] false if the signal could not be sent, such as TERM on Windows
+        def signal_executable signal, pid
+          Process.kill signal, pid
+          true
+        rescue Errno::ESRCH
+          true # The executable already exited.
+        rescue Errno::EINVAL, Errno::EPERM
+          false
         end
       end
     end

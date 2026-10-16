@@ -19,6 +19,8 @@ $LOAD_PATH.uniq!
 require 'webmock/rspec'
 require 'googleauth'
 require 'googleauth/external_account/pluggable_credentials'
+require 'rbconfig'
+require 'tempfile'
 
 include Google::Auth::CredentialsLoader
 
@@ -98,6 +100,53 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
     "message": "Permission denied. Caller not authorized",
   }
   CREDENTIAL_URL = "http://fakeurl.com"
+
+  # The executable specs run real executables: throwaway Ruby scripts, so the specs go
+  # through real pipes, exit codes and signals. --disable-all makes the script start fast
+  # and ignore the RUBYOPT=-rbundler/setup that it inherits from `bundle exec`.
+  def fake_executable_command script
+    file = Tempfile.new ["fake_executable", ".rb"]
+    file.write script
+    file.close
+    (@fake_executables ||= []) << file
+    "#{RbConfig.ruby} --disable-all #{file.path}"
+  end
+
+  # Returns a command for an executable that writes stdout and stderr, then exits with exit_status.
+  def fake_executable_returning stdout:, stderr:, exit_status:
+    fake_executable_command "$stdout.write #{stdout.dump}\n$stderr.write #{stderr.dump}\nexit #{exit_status}\n"
+  end
+
+  # Returns a copy of options with a credential source that runs command.
+  def with_executable options, command, timeout_millis: nil
+    executable = { command: command }
+    executable[:timeout_millis] = timeout_millis unless timeout_millis.nil?
+    options.merge credential_source: { executable: executable }
+  end
+
+  # Records the pid of each executable that is started. Open3 passes every process that it
+  # spawns to Process.detach, which still runs as usual.
+  def record_executable_pids
+    pids = []
+    allow(Process).to receive(:detach).and_wrap_original do |detach, pid|
+      pids << pid
+      detach.call pid
+    end
+    pids
+  end
+
+  # True once the process has exited and been reaped, so it is no longer a child of this
+  # process. Unlike Process.kill(0, pid), this cannot be fooled by a reused pid.
+  def reaped? pid
+    Process.waitpid pid, Process::WNOHANG
+    false
+  rescue Errno::ECHILD
+    true
+  end
+
+  after :example do
+    @fake_executables&.each(&:close!)
+  end
 
   #####################
   #
@@ -287,7 +336,7 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
     }
     before :example do
       ENV[Google::Auth::ExternalAccount::PluggableAuthCredentials::ENABLE_PLUGGABLE_ENV] = "1"
-      allow(Open3).to receive(:capture3).and_raise(StandardError, "mock subprocess error")
+      allow(Open3).to receive(:popen3).and_raise(StandardError, "mock subprocess error")
     end
     it "executable subprocess error" do
       credentials = PluggableAuthCredentials.new options
@@ -303,11 +352,6 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
           :audience => AUDIENCE,
           :subject_token_type => SUBJECT_TOKEN_TYPE,
           :token_url => TOKEN_URL,
-          :credential_source => {
-            :executable => {
-              :command => "failed command"
-            }
-          }
         },
         :executable_return => {
           :stdout => "",
@@ -322,11 +366,6 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
           :audience => AUDIENCE,
           :subject_token_type => SUBJECT_TOKEN_TYPE,
           :token_url => TOKEN_URL,
-          :credential_source => {
-            :executable => {
-              :command => "command return no version"
-            }
-          }
         },
         :executable_return => {
           :stdout => JSON.generate({}),
@@ -341,11 +380,6 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
           :audience => AUDIENCE,
           :subject_token_type => SUBJECT_TOKEN_TYPE,
           :token_url => TOKEN_URL,
-          :credential_source => {
-            :executable => {
-              :command => "command return missing success"
-            }
-          }
         },
         :executable_return => {
           :stdout => JSON.generate({:version => 1}),
@@ -360,11 +394,6 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
           :audience => AUDIENCE,
           :subject_token_type => SUBJECT_TOKEN_TYPE,
           :token_url => TOKEN_URL,
-          :credential_source => {
-            :executable => {
-              :command => "command return missing error code"
-            }
-          }
         },
         :executable_return => {
           :stdout => JSON.generate({:version => 1, :success => false}),
@@ -379,11 +408,6 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
           :audience => AUDIENCE,
           :subject_token_type => SUBJECT_TOKEN_TYPE,
           :token_url => TOKEN_URL,
-          :credential_source => {
-            :executable => {
-              :command => "command return error response"
-            }
-          }
         },
         :executable_return => {
           :stdout => JSON.generate(EXECUTABLE_FAILED_RESPONSE),
@@ -398,11 +422,6 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
           :audience => AUDIENCE,
           :subject_token_type => SUBJECT_TOKEN_TYPE,
           :token_url => TOKEN_URL,
-          :credential_source => {
-            :executable => {
-              :command => "comamnd return expired token"
-            }
-          },
         },
         :executable_return => {
           :stdout => JSON.generate({
@@ -423,11 +442,6 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
           :audience => AUDIENCE,
           :subject_token_type => SUBJECT_TOKEN_TYPE,
           :token_url => TOKEN_URL,
-          :credential_source => {
-            :executable => {
-              :command => "comamnd return missing token type"
-            }
-          },
         },
         :executable_return => {
           :stdout => JSON.generate({
@@ -442,16 +456,13 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
         :expect_error => /The executable response is missing the token_type field./
       }
     ]
+    before :example do
+      ENV[Google::Auth::ExternalAccount::PluggableAuthCredentials::ENABLE_PLUGGABLE_ENV] = "1"
+    end
     examples.each do |example|
-      before :example do
-        ENV[Google::Auth::ExternalAccount::PluggableAuthCredentials::ENABLE_PLUGGABLE_ENV] = "1"
-        cmd = example[:options][:credential_source][:executable][:command]
-        e = example[:executable_return]
-        exe_return = [e[:stdout], e[:stdout], double("Process::Status", exitstatus: e[:exit_status], success?: (e[:exit_status] == 0))]
-        allow(Open3).to receive(:capture3).with(anything, cmd).and_return(exe_return)
-      end
       it example[:name] do
-        credentials = PluggableAuthCredentials.new example[:options]
+        command = fake_executable_returning(**example[:executable_return])
+        credentials = PluggableAuthCredentials.new with_executable(example[:options], command)
         expect{credentials.retrieve_subject_token!}.to raise_error(example[:expect_error])
       end
     end
@@ -465,11 +476,6 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
           :audience => AUDIENCE,
           :subject_token_type => SUBJECT_TOKEN_TYPE,
           :token_url => TOKEN_URL,
-          :credential_source => {
-            :executable => {
-              :command => "command return id token"
-            }
-          }
         },
         :executable_return => {
           :stdout => JSON.generate(EXECUTABLE_SUCCESSFUL_OIDC_RESPONSE_ID_TOKEN),
@@ -484,11 +490,6 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
           :audience => AUDIENCE,
           :subject_token_type => SUBJECT_TOKEN_TYPE,
           :token_url => TOKEN_URL,
-          :credential_source => {
-            :executable => {
-              :command => "command return jwt token"
-            }
-          }
         },
         :executable_return => {
           :stdout => JSON.generate(EXECUTABLE_SUCCESSFUL_OIDC_RESPONSE_JWT),
@@ -503,11 +504,6 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
           :audience => AUDIENCE,
           :subject_token_type => SUBJECT_TOKEN_TYPE,
           :token_url => TOKEN_URL,
-          :credential_source => {
-            :executable => {
-              :command => "command return saml response"
-            }
-          }
         },
         :executable_return => {
           :stdout => JSON.generate(EXECUTABLE_SUCCESSFUL_SAML_RESPONSE),
@@ -517,18 +513,98 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
         :expect_token => EXECUTABLE_SAML_TOKEN
       },
     ]
+    before :example do
+      ENV[Google::Auth::ExternalAccount::PluggableAuthCredentials::ENABLE_PLUGGABLE_ENV] = "1"
+    end
     examples.each do |example|
-      before :example do
-        ENV[Google::Auth::ExternalAccount::PluggableAuthCredentials::ENABLE_PLUGGABLE_ENV] = "1"
-        cmd = example[:options][:credential_source][:executable][:command]
-        e = example[:executable_return]
-        exe_return = [e[:stdout], e[:stdout], double("Process::Status", exitstatus: e[:exit_status], success?: (e[:exit_status] == 0))]
-        allow(Open3).to receive(:capture3).with(anything, cmd).and_return(exe_return)
-      end
       it example[:name] do
-        credentials = PluggableAuthCredentials.new example[:options]
+        command = fake_executable_returning(**example[:executable_return])
+        credentials = PluggableAuthCredentials.new with_executable(example[:options], command)
         expect(credentials.retrieve_subject_token!).to eql(example[:expect_token])
       end
+    end
+  end
+
+  describe "test retrieve subject token executable lifecycle" do
+    let(:options) { { audience: AUDIENCE, subject_token_type: SUBJECT_TOKEN_TYPE, token_url: TOKEN_URL } }
+    # Below the 5 second minimum, which these specs lower to stay fast.
+    let(:short_timeout_millis) { 500 }
+
+    before :example do
+      ENV[Google::Auth::ExternalAccount::PluggableAuthCredentials::ENABLE_PLUGGABLE_ENV] = "1"
+    end
+
+    # Runs script as an executable that overruns a short timeout, checks for the timeout
+    # error, and returns the pid of the executable.
+    def run_past_timeout script
+      stub_const "Google::Auth::ExternalAccount::PluggableAuthCredentials::EXECUTABLE_TIMEOUT_MILLIS_LOWER_BOUND",
+                 short_timeout_millis
+      pids = record_executable_pids
+      command = fake_executable_command script
+      credentials = PluggableAuthCredentials.new with_executable(options, command, timeout_millis: short_timeout_millis)
+      expect { credentials.retrieve_subject_token! }.to raise_error(
+        Google::Auth::CredentialsError,
+        "The executable failed to finish within the timeout specified (#{short_timeout_millis} ms)."
+      )
+      expect(pids.size).to eq(1)
+      pids.first
+    end
+
+    it "returns the output unchanged while draining large stdout and stderr" do
+      token = "t" * (256 * 1024)
+      response = JSON.generate EXECUTABLE_SUCCESSFUL_OIDC_RESPONSE_ID_TOKEN.merge(id_token: token)
+      command = fake_executable_command <<~SCRIPT
+        $stdin.read # Returns at once, because stdin is closed for the executable.
+        $stderr.write "e" * #{256 * 1024}
+        $stdout.write #{response.dump}
+      SCRIPT
+      credentials = PluggableAuthCredentials.new with_executable(options, command)
+      expect(credentials.retrieve_subject_token!).to eq(token)
+    end
+
+    # The timeout specs below rely on this: the pid that gets signaled is the executable's.
+    it "starts the executable directly, not through a shell" do
+      pids = record_executable_pids
+      command = fake_executable_command <<~'SCRIPT'
+        $stdout.write %({"version":1,"success":true,"token_type":"urn:ietf:params:oauth:token-type:id_token","id_token":"#{Process.pid}"})
+      SCRIPT
+      credentials = PluggableAuthCredentials.new with_executable(options, command)
+      expect(credentials.retrieve_subject_token!).to eq(pids.first.to_s)
+    end
+
+    it "raises the same error as before for a non-zero exit" do
+      command = fake_executable_returning stdout: "partial", stderr: "boom", exit_status: 3
+      credentials = PluggableAuthCredentials.new with_executable(options, command)
+      expect { credentials.retrieve_subject_token! }.to raise_error(
+        Google::Auth::CredentialsError, "Executable exited with non-zero return code 3. Error: partial, boom"
+      )
+    end
+
+    it "times out after timeout_millis milliseconds, not seconds" do
+      started = Process.clock_gettime Process::CLOCK_MONOTONIC
+      run_past_timeout "sleep 60"
+      elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+      # Reading 500 as seconds, or waiting for the executable to exit, would take 60 seconds or more.
+      expect(elapsed).to be_between(short_timeout_millis / 1000.0, 10)
+    end
+
+    it "terminates and reaps the executable and joins the reader threads after a timeout" do
+      threads = Thread.list
+      pid = run_past_timeout "sleep 60"
+      expect(reaped?(pid)).to be(true)
+      expect(Thread.list - threads).to be_empty
+    end
+
+    it "kills an executable that ignores TERM" do
+      pid = run_past_timeout <<~SCRIPT
+        begin
+          Signal.trap "TERM", "IGNORE"
+        rescue ArgumentError
+          nil # Where TERM cannot be trapped, it is not sent either.
+        end
+        sleep 60
+      SCRIPT
+      expect(reaped?(pid)).to be(true)
     end
   end
 end
