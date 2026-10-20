@@ -19,6 +19,7 @@ $LOAD_PATH.uniq!
 require "apply_auth_examples"
 require "fakefs/safe"
 require "fileutils"
+require "googleauth"
 require "googleauth/user_refresh"
 require "jwt"
 require "multi_json"
