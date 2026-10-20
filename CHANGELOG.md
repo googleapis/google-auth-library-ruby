@@ -1,5 +1,11 @@
 # Release History
 
+### 1.17.6 (2026-10-14)
+
+#### Documentation
+
+* Fix broken links and remove obsolete instructions ([#553](https://github.com/googleapis/google-auth-library-ruby/issues/553)) 
+
 ### 1.17.5 (2026-10-13)
 
 #### Documentation
