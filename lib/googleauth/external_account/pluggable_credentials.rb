@@ -13,6 +13,7 @@
 # limitations under the License.
 
 require "open3"
+require "timeout"
 require "time"
 require "json"
 require "googleauth/errors"
@@ -88,7 +89,7 @@ module Google
           # environment variable injection
           env = inject_environment_variables
           output = subprocess_with_timeout env, @credential_source_executable_command,
-                                           @credential_source_executable_timeout_millis
+                                           (@credential_source_executable_timeout_millis / 1000.0)
           response = JSON.parse output, symbolize_names: true
           parse_subject_token response
         end
