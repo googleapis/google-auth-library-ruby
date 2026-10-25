@@ -35,6 +35,20 @@ module Google
         def connection
           @default_connection || Faraday.default_connection
         end
+
+        # Resolves the Faraday connection to use for a given credentials client.
+        #
+        # First checks if the client implements `build_default_connection` (used by Signet).
+        # Next checks if the client implements `#connection` (used by External Account credentials).
+        # Falls back to the global configured default connection helper.
+        #
+        # @param client [Object] the credentials client object.
+        # @return [Faraday::Connection] the resolved connection.
+        def connection_for client
+          conn = client.build_default_connection if client.respond_to? :build_default_connection
+          conn ||= client.connection if client.respond_to? :connection
+          conn || connection
+        end
       end
     end
   end
