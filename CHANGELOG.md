@@ -1,5 +1,11 @@
 # Release History
 
+### 1.17.7 (2026-10-23)
+
+#### Documentation
+
+* link to the published Ruby version support policy ([#605](https://github.com/googleapis/google-auth-library-ruby/issues/605)) 
+
 ### 1.17.6 (2026-10-14)
 
 #### Documentation
