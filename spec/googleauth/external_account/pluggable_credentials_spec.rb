@@ -531,4 +531,46 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
       end
     end
   end
+
+  describe "test retrieve subject token executable timeout" do
+    let(:command) { "fake_cmd" }
+    let(:options) do
+      {
+        audience: AUDIENCE,
+        subject_token_type: SUBJECT_TOKEN_TYPE,
+        token_url: TOKEN_URL,
+        credential_source: {
+          executable: {
+            command: command,
+            timeout_millis: 12_000
+          }
+        }
+      }
+    end
+
+    before :example do
+      ENV[Google::Auth::ExternalAccount::PluggableAuthCredentials::ENABLE_PLUGGABLE_ENV] = "1"
+    end
+
+    it "converts configured timeout_millis to seconds for Timeout.timeout" do
+      expect(Timeout).to receive(:timeout).with(12.0).and_yield
+      allow(Open3).to receive(:capture3).and_return(
+        [JSON.generate(EXECUTABLE_SUCCESSFUL_OIDC_RESPONSE_ID_TOKEN), "", double("Process::Status", exitstatus: 0, success?: true)]
+      )
+
+      credentials = PluggableAuthCredentials.new options
+      expect(credentials.retrieve_subject_token!).to eq(EXECUTABLE_OIDC_TOKEN)
+    end
+
+    it "converts default timeout_millis to seconds for Timeout.timeout when unspecified" do
+      options[:credential_source][:executable].delete :timeout_millis
+      expect(Timeout).to receive(:timeout).with(30.0).and_yield
+      allow(Open3).to receive(:capture3).and_return(
+        [JSON.generate(EXECUTABLE_SUCCESSFUL_OIDC_RESPONSE_ID_TOKEN), "", double("Process::Status", exitstatus: 0, success?: true)]
+      )
+
+      credentials = PluggableAuthCredentials.new options
+      expect(credentials.retrieve_subject_token!).to eq(EXECUTABLE_OIDC_TOKEN)
+    end
+  end
 end
