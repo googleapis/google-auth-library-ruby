@@ -484,4 +484,36 @@ describe Google::Auth::ExternalAccount::AwsCredentials do
       expect { credentials.fetch_access_token! }.to raise_error(/Invalid AWS service URL/)
     end
   end
+
+  describe Google::Auth::ExternalAccount::AwsRequestSigner do
+    it 'strips -fips suffix from service name when signing FIPS STS requests' do
+      allow(Time).to receive(:now).and_return(Time.strptime('2020-08-11T06:55:22Z', '%Y-%m-%dT%H:%M:%SZ'))
+      request_signer = Google::Auth::ExternalAccount::AwsRequestSigner.new('us-east-2')
+      access_key_id = 'ASIARD4OQDT6A77FR3CL'
+      secret_access_key = 'Y8AfSaucF37G4PpvfguKZ3/' + 'l7Id4uocLXxX0+VTx'
+      session_token = 'test_session_token'
+      original_request = {
+        method: 'POST',
+        url: 'https://sts-fips.us-east-2.amazonaws.com?Action=GetCallerIdentity&Version=2011-06-15'
+      }
+      actual = request_signer.generate_signed_request(
+        {
+          access_key_id: access_key_id,
+          secret_access_key: secret_access_key,
+          session_token: session_token
+        },
+        original_request
+      )
+      expect(actual).to eq({
+        url: 'https://sts-fips.us-east-2.amazonaws.com?Action=GetCallerIdentity&Version=2011-06-15',
+        method: 'POST',
+        headers: {
+          'Authorization' => "AWS4-HMAC-SHA256 Credential=#{access_key_id}/20200811/us-east-2/sts/aws4_request, SignedHeaders=host;x-amz-date;x-amz-security-token, Signature=4b549b7c3a615721e18adf21235665b1ef16d19b3db471ab6037a2f40f9048af",
+          'host' => 'sts-fips.us-east-2.amazonaws.com',
+          'x-amz-date' => '20200811T065522Z',
+          'x-amz-security-token' => session_token
+        }
+      })
+    end
+  end
 end
