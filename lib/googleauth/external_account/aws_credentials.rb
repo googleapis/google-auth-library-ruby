@@ -305,7 +305,7 @@ module Google
               principal: "aws"
             )
           end
-          service_name = uri.host.split(".").first
+          service_name = uri.host.split(".").first.delete_suffix("-fips")
 
           datetime = Time.now.utc.strftime "%Y%m%dT%H%M%SZ"
           date = datetime[0, 8]
