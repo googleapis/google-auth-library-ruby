@@ -17,6 +17,7 @@ $LOAD_PATH.unshift spec_dir
 $LOAD_PATH.uniq!
 
 require "apply_auth_examples"
+require "googleauth"
 require "googleauth/signet"
 require "jwt"
 require "openssl"
