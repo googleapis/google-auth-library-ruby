@@ -1,5 +1,11 @@
 # Release History
 
+### 1.17.8 (2026-11-18)
+
+#### Bug Fixes
+
+* strip -fips suffix from AWS service name in SigV4 signer ([#608](https://github.com/googleapis/google-auth-library-ruby/issues/608)) 
+
 ### 1.17.7 (2026-10-23)
 
 #### Documentation
