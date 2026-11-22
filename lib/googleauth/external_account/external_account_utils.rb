@@ -27,7 +27,18 @@ module Google
       # as those provided by the AWS provider or OIDC provider like Azure, etc.
       module ExternalAccountUtils
         # Cloud resource manager URL used to retrieve project information.
+        #
+        # @deprecated This constant is deprecated and will be removed in a future version.
+        #   The Cloud Resource Manager URL is constructed dynamically using `universe_domain`.
         CLOUD_RESOURCE_MANAGER = "https://cloudresourcemanager.googleapis.com/v1/projects/".freeze
+
+        # @private Default universe domain when none is configured.
+        DEFAULT_UNIVERSE_DOMAIN = "googleapis.com".freeze
+        private_constant :DEFAULT_UNIVERSE_DOMAIN
+
+        # @private Cloud Resource Manager URL template parameterized by universe domain and project number.
+        CLOUD_RESOURCE_MANAGER_URL_TEMPLATE = "https://cloudresourcemanager.%s/v1/projects/%s".freeze
+        private_constant :CLOUD_RESOURCE_MANAGER_URL_TEMPLATE
 
         ##
         # Retrieves the project ID corresponding to the workload identity or workforce pool.
@@ -48,7 +59,8 @@ module Google
           # if we missing either project number or scope, we won't retrieve project_id
           return nil if project_number.nil? || @scope.nil?
 
-          url = "#{CLOUD_RESOURCE_MANAGER}#{project_number}"
+          resolved_universe_domain = (respond_to?(:universe_domain) && universe_domain) || DEFAULT_UNIVERSE_DOMAIN
+          url = format CLOUD_RESOURCE_MANAGER_URL_TEMPLATE, resolved_universe_domain, project_number
           response = connection.get url do |req|
             req.headers["Authorization"] = "Bearer #{@access_token}"
             req.headers["Content-Type"] = "application/json"
@@ -71,7 +83,7 @@ module Google
         #   or nil if it cannot be determined
         #
         def project_number
-          segments = @audience.split "/"
+          segments = (@audience || "").split "/"
           idx = segments.index "projects"
           return nil if idx.nil? || idx + 1 == segments.size
           segments[idx + 1]
