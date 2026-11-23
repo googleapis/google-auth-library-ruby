@@ -116,6 +116,182 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
         expect(creds.scope).to eq(["scope2"])
       end
     end
+
+    context "universe_domain handling" do
+      let(:external_account_identity_pool_json) do
+        {
+          "type": "external_account",
+          "audience": "//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID",
+          "subject_token_type": "urn:ietf:params:oauth:token-type:jwt",
+          "token_url": "https://sts.myuniverse.com/v1/token",
+          "credential_source": {
+            "url": "https://idp.example.com/subject-token"
+          }
+        }
+      end
+
+      let(:external_account_aws_json) do
+        {
+          "type": "external_account",
+          "audience": "//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID",
+          "subject_token_type": "urn:ietf:params:aws:token-type:aws4_request",
+          "token_url": "https://sts.myuniverse.com/v1/token",
+          "credential_source": {
+            "environment_id": "aws1",
+            "regional_cred_verification_url": "https://sts.{region}.amazonaws.com?Action=GetCallerIdentity&Version=2011-06-15"
+          }
+        }
+      end
+
+      let(:external_account_pluggable_json) do
+        {
+          "type": "external_account",
+          "audience": "//iam.googleapis.com/projects/123456/locations/global/workloadIdentityPools/POOL_ID/providers/PROVIDER_ID",
+          "subject_token_type": "urn:ietf:params:oauth:token-type:jwt",
+          "token_url": "https://sts.myuniverse.com/v1/token",
+          "credential_source": {
+            "executable": {
+              "command": "/fake/external/executable"
+            }
+          }
+        }
+      end
+
+      let(:source_credentials_json) { external_account_identity_pool_json }
+
+      it "defaults to googleapis.com when universe_domain is omitted everywhere" do
+        creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
+          json_key_io: StringIO.new(JSON.generate(impersonated_json))
+        )
+        expect(creds.universe_domain).to eq("googleapis.com")
+        expect(creds.source_credentials.universe_domain).to eq("googleapis.com")
+      end
+
+      it "propagates top-level universe_domain to external_account IdentityPoolCredentials" do
+        json = impersonated_json.merge("universe_domain": "myuniverse.com")
+        creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
+          json_key_io: StringIO.new(JSON.generate(json))
+        )
+        expect(creds.universe_domain).to eq("myuniverse.com")
+        expect(creds.source_credentials.universe_domain).to eq("myuniverse.com")
+        expect(creds.duplicate.universe_domain).to eq("myuniverse.com")
+      end
+
+      it "propagates top-level universe_domain to external_account AwsCredentials" do
+        json = impersonated_json.merge(
+          "universe_domain": "myuniverse.com",
+          "source_credentials": external_account_aws_json
+        )
+        creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
+          json_key_io: StringIO.new(JSON.generate(json))
+        )
+        expect(creds.source_credentials).to be_a(Google::Auth::ExternalAccount::AwsCredentials)
+        expect(creds.universe_domain).to eq("myuniverse.com")
+        expect(creds.source_credentials.universe_domain).to eq("myuniverse.com")
+      end
+
+      it "propagates top-level universe_domain to external_account PluggableAuthCredentials" do
+        json = impersonated_json.merge(
+          "universe_domain": "myuniverse.com",
+          "source_credentials": external_account_pluggable_json
+        )
+        creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
+          json_key_io: StringIO.new(JSON.generate(json))
+        )
+        expect(creds.source_credentials).to be_a(Google::Auth::ExternalAccount::PluggableAuthCredentials)
+        expect(creds.universe_domain).to eq("myuniverse.com")
+        expect(creds.source_credentials.universe_domain).to eq("myuniverse.com")
+      end
+
+      it "propagates top-level universe_domain to service_account source credentials" do
+        json = impersonated_json.merge(
+          "universe_domain": "myuniverse.com",
+          "source_credentials": service_account_json
+        )
+        creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
+          json_key_io: StringIO.new(JSON.generate(json))
+        )
+        expect(creds.source_credentials).to be_a(Google::Auth::ServiceAccountCredentials)
+        expect(creds.universe_domain).to eq("myuniverse.com")
+        expect(creds.source_credentials.universe_domain).to eq("myuniverse.com")
+      end
+
+      it "inherits source_credentials universe_domain when top-level universe_domain is omitted" do
+        json = impersonated_json.merge(
+          "source_credentials": external_account_identity_pool_json.merge("universe_domain": "myuniverse.com")
+        )
+        creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
+          json_key_io: StringIO.new(JSON.generate(json))
+        )
+        expect(creds.universe_domain).to eq("myuniverse.com")
+      end
+
+      it "inherits source_credentials universe_domain when top-level universe_domain is nil" do
+        json = impersonated_json.merge(
+          "universe_domain": nil,
+          "source_credentials": external_account_identity_pool_json.merge("universe_domain": "myuniverse.com")
+        )
+        creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
+          json_key_io: StringIO.new(JSON.generate(json))
+        )
+        expect(creds.universe_domain).to eq("myuniverse.com")
+      end
+
+      it "succeeds when top-level and source_credentials universe_domain match" do
+        json = impersonated_json.merge(
+          "universe_domain": "myuniverse.com",
+          "source_credentials": external_account_identity_pool_json.merge("universe_domain": "myuniverse.com")
+        )
+        creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
+          json_key_io: StringIO.new(JSON.generate(json))
+        )
+        expect(creds.universe_domain).to eq("myuniverse.com")
+      end
+
+      it "raises InitializationError when top-level and source_credentials universe_domain conflict" do
+        json = impersonated_json.merge(
+          "universe_domain": "myuniverse.com",
+          "source_credentials": external_account_identity_pool_json.merge("universe_domain": "googleapis.com")
+        )
+        expect do
+          Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
+            json_key_io: StringIO.new(JSON.generate(json))
+          )
+        end.to raise_error(Google::Auth::InitializationError, /does not match/)
+
+        reverse_json = impersonated_json.merge(
+          "universe_domain": "googleapis.com",
+          "source_credentials": external_account_identity_pool_json.merge("universe_domain": "myuniverse.com")
+        )
+        expect do
+          Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
+            json_key_io: StringIO.new(JSON.generate(reverse_json))
+          )
+        end.to raise_error(Google::Auth::InitializationError, /does not match/)
+      end
+
+      it "raises InitializationError when top-level universe_domain is empty or non-string" do
+        ["", false, 123].each do |invalid_domain|
+          json = impersonated_json.merge("universe_domain": invalid_domain)
+          expect do
+            Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
+              json_key_io: StringIO.new(JSON.generate(json))
+            )
+          end.to raise_error(Google::Auth::InitializationError, /Invalid universe_domain/)
+        end
+      end
+
+      it "preserves top-level universe_domain when loaded via DefaultCredentials.make_creds" do
+        require "googleauth/default_credentials"
+        json = impersonated_json.merge("universe_domain": "myuniverse.com")
+        creds = Google::Auth::DefaultCredentials.make_creds(
+          json_key_io: StringIO.new(JSON.generate(json))
+        )
+        expect(creds).to be_a(Google::Auth::ImpersonatedServiceAccountCredentials)
+        expect(creds.universe_domain).to eq("myuniverse.com")
+        expect(creds.source_credentials.universe_domain).to eq("myuniverse.com")
+      end
+    end
   end
  
   let(:impersonation_url) {"https://iamcredentials.example.com/v1/projects/-/serviceAccounts/test:generateAccessToken"}
