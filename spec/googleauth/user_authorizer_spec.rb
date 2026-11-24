@@ -246,6 +246,10 @@ describe Google::Auth::UserAuthorizer do
       it "should return credentials with a valid expiration time" do
         expect(credentials.expires_at).to eq Time.at(1_441_234_742)
       end
+
+      it "should return credentials with the default universe_domain" do
+        expect(credentials.universe_domain).to eq "googleapis.com"
+      end
     end
 
     context "with an invalid user id" do
@@ -345,6 +349,7 @@ describe Google::Auth::UserAuthorizer do
       )
       expect(credentials.access_token).to eq "1/abc123"
       expect(credentials.redirect_uri.to_s).to eq "https://www.example.com/oauth/callback"
+      expect(credentials.universe_domain).to eq "googleapis.com"
     end
 
     it "should not store credentials when get only requested" do

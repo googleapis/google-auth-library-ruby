@@ -310,14 +310,28 @@ describe Google::Auth::UserRefreshCredentials do
       expect(creds.universe_domain).to eq("googleapis.com")
     end
 
-    it "permits nil when instantiated directly without universe_domain" do
+    it "defaults to googleapis.com when instantiated directly without universe_domain" do
       creds = UserRefreshCredentials.new(
         client_id:     "client123",
         client_secret: "privatekey",
         refresh_token: "refreshtoken"
       )
+      expect(creds.universe_domain).to eq("googleapis.com")
+      expect(creds.duplicate.universe_domain).to eq("googleapis.com")
+    end
+
+    it "permits explicit nil universe_domain" do
+      creds = UserRefreshCredentials.new(
+        client_id:       "client123",
+        client_secret:   "privatekey",
+        refresh_token:   "refreshtoken",
+        universe_domain: nil
+      )
       expect(creds.universe_domain).to be_nil
       expect(creds.duplicate.universe_domain).to be_nil
+
+      @client.universe_domain = nil
+      expect(@client.universe_domain).to be_nil
     end
 
     it "rejects a non-default universe_domain in make_creds" do

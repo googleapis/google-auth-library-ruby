@@ -107,12 +107,13 @@ module Google
         @project_id = options[:project_id]
         @project_id ||= CredentialsLoader.load_gcloud_project_id
         @quota_project_id = options[:quota_project_id]
+        @universe_domain = DEFAULT_UNIVERSE_DOMAIN
         super options
       end
 
       # Sets the universe domain for these credentials.
       # Only the default universe (`googleapis.com`) is supported for user
-      # refresh credentials; `nil` is also permitted when unset.
+      # refresh credentials; `nil` is also permitted.
       #
       # @param value [String, nil] The universe domain
       # @raise [Google::Auth::InitializationError] If a non-default universe domain is provided
