@@ -52,10 +52,6 @@ describe Google::Auth::UserRefreshCredentials do
       json_key_io: StringIO.new(cred_json_text),
       scope:       "https://www.googleapis.com/auth/userinfo.profile"
     )
-    @non_gdu_client = UserRefreshCredentials.make_creds(
-      json_key_io: StringIO.new(cred_json_text_with_universe_domain),
-      scope:       "https://www.googleapis.com/auth/userinfo.profile"
-    )
   end
 
   def make_auth_stubs opts
@@ -302,12 +298,77 @@ describe Google::Auth::UserRefreshCredentials do
   end
 
   describe "#universe_domain" do
-    it "loads the default domain" do
+    it "loads the default domain when omitted" do
       expect(@client.universe_domain).to eq("googleapis.com")
     end
 
-    it "loads a custom domain" do
-      expect(@non_gdu_client.universe_domain).to eq("myuniverse.com")
+    it "loads the default domain when explicitly set to googleapis.com" do
+      creds = UserRefreshCredentials.make_creds(
+        json_key_io: StringIO.new(JSON.generate(cred_json.merge(universe_domain: "googleapis.com"))),
+        scope:       "https://www.googleapis.com/auth/userinfo.profile"
+      )
+      expect(creds.universe_domain).to eq("googleapis.com")
+    end
+
+    it "permits nil when instantiated directly without universe_domain" do
+      creds = UserRefreshCredentials.new(
+        client_id:     "client123",
+        client_secret: "privatekey",
+        refresh_token: "refreshtoken"
+      )
+      expect(creds.universe_domain).to be_nil
+      expect(creds.duplicate.universe_domain).to be_nil
+    end
+
+    it "rejects a non-default universe_domain in make_creds" do
+      expect do
+        UserRefreshCredentials.make_creds(
+          json_key_io: StringIO.new(cred_json_text_with_universe_domain),
+          scope:       "https://www.googleapis.com/auth/userinfo.profile"
+        )
+      end.to raise_error(Google::Auth::InitializationError, /googleapis\.com/)
+    end
+
+    it "rejects an empty or non-string universe_domain in make_creds" do
+      ["", false, 123].each do |invalid_domain|
+        expect do
+          UserRefreshCredentials.make_creds(
+            json_key_io: StringIO.new(JSON.generate(cred_json.merge(universe_domain: invalid_domain))),
+            scope:       "https://www.googleapis.com/auth/userinfo.profile"
+          )
+        end.to raise_error(Google::Auth::InitializationError, /googleapis\.com/)
+      end
+    end
+
+    it "rejects a non-default universe_domain in initialize" do
+      expect do
+        UserRefreshCredentials.new(
+          client_id:       "client123",
+          client_secret:   "privatekey",
+          refresh_token:   "refreshtoken",
+          universe_domain: "myuniverse.com"
+        )
+      end.to raise_error(Google::Auth::InitializationError, /googleapis\.com/)
+
+      expect do
+        UserRefreshCredentials.new(
+          "client_id"       => "client123",
+          "client_secret"   => "privatekey",
+          "refresh_token"   => "refreshtoken",
+          "universe_domain" => "myuniverse.com"
+        )
+      end.to raise_error(Google::Auth::InitializationError, /googleapis\.com/)
+    end
+
+    it "rejects a non-default universe_domain via setter, update!, update_token!, and duplicate" do
+      expect { @client.universe_domain = "myuniverse.com" }
+        .to raise_error(Google::Auth::InitializationError, /googleapis\.com/)
+      expect { @client.update!(universe_domain: "myuniverse.com") }
+        .to raise_error(Google::Auth::InitializationError, /googleapis\.com/)
+      expect { @client.update_token!(universe_domain: "myuniverse.com") }
+        .to raise_error(Google::Auth::InitializationError, /googleapis\.com/)
+      expect { @client.duplicate(universe_domain: "myuniverse.com") }
+        .to raise_error(Google::Auth::InitializationError, /googleapis\.com/)
     end
   end
 
@@ -383,14 +444,16 @@ describe Google::Auth::UserRefreshCredentials do
                    headers: { "Content-Type" => "application/json" })
     end
 
-    it "raises an authorization error with detailed information" do
+    it "raises an authorization error with detailed information without retrying" do
       stub
+      expect(@client).not_to receive(:sleep)
       expect { @client.revoke! }.to raise_error do |error|
         expect(error).to be_a(Google::Auth::AuthorizationError)
         expect(error.message).to match(/Unexpected error code 400/)
         expect(error.credential_type_name).to eq("Google::Auth::UserRefreshCredentials")
         expect(error.principal).to eq(@client.client_id)
       end
+      expect(stub).to have_been_requested.once
     end
   end
 

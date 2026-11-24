@@ -43,6 +43,10 @@ module Google
       # @type [::String] The type name for this credential.
       CREDENTIAL_TYPE_NAME = "authorized_user".freeze
 
+      # @private Default universe domain.
+      DEFAULT_UNIVERSE_DOMAIN = "googleapis.com".freeze
+      private_constant :DEFAULT_UNIVERSE_DOMAIN
+
       # Create a UserRefreshCredentials.
       #
       # @param json_key_io [IO] An IO object containing the JSON key
@@ -69,6 +73,8 @@ module Google
                          "universe_domain" => nil
                        }
                      end
+        universe_domain = user_creds["universe_domain"]
+        universe_domain = DEFAULT_UNIVERSE_DOMAIN if universe_domain.nil?
         new(token_credential_uri: TOKEN_CRED_URI,
             client_id:            user_creds["client_id"],
             client_secret:        user_creds["client_secret"],
@@ -76,7 +82,7 @@ module Google
             project_id:           user_creds["project_id"],
             quota_project_id:     user_creds["quota_project_id"],
             scope:                scope,
-            universe_domain:      user_creds["universe_domain"] || "googleapis.com")
+            universe_domain:      universe_domain)
           .configure_connection(options)
       end
 
@@ -102,6 +108,22 @@ module Google
         @project_id ||= CredentialsLoader.load_gcloud_project_id
         @quota_project_id = options[:quota_project_id]
         super options
+      end
+
+      # Sets the universe domain for these credentials.
+      # Only the default universe (`googleapis.com`) is supported for user
+      # refresh credentials; `nil` is also permitted when unset.
+      #
+      # @param value [String, nil] The universe domain
+      # @raise [Google::Auth::InitializationError] If a non-default universe domain is provided
+      def universe_domain= value
+        unless value.nil? || value == DEFAULT_UNIVERSE_DOMAIN
+          raise InitializationError,
+                "UserRefreshCredentials is only supported in the default universe " \
+                "(#{DEFAULT_UNIVERSE_DOMAIN}), got #{value.inspect}"
+        end
+
+        super
       end
 
       # Creates a duplicate of these credentials
