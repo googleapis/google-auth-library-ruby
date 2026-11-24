@@ -1,5 +1,12 @@
 # Release History
 
+### 1.17.9 (2026-11-24)
+
+#### Bug Fixes
+
+* preserve top-level universe_domain in ImpersonatedServiceAccountCredentials ([#615](https://github.com/googleapis/google-auth-library-ruby/issues/615)) 
+* reject non-default universe_domain in UserRefreshCredentials ([#614](https://github.com/googleapis/google-auth-library-ruby/issues/614)) 
+
 ### 1.17.8 (2026-11-22)
 
 #### Bug Fixes
