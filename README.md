@@ -1,7 +1,7 @@
 # Google Auth Library for Ruby
 
 <dl>
-  <dt>Homepage</dt><dd><a href="http://www.github.com/googleapis/google-auth-library-ruby">http://www.github.com/googleapis/google-auth-library-ruby</a></dd>
+  <dt>Homepage</dt><dd><a href="https://github.com/googleapis/google-auth-library-ruby">https://github.com/googleapis/google-auth-library-ruby</a></dd>
   <dt>Authors</dt><dd><a href="mailto:temiola@google.com">Tim Emiola</a></dd>
   <dt>Copyright</dt><dd>Copyright © 2015 Google, Inc.</dd>
   <dt>License</dt><dd>Apache 2.0</dd>
@@ -286,12 +286,12 @@ See [CONTRIBUTING][contributing].
 ## Support
 
 Please
-[report bugs at the project on Github](https://github.com/google/google-auth-library-ruby/issues). Don't
+[report bugs at the project on Github](https://github.com/googleapis/google-auth-library-ruby/issues). Don't
 hesitate to
 [ask questions](http://stackoverflow.com/questions/tagged/google-auth-library-ruby)
 about the client or APIs on [StackOverflow](http://stackoverflow.com).
 
 [application default credentials]: https://cloud.google.com/docs/authentication/provide-credentials-adc
 [contributing]: https://github.com/googleapis/google-auth-library-ruby/blob/main/.github/CONTRIBUTING.md
-[license]: https://github.com/googleapis/google-auth-library-ruby/tree/main/LICENSE
+[license]: https://github.com/googleapis/google-auth-library-ruby/blob/main/LICENSE
 
