@@ -32,9 +32,14 @@ def run
 end
 
 def check_links
-  result = exec ["npx", "linkinator", "./doc", "--skip", "stackoverflow.com"], out: :capture
-  puts result.captured_out
-  checked_links = result.captured_out.split "\n"
+  cmd = [
+    "npx", "--yes", "linkinator", "./doc",
+    "--retry",
+    "--retry-errors",
+    "--skip", "^https?://(www\\.)?stackoverflow\\.com"
+  ]
+  result = exec cmd, out: [:tee, :capture, :inherit], err: [:child, :out], in: :null
+  checked_links = result.captured_out.b.split "\n"
   checked_links.select! { |link| link =~ /^\[(\d+)\]/ && ::Regexp.last_match[1] != "200" }
   unless checked_links.empty?
     checked_links.each do |link|
