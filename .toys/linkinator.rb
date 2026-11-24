@@ -33,7 +33,7 @@ end
 
 def check_links
   cmd = [
-    "npx", "--yes", "linkinator", "./doc",
+    "npx", "linkinator", "./doc",
     "--retry",
     "--retry-errors",
     "--skip", "^https?://(www\\.)?stackoverflow\\.com"
