@@ -127,6 +127,8 @@ module Google
                 "use delegates to chain impersonation."
         end
 
+        source_credentials_info = merge_universe_domain impersonated_json, source_credentials_info
+
         source_credentials = DefaultCredentials.make_creds(
           json_key_io: StringIO.new(JSON.generate(source_credentials_info))
         )
@@ -141,6 +143,27 @@ module Google
         )
       end
       private_class_method :make_creds_from_json
+
+      # @private
+      def self.merge_universe_domain impersonated_json, source_credentials_info
+        universe_domain = impersonated_json["universe_domain"]
+        return source_credentials_info if universe_domain.nil?
+
+        unless universe_domain.is_a?(String) && !universe_domain.empty?
+          raise Google::Auth::InitializationError,
+                "Invalid universe_domain: #{universe_domain.inspect}"
+        end
+
+        source_universe_domain = source_credentials_info["universe_domain"]
+        if !source_universe_domain.nil? && source_universe_domain != universe_domain
+          raise Google::Auth::InitializationError,
+                "Universe domain '#{source_universe_domain}' in source_credentials does not match " \
+                "top-level universe_domain '#{universe_domain}'"
+        end
+
+        source_credentials_info.merge "universe_domain" => universe_domain
+      end
+      private_class_method :merge_universe_domain
 
       # Initializes a new instance of ImpersonatedServiceAccountCredentials.
       #
