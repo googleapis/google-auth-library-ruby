@@ -130,7 +130,8 @@ module Google
         source_credentials_info = merge_universe_domain impersonated_json, source_credentials_info
 
         source_credentials = DefaultCredentials.make_creds(
-          json_key_io: StringIO.new(JSON.generate(source_credentials_info))
+          json_key_io: StringIO.new(JSON.generate(source_credentials_info)),
+          scope:       IAM_SCOPE
         )
 
         impersonation_url = impersonated_json["service_account_impersonation_url"]

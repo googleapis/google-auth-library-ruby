@@ -72,8 +72,58 @@ describe Google::Auth::ImpersonatedServiceAccountCredentials do
 
         expect(creds).to be_a(Google::Auth::ImpersonatedServiceAccountCredentials)
         expect(creds.source_credentials).to be_a(Google::Auth::ServiceAccountCredentials)
+        expect(creds.source_credentials.scope).to eq(Google::Auth::ImpersonatedServiceAccountCredentials::IAM_SCOPE)
         expect(creds.impersonation_url).to eq(impersonation_url)
         expect(creds.scope).to eq(["scope1"])
+      end
+
+      it "sends source authorization header during apply! in default universe" do
+        creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
+          json_key_io: StringIO.new(JSON.generate(impersonated_json))
+        )
+
+        token_stub = stub_request(:post, Google::Auth::ServiceAccountCredentials::TOKEN_CRED_URI)
+          .to_return(
+            body: JSON.generate({ "access_token" => "sa_source_token", "token_type" => "Bearer", "expires_in" => 3600 }),
+            status: 200,
+            headers: { "Content-Type" => "application/json" }
+          )
+        impersonation_stub = stub_request(:post, impersonation_url)
+          .with(headers: { "Authorization" => "Bearer sa_source_token" })
+          .to_return(
+            body: JSON.generate({ "accessToken" => "impersonated_token", "expireTime" => (Time.now.utc + 3600).to_s }),
+            status: 200,
+            headers: { "Content-Type" => "application/json" }
+          )
+
+        headers = {}
+        creds.apply!(headers)
+
+        expect(token_stub).to have_been_requested.once
+        expect(impersonation_stub).to have_been_requested.once
+        expect(headers[:authorization]).to eq("Bearer impersonated_token")
+      end
+
+      it "sends a self-signed JWT authorization header during apply! in a non-default universe" do
+        non_gdu_sa_json = service_account_json.merge("universe_domain": "myuniverse.com")
+        json = impersonated_json.merge("source_credentials": non_gdu_sa_json)
+        creds = Google::Auth::ImpersonatedServiceAccountCredentials.make_creds(
+          json_key_io: StringIO.new(JSON.generate(json))
+        )
+
+        impersonation_stub = stub_request(:post, impersonation_url)
+          .with(headers: { "Authorization" => /\ABearer [^.]+\.[^.]+\.[^.]+\z/ })
+          .to_return(
+            body: JSON.generate({ "accessToken" => "impersonated_token", "expireTime" => (Time.now.utc + 3600).to_s }),
+            status: 200,
+            headers: { "Content-Type" => "application/json" }
+          )
+
+        headers = {}
+        creds.apply!(headers)
+
+        expect(impersonation_stub).to have_been_requested.once
+        expect(headers[:authorization]).to eq("Bearer impersonated_token")
       end
     end
 
