@@ -88,7 +88,7 @@ module Google
           # environment variable injection
           env = inject_environment_variables
           output = subprocess_with_timeout env, @credential_source_executable_command,
-                                           @credential_source_executable_timeout_millis
+                                           @credential_source_executable_timeout_millis / 1000.0
           response = JSON.parse output, symbolize_names: true
           parse_subject_token response
         end
@@ -157,14 +157,48 @@ module Google
         end
 
         def subprocess_with_timeout environment_vars, command, timeout_seconds
-          Timeout.timeout timeout_seconds do
-            output, error, status = Open3.capture3 environment_vars, command
+          Open3.popen3 environment_vars, command, **spawn_options do |stdin, stdout, stderr, wait_thr|
+            finished = false
+            stdin.close
+            deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + timeout_seconds
+            out_reader = reader_thread stdout
+            err_reader = reader_thread stderr
+            unless [wait_thr, out_reader, err_reader].all? { |thread| join_until thread, deadline }
+              raise CredentialsError, "Executable timed out after #{timeout_seconds} seconds."
+            end
+            status = wait_thr.value
+            output = out_reader.value
+            finished = true
             unless status.success?
               raise CredentialsError,
-                    "Executable exited with non-zero return code #{status.exitstatus}. Error: #{output}, #{error}"
+                    "Executable exited with non-zero return code #{status.exitstatus}. " \
+                    "Error: #{output}, #{err_reader.value}"
             end
             output
+          ensure
+            kill_executable wait_thr.pid unless finished
           end
+        end
+
+        def join_until thread, deadline
+          remaining = deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
+          thread.join [remaining, 0].max
+        end
+
+        def reader_thread io
+          thread = Thread.new { io.read }
+          thread.report_on_exception = false
+          thread
+        end
+
+        def spawn_options
+          Gem.win_platform? ? {} : { pgroup: true }
+        end
+
+        def kill_executable pid
+          Process.kill "KILL", Gem.win_platform? ? pid : -pid
+        rescue Errno::ESRCH, Errno::EPERM
+          nil
         end
       end
     end

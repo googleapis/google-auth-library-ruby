@@ -42,6 +42,16 @@ DEFAULT_UNIVERSE_DOMAIN = "googleapis.com"
 
 describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
   PluggableAuthCredentials = Google::Auth::ExternalAccount::PluggableAuthCredentials
+
+  def stub_executable stdout, stderr, exit_status, command: anything
+    status = double("Process::Status", exitstatus: exit_status, success?: exit_status == 0)
+    wait_thr = double("wait_thr", pid: 12345, value: status)
+    allow(wait_thr).to receive(:join).and_return(wait_thr)
+    allow(Open3).to receive(:popen3).with(anything, command, any_args) do |*_args, &block|
+      block.call StringIO.new, StringIO.new(stdout), StringIO.new(stderr), wait_thr
+    end
+  end
+
   CREDENTIAL_SOURCE_EXECUTABLE_COMMAND = "/fake/external/excutable --arg1=value1 --arg2=value2"
   CREDENTIAL_SOURCE_EXECUTABLE_OUTPUT_FILE = "fake_output_file"
   CREDENTIAL_SOURCE_EXECUTABLE = {
@@ -287,11 +297,63 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
     }
     before :example do
       ENV[Google::Auth::ExternalAccount::PluggableAuthCredentials::ENABLE_PLUGGABLE_ENV] = "1"
-      allow(Open3).to receive(:capture3).and_raise(StandardError, "mock subprocess error")
+      allow(Open3).to receive(:popen3).and_raise(StandardError, "mock subprocess error")
     end
     it "executable subprocess error" do
       credentials = PluggableAuthCredentials.new options
       expect{credentials.retrieve_subject_token!}.to raise_error(/mock subprocess error/)
+    end
+  end
+
+  describe "test retrieve subject token executable timeout" do
+    options = {
+      :audience => AUDIENCE,
+      :subject_token_type => SUBJECT_TOKEN_TYPE,
+      :token_url => TOKEN_URL,
+      :credential_source => {
+        :executable => {
+          :command => "sleep 30",
+          :timeout_millis => 5000,
+        },
+      },
+    }
+    before :example do
+      ENV[Google::Auth::ExternalAccount::PluggableAuthCredentials::ENABLE_PLUGGABLE_ENV] = "1"
+    end
+    it "converts timeout_millis to seconds" do
+      stub_executable JSON.generate(EXECUTABLE_SUCCESSFUL_OIDC_RESPONSE_ID_TOKEN), "", 0
+      credentials = PluggableAuthCredentials.new options
+      expect(credentials).to receive(:subprocess_with_timeout).with(anything, "sleep 30", 5.0).and_call_original
+      expect(credentials.retrieve_subject_token!).to eql(EXECUTABLE_OIDC_TOKEN)
+    end
+    it "kills a real executable that exceeds the timeout" do
+      credentials = PluggableAuthCredentials.new options
+      cmd = %("#{RbConfig.ruby}" -e "sleep 5")
+      started = Process.clock_gettime Process::CLOCK_MONOTONIC
+      expect { credentials.send :subprocess_with_timeout, {}, cmd, 0.3 }
+        .to raise_error(Google::Auth::CredentialsError, /timed out after 0.3 seconds/)
+      expect(Process.clock_gettime(Process::CLOCK_MONOTONIC) - started).to be < 2
+    end
+    it "kills the executable when the caller is interrupted before the deadline" do
+      credentials = PluggableAuthCredentials.new options
+      cmd = %("#{RbConfig.ruby}" -e "sleep 5")
+      caller_thread = Thread.current
+      Thread.new do
+        sleep 0.3
+        caller_thread.raise Interrupt
+      end
+      started = Process.clock_gettime Process::CLOCK_MONOTONIC
+      expect { credentials.send :subprocess_with_timeout, {}, cmd, 30 }.to raise_error(Interrupt)
+      expect(Process.clock_gettime(Process::CLOCK_MONOTONIC) - started).to be < 2
+    end
+    it "times out when a background child keeps stdout open after the executable exits" do
+      skip "relies on POSIX shell job control" if Gem.win_platform?
+      credentials = PluggableAuthCredentials.new options
+      cmd = %(sh -c '"#{RbConfig.ruby}" -e "sleep 5" & echo hi')
+      started = Process.clock_gettime Process::CLOCK_MONOTONIC
+      expect { credentials.send :subprocess_with_timeout, {}, cmd, 0.3 }
+        .to raise_error(Google::Auth::CredentialsError, /timed out after 0.3 seconds/)
+      expect(Process.clock_gettime(Process::CLOCK_MONOTONIC) - started).to be < 2
     end
   end
 
@@ -447,8 +509,7 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
         ENV[Google::Auth::ExternalAccount::PluggableAuthCredentials::ENABLE_PLUGGABLE_ENV] = "1"
         cmd = example[:options][:credential_source][:executable][:command]
         e = example[:executable_return]
-        exe_return = [e[:stdout], e[:stdout], double("Process::Status", exitstatus: e[:exit_status], success?: (e[:exit_status] == 0))]
-        allow(Open3).to receive(:capture3).with(anything, cmd).and_return(exe_return)
+        stub_executable e[:stdout], e[:stderr], e[:exit_status], command: cmd
       end
       it example[:name] do
         credentials = PluggableAuthCredentials.new example[:options]
@@ -522,8 +583,7 @@ describe Google::Auth::ExternalAccount::PluggableAuthCredentials do
         ENV[Google::Auth::ExternalAccount::PluggableAuthCredentials::ENABLE_PLUGGABLE_ENV] = "1"
         cmd = example[:options][:credential_source][:executable][:command]
         e = example[:executable_return]
-        exe_return = [e[:stdout], e[:stdout], double("Process::Status", exitstatus: e[:exit_status], success?: (e[:exit_status] == 0))]
-        allow(Open3).to receive(:capture3).with(anything, cmd).and_return(exe_return)
+        stub_executable e[:stdout], e[:stderr], e[:exit_status], command: cmd
       end
       it example[:name] do
         credentials = PluggableAuthCredentials.new example[:options]
