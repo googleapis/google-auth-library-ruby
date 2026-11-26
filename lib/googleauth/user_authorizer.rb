@@ -156,7 +156,7 @@ module Google
           scope:         data["scope"] || @scope,
           access_token:  data["access_token"],
           refresh_token: data["refresh_token"],
-          expires_at:    data.fetch("expiration_time_millis", 0) / 1000
+          expires_at:    (data.fetch("expiration_time_millis") || 0) / 1000
         )
         scope ||= @scope
         return monitor_credentials user_id, credentials if credentials.includes_scope? scope
